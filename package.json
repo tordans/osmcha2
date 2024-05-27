@@ -1,0 +1,35 @@
+{
+  "name": "osmcha2",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "type-check": "tsc --skipLibCheck --noEmit",
+    "lint": "next lint",
+    "format": "prettier . --write",
+    "check": "npm run type-check && npm run format && npm run lint",
+    "updatePackages:major": "npx taze major --write && npm install",
+    "updatePackages:minor": "npx taze minor --write && npm install"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "prettier-plugin-organize-imports": "^3.2.4",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-compiler": "^0.0.0-experimental-c8b3f72-20240517",
+    "postcss": "^8",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.14",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
