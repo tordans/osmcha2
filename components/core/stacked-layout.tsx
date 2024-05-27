@@ -20,7 +20,11 @@ function CloseMenuIcon() {
   )
 }
 
-function MobileSidebar({ open, close, children }: React.PropsWithChildren<{ open: boolean; close: () => void }>) {
+function MobileSidebar({
+  open,
+  close,
+  children,
+}: React.PropsWithChildren<{ open: boolean; close: () => void }>) {
   return (
     <Headless.Transition show={open}>
       <Headless.Dialog onClose={close} className="lg:hidden">

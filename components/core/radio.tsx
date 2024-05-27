@@ -14,13 +14,16 @@ export function RadioGroup({
         // Basic groups
         'space-y-3 [&_[data-slot=label]]:font-normal',
         // With descriptions
-        'has-[[data-slot=description]]:space-y-6 [&_[data-slot=label]]:has-[[data-slot=description]]:font-medium'
+        'has-[[data-slot=description]]:space-y-6 [&_[data-slot=label]]:has-[[data-slot=description]]:font-medium',
       )}
     />
   )
 }
 
-export function RadioField({ className, ...props }: { className?: string } & Omit<Headless.FieldProps, 'className'>) {
+export function RadioField({
+  className,
+  ...props
+}: { className?: string } & Omit<Headless.FieldProps, 'className'>) {
   return (
     <Headless.Field
       data-slot="field"
@@ -36,7 +39,7 @@ export function RadioField({ className, ...props }: { className?: string } & Omi
         // Description layout
         '[&>[data-slot=description]]:col-start-2 [&>[data-slot=description]]:row-start-2',
         // With description
-        '[&_[data-slot=label]]:has-[[data-slot=description]]:font-medium'
+        '[&_[data-slot=label]]:has-[[data-slot=description]]:font-medium',
       )}
     />
   )
@@ -120,13 +123,17 @@ export function Radio({
   ...props
 }: { color?: Color; className?: string } & Omit<Headless.RadioProps, 'className' | 'children'>) {
   return (
-    <Headless.Radio data-slot="control" {...props} className={clsx(className, 'group inline-flex focus:outline-none')}>
+    <Headless.Radio
+      data-slot="control"
+      {...props}
+      className={clsx(className, 'group inline-flex focus:outline-none')}
+    >
       <span className={clsx([base, colors[color]])}>
         <span
           className={clsx(
             'size-full rounded-full border-[4.5px] border-transparent bg-[--radio-indicator] bg-clip-padding',
             // Forced colors mode
-            'forced-colors:border-[Canvas] forced-colors:group-data-[checked]:border-[Highlight]'
+            'forced-colors:border-[Canvas] forced-colors:group-data-[checked]:border-[Highlight]',
           )}
         />
       </span>
