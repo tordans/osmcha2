@@ -9,4 +9,4 @@ const prettierConfig = {
   tailwindFunctions: ['clsx'],
 }
 
-module.exports = prettierConfig
+export default prettierConfig
