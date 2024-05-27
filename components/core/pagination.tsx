@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import type { LinkProps } from 'next/link'
 import type React from 'react'
 import { Button } from './button'
 
@@ -70,12 +71,16 @@ export function PaginationList({ className, ...props }: React.ComponentPropsWith
   return <span {...props} className={clsx(className, 'hidden items-baseline gap-x-2 sm:flex')} />
 }
 
-export function PaginationPage({
+type Props<R extends string> = React.PropsWithChildren<
+  LinkProps<R> & { className?: string; current?: boolean }
+>
+
+export function PaginationPage<R extends string>({
   href,
   className,
   current = false,
   children,
-}: React.PropsWithChildren<{ href: string; className?: string; current?: boolean }>) {
+}: Props<R>) {
   return (
     <Button
       // TODO: Fix this type error
