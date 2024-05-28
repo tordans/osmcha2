@@ -1,13 +1,14 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import Image from 'next/image'
+import Image, { StaticImageData } from 'next/image'
 import React from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
 
 type AvatarProps = {
-  src?: string | null
+  src?: StaticImageData | string | null
   square?: boolean
+  icon?: React.ReactNode
   initials?: string
   alt?: string
   className?: string
@@ -16,6 +17,7 @@ type AvatarProps = {
 export function Avatar({
   src = null,
   square = false,
+  icon = undefined,
   initials,
   alt = '',
   className,
@@ -28,7 +30,7 @@ export function Avatar({
       className={clsx(
         className,
         // Basic layout
-        'inline-grid shrink-0 align-middle [--avatar-radius:20%] [--ring-opacity:20%] *:col-start-1 *:row-start-1',
+        'inline-flex shrink-0 items-center justify-center [--avatar-radius:20%] [--ring-opacity:20%]',
         'outline outline-1 -outline-offset-1 outline-black/[--ring-opacity] dark:outline-white/[--ring-opacity]',
         // Add the correct border radius
         square
@@ -55,6 +57,7 @@ export function Avatar({
           </text>
         </svg>
       )}
+      {icon}
       {src && <Image src={src} alt={alt} width={100} height={100} />}
     </span>
   )

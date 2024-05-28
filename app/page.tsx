@@ -29,6 +29,7 @@ import {
   FunnelIcon,
   ListBulletIcon,
   PlusIcon,
+  UserIcon,
   UsersIcon,
 } from '@heroicons/react/16/solid'
 
@@ -37,7 +38,7 @@ export default function HomePage() {
     <StackedLayout
       navbar={
         <Navbar>
-          <h1 className="text-xl font-normal text-zinc-500">
+          <h1 className="hidden select-none text-xl font-normal text-zinc-500 lg:block">
             <span className="text-blue-500">OSM</span>Cha
           </h1>
           <NavbarDivider className="max-lg:hidden" />
@@ -69,7 +70,8 @@ export default function HomePage() {
           <NavbarSection>
             <Dropdown>
               <DropdownButton as={NavbarItem}>
-                <Avatar src="/profile-photo.jpg" square />
+                {/* <Avatar src={PngLogo} square /> */}
+                <Avatar icon={<UserIcon className="size-5" />} square />
               </DropdownButton>
               <DropdownMenu className="min-w-64" anchor="bottom end">
                 <DropdownItem href="/user">
