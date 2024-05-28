@@ -3,6 +3,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { LayoutGroup, motion } from 'framer-motion'
+import { usePathname } from 'next/navigation'
 import React, { useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
@@ -65,6 +66,9 @@ export const NavbarItem = React.forwardRef(function NavbarItem(
     'dark:data-[hover]:bg-white/5 dark:data-[slot=icon]:*:data-[hover]:fill-white',
     'dark:data-[active]:bg-white/5 dark:data-[slot=icon]:*:data-[active]:fill-white',
   )
+
+  const currentPath = usePathname()
+  current = current === undefined ? 'href' in props && currentPath === props.href : current
 
   return (
     <span className={clsx(className, 'relative')}>
