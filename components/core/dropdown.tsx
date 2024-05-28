@@ -2,6 +2,7 @@
 
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
+import { usePathname } from 'next/navigation'
 import type React from 'react'
 import { Button } from './button'
 import { Link } from './link'
@@ -56,7 +57,10 @@ export function DropdownItem({
   | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>
   | Omit<React.ComponentPropsWithoutRef<'button'>, 'className'>
 )) {
-  let classes = clsx(
+  const currentPath = usePathname()
+  const current = 'href' in props && currentPath === props.href
+
+  const classes = clsx(
     className,
     // Base styles
     'group cursor-default rounded-lg px-3.5 py-2.5 focus:outline-none sm:px-3 sm:py-1.5',
@@ -75,12 +79,14 @@ export function DropdownItem({
     '[&>[data-slot=icon]]:text-zinc-500 [&>[data-slot=icon]]:data-[focus]:text-white [&>[data-slot=icon]]:dark:text-zinc-400 [&>[data-slot=icon]]:data-[focus]:dark:text-white',
     // Avatar
     '[&>[data-slot=avatar]]:-ml-1 [&>[data-slot=avatar]]:mr-2.5 [&>[data-slot=avatar]]:size-6 sm:[&>[data-slot=avatar]]:mr-2 sm:[&>[data-slot=avatar]]:size-5',
+    // Highlight current
+    'data-[current]:bg-zinc-950/5 data-[current]:text-zinc-950 data-[slot=icon]:*:data-[current]:fill-zinc-950',
   )
 
   return (
     <Headless.MenuItem>
       {'href' in props ? (
-        <Link {...props} className={classes} />
+        <Link {...props} data-current={current ? 'true' : undefined} className={classes} />
       ) : (
         <button type="button" {...props} className={classes} />
       )}
