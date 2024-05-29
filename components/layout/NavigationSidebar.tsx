@@ -7,7 +7,7 @@ import {
 } from '@components/core/sidebar'
 import { FunnelIcon, PlusIcon } from '@heroicons/react/16/solid'
 
-export const LayoutSidebar = () => {
+export const NavigationSidebar = () => {
   return (
     <Sidebar>
       <SidebarHeader className="text-center">

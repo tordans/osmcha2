@@ -16,7 +16,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/16/solid'
 
-export const LayoutUserProfileDropdown = () => {
+export const NavigationHorizontalUserProfileDropdown = () => {
   return (
     <Dropdown>
       <DropdownButton as={NavbarItem}>

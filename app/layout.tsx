@@ -1,7 +1,6 @@
 import { TailwindResponsiveHelper } from '@components/core/TailwindResponsiveHelper'
-import { StackedLayout } from '@components/core/stacked-layout'
-import { LayoutNavbar } from '@components/layout/LayoutNavbar'
-import { LayoutSidebar } from '@components/layout/LayoutSidebar'
+import { StackedLayout } from '@components/layout/StackedLayout'
+import { clsx } from 'clsx'
 import type { Metadata } from 'next'
 import { Open_Sans } from 'next/font/google'
 import './globals.css'
@@ -19,11 +18,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
-      <body className={openSans.className}>
-        <StackedLayout navbar={<LayoutNavbar />} sidebar={<LayoutSidebar />}>
-          {children}
-        </StackedLayout>
+    <html lang="en" className="h-full bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
+      <body className={clsx(openSans.className, 'min-h-full w-full antialiased')}>
+        <StackedLayout>{children}</StackedLayout>
         <TailwindResponsiveHelper />
       </body>
     </html>

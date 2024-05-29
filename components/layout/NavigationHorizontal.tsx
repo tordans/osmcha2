@@ -1,8 +1,8 @@
 import { Navbar, NavbarDivider, NavbarSection, NavbarSpacer } from '@components/core/navbar'
-import { LayoutNavigationDesktop } from '@components/layout/LayoutNavigationDesktop'
-import { LayoutUserProfileDropdown } from '@components/layout/LayoutUserProfileDropdown'
+import { NavigationHorizontalUserProfileDropdown } from '@components/layout/NavigationHorizontalUserProfileDropdown'
+import { NavigationHorizontalNavigationItems } from './NavigationHorizontalNavigationItems'
 
-export const LayoutNavbar = () => {
+export const NavigationHorizontal = () => {
   return (
     <Navbar>
       <h1 className="hidden select-none text-xl font-normal text-zinc-500 lg:block">
@@ -10,11 +10,11 @@ export const LayoutNavbar = () => {
       </h1>
       <NavbarDivider className="max-lg:hidden" />
       <NavbarSection className="max-lg:hidden">
-        <LayoutNavigationDesktop />
+        <NavigationHorizontalNavigationItems />
       </NavbarSection>
       <NavbarSpacer />
       <NavbarSection>
-        <LayoutUserProfileDropdown />
+        <NavigationHorizontalUserProfileDropdown />
       </NavbarSection>
     </Navbar>
   )

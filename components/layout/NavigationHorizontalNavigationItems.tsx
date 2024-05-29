@@ -9,7 +9,7 @@ import {
 import { NavbarItem } from '@components/core/navbar'
 import { ChevronDownIcon, FunnelIcon, PlusIcon } from '@heroicons/react/16/solid'
 
-export const LayoutNavigationDesktop = () => {
+export const NavigationHorizontalNavigationItems = () => {
   return (
     <>
       <NavbarItem href="/">Changesets</NavbarItem>
