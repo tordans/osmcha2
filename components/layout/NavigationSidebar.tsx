@@ -11,7 +11,7 @@ export const NavigationSidebar = () => {
   return (
     <Sidebar>
       <SidebarHeader className="text-center">
-        <h1 className="text-3xl font-normal text-zinc-500">
+        <h1 className="text-2xl font-normal text-zinc-500">
           <span className="text-blue-500">OSM</span>Cha
         </h1>
       </SidebarHeader>
