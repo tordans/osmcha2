@@ -18,7 +18,7 @@ export function LayoutWrapper({ children }: React.PropsWithChildren<{}>) {
       </NavigationSidebarWrapper>
 
       {/* Navigation on desktop: Navbar */}
-      <header className="flex items-center">
+      <header className="flex items-center px-4">
         <div className="py-2.5 lg:hidden">
           <NavbarItem onClick={() => setShowSidebar(true)} aria-label="Open navigation">
             <Bars3Icon />
