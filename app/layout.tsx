@@ -1,5 +1,5 @@
 import { TailwindResponsiveHelper } from '@components/core/TailwindResponsiveHelper'
-import { StackedLayout } from '@components/layout/StackedLayout'
+import { LayoutWrapper } from '@components/layout/LayoutWrapper'
 import { clsx } from 'clsx'
 import type { Metadata } from 'next'
 import { Open_Sans } from 'next/font/google'
@@ -25,10 +25,10 @@ export default function RootLayout({
           'relative isolate flex h-svh w-full flex-col bg-white antialiased lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950',
         )}
       >
-        <StackedLayout>
+        <LayoutWrapper>
           {children}
           <TailwindResponsiveHelper />
-        </StackedLayout>
+        </LayoutWrapper>
       </body>
     </html>
   )
