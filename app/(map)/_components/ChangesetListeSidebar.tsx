@@ -7,7 +7,7 @@ type Props = { changesets: any }
 export const ChangesetListeSidebar = ({ changesets }: Props) => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <nav>
+      <nav className="h-full overflow-y-scroll">
         <ul>
           {changesets.features.map((changeset: any) => (
             <li key={changeset.id}>

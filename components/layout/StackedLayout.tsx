@@ -53,14 +53,14 @@ export function StackedLayout({ children }: React.PropsWithChildren<{}>) {
   let [showSidebar, setShowSidebar] = useState(false)
 
   return (
-    <div className="relative isolate flex min-h-svh w-full flex-auto flex-col bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
+    <>
       {/* Navigaton on mobile: Sidebar  */}
       <MobileSidebar open={showSidebar} close={() => setShowSidebar(false)}>
         <NavigationSidebar />
       </MobileSidebar>
 
       {/* Navigation on desktop: Navbar */}
-      <header className="flex items-center px-4">
+      <header className="flex items-center">
         <div className="py-2.5 lg:hidden">
           <NavbarItem onClick={() => setShowSidebar(true)} aria-label="Open navigation">
             <Bars3Icon />
@@ -73,10 +73,13 @@ export function StackedLayout({ children }: React.PropsWithChildren<{}>) {
         <div className="min-w-0 flex-1">
           <NavigationHorizontal />
         </div>
+        {/* replace with:
+          <NavigationHorizontal /> <-- w-full
+         */}
       </header>
 
       {/* Content */}
-      <main className="flex flex-1 flex-grow flex-col pb-2 lg:px-2">{children}</main>
-    </div>
+      <main className="flex flex-1 grow flex-col overflow-hidden pb-2 lg:px-2">{children}</main>
+    </>
   )
 }

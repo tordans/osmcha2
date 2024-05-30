@@ -19,9 +19,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full bg-white lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
-      <body className={clsx(openSans.className, 'min-h-full w-full antialiased')}>
-        <StackedLayout>{children}</StackedLayout>
-        <TailwindResponsiveHelper />
+      <body
+        className={clsx(
+          openSans.className,
+          'relative isolate flex h-svh w-full flex-col bg-white antialiased lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950',
+        )}
+      >
+        <StackedLayout>
+          {children}
+          <TailwindResponsiveHelper />
+        </StackedLayout>
       </body>
     </html>
   )
