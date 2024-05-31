@@ -48,7 +48,7 @@ export const NavbarItem = React.forwardRef(function NavbarItem(
   ),
   ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>,
 ) {
-  let classes = clsx(
+  const classes = clsx(
     // Base
     'relative flex min-w-0 items-center gap-3 rounded-lg p-2 text-left text-base/6 font-medium text-zinc-950 sm:text-sm/5',
     // Leading icon/icon-only
@@ -71,7 +71,7 @@ export const NavbarItem = React.forwardRef(function NavbarItem(
   current = current === undefined ? 'href' in props && currentPath === props.href : current
 
   return (
-    <span className={clsx(className, 'relative')}>
+    <div className={clsx(className, 'relative')}>
       {current && (
         <motion.span
           layoutId="current-indicator"
@@ -97,7 +97,7 @@ export const NavbarItem = React.forwardRef(function NavbarItem(
           <TouchTarget>{children}</TouchTarget>
         </Headless.Button>
       )}
-    </span>
+    </div>
   )
 })
 

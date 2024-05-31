@@ -3,6 +3,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { LayoutGroup, motion } from 'framer-motion'
+import { usePathname } from 'next/navigation'
 import React, { Fragment, useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
@@ -84,17 +85,16 @@ export function SidebarHeading({ className, ...props }: React.ComponentPropsWith
 
 export const SidebarItem = React.forwardRef(function SidebarItem(
   {
-    current,
     className,
     children,
     ...props
-  }: { current?: boolean; className?: string; children: React.ReactNode } & (
+  }: { className?: string; children: React.ReactNode } & (
     | Omit<Headless.ButtonProps, 'className'>
     | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'type' | 'className'>
   ),
   ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>,
 ) {
-  let classes = clsx(
+  const classes = clsx(
     // Base
     'flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5',
     // Leading icon/icon-only
@@ -115,6 +115,9 @@ export const SidebarItem = React.forwardRef(function SidebarItem(
     'dark:data-[active]:bg-white/5 dark:data-[slot=icon]:*:data-[active]:fill-white',
     'dark:data-[slot=icon]:*:data-[current]:fill-white',
   )
+
+  const currentPath = usePathname()
+  const current = 'href' in props && currentPath === props.href
 
   return (
     <span className={clsx(className, 'relative')}>

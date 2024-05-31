@@ -13,11 +13,6 @@ import { InformationCircleIcon } from '@heroicons/react/20/solid'
 export const NavigationSidebar = () => {
   return (
     <Sidebar>
-      <SidebarHeader className="text-center">
-        <h1 className="text-2xl font-normal text-zinc-500">
-          <span className="text-blue-500">OSM</span>Cha
-        </h1>
-      </SidebarHeader>
       <SidebarBody>
         <SidebarSection>
           <SidebarHeader>

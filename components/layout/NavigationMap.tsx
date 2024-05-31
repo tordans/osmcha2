@@ -4,11 +4,12 @@ import * as Headless from '@headlessui/react'
 import { Bars3Icon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import React, { useState } from 'react'
+import { Logo } from './Logo'
 import { NavigationSidebar } from './NavigationItems'
 import { NavigationMapItemsWrapper } from './NavigationMapItemsWrapper'
 
 export const NavigationMap = () => {
-  let [showSidebar, setShowSidebar] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(false)
 
   return (
     <>
@@ -18,11 +19,12 @@ export const NavigationMap = () => {
       </NavigationMapItemsWrapper>
 
       {/* Navigation Button */}
-      <HeaderNavigationButton onClick={() => setShowSidebar(true)} aria-label="Open navigation">
-        <h1 className="text-lg  font-semibold text-zinc-500">
-          <span className="text-blue-500">OSM</span>Cha
-        </h1>
-
+      <HeaderNavigationButton
+        onClick={() => setShowSidebar(true)}
+        aria-label="Open navigation"
+        className="rounded-lg"
+      >
+        <Logo />
         <div className="flex items-center gap-2">
           <Bars3Icon className="size-5" />
           Menu
@@ -44,9 +46,9 @@ export const HeaderNavigationButton = React.forwardRef(function NavbarItem(
   >,
   ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>,
 ) {
-  let classes = clsx(
+  const classes = clsx(
     // Base
-    'relative flex min-w-0 items-center gap-3 rounded-lg p-2 text-left text-base/6 font-medium text-zinc-950 sm:text-sm/5',
+    'relative flex min-w-0 items-center gap-3 p-2 text-left text-base/6 font-medium text-zinc-950 sm:text-sm/5',
     // Leading icon/icon-only
     'data-[slot=icon]:*:size-6 data-[slot=icon]:*:shrink-0 data-[slot=icon]:*:fill-zinc-500 sm:data-[slot=icon]:*:size-5',
     // Trailing icon (down chevron or similar)
@@ -62,10 +64,10 @@ export const HeaderNavigationButton = React.forwardRef(function NavbarItem(
   )
 
   return (
-    <header className={clsx(className, 'relative')}>
+    <header className="relative">
       <Headless.Button
         {...props}
-        className={clsx('flex w-full items-center justify-between', classes)}
+        className={clsx('flex w-full items-center justify-between', classes, className)}
         data-current={current ? 'true' : undefined}
         ref={ref}
       >

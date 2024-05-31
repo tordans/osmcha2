@@ -2,7 +2,8 @@
 import * as Headless from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import React from 'react'
-import { NavbarItem } from '../core/navbar'
+import { Logo } from './Logo'
+import { HeaderNavigationButton } from './NavigationMap'
 
 type Props = React.PropsWithChildren<{ open: boolean; close: () => void }>
 
@@ -30,11 +31,16 @@ export const NavigationMapItemsWrapper = ({ open, close, children }: Props) => {
         >
           <Headless.DialogPanel className="fixed inset-y-0 w-full max-w-80 p-2 transition">
             <div className="flex h-full flex-col rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10">
-              <div className="-mb-3 px-4 pt-3">
-                <Headless.CloseButton as={NavbarItem} aria-label="Close navigation">
-                  <XMarkIcon />
-                </Headless.CloseButton>
-              </div>
+              <Headless.CloseButton
+                as={HeaderNavigationButton}
+                aria-label="Close navigation"
+                className="px-4 py-3"
+              >
+                <Logo />
+                <div className="flex items-center gap-2">
+                  <XMarkIcon className="size-5" />
+                </div>
+              </Headless.CloseButton>
               {children}
             </div>
           </Headless.DialogPanel>
