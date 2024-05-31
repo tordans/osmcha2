@@ -21,8 +21,8 @@ export const NavigationSidebar = () => {
       <SidebarBody>
         <SidebarSection>
           <SidebarHeader>
-            <FunnelIcon />
-            Changesets
+            <FunnelIcon className="size-4" />
+            <span>Changesets</span>
           </SidebarHeader>
           <SidebarItem href="/">Recent</SidebarItem>
           <SidebarItem
@@ -39,19 +39,23 @@ export const NavigationSidebar = () => {
           <SidebarItem href="/?aoi=3ee95214-1a8e-4a7e-8546-5c9c0ac2b006">Wrangelkiez</SidebarItem>
           <SidebarSpacer />
           <SidebarItem href="/saved-filters">
-            <PlusIcon />
+            <PlusIcon className="size-4" />
             <span>Filter hinzufügen</span>
           </SidebarItem>
+        </SidebarSection>
 
+        <SidebarSection>
           <SidebarHeader>
-            <InformationCircleIcon />
-            About
+            <InformationCircleIcon className="size-4" />
+            <span>About</span>
           </SidebarHeader>
           <SidebarItem href="/about">About</SidebarItem>
+        </SidebarSection>
 
+        <SidebarSection>
           <SidebarHeader>
             {/* <Avatar src={PngLogo} square /> */}
-            <Avatar icon={<UserIcon className="size-5" />} square /> About
+            <Avatar icon={<UserIcon className="size-4" />} square /> <span>About</span>
           </SidebarHeader>
           <SidebarItem href="/user">Edit Account</SidebarItem>
           <SidebarItem href="/teams">Edit Teams</SidebarItem>

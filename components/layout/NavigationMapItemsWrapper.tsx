@@ -9,7 +9,7 @@ type Props = React.PropsWithChildren<{ open: boolean; close: () => void }>
 export const NavigationMapItemsWrapper = ({ open, close, children }: Props) => {
   return (
     <Headless.Transition show={open}>
-      <Headless.Dialog onClose={close} className="lg:hidden">
+      <Headless.Dialog onClose={close}>
         <Headless.TransitionChild
           enter="ease-out duration-300"
           enterFrom="opacity-0"

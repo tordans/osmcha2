@@ -17,7 +17,7 @@ export function SidebarHeader({ className, ...props }: React.ComponentPropsWitho
       {...props}
       className={clsx(
         className,
-        'flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5 [&>[data-slot=section]+[data-slot=section]]:mt-2.5',
+        'flex items-center gap-1 border-b border-zinc-950/5 p-2 font-semibold dark:border-white/5 [&>[data-slot=section]+[data-slot=section]]:mt-2.5',
       )}
     />
   )
@@ -67,7 +67,7 @@ export function SidebarDivider({ className, ...props }: React.ComponentPropsWith
 }
 
 export function SidebarSpacer({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  return <div aria-hidden="true" {...props} className={clsx(className, 'mt-8 flex-1')} />
+  return <div aria-hidden="true" {...props} className={clsx(className, 'mt-2 flex-1')} />
 }
 
 export function SidebarHeading({ className, ...props }: React.ComponentPropsWithoutRef<'h3'>) {
