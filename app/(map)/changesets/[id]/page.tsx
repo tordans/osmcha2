@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { Map } from './_components/Map'
 
 type Props = { params: { id: string } }
 
@@ -15,7 +16,16 @@ export default async function ChangesetPage({ params }: Props) {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <pre className="flex-1 overflow-y-auto">{JSON.stringify(data, undefined, 2)}</pre>
+      <div className="flex h-full gap-2">
+        <div className="h-full grow">
+          <Map changeset={data} />
+        </div>
+        <div className="w-80">
+          <pre className="h-full flex-1 overflow-y-scroll">
+            {JSON.stringify(data, undefined, 2)}
+          </pre>
+        </div>
+      </div>
     </Suspense>
   )
 }
