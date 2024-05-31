@@ -4,11 +4,9 @@ import { XMarkIcon } from '@heroicons/react/20/solid'
 import React from 'react'
 import { NavbarItem } from '../core/navbar'
 
-export function NavigationSidebarWrapper({
-  open,
-  close,
-  children,
-}: React.PropsWithChildren<{ open: boolean; close: () => void }>) {
+type Props = React.PropsWithChildren<{ open: boolean; close: () => void }>
+
+export const NavigationMapItemsWrapper = ({ open, close, children }: Props) => {
   return (
     <Headless.Transition show={open}>
       <Headless.Dialog onClose={close} className="lg:hidden">

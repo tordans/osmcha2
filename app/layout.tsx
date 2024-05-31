@@ -1,5 +1,4 @@
 import { TailwindResponsiveHelper } from '@components/core/TailwindResponsiveHelper'
-import { LayoutWrapper } from '@components/layout/LayoutWrapper'
 import { clsx } from 'clsx'
 import type { Metadata } from 'next'
 import { Open_Sans } from 'next/font/google'
@@ -25,10 +24,8 @@ export default function RootLayout({
           'relative isolate flex h-svh w-full flex-col bg-white antialiased lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950',
         )}
       >
-        <LayoutWrapper>
-          {children}
-          <TailwindResponsiveHelper />
-        </LayoutWrapper>
+        {children}
+        <TailwindResponsiveHelper />
       </body>
     </html>
   )
