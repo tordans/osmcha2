@@ -20,7 +20,7 @@ export default async function MapLayout({
           <ChangesetListeSidebar changesets={data} />
         </nav>
       </div>
-      <main className="flex-1 lg:rounded-lg lg:bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
+      <main className="flex-1 overflow-clip lg:rounded-lg lg:bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
         {children}
       </main>
     </div>

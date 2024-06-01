@@ -26,8 +26,8 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                 <Link
                   href={`/changesets/${changeset.id}`}
                   className={clsx(
-                    'relative flex flex-col items-start justify-between gap-1 break-words rounded py-3 pl-3 pr-0',
-                    current ? 'bg-gray-100' : 'hover:bg-gray-50',
+                    'group relative flex flex-col items-start justify-between gap-1 break-words rounded py-3 pl-3 pr-0',
+                    current ? 'bg-blue-50' : 'hover:bg-gray-50',
                   )}
                 >
                   <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
@@ -70,7 +70,10 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                       )}
                     </div>
                     <ChevronRightIcon
-                      className="h-5 w-5 flex-none text-gray-400"
+                      className={clsx(
+                        'size-6 flex-none',
+                        current ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500',
+                      )}
                       aria-hidden="true"
                     />
                   </div>

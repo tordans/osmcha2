@@ -1,4 +1,7 @@
 import { Suspense } from 'react'
+import { DebugDataHelper } from './_components/DebugDataHelper'
+import { Details } from './_components/Details'
+import { Header } from './_components/Header'
 import { Map } from './_components/Map'
 
 type Props = { params: { id: string } }
@@ -16,16 +19,16 @@ export default async function ChangesetPage({ params }: Props) {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="flex h-full gap-2">
-        <div className="h-full grow">
-          <Map changeset={data} />
-        </div>
-        <div className="w-80">
-          <pre className="h-full flex-1 overflow-y-scroll">
-            {JSON.stringify(data, undefined, 2)}
-          </pre>
+      <div className="flex h-full flex-col">
+        <Header changeset={data} />
+        <div className="flex h-full gap-2">
+          <div className="h-full grow">
+            <Map changeset={data} />
+          </div>
+          <Details changeset={data} />
         </div>
       </div>
+      <DebugDataHelper osmChaChangeset={data} />
     </Suspense>
   )
 }
