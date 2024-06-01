@@ -51,14 +51,16 @@ export function DropdownMenu({
 }
 
 export function DropdownItem({
+  current,
   className,
   ...props
-}: { className?: string } & (
+}: { current?: boolean; className?: string } & (
   | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>
   | Omit<React.ComponentPropsWithoutRef<'button'>, 'className'>
 )) {
   const currentPath = usePathname()
-  const current = 'href' in props && currentPath === props.href
+  current = current === undefined ? 'href' in props && currentPath === props.href : current
+  console.log('xcurrent', current)
 
   const classes = clsx(
     className,
@@ -88,7 +90,12 @@ export function DropdownItem({
       {'href' in props ? (
         <Link {...props} data-current={current ? 'true' : undefined} className={classes} />
       ) : (
-        <button type="button" {...props} className={classes} />
+        <button
+          type="button"
+          {...props}
+          data-current={current ? 'true' : undefined}
+          className={classes}
+        />
       )}
     </Headless.MenuItem>
   )
