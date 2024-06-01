@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation'
 import { Suspense } from 'react'
 import { ChangesetCommentIndicator } from './Changeset/CommentIndicator'
 import { RelativeTime } from './Changeset/RelativeTime'
-import { TOsmChaChangeset } from './Changeset/zod/osmChaChangeset'
+import { TOsmChaChangeset } from './Changeset/zod/OsmChaChangeset.zod'
 import { editorShortname } from './utils/editorShortname'
 
 type Props = { changesets: any }

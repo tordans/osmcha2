@@ -1,5 +1,5 @@
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
-import { TOsmChaChangesetProperties } from './zod/osmChaChangeset'
+import { TOsmChaChangesetProperties } from './zod/OsmChaChangeset.zod'
 
 type Props = { commentCount: TOsmChaChangesetProperties['comments_count'] }
 
