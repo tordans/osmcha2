@@ -5,42 +5,42 @@ import { OsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChan
 import { OsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 
 export const fetchChangesetData = async (changesetId: string) => {
-  const rawOsmChaChangesetResponse = await fetch(
-    `https://osmcha.org/api/v1/changesets/${changesetId}/`,
-    {
-      headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
-    },
-  )
-  const rawOsmChaChangeset = await rawOsmChaChangesetResponse.json()
-  const osmChaChangeset = OsmChaChangeset.parse(rawOsmChaChangeset)
+  const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {
+    headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
+  })
 
-  const rawOsmChaRealChangesetResponse = await fetch(
+  const fetchOsmChaRealChangeset = fetch(
     `https://real-changesets.s3.us-west-2.amazonaws.com/${changesetId}.json`,
   )
-  const rawOsmChaRealChangeset = await rawOsmChaRealChangesetResponse.json()
-  const osmChaRealChangeset = OsmChaRealChangeset.parse(rawOsmChaRealChangeset)
 
-  const rawOsmOrgChangesetResponse = await fetch(
+  const fetchOsmOrgChangeset = fetch(
     `https://api.openstreetmap.org/api/0.6/changeset/${changesetId}.json?include_discussion=true`,
   )
-  const rawOsmOrgChangeset = await rawOsmOrgChangesetResponse.json()
-  const osmOrgChangeset = OsmOrgChangeset.parse(rawOsmOrgChangeset)
+
+  const [rawOsmChaChangesetResponse, rawOsmChaRealChangesetResponse, rawOsmOrgChangesetResponse] =
+    await Promise.all([fetchOsmChaChangeset, fetchOsmChaRealChangeset, fetchOsmOrgChangeset])
+
+  const osmChaChangeset = OsmChaChangeset.parse(await rawOsmChaChangesetResponse.json())
+  const osmChaRealChangeset = OsmChaRealChangeset.parse(await rawOsmChaRealChangesetResponse.json())
+  const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
 
   return { osmChaChangeset, osmChaRealChangeset, osmOrgChangeset }
 }
 
 export const fetchUserData = async (userId: string) => {
-  const rawOsmOrgUserResponse = await fetch(
-    `https://api.openstreetmap.org/api/0.6/user/${userId}.json`,
-  )
-  const rawOsmOrgUser = await rawOsmOrgUserResponse.json()
-  const osmOrgUser = OsmOrgUser.parse(rawOsmOrgUser)
+  const fetchOsmOrgUser = await fetch(`https://api.openstreetmap.org/api/0.6/user/${userId}.json`)
 
-  const rawOsmChaUserResponse = await fetch(`https://osmcha.org/api/v1/user-stats/${userId}/`, {
+  const fetchOsmChaUser = await fetch(`https://osmcha.org/api/v1/user-stats/${userId}/`, {
     headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
   })
-  const rawOsmChaUser = await rawOsmChaUserResponse.json()
-  const osmChaUser = OsmChaUser.parse(rawOsmChaUser)
+
+  const [rawOsmOrgUserResponse, rawOsmChaUserResponse] = await Promise.all([
+    fetchOsmOrgUser,
+    fetchOsmChaUser,
+  ])
+
+  const osmOrgUser = OsmOrgUser.parse(await rawOsmOrgUserResponse.json())
+  const osmChaUser = OsmChaUser.parse(await rawOsmChaUserResponse.json())
 
   return { osmOrgUser, osmChaUser }
 }
