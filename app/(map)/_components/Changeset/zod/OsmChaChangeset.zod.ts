@@ -5,7 +5,7 @@ export type TOsmChaChangesetProperties = z.infer<typeof OsmChaChangeset>['proper
 
 export const OsmChaChangeset = z.object({
   id: z.number(),
-  type: z.string(),
+  type: z.literal('Feature'),
   geometry: z.object({
     type: z.literal('Polygon'),
     coordinates: z.array(z.array(z.array(z.number()))),
