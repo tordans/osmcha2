@@ -1,14 +1,15 @@
 'use client'
 
 import { Badge } from '@components/core/badge'
-import { ChatBubbleLeftIcon, HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
+import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Suspense } from 'react'
+import { ChangesetCommentIndicator } from '../changesets/[id]/_components/Changeset/CommentIndicator'
+import { RelativeTime } from '../changesets/[id]/_components/Changeset/RelativeTime'
 import { editorShortname } from './utils/editorShortname'
-import { relativeTime } from './utils/relativeTime'
 
 type Props = { changesets: any }
 
@@ -33,15 +34,10 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                   <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
                     <strong>{editorShortname(changeset.properties.editor)}</strong>
                     <span>
-                      <time title={changeset.properties.date}>
-                        {relativeTime(changeset.properties.date)}
-                      </time>
-                      {changeset.properties.comments_count > 0 && (
-                        <span>
-                          <ChatBubbleLeftIcon className="size-4" />{' '}
-                          {changeset.properties.comments_count}
-                        </span>
-                      )}
+                      <RelativeTime createdAt={changeset.properties.date} />
+                      <ChangesetCommentIndicator
+                        commentCount={changeset.properties.comment_count}
+                      />
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-1 text-base">

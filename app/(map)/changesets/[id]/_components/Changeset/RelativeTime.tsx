@@ -23,3 +23,9 @@ export const relativeTime = (input: string) => {
   })
   return moment(input).fromNow()
 }
+
+type Props = { createdAt: string } // TODO TYPES
+
+export const RelativeTime = ({ createdAt }: Props) => {
+  return <time title={createdAt}>{relativeTime(createdAt)}</time>
+}
