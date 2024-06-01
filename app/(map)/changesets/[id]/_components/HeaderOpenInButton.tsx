@@ -1,4 +1,4 @@
-import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 import {
   Dropdown,
   DropdownButton,
@@ -21,6 +21,15 @@ const urlChangesetAchavi = (changesetId: number) => {
 const urlChangesetRevert = (changesetId: number) => {
   return `https://revert.monicz.dev/?changesets=${changesetId}` as const
 }
+const urlUserOsm = (username: string) => {
+  return `https://openstreetmap.org/user/${username}` as const
+}
+const urlUserHdyc = (username: string) => {
+  return `https://hdyc.neis-one.org/?${username}` as const
+}
+const urlUserMissingmaps = (username: string) => {
+  return `https://www.missingmaps.org/users/#/${username}` as const
+}
 
 export const HeaderOpenInButton = ({ changeset }: Props) => {
   return (
@@ -31,7 +40,7 @@ export const HeaderOpenInButton = ({ changeset }: Props) => {
       </DropdownButton>
       <DropdownMenu anchor="bottom start">
         <DropdownItem href={urlChangesetOsm(changeset.id)} target="_blank">
-          openstreetmap.org
+          OSM Website
         </DropdownItem>
         <DropdownDivider />
         <DropdownSection>
@@ -50,6 +59,19 @@ export const HeaderOpenInButton = ({ changeset }: Props) => {
           <DropdownItem href="/#JOSM">JOSM</DropdownItem>
           <DropdownItem href="/#Level9">Levle0</DropdownItem>
           <DropdownItem href="/#Rapid">Rapid</DropdownItem>
+        </DropdownSection>
+        <DropdownDivider />
+        <DropdownSection>
+          <DropdownHeading>User {changeset.properties.user}</DropdownHeading>
+          <DropdownItem href={urlUserOsm(changeset.properties.user)} target="_blank">
+            OSM Userprofil
+          </DropdownItem>
+          <DropdownItem href={urlUserHdyc(changeset.properties.user)} target="_blank">
+            HDYC
+          </DropdownItem>
+          <DropdownItem href={urlUserMissingmaps(changeset.properties.user)} target="_blank">
+            Missing Maps
+          </DropdownItem>
         </DropdownSection>
       </DropdownMenu>
     </Dropdown>

@@ -1,5 +1,13 @@
 import { z } from 'zod'
 
+const Discussion = z.object({
+  id: z.number(),
+  date: z.string(),
+  uid: z.number(),
+  user: z.string(),
+  text: z.string(),
+})
+
 const Element = z.object({
   type: z.string(),
   id: z.number(),
@@ -15,6 +23,7 @@ const Element = z.object({
   comments_count: z.number(),
   changes_count: z.number(),
   tags: z.record(z.string()),
+  discussion: z.array(Discussion),
 })
 
 export type TOsmOrgChangeset = z.infer<typeof OsmOrgChangeset>

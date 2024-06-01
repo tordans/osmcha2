@@ -1,4 +1,4 @@
-import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 
 type Props = { changeset: TOsmChaChangeset }
 

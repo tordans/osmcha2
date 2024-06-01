@@ -27,5 +27,9 @@ export const relativeTime = (input: string) => {
 type Props = { createdAt: string } // TODO TYPES
 
 export const RelativeTime = ({ createdAt }: Props) => {
-  return <time title={createdAt}>{relativeTime(createdAt)}</time>
+  return (
+    <time title={createdAt} className="cursor-help">
+      {relativeTime(createdAt)}
+    </time>
+  )
 }

@@ -24,13 +24,13 @@ const Element = z.object({
       action: z.string(),
       type: z.string(),
       tags: z.record(z.string()),
-      nodes: z.array(Node),
+      nodes: z.array(Node).optional(),
     })
     .optional(),
   action: z.string(),
   type: z.string(),
   tags: z.record(z.string()),
-  nodes: z.array(Node),
+  nodes: z.array(Node).optional(),
 })
 
 const Metadata = z.object({

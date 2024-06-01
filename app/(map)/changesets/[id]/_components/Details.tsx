@@ -1,5 +1,6 @@
 'use client'
-import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
+import { TOsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
 import { Navbar, NavbarItem, NavbarSection } from '@components/core/navbar'
 import { useState } from 'react'
 import {
@@ -7,11 +8,14 @@ import {
   ChangesetNoCommentIndicator,
 } from '../../../_components/Changeset/CommentIndicator'
 import { DetailsChanges } from './DetailsChanges'
-import { DetailsChangeset } from './DetailsChangeset'
+import { DetailsComments } from './DetailsComments'
 
-type Props = { changeset: TOsmChaChangeset }
+type Props = {
+  osmChaChangeset: TOsmChaChangeset
+  osmOrgChangeset: TOsmOrgChangeset
+}
 
-export const Details = ({ changeset }: Props) => {
+export const Details = ({ osmChaChangeset, osmOrgChangeset }: Props) => {
   const [panel, setPanel] = useState<'changes' | 'changeset'>('changes')
 
   return (
@@ -22,14 +26,16 @@ export const Details = ({ changeset }: Props) => {
             Changes
           </NavbarItem>
           <NavbarItem current={panel === 'changeset'} onClick={() => setPanel('changeset')}>
-            Changeset
-            <ChangesetCommentIndicator commentCount={changeset.commentCount} />
-            <ChangesetNoCommentIndicator commentCount={changeset.commentCount} />
+            Discussion
+            <ChangesetCommentIndicator commentCount={osmChaChangeset.properties.comments_count} />
+            <ChangesetNoCommentIndicator commentCount={osmChaChangeset.properties.comments_count} />
           </NavbarItem>
         </NavbarSection>
       </Navbar>
-      {panel === 'changes' && <DetailsChanges changeset={changeset} />}
-      {panel === 'changeset' && <DetailsChangeset changeset={changeset} />}
+      {panel === 'changes' && <DetailsChanges changeset={osmChaChangeset} />}
+      {panel === 'changeset' && (
+        <DetailsComments discussions={osmOrgChangeset.elements[0].discussion} />
+      )}
     </section>
   )
 }
