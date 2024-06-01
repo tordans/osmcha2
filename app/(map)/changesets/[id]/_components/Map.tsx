@@ -1,21 +1,21 @@
 'use client'
 
-import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
+import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { MapProvider, Map as ReacMapGlMap } from 'react-map-gl/maplibre'
+import { getMapBounds } from '../_utils/getMapBounds'
 
-type Props = { changeset: any }
+type Props = { osmChaChangeset: TOsmChaChangeset; osmChaRealChangeset: TOsmChaRealChangeset }
 
-type Props = { changeset: TOsmChaChangeset }
-export const Map = ({ changeset }: Props) => {
+export const Map = ({ osmChaChangeset, osmChaRealChangeset }: Props) => {
   return (
     <MapProvider>
       <ReacMapGlMap
         id="mainMap"
         initialViewState={{
-          longitude: -122.4,
-          latitude: 37.8,
-          zoom: 14,
+          bounds: getMapBounds(osmChaRealChangeset.metadata.bbox),
+          fitBoundsOptions: { padding: 200 },
         }}
         style={{ width: '100%', height: '100%' }}
         // https://cloud.maptiler.com/maps/dataviz/, Acccount tordans private

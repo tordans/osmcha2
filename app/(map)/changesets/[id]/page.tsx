@@ -8,9 +8,7 @@ import { fetchChangesetData, fetchUserData } from './_components/fetchPageData'
 type Props = { params: { id: string } }
 
 export default async function ChangesetPage({ params }: Props) {
-  const { osmChaChangeset, osmChaRealChangeset, osmOrgChangeset } = await fetchChangesetData(
-    params.id,
-  )
+  const { osmChaChangeset, osmChaRealChangeset } = await fetchChangesetData(params.id)
   const { osmOrgUser, osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
 
   return (
@@ -19,14 +17,13 @@ export default async function ChangesetPage({ params }: Props) {
         <Header changeset={osmChaChangeset} />
         <div className="flex h-full gap-2">
           <div className="h-full grow">
-            <Map changeset={osmChaChangeset} />
+            <Map osmChaChangeset={osmChaChangeset} osmChaRealChangeset={osmChaRealChangeset} />
           </div>
           <Details changeset={osmChaChangeset} />
         </div>
       </div>
       <DebugDataHelper
         osmChaChangeset={osmChaChangeset}
-        osmOrgChangeset={osmOrgChangeset}
         osmChaRealChangeset={osmChaRealChangeset}
         osmChaUser={osmChaUser}
         osmOrgUser={osmOrgUser}
