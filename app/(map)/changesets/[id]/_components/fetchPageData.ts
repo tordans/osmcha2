@@ -1,7 +1,6 @@
 import { OsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 import { OsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
 import { OsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
-import { OsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
 import { OsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 
 export const fetchChangesetData = async (changesetId: string) => {
@@ -13,18 +12,29 @@ export const fetchChangesetData = async (changesetId: string) => {
     `https://real-changesets.s3.us-west-2.amazonaws.com/${changesetId}.json`,
   )
 
-  const fetchOsmOrgChangeset = fetch(
-    `https://api.openstreetmap.org/api/0.6/changeset/${changesetId}.json?include_discussion=true`,
-  )
+  // const fetchOsmOrgChangeset = fetch(
+  //   `https://api.openstreetmap.org/api/0.6/changeset/${changesetId}.json?include_discussion=true`,
+  // )
 
-  const [rawOsmChaChangesetResponse, rawOsmChaRealChangesetResponse, rawOsmOrgChangesetResponse] =
-    await Promise.all([fetchOsmChaChangeset, fetchOsmChaRealChangeset, fetchOsmOrgChangeset])
+  const [
+    rawOsmChaChangesetResponse,
+    rawOsmChaRealChangesetResponse,
+    // rawOsmOrgChangesetResponse
+  ] = await Promise.all([
+    fetchOsmChaChangeset,
+    fetchOsmChaRealChangeset,
+    // fetchOsmOrgChangeset
+  ])
 
   const osmChaChangeset = OsmChaChangeset.parse(await rawOsmChaChangesetResponse.json())
   const osmChaRealChangeset = OsmChaRealChangeset.parse(await rawOsmChaRealChangesetResponse.json())
-  const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
+  // const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
 
-  return { osmChaChangeset, osmChaRealChangeset, osmOrgChangeset }
+  return {
+    osmChaChangeset,
+    osmChaRealChangeset,
+    // osmOrgChangeset
+  }
 }
 
 export const fetchUserData = async (userId: string) => {
