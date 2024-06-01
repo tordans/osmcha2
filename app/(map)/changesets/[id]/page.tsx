@@ -1,3 +1,4 @@
+import { OsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
 import { Suspense } from 'react'
 import { DebugDataHelper } from './_components/DebugDataHelper'
 import { Details } from './_components/Details'
@@ -11,6 +12,7 @@ export default async function ChangesetPage({ params }: Props) {
     headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
   })
   const data = await resp.json()
+  const osmChaChangeset = OsmChaChangeset.parse(data)
   // ALSO:
   // https://api.openstreetmap.org/api/0.6/changeset/152005139.json?include_discussion=true
   // https://real-changesets.s3.us-west-2.amazonaws.com/152005139.json
@@ -20,15 +22,15 @@ export default async function ChangesetPage({ params }: Props) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex h-full flex-col">
-        <Header changeset={data} />
+        <Header changeset={osmChaChangeset} />
         <div className="flex h-full gap-2">
           <div className="h-full grow">
-            <Map changeset={data} />
+            <Map changeset={osmChaChangeset} />
           </div>
-          <Details changeset={data} />
+          <Details changeset={osmChaChangeset} />
         </div>
       </div>
-      <DebugDataHelper osmChaChangeset={data} />
+      <DebugDataHelper osmChaChangeset={osmChaChangeset} />
     </Suspense>
   )
 }

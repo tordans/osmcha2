@@ -1,3 +1,4 @@
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
 import {
   Dropdown,
   DropdownButton,
@@ -9,7 +10,17 @@ import {
 } from '@components/core/dropdown'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 
-type Props = { changeset: any }
+type Props = { changeset: TOsmChaChangeset }
+
+const urlChangesetOsm = (changesetId: number) => {
+  return `https://openstreetmap.org/changeset/${changesetId}` as const
+}
+const urlChangesetAchavi = (changesetId: number) => {
+  return `https://overpass-api.de/achavi/?changeset=${changesetId}&relations=true` as const
+}
+const urlChangesetRevert = (changesetId: number) => {
+  return `https://revert.monicz.dev/?changesets=${changesetId}` as const
+}
 
 export const HeaderOpenInButton = ({ changeset }: Props) => {
   return (
@@ -19,12 +30,18 @@ export const HeaderOpenInButton = ({ changeset }: Props) => {
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu anchor="bottom start">
-        <DropdownItem href="/#1">openstreetmap.org</DropdownItem>
+        <DropdownItem href={urlChangesetOsm(changeset.id)} target="_blank">
+          openstreetmap.org
+        </DropdownItem>
         <DropdownDivider />
         <DropdownSection>
           <DropdownHeading>Tools</DropdownHeading>
-          <DropdownItem href="/#achavi">Achavi</DropdownItem>
-          <DropdownItem href="/#rever">osm-revert</DropdownItem>
+          <DropdownItem href={urlChangesetAchavi(changeset.id)} target="_blank">
+            Achavi
+          </DropdownItem>
+          <DropdownItem href={urlChangesetRevert(changeset.id)} target="_blank">
+            osm-revert
+          </DropdownItem>
         </DropdownSection>
         <DropdownDivider />
         <DropdownSection>

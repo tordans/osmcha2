@@ -1,4 +1,6 @@
-type Props = { osmChaChangeset: any }
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
+
+type Props = { osmChaChangeset: TOsmChaChangeset }
 
 export const DebugDataHelper = ({ osmChaChangeset }: Props) => {
   return (

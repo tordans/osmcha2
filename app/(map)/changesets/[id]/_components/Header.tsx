@@ -1,7 +1,8 @@
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
 import { UserIcon } from '@heroicons/react/16/solid'
 import { HeaderOpenInButton } from './HeaderOpenInButton'
 
-type Props = { changeset: any }
+type Props = { changeset: TOsmChaChangeset }
 
 export const Header = ({ changeset }: Props) => {
   return (

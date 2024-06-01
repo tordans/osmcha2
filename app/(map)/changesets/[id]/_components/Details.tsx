@@ -1,10 +1,15 @@
 'use client'
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
 import { Navbar, NavbarItem, NavbarSection } from '@components/core/navbar'
 import { useState } from 'react'
+import {
+  ChangesetCommentIndicator,
+  ChangesetNoCommentIndicator,
+} from '../../../_components/Changeset/CommentIndicator'
 import { DetailsChanges } from './DetailsChanges'
 import { DetailsChangeset } from './DetailsChangeset'
 
-type Props = { changeset: any }
+type Props = { changeset: TOsmChaChangeset }
 
 export const Details = ({ changeset }: Props) => {
   const [panel, setPanel] = useState<'changes' | 'changeset'>('changes')
@@ -18,6 +23,8 @@ export const Details = ({ changeset }: Props) => {
           </NavbarItem>
           <NavbarItem current={panel === 'changeset'} onClick={() => setPanel('changeset')}>
             Changeset
+            <ChangesetCommentIndicator commentCount={changeset.commentCount} />
+            <ChangesetNoCommentIndicator commentCount={changeset.commentCount} />
           </NavbarItem>
         </NavbarSection>
       </Navbar>

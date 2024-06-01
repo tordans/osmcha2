@@ -7,8 +7,9 @@ import { clsx } from 'clsx'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Suspense } from 'react'
-import { ChangesetCommentIndicator } from '../changesets/[id]/_components/Changeset/CommentIndicator'
-import { RelativeTime } from '../changesets/[id]/_components/Changeset/RelativeTime'
+import { ChangesetCommentIndicator } from './Changeset/CommentIndicator'
+import { RelativeTime } from './Changeset/RelativeTime'
+import { TOsmChaChangeset } from './Changeset/zod/osmChaChangeset'
 import { editorShortname } from './utils/editorShortname'
 
 type Props = { changesets: any }
@@ -20,7 +21,7 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
     <Suspense fallback={<div>Loading...</div>}>
       <nav className="h-full overflow-y-scroll">
         <ul className="divide-y divide-gray-100">
-          {changesets.features.map((changeset: any) => {
+          {changesets.features.map((changeset: TOsmChaChangeset) => {
             const current = currentPath === `/changesets/${changeset.id}`
             return (
               <li key={changeset.id}>
@@ -36,7 +37,7 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                     <span>
                       <RelativeTime createdAt={changeset.properties.date} />
                       <ChangesetCommentIndicator
-                        commentCount={changeset.properties.comment_count}
+                        commentCount={changeset.properties.comments_count}
                       />
                     </span>
                   </div>

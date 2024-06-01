@@ -1,10 +1,12 @@
 'use client'
 
+import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/osmChaChangeset'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { MapProvider, Map as ReacMapGlMap } from 'react-map-gl/maplibre'
 
 type Props = { changeset: any }
 
+type Props = { changeset: TOsmChaChangeset }
 export const Map = ({ changeset }: Props) => {
   return (
     <MapProvider>
