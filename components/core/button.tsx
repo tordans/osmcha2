@@ -199,7 +199,7 @@ export const Button = React.forwardRef(function Button(
   ) : (
     <Headless.Button
       {...props}
-      className={clsx(classes, 'cursor-default')}
+      className={clsx(classes, 'cursor-pointer')}
       data-current={current ? 'true' : undefined}
       ref={ref}
     >
