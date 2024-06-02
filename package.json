@@ -39,6 +39,7 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.6.0",
+    "react18-json-view": "^0.2.8",
     "tailwindcss": "^3.4.3",
     "typescript": "^5"
   }

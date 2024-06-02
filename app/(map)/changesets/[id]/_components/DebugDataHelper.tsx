@@ -7,6 +7,9 @@ import { TOsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod
 import { XMarkIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { useState } from 'react'
+// https://github.com/YYsuni/react18-json-view
+import JsonView from 'react18-json-view'
+import 'react18-json-view/src/style.css'
 
 type Props = {
   osmChaChangeset?: TOsmChaChangeset
@@ -43,7 +46,7 @@ export const DebugDataHelper = ({
             >
               OSMCha Changeset
             </summary>
-            <pre>{JSON.stringify(osmChaChangeset, undefined, 2)}</pre>
+            <JsonView src={osmChaChangeset} theme="vscode" />
           </details>
           <details>
             <summary
@@ -53,7 +56,7 @@ export const DebugDataHelper = ({
             >
               OSMCha Real Changeset
             </summary>
-            <pre>{JSON.stringify(osmChaRealChangeset, undefined, 2)}</pre>
+            <JsonView src={osmChaRealChangeset} theme="vscode" />
           </details>
           <details>
             <summary
@@ -61,7 +64,7 @@ export const DebugDataHelper = ({
             >
               OSMOrg Changeset
             </summary>
-            <pre>{JSON.stringify(osmOrgChangeset, undefined, 2)}</pre>
+            <JsonView src={osmOrgChangeset} theme="vscode" />
           </details>
           <details>
             <summary
@@ -69,7 +72,7 @@ export const DebugDataHelper = ({
             >
               OSMCha User
             </summary>
-            <pre>{JSON.stringify(osmChaUser, undefined, 2)}</pre>
+            <JsonView src={osmChaUser} theme="vscode" />
           </details>
           <details>
             <summary
@@ -77,7 +80,7 @@ export const DebugDataHelper = ({
             >
               OSMOrg User
             </summary>
-            <pre>{JSON.stringify(osmOrgUser, undefined, 2)}</pre>
+            <JsonView src={osmOrgUser} theme="vscode" />
           </details>
         </>
       )}
