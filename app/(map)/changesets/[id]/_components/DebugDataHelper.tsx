@@ -26,16 +26,16 @@ export const DebugDataHelper = ({
   const [show, setShow] = useState(false)
 
   return (
-    <div className="border-xl fixed right-1 top-1 z-10 flex max-h-[calc(100svh_-_1rem)] max-w-prose flex-col overflow-y-auto rounded border border-white/70 bg-pink-300 px-1 text-xs shadow-xl print:hidden">
+    <div className="border-xl fixed right-[50%] top-1 z-10 flex max-h-[calc(100svh_-_1rem)] max-w-prose flex-col overflow-y-auto rounded border border-white/70 bg-pink-300 px-1 py-0.5 text-xs shadow-xl print:hidden">
       <div className="flex justify-end">
         <button
           onClick={() => setShow((prev) => !prev)}
-          className="flex size-5 items-center justify-center rounded-full bg-white/50 hover:bg-white"
+          className="relative flex size-5 items-center justify-center rounded-full bg-white/50 hover:bg-white"
         >
-          <XMarkIcon className="size-3" />
+          <XMarkIcon className={clsx('size-3', show ? '' : 'rotate-45')} />
         </button>
       </div>
-      {!show && (
+      {show && (
         <>
           <details>
             <summary
