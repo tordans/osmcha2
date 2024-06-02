@@ -21,24 +21,15 @@ const urlChangesetAchavi = (changesetId: number) => {
 const urlChangesetRevert = (changesetId: number) => {
   return `https://revert.monicz.dev/?changesets=${changesetId}` as const
 }
-const urlUserOsm = (username: string) => {
-  return `https://openstreetmap.org/user/${username}` as const
-}
-const urlUserHdyc = (username: string) => {
-  return `https://hdyc.neis-one.org/?${username}` as const
-}
-const urlUserMissingmaps = (username: string) => {
-  return `https://www.missingmaps.org/users/#/${username}` as const
-}
 
-export const HeaderOpenInButton = ({ changeset }: Props) => {
+export const DetailsHeaderOpenChangeset = ({ changeset }: Props) => {
   return (
     <Dropdown>
       <DropdownButton outline className="p-0">
         Open
         <ChevronDownIcon />
       </DropdownButton>
-      <DropdownMenu anchor="bottom start">
+      <DropdownMenu anchor="left start">
         <DropdownItem href={urlChangesetOsm(changeset.id)} target="_blank">
           OSM Website
         </DropdownItem>
@@ -59,19 +50,6 @@ export const HeaderOpenInButton = ({ changeset }: Props) => {
           <DropdownItem href="/#JOSM">JOSM</DropdownItem>
           <DropdownItem href="/#Level9">Levle0</DropdownItem>
           <DropdownItem href="/#Rapid">Rapid</DropdownItem>
-        </DropdownSection>
-        <DropdownDivider />
-        <DropdownSection>
-          <DropdownHeading>User {changeset.properties.user}</DropdownHeading>
-          <DropdownItem href={urlUserOsm(changeset.properties.user)} target="_blank">
-            OSM Userprofil
-          </DropdownItem>
-          <DropdownItem href={urlUserHdyc(changeset.properties.user)} target="_blank">
-            HDYC
-          </DropdownItem>
-          <DropdownItem href={urlUserMissingmaps(changeset.properties.user)} target="_blank">
-            Missing Maps
-          </DropdownItem>
         </DropdownSection>
       </DropdownMenu>
     </Dropdown>

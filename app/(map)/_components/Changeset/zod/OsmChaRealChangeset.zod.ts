@@ -6,6 +6,9 @@ const Node = z.object({
   lon: z.string(),
 })
 
+const Action = z.union([z.literal('modify'), z.literal('create'), z.literal('delete')])
+const Type = z.union([z.literal('node'), z.literal('way'), z.literal('relation')])
+
 const Element = z.object({
   id: z.string(),
   version: z.string(),
@@ -21,14 +24,14 @@ const Element = z.object({
       changeset: z.string(),
       uid: z.string(),
       user: z.string(),
-      action: z.string(),
-      type: z.string(),
+      action: Action,
+      type: Type,
       tags: z.record(z.string()),
       nodes: z.array(Node).optional(),
     })
     .optional(),
-  action: z.string(),
-  type: z.string(),
+  action: Action,
+  type: Type,
   tags: z.record(z.string()),
   nodes: z.array(Node).optional(),
 })

@@ -5,10 +5,12 @@ import { TOsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod
 import { TOsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 import { editorShortname } from '@app/(map)/_components/utils/editorShortname'
 import { Button } from '@components/core/button'
+import { Divider } from '@components/core/divider'
 import { Transition } from '@headlessui/react'
-import { ClockIcon, PencilSquareIcon, UserIcon } from '@heroicons/react/16/solid'
+import { UserIcon } from '@heroicons/react/16/solid'
 import { useState } from 'react'
-import { HeaderOpenInButton } from './HeaderOpenInButton'
+import { DetailsHeaderOpenChangeset } from './DetailsHeaderOpenChangeset'
+import { DetailsHeaderOpenUser } from './DetailsHeaderOpenUser'
 
 type Props = {
   osmChaChangeset: TOsmChaChangeset
@@ -20,11 +22,25 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
   const [showUserDetails, setShowUserDetails] = useState(false)
 
   return (
-    <header className="flex flex-col gap-1 bg-zinc-50 px-3 py-1">
+    <header className="flex flex-col gap-1 bg-zinc-50 py-1 pl-3 pr-1">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="font-semibold">Changeset #{osmChaChangeset.id}</h1>
-        <HeaderOpenInButton changeset={osmChaChangeset} />
+        <div>
+          <h1 className="font-semibold">Changeset #{osmChaChangeset.id}</h1>
+          <p className="text-sm">
+            <RelativeTime createdAt={osmChaChangeset.properties.date} /> |{' '}
+            <span title={osmChaChangeset.properties.editor} className="cursor-help">
+              {editorShortname(osmChaChangeset.properties.editor)}
+            </span>
+          </p>
+        </div>
+        <DetailsHeaderOpenChangeset changeset={osmChaChangeset} />
       </div>
+      <div className="border-l-2 border-l-zinc-200 pl-2 text-sm">
+        <p>{osmChaChangeset.properties.comment}</p>
+      </div>
+
+      <Divider className="mp-0.5 mt-1" />
+
       <div className="flex items-center justify-between gap-2">
         <Button
           className="flex items-center gap-1"
@@ -35,18 +51,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
           <UserIcon className="size-4" aria-hidden />
           {osmChaChangeset.properties.user}
         </Button>
-
-        <div className="flex items-center gap-1">
-          <ClockIcon className="size-4" aria-hidden />
-          <RelativeTime createdAt={osmChaChangeset.properties.date} />
-        </div>
-
-        <div className="flex items-center gap-1">
-          <PencilSquareIcon className="size-4" aria-hidden />
-          <abbr title={osmChaChangeset.properties.editor} className="cursor-help">
-            {editorShortname(osmChaChangeset.properties.editor)}
-          </abbr>
-        </div>
+        <DetailsHeaderOpenUser changeset={osmChaChangeset} />
       </div>
       <Transition
         show={showUserDetails}
@@ -59,11 +64,12 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
       >
         <p className="text-sm">
           Registered <RelativeTime createdAt={osmOrgUser.user.account_created} /> |{' '}
-          {osmOrgUser.user.changesets.count} edits
+          {osmOrgUser.user.changesets.count.toLocaleString()} edits
           <br />
           {/* TODO: Addd Link https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}],"date__gte":[{"label":"","value":""}]} */}
           {/* TODO: Addd Link 'https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}],"date__gte":[{"label":"","value":""}]}' */}
-          {osmChaUser.harmful_changesets} Bad and {osmChaUser.checked_changesets} Good changesets
+          {osmChaUser.harmful_changesets.toLocaleString()} Bad and{' '}
+          {osmChaUser.checked_changesets.toLocaleString()} Good changesets
         </p>
       </Transition>
     </header>

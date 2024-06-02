@@ -25,7 +25,11 @@ export default async function ChangesetPage({ params }: Props) {
             osmOrgUser={osmOrgUser}
             osmChaUser={osmChaUser}
           />
-          <Details osmChaChangeset={osmChaChangeset} osmOrgChangeset={osmOrgChangeset} />
+          <Details
+            osmChaChangeset={osmChaChangeset}
+            osmChaRealChangeset={osmChaRealChangeset}
+            osmOrgChangeset={osmOrgChangeset}
+          />
         </div>
       </div>
       <DebugDataHelper

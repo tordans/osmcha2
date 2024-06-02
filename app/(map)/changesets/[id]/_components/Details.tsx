@@ -1,6 +1,8 @@
 'use client'
 import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
+import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
 import { TOsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
+import { Badge } from '@components/core/badge'
 import { Navbar, NavbarItem, NavbarSection } from '@components/core/navbar'
 import { useState } from 'react'
 import {
@@ -12,10 +14,11 @@ import { DetailsComments } from './DetailsComments'
 
 type Props = {
   osmChaChangeset: TOsmChaChangeset
+  osmChaRealChangeset: TOsmChaRealChangeset
   osmOrgChangeset: TOsmOrgChangeset
 }
 
-export const Details = ({ osmChaChangeset, osmOrgChangeset }: Props) => {
+export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset }: Props) => {
   const [panel, setPanel] = useState<'changes' | 'changeset'>('changes')
 
   return (
@@ -23,7 +26,7 @@ export const Details = ({ osmChaChangeset, osmOrgChangeset }: Props) => {
       <Navbar className="mb-2">
         <NavbarSection>
           <NavbarItem current={panel === 'changes'} onClick={() => setPanel('changes')}>
-            Changes
+            Changes <Badge>{osmChaRealChangeset.metadata.changes_count}</Badge>
           </NavbarItem>
           <NavbarItem current={panel === 'changeset'} onClick={() => setPanel('changeset')}>
             Discussion
@@ -32,7 +35,7 @@ export const Details = ({ osmChaChangeset, osmOrgChangeset }: Props) => {
           </NavbarItem>
         </NavbarSection>
       </Navbar>
-      {panel === 'changes' && <DetailsChanges changeset={osmChaChangeset} />}
+      {panel === 'changes' && <DetailsChanges osmChaRealChangeset={osmChaRealChangeset} />}
       {panel === 'changeset' && (
         <DetailsComments discussions={osmOrgChangeset.elements[0].discussion} />
       )}
