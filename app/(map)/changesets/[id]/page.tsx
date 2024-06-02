@@ -19,8 +19,12 @@ export default async function ChangesetPage({ params }: Props) {
         <div className="h-full grow">
           <Map osmChaChangeset={osmChaChangeset} osmChaRealChangeset={osmChaRealChangeset} />
         </div>
-        <div className="flex flex-col">
-          <DetailsHeader changeset={osmChaChangeset} />
+        <div className="flex w-80 flex-col">
+          <DetailsHeader
+            osmChaChangeset={osmChaChangeset}
+            osmOrgUser={osmOrgUser}
+            osmChaUser={osmChaUser}
+          />
           <Details osmChaChangeset={osmChaChangeset} osmOrgChangeset={osmOrgChangeset} />
         </div>
       </div>

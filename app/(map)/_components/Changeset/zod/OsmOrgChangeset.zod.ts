@@ -23,7 +23,7 @@ const Element = z.object({
   comments_count: z.number(),
   changes_count: z.number(),
   tags: z.record(z.string()),
-  discussion: z.array(Discussion),
+  discussion: z.array(Discussion).optional(),
 })
 
 export type TOsmOrgChangeset = z.infer<typeof OsmOrgChangeset>
