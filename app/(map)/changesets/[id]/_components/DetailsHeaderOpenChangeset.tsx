@@ -48,7 +48,7 @@ export const DetailsHeaderOpenChangeset = ({ changeset }: Props) => {
           <DropdownHeading>Editor</DropdownHeading>
           <DropdownItem href="/#id">iD</DropdownItem>
           <DropdownItem href="/#JOSM">JOSM</DropdownItem>
-          <DropdownItem href="/#Level9">Levle0</DropdownItem>
+          <DropdownItem href="/#Level9">Level0</DropdownItem>
           <DropdownItem href="/#Rapid">Rapid</DropdownItem>
         </DropdownSection>
       </DropdownMenu>

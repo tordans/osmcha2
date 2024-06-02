@@ -24,7 +24,6 @@ export const MapStyleControl = ({ useBackground, currentMapstyle, setMapStyle }:
         </DropdownButton>
         <DropdownMenu anchor="top end">
           {Object.entries(mapStyles).map(([key, { name }]) => {
-            console.log('x', key === currentMapstyle, key, currentMapstyle)
             return (
               <DropdownItem
                 key={key}

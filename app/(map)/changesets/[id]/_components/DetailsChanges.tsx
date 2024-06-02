@@ -1,4 +1,13 @@
 import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@components/core/table'
+import { ArrowRightIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { Fragment } from 'react'
 import { DetailsChangesOpenElement } from './DetailsChangesOpenElement'
@@ -25,10 +34,25 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
       {Array.from(groupedChanges).map(([action, changes]) => {
         return (
           <Fragment key={action}>
-            <h2 className="px-2 font-semibold">{actionTranslation[action]}</h2>
+            <h2 className="mt-5 px-2 font-semibold">{actionTranslation[action]}</h2>
             <ul>
               {changes.map((change) => {
                 const current = false // TODO
+
+                const oldTags = change.old?.tags || {}
+                const addedTags = Object.entries(change.tags).filter(
+                  ([key, _]) => !(key in oldTags),
+                )
+                const removedTags = Object.entries(oldTags).filter(
+                  ([key, _]) => !(key in change.tags),
+                )
+                const changedTags = Object.entries(change.tags).filter(
+                  ([key, _]) => key in oldTags && oldTags[key] !== change.tags[key],
+                )
+                const unchangedTags = Object.entries(change.tags).filter(
+                  ([key, _]) => key in oldTags && oldTags[key] === change.tags[key],
+                )
+
                 return (
                   <li key={change.id}>
                     <div
@@ -39,12 +63,64 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                     >
                       <div className="flex w-full items-center justify-between">
                         <h3>
-                          {change.type}/{change.id}
+                          {change.type}/{change.id}{' '}
+                          <span className="text-zinc-400">#{change.version}</span>
                         </h3>
                         <DetailsChangesOpenElement element={change} />
                       </div>
-                      <div className="text-sm">
-                        <p>Version {change.version}</p>
+                      <div className="w-full border-t font-mono">
+                        <Table dense bleed classNameTable="text-xs">
+                          <TableHead className="sr-only">
+                            <TableRow className="w-full">
+                              <TableHeader>Key</TableHeader>
+                              <TableHeader>Value</TableHeader>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {addedTags.map(([key, value]) => (
+                              <TableRow key={key} className="w-full">
+                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                  {key}
+                                </TableCell>
+                                <TableCell className="bg-green-100 text-green-700">
+                                  {value}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {removedTags.map(([key, _]) => (
+                              <TableRow key={key} className="w-full">
+                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                  {key}
+                                </TableCell>
+                                <TableCell className="bg-orange-100 text-orange-500">
+                                  {oldTags[key]}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {changedTags.map(([key, value]) => (
+                              <TableRow key={key} className="w-full">
+                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                  {key}
+                                </TableCell>
+                                <TableCell className="className='w-28 truncate'bg-yellow-100">
+                                  <div className="flex items-center gap-1 truncate">
+                                    <span className="text-orange-500">{oldTags[key]}</span>{' '}
+                                    <ArrowRightIcon className="size-3" />{' '}
+                                    <span className="text-green-700">{value}</span>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {unchangedTags.map(([key, value]) => (
+                              <TableRow key={key} className="w-full">
+                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                  {key}
+                                </TableCell>
+                                <TableCell className="text-zinc-500">{value}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
                     </div>
                   </li>

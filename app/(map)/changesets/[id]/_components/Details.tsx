@@ -22,7 +22,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
   const [panel, setPanel] = useState<'changes' | 'changeset'>('changes')
 
   return (
-    <section className="p-2">
+    <section className="h-full overflow-y-scroll p-2">
       <Navbar className="mb-2">
         <NavbarSection>
           <NavbarItem current={panel === 'changes'} onClick={() => setPanel('changes')}>

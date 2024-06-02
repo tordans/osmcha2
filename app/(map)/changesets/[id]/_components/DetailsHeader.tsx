@@ -22,7 +22,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
   const [showUserDetails, setShowUserDetails] = useState(false)
 
   return (
-    <header className="flex flex-col gap-1 bg-zinc-50 py-1 pl-3 pr-1">
+    <header className="z-50 flex flex-col gap-1 bg-zinc-50 py-1 pl-3 pr-1 shadow">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="font-semibold">Changeset #{osmChaChangeset.id}</h1>
