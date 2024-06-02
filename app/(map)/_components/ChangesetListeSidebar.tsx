@@ -19,7 +19,7 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <nav className="h-full overflow-y-scroll">
+      <nav className="group/nav h-full overflow-y-scroll">
         <ul className="divide-y divide-gray-100">
           {changesets.features.map((changeset: TOsmChaChangeset) => {
             const current = currentPath === `/changesets/${changeset.id}`
@@ -28,7 +28,7 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                 <Link
                   href={`/changesets/${changeset.id}`}
                   className={clsx(
-                    'group relative flex flex-col items-start justify-between gap-1 break-words rounded py-3 pl-3 pr-0',
+                    'group/item relative flex flex-col items-start justify-between gap-1 break-words rounded py-3 pl-3 pr-0',
                     current ? 'bg-blue-50' : 'hover:bg-gray-50',
                   )}
                 >
@@ -68,8 +68,10 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                     </div>
                     <ChevronRightIcon
                       className={clsx(
-                        'size-6 flex-none',
-                        current ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500',
+                        'size-6 flex-none transition-colors duration-150',
+                        current
+                          ? 'text-blue-500'
+                          : 'text-white group-hover/item:!text-blue-500 group-hover/nav:text-zinc-200',
                       )}
                       aria-hidden="true"
                     />
