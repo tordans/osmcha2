@@ -21,11 +21,13 @@
     "maplibre-gl": "^4.3.2",
     "moment": "^2.30.1",
     "next": "14.2.3",
+    "nuqs": "^1.17.4",
     "prettier-plugin-organize-imports": "^3.2.4",
     "react": "^18",
     "react-dom": "^18",
     "react-map-gl": "^7.1.7",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/eslint": "^8.56.10",
