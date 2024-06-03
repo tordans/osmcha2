@@ -21,6 +21,10 @@ export const fetchChangesetData = async (changesetId: string) => {
     await Promise.all([fetchOsmChaChangeset, fetchOsmChaRealChangeset, fetchOsmOrgChangeset])
 
   const osmChaChangeset = OsmChaChangeset.parse(await rawOsmChaChangesetResponse.json())
+  // TODO: The real changesets are not relyable. They might not exist yet … or not anymore … or where never created successfully.
+  //  The current UI can handle this case and fall back to show some information.
+  //  One idea was to use useFetchErrorsActions so set an error message that we show on the UI whenever this
+  //  However, we need to work around the client vs server components issue first.
   const osmChaRealChangeset = OsmChaRealChangeset.parse(await rawOsmChaRealChangesetResponse.json())
   const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
 
