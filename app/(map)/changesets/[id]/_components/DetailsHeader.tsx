@@ -4,13 +4,14 @@ import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaCha
 import { TOsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
 import { TOsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 import { editorShortname } from '@app/(map)/_components/utils/editorShortname'
+import { Badge } from '@components/core/badge'
 import { Button } from '@components/core/button'
 import { Divider } from '@components/core/divider'
 import { Transition } from '@headlessui/react'
-import { UserIcon } from '@heroicons/react/16/solid'
+import { HandThumbDownIcon, HandThumbUpIcon, UserIcon } from '@heroicons/react/16/solid'
 import { useState } from 'react'
-import { DetailsHeaderOpenChangeset } from './DetailsHeaderOpenChangeset'
-import { DetailsHeaderOpenUser } from './DetailsHeaderOpenUser'
+import { DropdownOpenChangeset } from './Details/DropdownOpenChangeset'
+import { DropdownOpenUser } from './Details/HeaderDropdownOpenUser'
 
 type Props = {
   osmChaChangeset: TOsmChaChangeset
@@ -22,21 +23,43 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
   const [showUserDetails, setShowUserDetails] = useState(false)
 
   return (
-    <header className="z-50 flex flex-col gap-1 bg-zinc-50 py-1 pl-3 pr-1 shadow">
+    <header className="flex flex-col gap-1 bg-zinc-50 py-1 pl-3 pr-1">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="font-semibold">Changeset #{osmChaChangeset.id}</h1>
-          <p className="text-sm">
-            <RelativeTime createdAt={osmChaChangeset.properties.date} /> |{' '}
-            <span title={osmChaChangeset.properties.editor} className="cursor-help">
-              {editorShortname(osmChaChangeset.properties.editor)}
+          <h1 className="text-lg font-bold">Changeset #{osmChaChangeset.id}</h1>
+          <div className="flex w-full items-center justify-start gap-2 text-xs text-zinc-500">
+            <span>
+              <RelativeTime createdAt={osmChaChangeset.properties.date} />
             </span>
-          </p>
+            <span>{editorShortname(osmChaChangeset.properties.editor)}</span>
+          </div>
         </div>
-        <DetailsHeaderOpenChangeset changeset={osmChaChangeset} />
+        <DropdownOpenChangeset changeset={osmChaChangeset} />
       </div>
-      <div className="border-l-2 border-l-zinc-200 pl-2 text-sm">
-        <p>{osmChaChangeset.properties.comment}</p>
+      <div className="flex items-center justify-between gap-1 text-base">
+        <div className="flex flex-col gap-1">
+          <div className="hyphens-auto leading-tight">
+            <strong className="font-semibold">{osmChaChangeset.properties.user}:</strong>{' '}
+            {osmChaChangeset.properties.comment}
+          </div>
+
+          {osmChaChangeset.properties.checked ? (
+            <div>
+              {osmChaChangeset.properties.harmful ? (
+                <HandThumbDownIcon className="size-4" />
+              ) : (
+                <HandThumbUpIcon className="size-4" />
+              )}{' '}
+              by {osmChaChangeset.properties.check_user}
+            </div>
+          ) : (
+            <div className="space-x-1">
+              {osmChaChangeset.properties.reasons?.map((reason: { id: number; name: string }) => {
+                return <Badge key={reason.id}>{reason.name}</Badge>
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <Divider className="mp-0.5 mt-1" />
@@ -51,7 +74,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
           <UserIcon className="size-4" aria-hidden />
           {osmChaChangeset.properties.user}
         </Button>
-        <DetailsHeaderOpenUser changeset={osmChaChangeset} />
+        <DropdownOpenUser changeset={osmChaChangeset} />
       </div>
       <Transition
         show={showUserDetails}

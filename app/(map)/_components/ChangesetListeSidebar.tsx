@@ -1,5 +1,4 @@
 'use client'
-
 import { Badge } from '@components/core/badge'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
@@ -33,13 +32,13 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                   )}
                 >
                   <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
-                    <strong>{editorShortname(changeset.properties.editor)}</strong>
                     <span>
                       <RelativeTime createdAt={changeset.properties.date} />
                       <ChangesetCommentIndicator
                         commentCount={changeset.properties.comments_count}
                       />
                     </span>
+                    <span>{editorShortname(changeset.properties.editor)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-1 text-base">
                     <div className="flex flex-col gap-1">

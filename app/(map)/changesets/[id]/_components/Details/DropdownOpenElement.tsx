@@ -22,7 +22,7 @@ const urlElementPewu = (osmType: string, osmId: string | number) => {
   return `https://pewu.github.io/osm-history/#/${osmType}/${osmId}` as const
 }
 
-export const DetailsChangesOpenElement = ({ element }: Props) => {
+export const DropdownOpenElement = ({ element }: Props) => {
   return (
     <Dropdown>
       <DropdownButton outline className="p-0">

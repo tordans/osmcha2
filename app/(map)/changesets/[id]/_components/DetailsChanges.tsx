@@ -10,7 +10,7 @@ import {
 import { ArrowRightIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { Fragment } from 'react'
-import { DetailsChangesOpenElement } from './DetailsChangesOpenElement'
+import { DropdownOpenElement } from './Details/DropdownOpenElement'
 
 type Props = { osmChaRealChangeset: TOsmChaRealChangeset }
 
@@ -66,7 +66,7 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                           {change.type}/{change.id}{' '}
                           <span className="text-zinc-400">#{change.version}</span>
                         </h3>
-                        <DetailsChangesOpenElement element={change} />
+                        <DropdownOpenElement element={change} />
                       </div>
                       <div className="w-full border-t font-mono">
                         <Table dense bleed classNameTable="text-xs">

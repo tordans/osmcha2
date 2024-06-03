@@ -22,7 +22,7 @@ const urlChangesetRevert = (changesetId: number) => {
   return `https://revert.monicz.dev/?changesets=${changesetId}` as const
 }
 
-export const DetailsHeaderOpenChangeset = ({ changeset }: Props) => {
+export const DropdownOpenChangeset = ({ changeset }: Props) => {
   return (
     <Dropdown>
       <DropdownButton outline className="p-0">

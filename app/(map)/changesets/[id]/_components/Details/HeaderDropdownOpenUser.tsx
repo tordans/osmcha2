@@ -25,7 +25,7 @@ const urlUserOsmCha = (username: string) => {
   return `https://osmcha.org/?filters={"users":[{"label":"${username}","value":"${username}"}],"date__gte":[{"label":"","value":""}]}` as const
 }
 
-export const DetailsHeaderOpenUser = ({ changeset }: Props) => {
+export const DropdownOpenUser = ({ changeset }: Props) => {
   return (
     <Dropdown>
       <DropdownButton outline className="p-0">
