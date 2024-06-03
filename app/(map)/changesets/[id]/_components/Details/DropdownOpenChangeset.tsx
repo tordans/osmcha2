@@ -26,7 +26,7 @@ export const DropdownOpenChangeset = ({ changeset }: Props) => {
   return (
     <Dropdown>
       <DropdownButton outline className="p-0">
-        Open
+        Changeset
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu anchor="left start">
