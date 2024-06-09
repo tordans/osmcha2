@@ -8,6 +8,7 @@ import { XMarkIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { useState } from 'react'
 // https://github.com/YYsuni/react18-json-view
+import { TOsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangesetGeojson.zod'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
 
@@ -15,6 +16,7 @@ type Props = {
   osmChaChangeset?: TOsmChaChangeset
   osmOrgChangeset?: TOsmOrgChangeset
   osmChaRealChangeset?: TOsmChaRealChangeset
+  osmChaRealChangesetGeojson?: TOsmChaRealChangesetGeojson
   osmChaUser?: TOsmChaUser
   osmOrgUser?: TOsmOrgUser
 }
@@ -23,6 +25,7 @@ export const DebugDataHelper = ({
   osmChaChangeset,
   osmOrgChangeset,
   osmChaRealChangeset,
+  osmChaRealChangesetGeojson,
   osmChaUser,
   osmOrgUser,
 }: Props) => {
@@ -57,6 +60,16 @@ export const DebugDataHelper = ({
               OSMCha Real Changeset
             </summary>
             <JsonView src={osmChaRealChangeset} theme="vscode" />
+          </details>
+          <details>
+            <summary
+              className={clsx(
+                osmChaRealChangesetGeojson ? 'cursor-pointer hover:underline' : 'text-gray-400',
+              )}
+            >
+              OSMCha Real Changeset GeoJson
+            </summary>
+            <JsonView src={osmChaRealChangesetGeojson} theme="vscode" />
           </details>
           <details>
             <summary

@@ -1,8 +1,10 @@
 import { OsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 import { OsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
+import { OsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangesetGeojson.zod'
 import { OsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
 import { OsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
 import { OsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
+import { realChangesetParser } from '@components/_lib/real-changesets-parser'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {
@@ -22,15 +24,20 @@ export const fetchChangesetData = async (changesetId: string) => {
 
   const osmChaChangeset = OsmChaChangeset.parse(await rawOsmChaChangesetResponse.json())
   // TODO: The real changesets are not relyable. They might not exist yet … or not anymore … or where never created successfully.
-  //  The current UI can handle this case and fall back to show some information.
+  //  The current OsmCha can handle this case and fall back to show some information.
   //  One idea was to use useFetchErrorsActions so set an error message that we show on the UI whenever this
   //  However, we need to work around the client vs server components issue first.
   const osmChaRealChangeset = OsmChaRealChangeset.parse(await rawOsmChaRealChangesetResponse.json())
+  // TODO: Figure out if we need the `osmChaRealChangeset` at all; maybe we can use the GeoJson version only? But it does not have the metadata. However it does cleanup some entries that are blank (AFAIK notes that are changed as part of a way)
+  const osmChaRealChangesetGeojson = OsmChaRealChangesetGeojson.parse(
+    realChangesetParser(osmChaRealChangeset),
+  )
   const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
 
   return {
     osmChaChangeset,
     osmChaRealChangeset,
+    osmChaRealChangesetGeojson,
     osmOrgChangeset,
   }
 }

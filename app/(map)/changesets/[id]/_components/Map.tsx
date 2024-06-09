@@ -2,17 +2,27 @@
 
 import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
+import { TOsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangesetGeojson.zod'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useState } from 'react'
 import { AttributionControl, MapProvider, Map as ReactMapGlMap } from 'react-map-gl/maplibre'
 import { MapStyleControl } from './Map/MapStyleControl'
 import { SourceLayerBounds } from './Map/SourceLayerBounds'
+import { SourceLayerChanges } from './Map/SourceLayerChanges'
 import { getChangesetBounds } from './Map/utils/getChangesetBounds'
 import { mapStyles, type TMapStyle } from './Map/utils/mapStyles'
 
-type Props = { osmChaChangeset: TOsmChaChangeset; osmChaRealChangeset: TOsmChaRealChangeset }
+type Props = {
+  osmChaChangeset: TOsmChaChangeset
+  osmChaRealChangeset: TOsmChaRealChangeset
+  osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson
+}
 
-export const Map = ({ osmChaChangeset, osmChaRealChangeset }: Props) => {
+export const Map = ({
+  osmChaChangeset,
+  osmChaRealChangeset,
+  osmChaRealChangesetGeojson,
+}: Props) => {
   const bounds = getChangesetBounds(osmChaRealChangeset.metadata.bbox)
   const [mapStyle, setMapStyle] = useState<TMapStyle>('maptilerDataviz')
 
@@ -21,7 +31,7 @@ export const Map = ({ osmChaChangeset, osmChaRealChangeset }: Props) => {
       <ReactMapGlMap
         id="mainMap"
         initialViewState={{
-          bounds: bounds,
+          bounds,
           fitBoundsOptions: { padding: 200 },
         }}
         style={{ width: '100%', height: '100%' }}
@@ -30,6 +40,7 @@ export const Map = ({ osmChaChangeset, osmChaRealChangeset }: Props) => {
         attributionControl={false}
       >
         <SourceLayerBounds bounds={bounds} />
+        <SourceLayerChanges osmChaRealChangesetGeojson={osmChaRealChangesetGeojson} />
         <MapStyleControl
           useBackground={osmChaChangeset.properties.imagery_used}
           currentMapstyle={mapStyle}

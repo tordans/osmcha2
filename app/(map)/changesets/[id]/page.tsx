@@ -8,16 +8,19 @@ import { fetchChangesetData, fetchUserData } from './_components/fetchPageData'
 type Props = { params: { id: string } }
 
 export default async function ChangesetPage({ params }: Props) {
-  const { osmChaChangeset, osmChaRealChangeset, osmOrgChangeset } = await fetchChangesetData(
-    params.id,
-  )
+  const { osmChaChangeset, osmChaRealChangeset, osmChaRealChangesetGeojson, osmOrgChangeset } =
+    await fetchChangesetData(params.id)
   const { osmOrgUser, osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex h-full">
         <div className="h-full grow">
-          <Map osmChaChangeset={osmChaChangeset} osmChaRealChangeset={osmChaRealChangeset} />
+          <Map
+            osmChaChangeset={osmChaChangeset}
+            osmChaRealChangeset={osmChaRealChangeset}
+            osmChaRealChangesetGeojson={osmChaRealChangesetGeojson}
+          />
         </div>
         <div className="flex w-96 flex-col">
           <DetailsHeader
@@ -35,6 +38,7 @@ export default async function ChangesetPage({ params }: Props) {
       <DebugDataHelper
         osmChaChangeset={osmChaChangeset}
         osmChaRealChangeset={osmChaRealChangeset}
+        osmChaRealChangesetGeojson={osmChaRealChangesetGeojson}
         osmOrgChangeset={osmOrgChangeset}
         osmChaUser={osmChaUser}
         osmOrgUser={osmOrgUser}
