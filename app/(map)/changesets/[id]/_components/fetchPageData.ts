@@ -23,15 +23,27 @@ export const fetchChangesetData = async (changesetId: string) => {
     await Promise.all([fetchOsmChaChangeset, fetchOsmChaRealChangeset, fetchOsmOrgChangeset])
 
   const osmChaChangeset = OsmChaChangeset.parse(await rawOsmChaChangesetResponse.json())
+
   // TODO: The real changesets are not relyable. They might not exist yet … or not anymore … or where never created successfully.
   //  The current OsmCha can handle this case and fall back to show some information.
   //  One idea was to use useFetchErrorsActions so set an error message that we show on the UI whenever this
   //  However, we need to work around the client vs server components issue first.
   const osmChaRealChangeset = OsmChaRealChangeset.parse(await rawOsmChaRealChangesetResponse.json())
+
   // TODO: Figure out if we need the `osmChaRealChangeset` at all; maybe we can use the GeoJson version only? But it does not have the metadata. However it does cleanup some entries that are blank (AFAIK notes that are changed as part of a way)
-  const osmChaRealChangesetGeojson = OsmChaRealChangesetGeojson.parse(
-    realChangesetParser(osmChaRealChangeset),
-  )
+  // Note: ATM we need it for the bbox in the Map.
+  const osmChaRealChangesetGeojsonRaw = realChangesetParser(osmChaRealChangeset)
+  // `OsmChaRealChangesetGeojson` is not perfect yet and written writ strict `strictObject` so it throws errors. But the errors are not that helpfull, so to debug, there is this console log… — TODO: Find a nicer way to do this.
+  try {
+    OsmChaRealChangesetGeojson.parse(osmChaRealChangesetGeojsonRaw)
+  } catch (error) {
+    console.log(
+      'osmChaRealChangesetGeojsonRaw',
+      JSON.stringify(osmChaRealChangesetGeojsonRaw, undefined, 2),
+    )
+  }
+  const osmChaRealChangesetGeojson = OsmChaRealChangesetGeojson.parse(osmChaRealChangesetGeojsonRaw)
+
   const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
 
   return {

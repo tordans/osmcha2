@@ -60,7 +60,6 @@ export function DropdownItem({
 )) {
   const currentPath = usePathname()
   current = current === undefined ? 'href' in props && currentPath === props.href : current
-  console.log('xcurrent', current)
 
   const classes = clsx(
     className,

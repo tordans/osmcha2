@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import { useState } from 'react'
 // https://github.com/YYsuni/react18-json-view
 import { TOsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangesetGeojson.zod'
+import { realChangesetParser } from '@components/_lib/real-changesets-parser'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
 
@@ -51,6 +52,7 @@ export const DebugDataHelper = ({
             </summary>
             <JsonView src={osmChaChangeset} theme="vscode" />
           </details>
+
           <details>
             <summary
               className={clsx(
@@ -61,6 +63,7 @@ export const DebugDataHelper = ({
             </summary>
             <JsonView src={osmChaRealChangeset} theme="vscode" />
           </details>
+
           <details>
             <summary
               className={clsx(
@@ -71,6 +74,18 @@ export const DebugDataHelper = ({
             </summary>
             <JsonView src={osmChaRealChangesetGeojson} theme="vscode" />
           </details>
+
+          <details>
+            <summary
+              className={clsx(
+                osmChaRealChangeset ? 'cursor-pointer hover:underline' : 'text-gray-400',
+              )}
+            >
+              OSMCha Real Changeset GeoJson – No Zod
+            </summary>
+            <JsonView src={realChangesetParser(osmChaRealChangeset)} theme="vscode" />
+          </details>
+
           <details>
             <summary
               className={clsx(osmOrgChangeset ? 'cursor-pointer hover:underline' : 'text-gray-400')}
@@ -79,6 +94,7 @@ export const DebugDataHelper = ({
             </summary>
             <JsonView src={osmOrgChangeset} theme="vscode" />
           </details>
+
           <details>
             <summary
               className={clsx(osmChaUser ? 'cursor-pointer hover:underline' : 'text-gray-400')}
@@ -87,6 +103,7 @@ export const DebugDataHelper = ({
             </summary>
             <JsonView src={osmChaUser} theme="vscode" />
           </details>
+
           <details>
             <summary
               className={clsx(osmOrgUser ? 'cursor-pointer hover:underline' : 'text-gray-400')}
