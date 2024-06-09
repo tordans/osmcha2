@@ -18,7 +18,7 @@ const PropertyModify = z.strictObject({
 })
 const PropertyDelete = z.strictObject({
   action: z.literal('delete'),
-  changeType: z.literal('deleteNew'),
+  changeType: z.union([z.literal('deleteNew'), z.literal('deletedOld')]),
 })
 const PropertyCreate = z.strictObject({
   action: z.literal('create'),
