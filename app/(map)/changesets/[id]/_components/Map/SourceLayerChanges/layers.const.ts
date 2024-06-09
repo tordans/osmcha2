@@ -1,6 +1,5 @@
 export const layers = {
   'bg-line': {
-    source: 'changeset',
     type: 'line',
     layout: {
       'line-cap': 'round',
@@ -21,7 +20,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'way']],
   },
   'bg-point': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': 'hsl(0, 0%, 15%)',
@@ -44,7 +42,6 @@ export const layers = {
     filter: ['all', ['==', '$type', 'Point']],
   },
   'highlight-line': {
-    source: 'changeset',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -70,7 +67,6 @@ export const layers = {
     filter: ['all', ['==', 'id', ''], ['==', '$type', 'LineString']],
   },
   'highlight-point': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': 'hsl(0, 0%, 75%)',
@@ -86,7 +82,6 @@ export const layers = {
     filter: ['all', ['==', 'id', ''], ['==', '$type', 'Point']],
   },
   'highlight-relation-member-line': {
-    source: 'relationMembers',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -112,7 +107,6 @@ export const layers = {
     filter: ['all', ['==', 'ref', ''], ['==', '$type', 'LineString']],
   },
   'highlight-relation-member-point': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': 'hsl(267, 81%, 82%)',
@@ -131,7 +125,6 @@ export const layers = {
   // RELATION MEMBERS
 
   'deleted-relation-member-line': {
-    source: 'relationMembers',
     type: 'line',
     paint: {
       'line-color': '#CC2C47',
@@ -148,7 +141,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'modified-relation-member-old-line': {
-    source: 'relationMembers',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -175,7 +167,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'modified-relation-member-new-line': {
-    source: 'relationMembers',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -195,7 +186,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'added-relation-member-line': {
-    source: 'relationMembers',
     type: 'line',
     interactive: true,
     layout: {
@@ -216,7 +206,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'modified-relation-member-old-point-on-way': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#DB950A',
@@ -239,7 +228,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'modified-relation-member-new-point-on-way': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#E8E845',
@@ -261,7 +249,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'deleted-relation-member-point': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#CC2C47',
@@ -283,7 +270,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'added-relation-member-point': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#39DBC0',
@@ -305,7 +291,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'added-relation-member-point-with-role': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#39DBC0',
@@ -330,7 +315,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'modified-relation-member-new-point': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#E8E845',
@@ -355,7 +339,6 @@ export const layers = {
     filter: ['all', ['==', 'relation', '']],
   },
   'modified-relation-member-old-point': {
-    source: 'relationMembers',
     type: 'circle',
     paint: {
       'circle-color': '#DB950A',
@@ -382,7 +365,6 @@ export const layers = {
 
   // RELATIONS
   'deleted-relation': {
-    source: 'changeset',
     type: 'line',
     paint: {
       'line-color': '#CC2C47',
@@ -399,7 +381,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'relation'], ['==', 'changeType', 'deletedNew']],
   },
   'modified-old-relation': {
-    source: 'changeset',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -420,7 +401,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'relation'], ['==', 'changeType', 'modifiedOld']],
   },
   'modified-new-relation': {
-    source: 'changeset',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -440,7 +420,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'relation'], ['==', 'changeType', 'modifiedNew']],
   },
   'added-relation': {
-    source: 'changeset',
     type: 'line',
     interactive: true,
     layout: {
@@ -461,7 +440,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'relation'], ['==', 'changeType', 'added']],
   },
   'deleted-line': {
-    source: 'changeset',
     type: 'line',
     paint: {
       'line-color': '#CC2C47',
@@ -478,7 +456,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'way'], ['==', 'changeType', 'deletedNew']],
   },
   'modified-old-point-on-way': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#DB950A',
@@ -501,7 +478,6 @@ export const layers = {
     filter: ['all', ['==', '$type', 'LineString'], ['==', 'changeType', 'modifiedOld']],
   },
   'modified-old-line': {
-    source: 'changeset',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -528,7 +504,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'way'], ['==', 'changeType', 'modifiedOld']],
   },
   'modified-new-point-on-way': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#E8E845',
@@ -550,7 +525,6 @@ export const layers = {
     filter: ['all', ['==', '$type', 'LineString'], ['==', 'changeType', 'modifiedNew']],
   },
   'modified-new-line': {
-    source: 'changeset',
     type: 'line',
     layout: {
       'line-join': 'round',
@@ -570,7 +544,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'way'], ['==', 'changeType', 'modifiedNew']],
   },
   'added-line': {
-    source: 'changeset',
     type: 'line',
     interactive: true,
     layout: {
@@ -591,7 +564,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'way'], ['==', 'changeType', 'added']],
   },
   'deleted-point-untagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#CC2C47',
@@ -617,7 +589,6 @@ export const layers = {
     ],
   },
   'modified-old-point-untagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#DB950A',
@@ -647,7 +618,6 @@ export const layers = {
     ],
   },
   'modified-new-point-untagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#E8E845',
@@ -677,7 +647,6 @@ export const layers = {
     ],
   },
   'added-point-untagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#39DBC0',
@@ -699,7 +668,6 @@ export const layers = {
     filter: ['all', ['==', 'type', 'node'], ['==', 'changeType', 'added'], ['==', 'tagsCount', 0]],
   },
   'deleted-point-tagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#CC2C47',
@@ -729,7 +697,6 @@ export const layers = {
     ],
   },
   'modified-old-point-tagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#DB950A',
@@ -759,7 +726,6 @@ export const layers = {
     ],
   },
   'modified-new-point-tagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#E8E845',
@@ -789,7 +755,6 @@ export const layers = {
     ],
   },
   'added-point-tagged': {
-    source: 'changeset',
     type: 'circle',
     paint: {
       'circle-color': '#39DBC0',

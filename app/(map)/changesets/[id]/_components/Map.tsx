@@ -32,7 +32,7 @@ export const Map = ({
         id="mainMap"
         initialViewState={{
           bounds,
-          fitBoundsOptions: { padding: 200 },
+          fitBoundsOptions: { padding: 100 },
         }}
         style={{ width: '100%', height: '100%' }}
         // https://cloud.maptiler.com/maps/dataviz/, Acccount tordans private
