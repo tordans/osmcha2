@@ -10,6 +10,7 @@ const PropertyShared = z.strictObject({
   uid: z.string(),
   user: z.string(),
   type: PropertyType,
+  tagsCount: z.coerce.number(),
   tags: z.record(z.string()),
 })
 const PropertyModify = z.strictObject({
