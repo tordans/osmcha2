@@ -21,6 +21,7 @@ const TableContext = createContext<{
 export function Table({
   bleed = false,
   dense = false,
+  overflow = false,
   grid = false,
   striped = false,
   className,
@@ -30,6 +31,7 @@ export function Table({
 }: {
   bleed?: boolean
   dense?: boolean
+  overflow?: boolean
   grid?: boolean
   striped?: boolean
   classNameTable?: string
@@ -41,7 +43,10 @@ export function Table({
       <div className="flow-root">
         <div
           {...props}
-          className={clsx(className, '-mx-[--gutter] overflow-x-auto whitespace-nowrap')}
+          className={clsx(
+            className,
+            overflow ? '-mx-[--gutter] overflow-x-auto whitespace-nowrap' : '',
+          )}
         >
           <div
             className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-[--gutter]')}

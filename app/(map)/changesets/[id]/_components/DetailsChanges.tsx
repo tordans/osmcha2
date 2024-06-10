@@ -57,7 +57,7 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                   <li key={change.id}>
                     <div
                       className={clsx(
-                        'group/item relative flex w-full flex-col items-start justify-between gap-1 break-words rounded px-2 py-2 pr-0',
+                        'group/item relative flex w-full flex-col items-start justify-between gap-1 rounded px-2 py-2 pr-0',
                         current ? 'bg-blue-50' : 'hover:bg-gray-50',
                       )}
                     >
@@ -79,33 +79,50 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                           <TableBody>
                             {addedTags.map(([key, value]) => (
                               <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
                                   {key}
                                 </TableCell>
-                                <TableCell className="bg-green-100 text-green-700">
+                                <TableCell
+                                  className={clsx(
+                                    'bg-green-100 align-top text-green-700',
+                                    value.includes('http') ? 'break-all' : 'break-words',
+                                  )}
+                                >
                                   {value}
                                 </TableCell>
                               </TableRow>
                             ))}
                             {removedTags.map(([key, _]) => (
                               <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
                                   {key}
                                 </TableCell>
-                                <TableCell className="bg-orange-100 text-orange-500">
+                                <TableCell
+                                  className={clsx(
+                                    'bg-orange-100 align-top text-orange-500',
+                                    oldTags[key].includes('http') ? 'break-all' : 'break-words',
+                                  )}
+                                >
                                   {oldTags[key]}
                                 </TableCell>
                               </TableRow>
                             ))}
                             {changedTags.map(([key, value]) => (
                               <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
                                   {key}
                                 </TableCell>
-                                <TableCell className="bg-yellow-100">
-                                  <div className="flex items-center gap-1 truncate">
+                                <TableCell
+                                  className={clsx(
+                                    'bg-yellow-100 align-top',
+                                    oldTags[key].includes('http') || value.includes('http')
+                                      ? 'break-all'
+                                      : 'break-words',
+                                  )}
+                                >
+                                  <div className="flex items-center gap-1">
                                     <span className="text-orange-500">{oldTags[key]}</span>{' '}
-                                    <ArrowRightIcon className="size-3" />{' '}
+                                    <ArrowRightIcon className="size-3 flex-none" />{' '}
                                     <span className="text-green-700">{value}</span>
                                   </div>
                                 </TableCell>
@@ -116,7 +133,14 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                                 <TableCell className="w-32 max-w-32 truncate" title={key}>
                                   {key}
                                 </TableCell>
-                                <TableCell className="text-zinc-500">{value}</TableCell>
+                                <TableCell
+                                  className={clsx(
+                                    'align-top text-zinc-500',
+                                    value.includes('http') ? 'break-all' : 'break-words',
+                                  )}
+                                >
+                                  {value}
+                                </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
