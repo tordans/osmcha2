@@ -19,7 +19,8 @@ const PropertyModify = z.strictObject({
 })
 const PropertyDelete = z.strictObject({
   action: z.literal('delete'),
-  changeType: z.union([z.literal('deleteNew'), z.literal('deletedOld')]),
+  changeType: z.union([z.literal('deletedNew'), z.literal('deletedOld')]),
+  visible: z.literal('false').optional(), // NOTE: Optional because only present for changeType:"deletedNew"
 })
 const PropertyCreate = z.strictObject({
   action: z.literal('create'),

@@ -15,7 +15,7 @@ const Action = z.union([z.literal('modify'), z.literal('create'), z.literal('del
 const ElementShared = z.strictObject({
   id: z.string(),
   version: z.string(),
-  visible: z.literal('false').optional(), // Note: Only for `action:"delete", but required then
+  visible: z.literal('false').optional(), // NOTE: Only for `action:"delete", but required then
   timestamp: z.string(),
   changeset: z.string(),
   uid: z.string(),
@@ -23,7 +23,12 @@ const ElementShared = z.strictObject({
   action: Action,
   tags: z.record(z.string()),
 })
-const ElementNode = z.strictObject({ type: z.literal('node'), lat: z.string(), lon: z.string() })
+const ElementNode = z.strictObject({
+  type: z.literal('node'),
+  // NOTE: type:"node" && action:"delete" do not have "lat", "lon"
+  lat: z.string().optional(),
+  lon: z.string().optional(),
+})
 const ElementWay = z.strictObject({ type: z.literal('way'), nodes: z.array(WayNodes) })
 const ElementRelation = z.strictObject({ type: z.literal('relation') })
 const Element = z.discriminatedUnion('type', [
@@ -32,7 +37,7 @@ const Element = z.discriminatedUnion('type', [
   ElementShared.merge(ElementRelation),
 ])
 const ElementSharedWithOld =
-  // Note: Only for `action:"modify"|"delete", but required then
+  // NOTE: Only for `action:"modify"|"delete", but required then
   ElementShared.merge(z.strictObject({ old: Element.optional() }))
 const ElementWithOld = z.discriminatedUnion('type', [
   ElementSharedWithOld.merge(ElementNode),
