@@ -1,46 +1,47 @@
 import { z } from 'zod'
 
-const Node = z.object({
+const WayNotes = z.strictObject({
   ref: z.string(),
   lat: z.string(),
   lon: z.string(),
 })
 
+// NOTE: Zod does not allow nested discriminatedUnions https://github.com/colinhacks/zod/issues/1884
+// Otherwise we could refactor this: `action:"delete"` never had `old` but always has `visible`.
 const Action = z.union([z.literal('modify'), z.literal('create'), z.literal('delete')])
-const Type = z.union([z.literal('node'), z.literal('way'), z.literal('relation')])
-
-const Element = z.object({
+const ElementShared = z.strictObject({
   id: z.string(),
   version: z.string(),
+  visible: z.literal('false').optional(), // Note: Only for `action:"delete", but required then
   timestamp: z.string(),
   changeset: z.string(),
   uid: z.string(),
   user: z.string(),
-  old: z
-    .object({
-      id: z.string(),
-      version: z.string(),
-      timestamp: z.string(),
-      changeset: z.string(),
-      uid: z.string(),
-      user: z.string(),
-      action: Action,
-      type: Type,
-      tags: z.record(z.string()),
-      nodes: z.array(Node).optional(),
-    })
-    .optional(),
   action: Action,
-  type: Type,
   tags: z.record(z.string()),
-  nodes: z.array(Node).optional(),
 })
+const ElementNode = z.strictObject({ type: z.literal('node'), lat: z.string(), lon: z.string() })
+const ElementWay = z.strictObject({ type: z.literal('way'), nodes: z.array(WayNotes) })
+const ElementRelation = z.strictObject({ type: z.literal('relation') })
+const Element = z.discriminatedUnion('type', [
+  ElementShared.merge(ElementNode),
+  ElementShared.merge(ElementWay),
+  ElementShared.merge(ElementRelation),
+])
+const ElementSharedWithOld =
+  // Note: Only for `action:"modify"|"delete", but required then
+  ElementShared.merge(z.strictObject({ old: Element.optional() }))
+const ElementWithOld = z.discriminatedUnion('type', [
+  ElementSharedWithOld.merge(ElementNode),
+  ElementSharedWithOld.merge(ElementWay),
+  ElementSharedWithOld.merge(ElementRelation),
+])
 
-const Metadata = z.object({
+const Metadata = z.strictObject({
   id: z.string(),
   created_at: z.string(),
   closed_at: z.string(),
-  open: z.string(),
+  open: z.union([z.literal('true'), z.literal('false')]),
   user: z.string(),
   uid: z.string(),
   min_lat: z.string(),
@@ -50,22 +51,23 @@ const Metadata = z.object({
   comments_count: z.string(),
   changes_count: z.string(),
   tag: z.array(
-    z.object({
+    z.strictObject({
       k: z.string(),
       v: z.string(),
     }),
   ),
-  bbox: z.object({
+  bbox: z.strictObject({
     left: z.string(),
     bottom: z.string(),
     right: z.string(),
     top: z.string(),
   }),
+  incomplete: z.literal(true).optional(), // NOTE: No idea what that means. It is not mentioned in osmcha-frontend, changeset-map, osm-adiff-parser, planet-stream, wiki/Overpass_API/Augmented_Diffs
 })
 
 export type TOsmChaRealChangeset = z.infer<typeof OsmChaRealChangeset>
 
-export const OsmChaRealChangeset = z.object({
-  elements: z.array(Element),
+export const OsmChaRealChangeset = z.strictObject({
+  elements: z.array(ElementWithOld),
   metadata: Metadata,
 })

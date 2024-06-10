@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const Discussion = z.object({
+const Discussion = z.strictObject({
   id: z.number(),
   date: z.string(),
   uid: z.number(),
@@ -8,7 +8,7 @@ const Discussion = z.object({
   text: z.string(),
 })
 
-const Element = z.object({
+const Element = z.strictObject({
   type: z.string(),
   id: z.number(),
   created_at: z.string(),
@@ -28,7 +28,7 @@ const Element = z.object({
 
 export type TOsmOrgChangeset = z.infer<typeof OsmOrgChangeset>
 
-export const OsmOrgChangeset = z.object({
+export const OsmOrgChangeset = z.strictObject({
   version: z.string(),
   generator: z.string(),
   copyright: z.string(),

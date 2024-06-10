@@ -28,7 +28,13 @@ export const fetchChangesetData = async (changesetId: string) => {
   //  The current OsmCha can handle this case and fall back to show some information.
   //  One idea was to use useFetchErrorsActions so set an error message that we show on the UI whenever this
   //  However, we need to work around the client vs server components issue first.
-  const osmChaRealChangeset = OsmChaRealChangeset.parse(await rawOsmChaRealChangesetResponse.json())
+  const osmChaRealchangesetRaw = await rawOsmChaRealChangesetResponse.json()
+  try {
+    OsmChaRealChangeset.parse(osmChaRealchangesetRaw)
+  } catch (error) {
+    console.log('osmChaRealchangesetRaw', JSON.stringify(osmChaRealchangesetRaw, undefined, 2))
+  }
+  const osmChaRealChangeset = OsmChaRealChangeset.parse(osmChaRealchangesetRaw)
 
   // TODO: Figure out if we need the `osmChaRealChangeset` at all; maybe we can use the GeoJson version only? But it does not have the metadata. However it does cleanup some entries that are blank (AFAIK notes that are changed as part of a way)
   // Note: ATM we need it for the bbox in the Map.
