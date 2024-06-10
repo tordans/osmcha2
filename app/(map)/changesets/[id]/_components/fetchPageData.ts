@@ -5,6 +5,8 @@ import { OsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
 import { OsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
 import { OsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 import { realChangesetParser } from '@components/_lib/real-changesets-parser'
+import fs from 'fs'
+import path from 'path'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {
@@ -32,7 +34,9 @@ export const fetchChangesetData = async (changesetId: string) => {
   try {
     OsmChaRealChangeset.parse(osmChaRealchangesetRaw)
   } catch (error) {
-    console.log('osmChaRealchangesetRaw', JSON.stringify(osmChaRealchangesetRaw, undefined, 2))
+    const file = path.join(__dirname, '../../../../../../tmp', 'osmChaRealchangesetRaw.json')
+    console.info('ERROR, write debugging at ', file)
+    fs.writeFileSync(file, JSON.stringify(osmChaRealchangesetRaw, undefined, 2))
   }
   const osmChaRealChangeset = OsmChaRealChangeset.parse(osmChaRealchangesetRaw)
 
@@ -43,10 +47,9 @@ export const fetchChangesetData = async (changesetId: string) => {
   try {
     OsmChaRealChangesetGeojson.parse(osmChaRealChangesetGeojsonRaw)
   } catch (error) {
-    console.log(
-      'osmChaRealChangesetGeojsonRaw',
-      JSON.stringify(osmChaRealChangesetGeojsonRaw, undefined, 2),
-    )
+    const file = path.join(__dirname, '../../../../../../tmp', 'osmChaRealChangesetGeojsonRaw.json')
+    console.info('ERROR, write debugging at ', file)
+    fs.writeFileSync(file, JSON.stringify(osmChaRealChangesetGeojsonRaw, undefined, 2))
   }
   const osmChaRealChangesetGeojson = OsmChaRealChangesetGeojson.parse(osmChaRealChangesetGeojsonRaw)
 
