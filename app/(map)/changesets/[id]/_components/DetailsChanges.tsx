@@ -1,4 +1,5 @@
 import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
+import { Badge } from '@components/core/badge'
 import {
   Table,
   TableBody,
@@ -17,17 +18,40 @@ type Props = { osmChaRealChangeset: TOsmChaRealChangeset }
 const actionTranslation = { create: 'Created', modify: 'Modified', delete: 'Deleted' } as const
 
 export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
-  const groupedChanges: Map<
-    (typeof osmChaRealChangeset.elements)[number]['action'],
-    (typeof osmChaRealChangeset.elements)[number][]
-  > = new Map()
-
-  for (const change of osmChaRealChangeset.elements) {
-    if (!groupedChanges.has(change.action)) {
-      groupedChanges.set(change.action, [])
-    }
-    groupedChanges.get(change.action)!.push(change)
+  type Element = (typeof osmChaRealChangeset.elements)[number] & {
+    nodeStats: { added: number; modified: number; deleted: number }
   }
+  const elements = structuredClone(osmChaRealChangeset.elements) as Element[]
+
+  // For every way, we add a count of nodes that where added, modified or deleted
+  // We also delete those notes if they have no own tags, because we don't want to list them separately in this case
+  elements.forEach((element) => {
+    if (element.type !== 'way') return
+    const nodeStats = { added: 0, modified: 0, deleted: 0 }
+    const nodeRefs = new Set(element.nodes.map((node) => node.ref))
+    elements.forEach((node) => {
+      if (node.type !== 'node') return
+      if (!nodeRefs.has(node.id)) return
+      if (node.action === 'create') {
+        nodeStats.added++
+      } else if (node.action === 'modify') {
+        nodeStats.modified++
+      } else if (node.action === 'delete') {
+        nodeStats.deleted++
+      }
+      delete elements[elements.indexOf(node)]
+    })
+    element.nodeStats = nodeStats
+  })
+
+  // Group changes by action
+  const groupedChanges: Map<Element['action'], Element[]> = new Map()
+  elements.forEach((element) => {
+    if (!groupedChanges.has(element.action)) {
+      groupedChanges.set(element.action, [])
+    }
+    groupedChanges.get(element.action)!.push(element)
+  })
 
   return (
     <section className="my-4">
@@ -62,11 +86,31 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                       )}
                     >
                       <div className="flex w-full items-center justify-between">
-                        <h3>
-                          {change.type}/{change.id}{' '}
-                          <span className="text-zinc-400">#{change.version}</span>
-                        </h3>
-                        <DropdownOpenElement element={change} />
+                        <div>
+                          <h3>
+                            {change.type}/{change.id}{' '}
+                            <span className="text-zinc-400">#{change.version}</span>{' '}
+                          </h3>
+                        </div>
+                        <div>
+                          {change.nodeStats && (
+                            <span
+                              className="text-xs"
+                              title={`Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`}
+                            >
+                              <Badge color="blue" className="rounded-r-none">
+                                {change.nodeStats.added}
+                              </Badge>
+                              <Badge color="yellow" className="-my-1 rounded-none">
+                                {change.nodeStats.modified}
+                              </Badge>
+                              <Badge color="red" className="rounded-l-none">
+                                {change.nodeStats.deleted}
+                              </Badge>
+                            </span>
+                          )}{' '}
+                          <DropdownOpenElement element={change} />
+                        </div>
                       </div>
                       <div className="w-full border-t font-mono">
                         <Table dense bleed classNameTable="text-xs">
@@ -84,7 +128,7 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                                 </TableCell>
                                 <TableCell
                                   className={clsx(
-                                    'bg-green-100 align-top text-green-700',
+                                    'bg-blue-100 align-top text-blue-700',
                                     value.includes('http') ? 'break-all' : 'break-words',
                                   )}
                                 >
