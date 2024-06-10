@@ -2,8 +2,11 @@ import { z } from 'zod'
 
 const WayNotes = z.strictObject({
   ref: z.string(),
-  lat: z.string(),
-  lon: z.string(),
+  // TODO: Why are there nodes without lat/lon?
+  // Eg. the playground in https://osmcha.org/changesets/152004593
+  // Where node https://www.openstreetmap.org/node/10302839372 and https://www.openstreetmap.org/node/10302839383 are missing coordinates so the area is displayed as line instead of area.
+  lat: z.string().optional(),
+  lon: z.string().optional(),
 })
 
 // NOTE: Zod does not allow nested discriminatedUnions https://github.com/colinhacks/zod/issues/1884
