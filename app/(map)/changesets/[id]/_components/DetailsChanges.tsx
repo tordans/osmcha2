@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@components/core/table'
 import { ArrowRightIcon } from '@heroicons/react/16/solid'
+import { PencilIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/solid'
 import clsx from 'clsx'
 import { Fragment } from 'react'
 import { DropdownOpenElement } from './Details/DropdownOpenElement'
@@ -52,13 +53,20 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
     }
     groupedChanges.get(element.action)!.push(element)
   })
+  const groupIcons: Record<Element['action'], React.ReactElement> = {
+    create: <PlusCircleIcon className="size-4 flex-none" />,
+    modify: <PencilIcon className="size-4 flex-none" />,
+    delete: <TrashIcon className="size-4 flex-none" />,
+  }
 
   return (
     <section className="my-4">
       {Array.from(groupedChanges).map(([action, changes]) => {
         return (
           <Fragment key={action}>
-            <h2 className="mt-5 px-2 font-semibold">{actionTranslation[action]}</h2>
+            <h2 className="mt-5 flex items-center gap-1 rounded-sm border border-zinc-950/10 bg-zinc-50 px-2 py-1 font-semibold">
+              {groupIcons[action]} {actionTranslation[action]}
+            </h2>
             <ul>
               {changes.map((change) => {
                 const current = false // TODO
@@ -86,8 +94,8 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                       )}
                     >
                       <div className="flex w-full items-center justify-between">
-                        <h3>
-                          {change.type}/{change.id}{' '}
+                        <h3 className="flex items-center gap-1">
+                          {groupIcons[action]} {change.type}/{change.id}{' '}
                           <span className="text-zinc-400">#{change.version}</span>{' '}
                         </h3>
                         <div className="flex items-center justify-end gap-1">
