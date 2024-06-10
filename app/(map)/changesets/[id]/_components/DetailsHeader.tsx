@@ -45,25 +45,31 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
             })}
           </div>
 
-          <p className="text-sm">
+          <p className="text-xs text-zinc-500 hover:text-zinc-800">
             User created <RelativeTime createdAt={osmOrgUser.user.account_created} /> |{' '}
             {osmOrgUser.user.changesets.count.toLocaleString()} edits |{' '}
             <span title="Number of changesets of this user that where marked bad/good in OSMCha before">
               {/* TODO: Addd Link https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}],"date__gte":[{"label":"","value":""}]} */}
               {/* TODO: Addd Link 'https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}],"date__gte":[{"label":"","value":""}]}' */}
-              {osmChaUser.checked_changesets.toLocaleString()}{' '}
-              <HandThumbUpIcon
-                className="inline size-4 text-zinc-600"
-                aria-label="Good changesets"
-              />{' '}
-              {osmChaUser.harmful_changesets.toLocaleString()}{' '}
-              <HandThumbDownIcon
-                className={clsx(
-                  'inline size-4',
-                  osmChaUser.harmful_changesets ? 'text-orange-500' : 'text-zinc-600',
-                )}
-                aria-label="Harmful changesets"
-              />
+              <Badge className="rounded-r-none">
+                {osmChaUser.checked_changesets.toLocaleString()}{' '}
+                <HandThumbUpIcon
+                  className="inline size-4 text-zinc-600"
+                  aria-label="Good changesets"
+                />
+              </Badge>
+              <Badge className="rounded-l-none">
+                <span className={clsx(osmChaUser.harmful_changesets ? 'text-orange-700' : '')}>
+                  {osmChaUser.harmful_changesets.toLocaleString()}{' '}
+                </span>
+                <HandThumbDownIcon
+                  className={clsx(
+                    'inline size-4',
+                    osmChaUser.harmful_changesets ? 'text-orange-500' : 'text-zinc-600',
+                  )}
+                  aria-label="Harmful changesets"
+                />
+              </Badge>
             </span>
           </p>
         </div>
