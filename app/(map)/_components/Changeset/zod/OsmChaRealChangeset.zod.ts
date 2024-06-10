@@ -37,11 +37,9 @@ const ElementWithOld = z.discriminatedUnion('type', [
   ElementSharedWithOld.merge(ElementRelation),
 ])
 
-const Metadata = z.strictObject({
+const MetadataShared = z.strictObject({
   id: z.string(),
   created_at: z.string(),
-  closed_at: z.string(),
-  open: z.union([z.literal('true'), z.literal('false')]),
   user: z.string(),
   uid: z.string(),
   min_lat: z.string(),
@@ -50,12 +48,7 @@ const Metadata = z.strictObject({
   max_lon: z.string(),
   comments_count: z.string(),
   changes_count: z.string(),
-  tag: z.array(
-    z.strictObject({
-      k: z.string(),
-      v: z.string(),
-    }),
-  ),
+  tag: z.array(z.strictObject({ k: z.string(), v: z.string() })),
   bbox: z.strictObject({
     left: z.string(),
     bottom: z.string(),
@@ -64,6 +57,10 @@ const Metadata = z.strictObject({
   }),
   incomplete: z.literal(true).optional(), // NOTE: No idea what that means. It is not mentioned in osmcha-frontend, changeset-map, osm-adiff-parser, planet-stream, wiki/Overpass_API/Augmented_Diffs
 })
+const Metadata = z.discriminatedUnion('open', [
+  MetadataShared.merge(z.strictObject({ open: z.literal('true') })),
+  MetadataShared.merge(z.strictObject({ open: z.literal('false'), closed_at: z.string() })),
+])
 
 export type TOsmChaRealChangeset = z.infer<typeof OsmChaRealChangeset>
 
