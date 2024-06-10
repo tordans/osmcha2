@@ -23,16 +23,30 @@ const nextConfig = {
       },
     ],
   },
-  // TODO: Make use only non-www-domains are used; configure once a domain is known
-  // redirects: async () => [
-  //   // https://stackoverflow.com/a/70184067
-  //   {
-  //     source: '/:path*',
-  //     has: [{ type: 'host', value: 'www.DOMAIN.de' }],
-  //     destination: 'https://DOMAIN.de/:path*',
-  //     permanent: true,
-  //   },
-  // ],
+  // Docs: https://nextjs.org/docs/app/building-your-application/routing/redirecting#redirects-in-nextconfigjs
+  // Docs: https://nextjs.org/docs/app/api-reference/next-config-js/redirects
+  redirects: async () => [
+    // TODO: Make use only non-www-domains are used; configure once a domain is known
+    //   // https://stackoverflow.com/a/70184067
+    //   {
+    //     source: '/:path*',
+    //     has: [{ type: 'host', value: 'www.DOMAIN.de' }],
+    //     destination: 'https://DOMAIN.de/:path*',
+    //     permanent: true,
+    //   },
+    {
+      // We don't have a page for `/changeset` so we fall back to root
+      source: '/changesets',
+      destination: '/',
+      permanent: false,
+    },
+    {
+      // osm.org uses `changeset/ID` but OSMCha always used the plural form
+      source: '/changeset/:slug*',
+      destination: '/changesets/:slug*',
+      permanent: true,
+    },
+  ],
 }
 
 export default nextConfig
