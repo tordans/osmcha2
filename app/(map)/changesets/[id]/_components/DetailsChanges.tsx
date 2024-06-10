@@ -102,7 +102,7 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                                 <TableCell className="w-32 max-w-32 truncate" title={key}>
                                   {key}
                                 </TableCell>
-                                <TableCell className="className='w-28 truncate'bg-yellow-100">
+                                <TableCell className="bg-yellow-100">
                                   <div className="flex items-center gap-1 truncate">
                                     <span className="text-orange-500">{oldTags[key]}</span>{' '}
                                     <ArrowRightIcon className="size-3" />{' '}
