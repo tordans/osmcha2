@@ -19,7 +19,7 @@ type Props = {
 }
 
 export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset }: Props) => {
-  const [panel, setPanel] = useState<'changes' | 'changeset'>('changes')
+  const [panel, setPanel] = useState<'changes' | 'discussion'>('changes')
 
   return (
     <section className="h-full overflow-y-scroll p-2">
@@ -28,7 +28,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
           <NavbarItem current={panel === 'changes'} onClick={() => setPanel('changes')}>
             Changes <Badge>{osmChaRealChangeset.metadata.changes_count}</Badge>
           </NavbarItem>
-          <NavbarItem current={panel === 'changeset'} onClick={() => setPanel('changeset')}>
+          <NavbarItem current={panel === 'discussion'} onClick={() => setPanel('discussion')}>
             Discussion
             <ChangesetCommentIndicator commentCount={osmChaChangeset.properties.comments_count} />
             <ChangesetNoCommentIndicator commentCount={osmChaChangeset.properties.comments_count} />
@@ -36,7 +36,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
         </NavbarSection>
       </Navbar>
       {panel === 'changes' && <DetailsChanges osmChaRealChangeset={osmChaRealChangeset} />}
-      {panel === 'changeset' && (
+      {panel === 'discussion' && (
         <DetailsComments discussions={osmOrgChangeset.elements[0].discussion} />
       )}
     </section>
