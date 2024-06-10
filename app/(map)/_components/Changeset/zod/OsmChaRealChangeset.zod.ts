@@ -29,7 +29,10 @@ const ElementNode = z.strictObject({
   lat: z.string().optional(),
   lon: z.string().optional(),
 })
-const ElementWay = z.strictObject({ type: z.literal('way'), nodes: z.array(WayNodes) })
+const ElementWay = z.strictObject({
+  type: z.literal('way'),
+  nodes: z.array(WayNodes), // NOTE: For action:"delete" nodes is always `[]` but `old.nodes` is present
+})
 const ElementRelation = z.strictObject({ type: z.literal('relation') })
 const Element = z.discriminatedUnion('type', [
   ElementShared.merge(ElementNode),

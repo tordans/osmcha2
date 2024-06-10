@@ -29,7 +29,11 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
   elements.forEach((element) => {
     if (element.type !== 'way') return
     const nodeStats = { added: 0, modified: 0, deleted: 0 }
-    const nodeRefs = new Set(element.nodes.map((node) => node.ref))
+    const nodeRefs =
+      element.action === 'delete'
+        ? // @ts-expect-error our zod types are not precise enough but we know that for action=delete we need to look at the old.nodes
+          new Set(element.old.nodes.map((node) => node.ref))
+        : new Set(element.nodes.map((node) => node.ref))
     elements.forEach((node) => {
       if (node.type !== 'node') return
       if (!nodeRefs.has(node.id)) return
