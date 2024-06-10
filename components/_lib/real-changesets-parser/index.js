@@ -5330,8 +5330,8 @@ var omit = _curry2(function omit2(names, obj) {
   return result
 })
 var omit_default = omit
-// parsers/realChangesetElementParser.ts
-function realChangesetElementParser(json) {
+// parsers/mutagingRealChangesetElementParser.ts
+function mutatingRealChangesetElementParser(mutatingJson) {
   function createFeature(data) {
     switch (data.type) {
       case 'node':
@@ -5378,38 +5378,40 @@ function realChangesetElementParser(json) {
     }
     return null
   }
-  if (json.action === 'delete') {
-    switch (json.type) {
+  if (mutatingJson.action === 'delete') {
+    switch (mutatingJson.type) {
       case 'node':
-        json.lon = json.old.lon
-        json.lat = json.old.lat
+        mutatingJson.lon = mutatingJson.old.lon
+        mutatingJson.lat = mutatingJson.old.lat
         break
       case 'way':
-        json.nodes = json.old.nodes
+        mutatingJson.nodes = mutatingJson.old.nodes
         break
       case 'relation':
-        json.members = json.old.members
+        mutatingJson.members = mutatingJson.old.members
         break
     }
   }
-  switch (json.action) {
+  switch (mutatingJson.action) {
     case 'create':
-      json.changeType = 'added'
+      mutatingJson.changeType = 'added'
       break
     case 'delete':
-      json.changeType = 'deletedNew'
-      json.old.changeType = 'deletedOld'
+      mutatingJson.changeType = 'deletedNew'
+      mutatingJson.old.changeType = 'deletedOld'
       break
     case 'modify':
-      json.changeType = 'modifiedNew'
-      json.old.changeType = 'modifiedOld'
+      mutatingJson.changeType = 'modifiedNew'
+      mutatingJson.old.changeType = 'modifiedOld'
       break
   }
-  json.tagsCount = Object.keys(json?.tags || {}).length
-  if (json.old) {
-    json.old.tagsCount = Object.keys(json.old?.tags || {}).length
+  mutatingJson.tagsCount = Object.keys(mutatingJson?.tags || {}).length
+  if (mutatingJson.old) {
+    mutatingJson.old.tagsCount = Object.keys(mutatingJson.old?.tags || {}).length
   }
-  return ('old' in json ? [omit_default(['old'], json), json.old] : [json]).map(createFeature)
+  return (
+    'old' in mutatingJson ? [omit_default(['old'], mutatingJson), mutatingJson.old] : [mutatingJson]
+  ).map(createFeature)
 }
 var isClosedWay = function (nodes) {
   if (nodes.length > 3) {
@@ -5426,10 +5428,16 @@ var isClosedWay = function (nodes) {
   }
   return false
 }
+
+// parsers/realChangesetElementParser.ts
+function realChangesetElementParser(mutatingJson) {
+  const closedJson = structuredClone(mutatingJson)
+  return mutatingRealChangesetElementParser(closedJson)
+}
 // parsers/realChangesetParser.ts
 var realChangesetParser = (input) => {
-  const { elements } = input
-  const parsedElements = elements.map((element) => realChangesetElementParser(element))
+  const elements = structuredClone(input.elements)
+  const parsedElements = elements.map((element) => mutatingRealChangesetElementParser(element))
   const flatElements = parsedElements.flat()
   const cleanElements = flatElements.filter(Boolean)
   return featureCollection(cleanElements)
