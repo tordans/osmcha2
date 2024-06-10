@@ -45,10 +45,12 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
             })}
           </div>
 
-          <p className="text-xs text-zinc-500 hover:text-zinc-800">
-            User created <RelativeTime createdAt={osmOrgUser.user.account_created} /> |{' '}
-            {osmOrgUser.user.changesets.count.toLocaleString()} edits |{' '}
-            <span title="Number of changesets of this user that where marked bad/good in OSMCha before">
+          <div className="flex items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
+            <p>
+              User created <RelativeTime createdAt={osmOrgUser.user.account_created} /> |{' '}
+              {osmOrgUser.user.changesets.count.toLocaleString()} edits
+            </p>
+            <div title="Number of changesets of this user that where marked bad/good in OSMCha before">
               {/* TODO: Addd Link https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}],"date__gte":[{"label":"","value":""}]} */}
               {/* TODO: Addd Link 'https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}],"date__gte":[{"label":"","value":""}]}' */}
               <Badge className="rounded-r-none">
@@ -70,8 +72,8 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
                   aria-label="Harmful changesets"
                 />
               </Badge>
-            </span>
-          </p>
+            </div>
+          </div>
         </div>
       </div>
 
