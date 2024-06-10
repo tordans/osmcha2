@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const WayNotes = z.strictObject({
+const WayNodes = z.strictObject({
   ref: z.string(),
   // TODO: Why are there nodes without lat/lon?
   // Eg. the playground in https://osmcha.org/changesets/152004593
@@ -24,7 +24,7 @@ const ElementShared = z.strictObject({
   tags: z.record(z.string()),
 })
 const ElementNode = z.strictObject({ type: z.literal('node'), lat: z.string(), lon: z.string() })
-const ElementWay = z.strictObject({ type: z.literal('way'), nodes: z.array(WayNotes) })
+const ElementWay = z.strictObject({ type: z.literal('way'), nodes: z.array(WayNodes) })
 const ElementRelation = z.strictObject({ type: z.literal('relation') })
 const Element = z.discriminatedUnion('type', [
   ElementShared.merge(ElementNode),
