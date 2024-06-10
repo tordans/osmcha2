@@ -40,7 +40,7 @@ export const ChangesetListeSidebar = ({ changesets }: Props) => {
                     </span>
                     <span>{editorShortname(changeset.properties.editor)}</span>
                   </div>
-                  <div className="flex items-center justify-between gap-1 text-base">
+                  <div className="flex w-full items-center justify-between gap-1 text-base">
                     <div className="flex flex-col gap-1">
                       <div className="hyphens-auto leading-tight">
                         <strong>{changeset.properties.user}:</strong> {changeset.properties.comment}
