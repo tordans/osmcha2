@@ -86,17 +86,19 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                       )}
                     >
                       <div className="flex w-full items-center justify-between">
-                        <div>
-                          <h3>
-                            {change.type}/{change.id}{' '}
-                            <span className="text-zinc-400">#{change.version}</span>{' '}
-                          </h3>
-                        </div>
-                        <div>
+                        <h3>
+                          {change.type}/{change.id}{' '}
+                          <span className="text-zinc-400">#{change.version}</span>{' '}
+                        </h3>
+                        <div className="flex items-center justify-end gap-1">
                           {change.nodeStats && (
                             <span
-                              className="text-xs"
-                              title={`Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`}
+                              className="cursor-help text-xs"
+                              title={
+                                Object.values(change.nodeStats).every((v) => v === 0)
+                                  ? 'Only tagging was changed; no changes to the geometry where made.'
+                                  : `Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`
+                              }
                             >
                               <Badge color="blue" className="rounded-r-none">
                                 {change.nodeStats.added}
