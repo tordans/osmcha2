@@ -1,11 +1,11 @@
-import { OsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
-import { OsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
-import { OsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangesetGeojson.zod'
-import { OsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
-import { OsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
-import { OsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
-import { writeDebugFile } from '@app/(map)/_components/Changeset/zod/writeDebugFile'
 import { realChangesetParser } from '@components/_lib/real-changesets-parser'
+import { OsmChaChangeset } from '@components/zod/OsmChaChangeset.zod'
+import { OsmChaRealChangeset } from '@components/zod/OsmChaRealChangeset.zod'
+import { OsmChaRealChangesetGeojson } from '@components/zod/OsmChaRealChangesetGeojson.zod'
+import { OsmChaUser } from '@components/zod/OsmChaUser.zod'
+import { OsmOrgChangeset } from '@components/zod/OsmOrgChangeset.zod'
+import { OsmOrgUser } from '@components/zod/OsmOrgUser.zod'
+import { writeDebugFile } from '@components/zod/writeDebugFile'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {

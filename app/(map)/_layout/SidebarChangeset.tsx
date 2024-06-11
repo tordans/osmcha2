@@ -1,4 +1,5 @@
 'use client'
+import { TOsmChaChangesets } from '@components/zod/OsmChaChangesets.zod'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import Link from 'next/link'
@@ -9,7 +10,6 @@ import { BadgesTags } from '../_components/Changeset/BadgesTags'
 import { ChangesetDescription } from '../_components/Changeset/ChangesetDescription'
 import { ChangesetCommentIndicator } from '../_components/Changeset/CommentIndicator'
 import { RelativeTime } from '../_components/Changeset/RelativeTime'
-import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
 import { editorShortname } from '../_components/utils/editorShortname'
 import { DebugDataHelperDialog } from './DebugDataHelperDialog'
 

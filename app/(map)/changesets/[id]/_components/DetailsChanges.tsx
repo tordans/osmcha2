@@ -1,4 +1,3 @@
-import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangeset.zod'
 import { Badge } from '@components/core/badge'
 import {
   Table,
@@ -8,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@components/core/table'
+import { TOsmChaRealChangeset } from '@components/zod/OsmChaRealChangeset.zod'
 import { ArrowRightIcon } from '@heroicons/react/16/solid'
 import { PencilIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/solid'
 import clsx from 'clsx'

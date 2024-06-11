@@ -1,5 +1,5 @@
-import { OsmChaAoi } from '../../_components/Changeset/zod/OsmChaAoi.zod'
-import { writeDebugFile } from '../../_components/Changeset/zod/writeDebugFile'
+import { OsmChaAoi } from '@components/zod/OsmChaAoi.zod'
+import { writeDebugFile } from '@components/zod/writeDebugFile'
 import { ParamAoi } from '../ParamAoi.zod'
 import { searchParamsCache } from '../searchParams'
 

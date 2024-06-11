@@ -1,5 +1,5 @@
-import { OsmChaChangesets } from '../../_components/Changeset/zod/OsmChaChangesets.zod'
-import { writeDebugFile } from '../../_components/Changeset/zod/writeDebugFile'
+import { OsmChaChangesets } from '@components/zod/OsmChaChangesets.zod'
+import { writeDebugFile } from '@components/zod/writeDebugFile'
 import { ParamAoi } from '../ParamAoi.zod'
 import { ParamFilters } from '../ParamFilters.zod'
 import { ParamOrderBy } from '../ParamOrderBy.zod'
