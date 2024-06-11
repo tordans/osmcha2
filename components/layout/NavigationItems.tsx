@@ -9,11 +9,14 @@ import {
 } from '@components/core/sidebar'
 import { FunnelIcon, PlusIcon, UserIcon } from '@heroicons/react/16/solid'
 import { InformationCircleIcon } from '@heroicons/react/20/solid'
+import { fetchAois } from './fetch/fetchAois'
 
 export const NavigationSidebar = () => {
   // TODO: Fetch Userdata, use avatar logo instead of <UserIcon/>
   // Use https://osmcha.org/api/v1/users/ user.avatar
   // const { osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
+
+  const aois = fetchAois()
 
   return (
     <Sidebar>
