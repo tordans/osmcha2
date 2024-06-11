@@ -9,6 +9,7 @@ import { ChangesetCommentIndicator } from '../_components/Changeset/CommentIndic
 import { RelativeTime } from '../_components/Changeset/RelativeTime'
 import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
 import { editorShortname } from '../_components/utils/editorShortname'
+import { SidebarChangesetDebugDataHelper } from './SidebarChangesetDebugDataHelper'
 
 type Props = { changeset: TOsmChaChangesets['features'][number] }
 
@@ -17,7 +18,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
   const current = currentPath === `/changesets/${changeset.id}`
 
   return (
-    <li key={changeset.id}>
+    <li key={changeset.id} className="relative">
       <Link
         href={`/changesets/${changeset.id}`}
         className={clsx(
@@ -66,6 +67,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
           />
         </div>
       </Link>
+      <SidebarChangesetDebugDataHelper osmChaChangeset={changeset} />
     </li>
   )
 }
