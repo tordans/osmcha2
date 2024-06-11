@@ -3,7 +3,9 @@ import { z } from 'zod'
 const LabelValueString = z.object({ label: z.string(), value: z.string() })
 const LabelValueBoolean = z.object({ label: z.string(), value: z.boolean() })
 
-export const ParamFilters = z.object({
+export type TParamFilters = z.infer<typeof ParamFilters>
+
+export const ParamFilters = z.strictObject({
   uids: z.array(LabelValueString).optional(), // UserIDs
   users: z.array(LabelValueString).optional(),
   checked_by: z.array(LabelValueString).optional(),
