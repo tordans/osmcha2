@@ -10,6 +10,14 @@ const Polygon = z.strictObject({
 
 const IdNameObject = z.strictObject({ id: z.number(), name: z.string() })
 
+const ReviewFeature = z.object({
+  url: z.string(),
+  osm_id: z.number(),
+  reasons: z.array(z.number()),
+  version: z.number(),
+  primary_tags: z.record(z.unknown()),
+})
+
 const Properties = z.strictObject({
   // Review
   is_suspect: z.boolean(),
@@ -18,6 +26,8 @@ const Properties = z.strictObject({
   check_date: z.coerce.date().nullable(),
   harmful: z.boolean().nullable(),
   reasons: z.array(IdNameObject),
+  features: z.array(ReviewFeature),
+  reviewed_features: z.array(z.never()),
 
   // Modifications
   create: z.number(),
@@ -44,10 +54,6 @@ const Properties = z.strictObject({
   // Tags
   tags: z.array(IdNameObject),
   tag_changes: z.record(z.string(), z.array(z.string())),
-
-  // Unused
-  features: z.array(z.never()), // NOTE: I am pretty sure those properties are not in use ATM
-  reviewed_features: z.array(z.never()),
 })
 
 const Feature = z.strictObject({
