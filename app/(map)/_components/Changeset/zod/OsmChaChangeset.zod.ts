@@ -42,7 +42,7 @@ export const OsmChaChangeset = z.object({
     is_suspect: z.boolean(),
     harmful: z.boolean().nullable(),
     checked: z.boolean(),
-    check_date: z.string().nullable(),
+    check_date: z.coerce.date().nullable(),
     metadata: z.object({
       host: z.string().optional(),
       changesets_count: z.number().optional(),

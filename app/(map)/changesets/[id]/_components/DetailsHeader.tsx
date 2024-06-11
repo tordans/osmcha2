@@ -1,11 +1,14 @@
 'use client'
+import { BadgeCheckedBy } from '@app/(map)/_components/Changeset/BadgeCheckedBy'
+import { BadgesReasons } from '@app/(map)/_components/Changeset/BadgesReasons'
+import { BadgesTags } from '@app/(map)/_components/Changeset/BadgesTags'
 import { ChangesetDescription } from '@app/(map)/_components/Changeset/ChangesetDescription'
 import { RelativeTime } from '@app/(map)/_components/Changeset/RelativeTime'
 import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 import { TOsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
 import { TOsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 import { longerEditorShortname } from '@app/(map)/_components/utils/editorShortname'
-import { Badge, BadgeButton } from '@components/core/badge'
+import { BadgeButton } from '@components/core/badge'
 import { Button } from '@components/core/button'
 import { Divider } from '@components/core/divider'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
@@ -37,11 +40,8 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
         <div className="flex flex-col gap-1">
           <ChangesetDescription changeset={osmChaChangeset} />
 
-          <div className="space-x-1">
-            {osmChaChangeset.properties.reasons?.map((reason: { id: number; name: string }) => {
-              return <Badge key={reason.id}>{reason.name}</Badge>
-            })}
-          </div>
+          <BadgesReasons reasons={osmChaChangeset.properties.tags} />
+          <BadgesTags tags={osmChaChangeset.properties.tags} />
 
           <div className="flex items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
             <p>
@@ -80,18 +80,28 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
       </div>
 
       <div className="mt-2 flex gap-2">
-        <Button outline className="group">
-          <HandThumbUpIcon
-            className="inline size-4 text-zinc-600 group-hover:text-green-500"
-            aria-label="Mark changesets as good"
+        {osmChaChangeset.properties.checked ? (
+          <BadgeCheckedBy
+            checkDate={osmChaChangeset.properties.check_date}
+            harmful={osmChaChangeset.properties.harmful}
+            user={osmChaChangeset.properties.check_user}
           />
-        </Button>
-        <Button outline className="group">
-          <HandThumbDownIcon
-            className="inline size-4 text-zinc-600 group-hover:text-orange-500"
-            aria-label="Mark changesets as harmful"
-          />
-        </Button>
+        ) : (
+          <>
+            <Button outline className="group">
+              <HandThumbUpIcon
+                className="inline size-4 text-zinc-600 group-hover:text-green-500"
+                aria-label="Mark changesets as good"
+              />
+            </Button>
+            <Button outline className="group">
+              <HandThumbDownIcon
+                className="inline size-4 text-zinc-600 group-hover:text-orange-500"
+                aria-label="Mark changesets as harmful"
+              />
+            </Button>
+          </>
+        )}
         <DropdownOpenChangeset changeset={osmChaChangeset} />
         <DropdownOpenUser changeset={osmChaChangeset} />
       </div>

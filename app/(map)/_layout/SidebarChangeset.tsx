@@ -1,17 +1,17 @@
 'use client'
-import { Badge } from '@components/core/badge'
-import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { BadgeCheckedBy } from '../_components/Changeset/BadgeCheckedBy'
+import { BadgesReasons } from '../_components/Changeset/BadgesReasons'
+import { BadgesTags } from '../_components/Changeset/BadgesTags'
 import { ChangesetDescription } from '../_components/Changeset/ChangesetDescription'
 import { ChangesetCommentIndicator } from '../_components/Changeset/CommentIndicator'
 import { RelativeTime } from '../_components/Changeset/RelativeTime'
 import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
 import { editorShortname } from '../_components/utils/editorShortname'
 import { DebugDataHelperDialog } from './DebugDataHelperDialog'
-import { localDateTimeWithRelative } from './_utils/localDateTime'
 
 type Props = {
   changeset: TOsmChaChangesets['features'][number]
@@ -43,24 +43,18 @@ export const SidebarChangeset = ({ changeset }: Props) => {
             <ChangesetDescription changeset={changeset} />
 
             {changeset.properties.checked ? (
-              <div
-                title={`Checked on ${localDateTimeWithRelative(changeset.properties.check_date)}`}
-              >
-                <Badge color={changeset.properties.harmful ? 'orange' : 'green'}>
-                  {changeset.properties.harmful ? (
-                    <HandThumbDownIcon className="size-4" />
-                  ) : (
-                    <HandThumbUpIcon className="size-4" />
-                  )}{' '}
-                  by {changeset.properties.check_user}
-                </Badge>
-              </div>
+              <BadgeCheckedBy
+                checkDate={changeset.properties.check_date}
+                harmful={changeset.properties.harmful}
+                user={changeset.properties.check_user}
+              />
             ) : (
-              <div className="space-x-1">
-                {changeset.properties.reasons?.map((reason: { id: number; name: string }) => {
-                  return <Badge key={reason.id}>{reason.name}</Badge>
-                })}
-              </div>
+              <BadgesReasons reasons={changeset.properties.tags} />
+            )}
+
+            {/* We hide the whole box when id=9/"Resolved" is present because then the tags don't add too much information to the overview list. All data is visible in the <DetailsHeader> */}
+            {!changeset.properties.tags.some((t) => t.id === 9) && (
+              <BadgesTags tags={changeset.properties.tags} />
             )}
           </div>
           <ChevronRightIcon
