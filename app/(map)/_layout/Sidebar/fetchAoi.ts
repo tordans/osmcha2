@@ -1,4 +1,4 @@
-import { OsmChaAoi, TOsmChaAoi } from '../../_components/Changeset/zod/OsmChaAoi.zod'
+import { OsmChaAoi } from '../../_components/Changeset/zod/OsmChaAoi.zod'
 import { writeDebugFile } from '../../_components/Changeset/zod/writeDebugFile'
 import { ParamAoi } from '../ParamAoi.zod'
 import { searchParamsCache } from '../searchParams'
@@ -6,20 +6,19 @@ import { searchParamsCache } from '../searchParams'
 export const fetchAoi = async () => {
   const aoi = ParamAoi.parse(searchParamsCache.get('aoi'))
 
-  let osmChaAoi: TOsmChaAoi | undefined = undefined
   if (aoi) {
-    const osmChaAoiApiUrl = `https://osmcha.org/api/v1/aoi/${aoi}`
-    console.info('Fetching', osmChaAoiApiUrl)
-    const rawOsmChaAoiResponse = await fetch(osmChaAoiApiUrl, {
+    const apiUrl = `https://osmcha.org/api/v1/aoi/${aoi}`
+    console.info('Fetching', apiUrl)
+    const rawResponse = await fetch(apiUrl, {
       headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
     })
-    const OsmChaAoiRaw = await rawOsmChaAoiResponse.json()
+    const response = await rawResponse.json()
     writeDebugFile({
       parser: OsmChaAoi,
-      data: OsmChaAoiRaw,
+      data: response,
       filename: 'OsmChaAoiRaw',
     })
-    osmChaAoi = OsmChaAoi.parse(OsmChaAoiRaw)
+    return OsmChaAoi.parse(response)
   }
-  return osmChaAoi
+  return undefined
 }
