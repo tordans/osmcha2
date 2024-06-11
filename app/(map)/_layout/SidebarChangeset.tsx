@@ -5,6 +5,7 @@ import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { ChangesetDescription } from '../_components/Changeset/ChangesetDescription'
 import { ChangesetCommentIndicator } from '../_components/Changeset/CommentIndicator'
 import { RelativeTime } from '../_components/Changeset/RelativeTime'
 import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
@@ -28,26 +29,26 @@ export const SidebarChangeset = ({ changeset }: Props) => {
         )}
       >
         <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
-          <span>
+          <div className="flex items-center gap-1">
             <RelativeTime createdAt={changeset.properties.date} />
             <ChangesetCommentIndicator commentCount={changeset.properties.comments_count} />
-          </span>
+          </div>
           <span>{editorShortname(changeset.properties.editor)}</span>
         </div>
         <div className="flex w-full items-center justify-between gap-1 text-base">
           <div className="flex flex-col gap-1">
-            <div className="hyphens-auto leading-tight">
-              <strong>{changeset.properties.user}:</strong> {changeset.properties.comment}
-            </div>
+            <ChangesetDescription changeset={changeset} />
 
             {changeset.properties.checked ? (
               <div>
-                {changeset.properties.harmful ? (
-                  <HandThumbDownIcon className="size-4" />
-                ) : (
-                  <HandThumbUpIcon className="size-4" />
-                )}{' '}
-                by {changeset.properties.check_user}
+                <Badge color={changeset.properties.harmful ? 'orange' : 'green'}>
+                  {changeset.properties.harmful ? (
+                    <HandThumbDownIcon className="size-4" />
+                  ) : (
+                    <HandThumbUpIcon className="size-4" />
+                  )}{' '}
+                  by {changeset.properties.check_user}
+                </Badge>
               </div>
             ) : (
               <div className="space-x-1">

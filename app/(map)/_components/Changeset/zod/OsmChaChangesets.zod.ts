@@ -34,7 +34,12 @@ const Properties = z.strictObject({
   source: z.string(),
   editor: z.string(),
   imagery_used: z.string(),
-  metadata: z.record(z.string(), z.union([z.string(), z.number()])),
+  metadata: z.intersection(
+    z.record(z.union([z.string(), z.number()])),
+    z.object({
+      locale: z.string().optional(),
+    }),
+  ),
 
   // Tags
   tags: z.array(IdNameObject),
