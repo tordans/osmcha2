@@ -1,5 +1,5 @@
+import { writeDebugFile } from '@app/(map)/_components/utils/writeDebugFile'
 import { OsmChaChangesets } from '@components/zod/OsmChaChangesets.zod'
-import { writeDebugFile } from '@components/zod/writeDebugFile/writeDebugFile'
 import { ParamAoi } from '../ParamAoi.zod'
 import { ParamFilters } from '../ParamFilters.zod'
 import { ParamOrderBy } from '../ParamOrderBy.zod'

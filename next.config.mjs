@@ -48,13 +48,13 @@ const nextConfig = {
     },
   ],
   // ABOUT: components/zod/writeDebugFile/README.md
-  webpack(config) {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-    }
-    return config
-  },
+  // webpack(config) {
+  //   config.resolve.fallback = {
+  //     ...config.resolve.fallback,
+  //     fs: false,
+  //   }
+  //   return config
+  // },
 }
 
 export default nextConfig

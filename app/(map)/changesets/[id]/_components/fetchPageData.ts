@@ -1,3 +1,4 @@
+import { writeDebugFile } from '@app/(map)/_components/utils/writeDebugFile'
 import { realChangesetParser } from '@components/_lib/real-changesets-parser'
 import { OsmChaChangeset } from '@components/zod/OsmChaChangeset.zod'
 import { OsmChaRealChangeset } from '@components/zod/OsmChaRealChangeset.zod'
@@ -5,7 +6,6 @@ import { OsmChaRealChangesetGeojson } from '@components/zod/OsmChaRealChangesetG
 import { OsmChaUser } from '@components/zod/OsmChaUser.zod'
 import { OsmOrgChangeset } from '@components/zod/OsmOrgChangeset.zod'
 import { OsmOrgUser } from '@components/zod/OsmOrgUser.zod'
-import { writeDebugFile } from '@components/zod/writeDebugFile/writeDebugFile'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {
