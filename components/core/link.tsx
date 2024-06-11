@@ -3,7 +3,7 @@ import NextLink, { type LinkProps } from 'next/link'
 import React from 'react'
 
 export const Link = React.forwardRef(function Link<R extends string>(
-  props: LinkProps<R> & React.ComponentPropsWithoutRef<'a'>,
+  props: LinkProps<R> & Omit<React.ComponentPropsWithoutRef<'a'>, 'href'>,
   ref: React.ForwardedRef<HTMLAnchorElement>,
 ) {
   return (
