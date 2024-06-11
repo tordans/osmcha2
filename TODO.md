@@ -146,3 +146,15 @@ export const useIsUserListed = (
 };
 
 ```
+
+### Form: Query for suspicion reasons, tags
+
+```
+https://osmcha.org/api/v1/suspicion-reasons/?page_size=200
+https://osmcha.org/api/v1/tags/?page_size=200
+https://osmcha.org/api/v1/mapping-team/
+https://osmcha.org/api/v1/blacklisted-users/
+
+```
+
+We will need this, once we build the filter form.
