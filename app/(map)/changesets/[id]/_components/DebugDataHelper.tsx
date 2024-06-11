@@ -33,7 +33,12 @@ export const DebugDataHelper = ({
   const [show, setShow] = useState(false)
 
   return (
-    <div className="fixed right-[50%] top-1 z-10 flex max-h-[calc(100svh_-_1rem)] max-w-prose flex-col overflow-y-auto rounded border border-white/70 bg-pink-300 px-1 py-0.5 text-xs shadow-xl print:hidden">
+    <div
+      className={clsx(
+        'fixed right-[50%] top-1 z-10 flex max-h-[calc(100svh_-_1rem)] max-w-prose flex-col overflow-y-auto border border-white/70 bg-pink-300 text-xs shadow-xl print:hidden',
+        show ? 'rounded px-1 py-0.5' : 'rounded-full p-0.5',
+      )}
+    >
       <div className="flex justify-end">
         <button
           onClick={() => setShow((prev) => !prev)}
