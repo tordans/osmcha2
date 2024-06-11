@@ -82,3 +82,12 @@ this.map.queryRenderedFeatures([x1y1, x2y2], {
         ].concat(Object.keys(this.relationMembersLayers)),
       })
 ```
+
+## Force Login
+
+- Use middleware? (But preserve URL including params)
+- Some other way
+
+## Show status message
+
+https://raw.githubusercontent.com/osmcha/osmcha-frontend/status/status.json
