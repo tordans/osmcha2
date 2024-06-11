@@ -4,9 +4,8 @@ import { OsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod
 import { OsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
 import { OsmOrgChangeset } from '@app/(map)/_components/Changeset/zod/OsmOrgChangeset.zod'
 import { OsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
+import { writeDebugFile } from '@app/(map)/_components/Changeset/zod/writeDebugFile'
 import { realChangesetParser } from '@components/_lib/real-changesets-parser'
-import fs from 'fs'
-import path from 'path'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {
@@ -31,26 +30,22 @@ export const fetchChangesetData = async (changesetId: string) => {
   //  One idea was to use useFetchErrorsActions so set an error message that we show on the UI whenever this
   //  However, we need to work around the client vs server components issue first.
   const osmChaRealchangesetRaw = await rawOsmChaRealChangesetResponse.json()
-  try {
-    OsmChaRealChangeset.parse(osmChaRealchangesetRaw)
-  } catch (error) {
-    const file = path.join(__dirname, '../../../../../../tmp', 'osmChaRealchangesetRaw.json')
-    console.info('ERROR, write debugging at ', file)
-    fs.writeFileSync(file, JSON.stringify(osmChaRealchangesetRaw, undefined, 2))
-  }
+  writeDebugFile({
+    parser: OsmChaRealChangeset,
+    data: osmChaRealchangesetRaw,
+    filename: 'osmChaRealchangesetRaw',
+  })
   const osmChaRealChangeset = OsmChaRealChangeset.parse(osmChaRealchangesetRaw)
 
   // TODO: Figure out if we need the `osmChaRealChangeset` at all; maybe we can use the GeoJson version only? But it does not have the metadata. However it does cleanup some entries that are blank (AFAIK notes that are changed as part of a way)
   // Note: ATM we need it for the bbox in the Map.
   const osmChaRealChangesetGeojsonRaw = realChangesetParser(osmChaRealChangeset)
   // `OsmChaRealChangesetGeojson` is not perfect yet and written writ strict `strictObject` so it throws errors. But the errors are not that helpfull, so to debug, there is this console log… — TODO: Find a nicer way to do this.
-  try {
-    OsmChaRealChangesetGeojson.parse(osmChaRealChangesetGeojsonRaw)
-  } catch (error) {
-    const file = path.join(__dirname, '../../../../../../tmp', 'osmChaRealChangesetGeojsonRaw.json')
-    console.info('ERROR, write debugging at ', file)
-    fs.writeFileSync(file, JSON.stringify(osmChaRealChangesetGeojsonRaw, undefined, 2))
-  }
+  writeDebugFile({
+    parser: OsmChaRealChangesetGeojson,
+    data: osmChaRealChangesetGeojsonRaw,
+    filename: 'osmChaRealChangesetGeojsonRaw',
+  })
   const osmChaRealChangesetGeojson = OsmChaRealChangesetGeojson.parse(osmChaRealChangesetGeojsonRaw)
 
   const osmOrgChangeset = OsmOrgChangeset.parse(await rawOsmOrgChangesetResponse.json())
