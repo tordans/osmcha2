@@ -5,7 +5,7 @@ import { OsmChaRealChangesetGeojson } from '@components/zod/OsmChaRealChangesetG
 import { OsmChaUser } from '@components/zod/OsmChaUser.zod'
 import { OsmOrgChangeset } from '@components/zod/OsmOrgChangeset.zod'
 import { OsmOrgUser } from '@components/zod/OsmOrgUser.zod'
-import { writeDebugFile } from '@components/zod/writeDebugFile'
+import { writeDebugFile } from '@components/zod/writeDebugFile/writeDebugFile'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {

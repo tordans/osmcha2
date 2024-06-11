@@ -47,6 +47,14 @@ const nextConfig = {
       permanent: true,
     },
   ],
+  // ABOUT: components/zod/writeDebugFile/README.md
+  webpack(config) {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    }
+    return config
+  },
 }
 
 export default nextConfig
