@@ -5,10 +5,16 @@ import { TOsmChaRealChangeset } from '@app/(map)/_components/Changeset/zod/OsmCh
 import { TOsmChaRealChangesetGeojson } from '@app/(map)/_components/Changeset/zod/OsmChaRealChangesetGeojson.zod'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useState } from 'react'
-import { AttributionControl, MapProvider, Map as ReactMapGlMap } from 'react-map-gl/maplibre'
+import {
+  AttributionControl,
+  MapLayerMouseEvent,
+  MapProvider,
+  Map as ReactMapGlMap,
+} from 'react-map-gl/maplibre'
 import { MapStyleControl } from './Map/MapStyleControl'
 import { SourceLayerBounds } from './Map/SourceLayerBounds'
 import { SourceLayerChanges } from './Map/SourceLayerChanges'
+import { layers } from './Map/SourceLayerChanges/layers.const'
 import { getChangesetBounds } from './Map/utils/getChangesetBounds'
 import { mapStyles, type TMapStyle } from './Map/utils/mapStyles'
 
@@ -38,6 +44,8 @@ export const Map = ({
         // https://cloud.maptiler.com/maps/dataviz/, Acccount tordans private
         mapStyle={mapStyles[mapStyle].url}
         attributionControl={false}
+        onClick={(e: MapLayerMouseEvent) => console.log(e.features)}
+        interactiveLayerIds={Object.keys(layers)}
       >
         <SourceLayerBounds bounds={bounds} />
         <SourceLayerChanges osmChaRealChangesetGeojson={osmChaRealChangesetGeojson} />
