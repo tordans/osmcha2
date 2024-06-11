@@ -11,6 +11,10 @@ import { FunnelIcon, PlusIcon, UserIcon } from '@heroicons/react/16/solid'
 import { InformationCircleIcon } from '@heroicons/react/20/solid'
 
 export const NavigationSidebar = () => {
+  // TODO: Fetch Userdata, use avatar logo instead of <UserIcon/>
+  // Use https://osmcha.org/api/v1/users/ user.avatar
+  // const { osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
+
   return (
     <Sidebar>
       <SidebarBody>
@@ -22,7 +26,6 @@ export const NavigationSidebar = () => {
           <SidebarItem href="/">Recent</SidebarItem>
           {/* TODO: Change uids to current user */}
           {/* TODO: Click does not fetch new data */}
-
           <SidebarItem href={`/?filters={"uids":[{"label":"11881","value":"11881"}]}`}>
             My Changesets
           </SidebarItem>
