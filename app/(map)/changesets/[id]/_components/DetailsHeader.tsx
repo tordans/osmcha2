@@ -1,4 +1,5 @@
 'use client'
+import { ChangesetDescription } from '@app/(map)/_components/Changeset/ChangesetDescription'
 import { RelativeTime } from '@app/(map)/_components/Changeset/RelativeTime'
 import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaChangeset.zod'
 import { TOsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
@@ -34,10 +35,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
 
       <div className="mt-2 flex items-center justify-between gap-1 text-base">
         <div className="flex flex-col gap-1">
-          <div className="hyphens-auto leading-tight">
-            <strong className="font-semibold">{osmChaChangeset.properties.user}:</strong>{' '}
-            {osmChaChangeset.properties.comment}
-          </div>
+          <ChangesetDescription changeset={osmChaChangeset} />
 
           <div className="space-x-1">
             {osmChaChangeset.properties.reasons?.map((reason: { id: number; name: string }) => {
