@@ -20,14 +20,15 @@ export const NavigationSidebar = () => {
             <span>Changesets</span>
           </SidebarHeader>
           <SidebarItem href="/">Recent</SidebarItem>
-          <SidebarItem
-            href={`?filters={"uids":[{"label":"11881","value":"11881"}],"date__gte":[{"label":"","value":""}]}`}
-          >
+          {/* TODO: Change uids to current user */}
+          {/* TODO: Click does not fetch new data */}
+
+          <SidebarItem href={`/?filters={"uids":[{"label":"11881","value":"11881"}]}`}>
             My Changesets
           </SidebarItem>
-          <SidebarItem
-            href={`filters={"checked_by":[{"label":"tordans","value":"tordans"}],"date__gte":[{"label":"","value":""}]}`}
-          >
+          {/* TODO: Change uids to current user */}
+          {/* TODO: Click does not fetch new data */}
+          <SidebarItem href={`/?filters={"checked_by":[{"label":"tordans","value":"tordans"}]}`}>
             My Reviews
           </SidebarItem>
           <SidebarSpacer />
