@@ -15,7 +15,7 @@ export default async function HomePage({
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="flex-1 overflow-y-auto p-10">
+      <div className="max-h-full flex-1 overflow-y-auto p-10">
         <h1 className="flex items-center gap-1 text-4xl font-thin">
           <ArrowLeftIcon className="size-10" /> Start by selecting a changeset…
         </h1>
