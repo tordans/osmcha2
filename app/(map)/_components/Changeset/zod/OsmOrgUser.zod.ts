@@ -3,7 +3,7 @@ import { z } from 'zod'
 const User = z.object({
   id: z.number(),
   display_name: z.string(),
-  account_created: z.string(),
+  account_created: z.coerce.date(),
   description: z.string(),
   contributor_terms: z.object({
     agreed: z.boolean(),

@@ -25,7 +25,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
       <div className="w-full">
         <h1 className="text-lg font-bold">Changeset #{osmChaChangeset.id}</h1>
         <p className="text-xs text-zinc-500">
-          <RelativeTime createdAt={osmChaChangeset.properties.date} /> |{' '}
+          <RelativeTime date={osmChaChangeset.properties.date} /> |{' '}
           {longerEditorShortname(
             osmChaChangeset.properties.editor,
             osmChaChangeset.properties.metadata.host,
@@ -45,7 +45,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
 
           <div className="flex items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
             <p>
-              User created <RelativeTime createdAt={osmOrgUser.user.account_created} /> |{' '}
+              User created <RelativeTime date={osmOrgUser.user.account_created} /> |{' '}
               {osmOrgUser.user.changesets.count.toLocaleString()} edits
             </p>
             <div title="Number of changesets of this user that where marked bad/good in OSMCha before">

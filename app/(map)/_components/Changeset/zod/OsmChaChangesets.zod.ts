@@ -27,7 +27,7 @@ const Properties = z.strictObject({
   // Meta
   uid: z.string(),
   user: z.string(),
-  date: z.string(),
+  date: z.coerce.date(),
   area: z.number(),
   comment: z.string(),
   comments_count: z.number(),

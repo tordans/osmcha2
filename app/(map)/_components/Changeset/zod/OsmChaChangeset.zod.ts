@@ -32,7 +32,7 @@ export const OsmChaChangeset = z.object({
     comments_count: z.number(),
     source: z.string(),
     imagery_used: z.string(),
-    date: z.string(),
+    date: z.coerce.date(),
     reviewed_features: z.array(z.record(z.union([z.string(), z.number()]))),
     tag_changes: z.record(z.array(z.string())),
     create: z.number(),

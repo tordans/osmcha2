@@ -1,6 +1,7 @@
+import { localDateTime } from '@app/(map)/_layout/_utils/localDateTime'
 import moment from 'moment'
 
-export const relativeTime = (input: string) => {
+export const relativeTime = (input: Date | string) => {
   moment.updateLocale('en', {
     relativeTime: {
       future: 'in %s',
@@ -24,12 +25,12 @@ export const relativeTime = (input: string) => {
   return moment(input).fromNow()
 }
 
-type Props = { createdAt: string } // TODO TYPES
+type Props = { date: Date }
 
-export const RelativeTime = ({ createdAt }: Props) => {
+export const RelativeTime = ({ date }: Props) => {
   return (
-    <time title={createdAt} className="cursor-help">
-      {relativeTime(createdAt)}
+    <time title={`${localDateTime(date)}`} className="cursor-help">
+      {relativeTime(date)}
     </time>
   )
 }
