@@ -36,7 +36,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
           <span>{editorShortname(changeset.properties.editor)}</span>
         </div>
         <div className="flex w-full items-center justify-between gap-1 text-base">
-          <div className="flex flex-col gap-1">
+          <div className="flex w-full flex-col gap-1">
             <ChangesetDescription changeset={changeset} />
 
             {changeset.properties.checked ? (
