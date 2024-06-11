@@ -8,30 +8,41 @@ const Polygon = z.strictObject({
   coordinates: z.array(z.array(Coordinate)),
 })
 
+const IdNameObject = z.strictObject({ id: z.number(), name: z.string() })
+
 const Properties = z.strictObject({
-  area: z.number(),
-  check_date: z.coerce.date().nullable(),
-  check_user: z.nullable(z.string()),
-  checked: z.boolean(),
-  comment: z.string(),
-  comments_count: z.number(),
-  create: z.number(),
-  date: z.string(),
-  delete: z.number(),
-  editor: z.string(),
-  features: z.array(z.unknown()),
-  harmful: z.boolean(),
-  imagery_used: z.string(),
+  // Review
   is_suspect: z.boolean(),
-  metadata: z.record(z.string(), z.union([z.string(), z.number()])),
+  checked: z.boolean(),
+  check_user: z.nullable(z.string()),
+  check_date: z.coerce.date().nullable(),
+  harmful: z.boolean(),
+  reasons: z.array(IdNameObject),
+
+  // Modifications
+  create: z.number(),
   modify: z.number(),
-  reasons: z.array(z.unknown()),
-  reviewed_features: z.array(z.unknown()),
-  source: z.string(),
-  tag_changes: z.record(z.string(), z.array(z.string())),
-  tags: z.array(z.strictObject({ id: z.number(), name: z.string() })),
+  delete: z.number(),
+
+  // Meta
   uid: z.string(),
   user: z.string(),
+  date: z.string(),
+  area: z.number(),
+  comment: z.string(),
+  comments_count: z.number(),
+  source: z.string(),
+  editor: z.string(),
+  imagery_used: z.string(),
+  metadata: z.record(z.string(), z.union([z.string(), z.number()])),
+
+  // Tags
+  tags: z.array(IdNameObject),
+  tag_changes: z.record(z.string(), z.array(z.string())),
+
+  // Unused
+  features: z.array(z.never()), // NOTE: I am pretty sure those properties are not in use ATM
+  reviewed_features: z.array(z.never()),
 })
 
 const Feature = z.strictObject({
