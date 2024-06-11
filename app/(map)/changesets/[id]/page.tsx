@@ -1,19 +1,22 @@
-import { Suspense } from 'react'
+import { SearchParams } from '@app/(map)/_components/types'
+import { searchParamsCache } from '@app/(map)/_layout/searchParams'
 import { DebugDataHelper } from './_components/DebugDataHelper'
 import { Details } from './_components/Details'
 import { DetailsHeader } from './_components/DetailsHeader'
 import { Map } from './_components/Map'
 import { fetchChangesetData, fetchUserData } from './_components/fetchPageData'
 
-type Props = { params: { id: string } }
+type Props = { params: { id: string } } & SearchParams
 
-export default async function ChangesetPage({ params }: Props) {
+export default async function ChangesetPage({ params, searchParams }: Props) {
+  const { filters, orderBy } = searchParamsCache.parse(searchParams)
+
   const { osmChaChangeset, osmChaRealChangeset, osmChaRealChangesetGeojson, osmOrgChangeset } =
     await fetchChangesetData(params.id)
   const { osmOrgUser, osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <>
       <div className="flex h-full">
         <div className="h-full grow">
           <Map
@@ -43,6 +46,6 @@ export default async function ChangesetPage({ params }: Props) {
         osmChaUser={osmChaUser}
         osmOrgUser={osmOrgUser}
       />
-    </Suspense>
+    </>
   )
 }

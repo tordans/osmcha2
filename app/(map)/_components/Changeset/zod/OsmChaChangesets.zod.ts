@@ -11,7 +11,12 @@ const Polygon = z.object({
 const Properties = z.object({
   check_user: z.nullable(z.string()),
   reasons: z.array(z.unknown()),
-  tags: z.array(z.string()),
+  tags: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+    }),
+  ),
   features: z.array(z.unknown()),
   user: z.string(),
   uid: z.string(),
@@ -23,7 +28,7 @@ const Properties = z.object({
   date: z.string(),
   reviewed_features: z.array(z.unknown()),
   checked: z.boolean(),
-  check_date: z.date().nullable(),
+  check_date: z.coerce.date().nullable(),
 })
 
 const Feature = z.object({
