@@ -16,7 +16,7 @@ const Properties = z.strictObject({
   checked: z.boolean(),
   check_user: z.nullable(z.string()),
   check_date: z.coerce.date().nullable(),
-  harmful: z.boolean(),
+  harmful: z.boolean().nullable(),
   reasons: z.array(IdNameObject),
 
   // Modifications

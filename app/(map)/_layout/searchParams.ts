@@ -10,8 +10,9 @@ import { orderByOptions } from './ParamOrderBy.zod'
 
 export const searchParamsCache = createSearchParamsCache({
   // List your search param keys and associated parsers here:
-  selected: parseAsString.withDefault(''),
+  selected: parseAsString,
   filters: parseAsJson<any>().withDefault({}),
+  aoi: parseAsString,
   orderBy: parseAsStringLiteral(orderByOptions.map((o) => o.value)),
   page: parseAsString.withDefault('1'),
 })

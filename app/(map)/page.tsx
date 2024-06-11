@@ -1,8 +1,9 @@
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { Suspense } from 'react'
+import { ParamAoi } from './_layout/ParamAoi.zod'
 import { ParamFilters } from './_layout/ParamFilters.zod'
 import { ParamOrderBy } from './_layout/ParamOrderBy.zod'
-import { ParamPage } from './_layout/ParamPage.zod copy'
+import { ParamPage } from './_layout/ParamPage.zod'
 import { searchParamsCache } from './_layout/searchParams'
 
 export default async function HomePage({
@@ -10,7 +11,7 @@ export default async function HomePage({
 }: {
   searchParams: Record<string, string | string[] | undefined>
 }) {
-  const { filters, orderBy, page } = searchParamsCache.parse(searchParams)
+  const { filters, aoi, orderBy, page } = searchParamsCache.parse(searchParams)
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -31,6 +32,10 @@ export default async function HomePage({
           <pre>{JSON.stringify(page, undefined, 2)}</pre>
           <p>Page Parsed</p>
           <pre>{JSON.stringify(ParamPage.parse(page), undefined, 2)}</pre>
+          <p>AOI Raw</p>
+          <pre>{JSON.stringify(aoi, undefined, 2)}</pre>
+          <p>AOI Parsed</p>
+          <pre>{JSON.stringify(ParamAoi.parse(aoi), undefined, 2)}</pre>
         </div>
       </div>
     </Suspense>

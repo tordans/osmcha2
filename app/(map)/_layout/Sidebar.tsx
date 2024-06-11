@@ -1,8 +1,9 @@
 import { OsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
 import { writeDebugFile } from '../_components/Changeset/zod/writeDebugFile'
+import { ParamAoi } from './ParamAoi.zod'
 import { ParamFilters } from './ParamFilters.zod'
 import { ParamOrderBy } from './ParamOrderBy.zod'
-import { ParamPage } from './ParamPage.zod copy'
+import { ParamPage } from './ParamPage.zod'
 import { SidebarChangeset } from './SidebarChangeset'
 import { searchParamsCache } from './searchParams'
 
@@ -10,8 +11,11 @@ export const Sidebar = async () => {
   const filters = ParamFilters.parse(searchParamsCache.get('filters'))
   const orderBy = ParamOrderBy.parse(searchParamsCache.get('orderBy'))
   const page = ParamPage.parse(searchParamsCache.get('page')) || 1
+  const aoi = ParamAoi.parse(searchParamsCache.get('aoi'))
 
-  const apiUrl = new URL('https://osmcha.org/api/v1/changesets/')
+  const apiUrl = aoi
+    ? new URL(`https://osmcha.org/api/v1/aoi/${aoi}/changesets/`)
+    : new URL('https://osmcha.org/api/v1/changesets/')
   apiUrl.searchParams.set('page', String(page))
   apiUrl.searchParams.set('page_size', '25')
   orderBy && apiUrl.searchParams.set('orderBy', orderBy)
