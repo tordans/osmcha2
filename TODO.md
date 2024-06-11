@@ -91,3 +91,58 @@ this.map.queryRenderedFeatures([x1y1, x2y2], {
 ## Show status message
 
 https://raw.githubusercontent.com/osmcha/osmcha-frontend/status/status.json
+
+### Trust indicator
+
+```
+{isInTrustedlist && (
+  <svg className="icon pl3 w18 h18 color-yellow inline-block align-middle">
+  <use xlinkHref="#icon-star" />
+  </svg>
+)}
+{isInWatchlist && (
+  <svg className="icon pl3 w18 h18 color-red inline-block align-middle">
+  <use xlinkHref="#icon-alert" />
+  </svg>
+)}
+```
+
+```
+const [isInTrustedlist, isInWatchlist] = useIsUserListed(
+  user,
+  properties.get('uid'),
+  trustedlist,
+  watchlisted,
+)
+```
+
+```
+export const useIsUserListed = (
+  username,
+  uid,
+  trustedlist,
+  watchlist
+) => {
+  const [isInTrustedlist, setIsInTrustedlist] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+
+  useEffect(() => {
+    try {
+      setIsInTrustedlist(trustedlist.indexOf(username) !== -1);
+    } catch (e) {
+      setIsInTrustedlist(false);
+    }
+    try {
+      setIsInWatchlist(
+        watchlist.map((user) => user.get("uid")).indexOf(uid) !==
+          -1
+      );
+    } catch (e) {
+      setIsInWatchlist(false);
+    }
+  }, [username, uid, watchlist, trustedlist]);
+
+  return [isInTrustedlist, isInWatchlist];
+};
+
+```
