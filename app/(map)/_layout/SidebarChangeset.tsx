@@ -4,7 +4,7 @@ import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { ChangesetCommentIndicator } from '../_components/Changeset/CommentIndicator'
 import { RelativeTime } from '../_components/Changeset/RelativeTime'
 import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
@@ -16,11 +16,12 @@ type Props = { changeset: TOsmChaChangesets['features'][number] }
 export const SidebarChangeset = ({ changeset }: Props) => {
   const currentPath = usePathname()
   const current = currentPath === `/changesets/${changeset.id}`
+  const searchParams = useSearchParams()
 
   return (
     <li key={changeset.id} className="relative">
       <Link
-        href={`/changesets/${changeset.id}`}
+        href={`/changesets/${changeset.id}?${searchParams.toString()}`}
         className={clsx(
           'group/item relative flex flex-col items-start justify-between gap-1 break-words rounded py-3 pl-3 pr-0',
           current ? 'bg-blue-50' : 'hover:bg-gray-50',
