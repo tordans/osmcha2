@@ -1,12 +1,14 @@
 import { z } from 'zod'
 
-const LabelValue = z.object({ label: z.string(), value: z.string() })
+const LabelValueString = z.object({ label: z.string(), value: z.string() })
+const LabelValueBoolean = z.object({ label: z.string(), value: z.boolean() })
 
 export const ParamFilters = z.object({
-  uids: z.array(LabelValue).optional(), // UserIDs
-  users: z.array(LabelValue).optional(),
-  checked_by: z.array(LabelValue).optional(),
-  date__gte: z.array(LabelValue).optional(),
+  uids: z.array(LabelValueString).optional(), // UserIDs
+  users: z.array(LabelValueString).optional(),
+  checked_by: z.array(LabelValueString).optional(),
+  date__gte: z.array(LabelValueString).optional(),
+  harmful: z.array(LabelValueBoolean).optional(),
 })
 
 // My Changesets:

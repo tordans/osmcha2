@@ -1,3 +1,3 @@
 import { z } from 'zod'
 
-export const ParamAoi = z.string().optional()
+export const ParamAoi = z.string().nullable()

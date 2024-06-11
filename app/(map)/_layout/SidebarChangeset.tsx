@@ -10,9 +10,12 @@ import { ChangesetCommentIndicator } from '../_components/Changeset/CommentIndic
 import { RelativeTime } from '../_components/Changeset/RelativeTime'
 import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
 import { editorShortname } from '../_components/utils/editorShortname'
-import { SidebarChangesetDebugDataHelper } from './SidebarChangesetDebugDataHelper'
+import { DebugDataHelperDialog } from './DebugDataHelperDialog'
+import { localDateTimeWithRelative } from './_utils/localDateTime'
 
-type Props = { changeset: TOsmChaChangesets['features'][number] }
+type Props = {
+  changeset: TOsmChaChangesets['features'][number]
+}
 
 export const SidebarChangeset = ({ changeset }: Props) => {
   const currentPath = usePathname()
@@ -29,18 +32,20 @@ export const SidebarChangeset = ({ changeset }: Props) => {
         )}
       >
         <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
-          <div className="flex items-center gap-1">
-            <RelativeTime createdAt={changeset.properties.date} />
+          <RelativeTime date={changeset.properties.date} />
+          <div className="flex items-center gap-2">
+            {editorShortname(changeset.properties.editor)}
             <ChangesetCommentIndicator commentCount={changeset.properties.comments_count} />
           </div>
-          <span>{editorShortname(changeset.properties.editor)}</span>
         </div>
         <div className="flex w-full items-center justify-between gap-1 text-base">
           <div className="flex w-full flex-col gap-1">
             <ChangesetDescription changeset={changeset} />
 
             {changeset.properties.checked ? (
-              <div>
+              <div
+                title={`Checked on ${localDateTimeWithRelative(changeset.properties.check_date)}`}
+              >
                 <Badge color={changeset.properties.harmful ? 'orange' : 'green'}>
                   {changeset.properties.harmful ? (
                     <HandThumbDownIcon className="size-4" />
@@ -69,7 +74,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
           />
         </div>
       </Link>
-      <SidebarChangesetDebugDataHelper osmChaChangeset={changeset} />
+      <DebugDataHelperDialog data={changeset} title="OSMCha Changeset from OMSCha Changeset List" />
     </li>
   )
 }

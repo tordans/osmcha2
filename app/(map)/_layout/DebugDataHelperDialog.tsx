@@ -2,23 +2,17 @@
 import { useState } from 'react'
 // https://github.com/YYsuni/react18-json-view
 import { Button } from '@components/core/button'
-import {
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogDescription,
-  DialogTitle,
-} from '@components/core/dialog'
+import { Dialog, DialogActions, DialogBody, DialogTitle } from '@components/core/dialog'
 import { MagnifyingGlassIcon } from '@heroicons/react/16/solid'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
-import { TOsmChaChangesets } from '../_components/Changeset/zod/OsmChaChangesets.zod'
 
 type Props = {
-  osmChaChangeset?: TOsmChaChangesets['features'][number]
+  title: string
+  data: {} | undefined
 }
 
-export const SidebarChangesetDebugDataHelper = ({ osmChaChangeset }: Props) => {
+export const DebugDataHelperDialog = ({ title, data }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -32,12 +26,9 @@ export const SidebarChangesetDebugDataHelper = ({ osmChaChangeset }: Props) => {
         </button>
       </div>
       <Dialog open={isOpen} onClose={setIsOpen}>
-        <DialogTitle>OSMCha Changeset from OMSCha Changeset List</DialogTitle>
-        <DialogDescription>
-          This changeset from the list API is different from the changeset/id API.
-        </DialogDescription>
+        <DialogTitle>{title}</DialogTitle>
         <DialogBody>
-          <JsonView src={osmChaChangeset} theme="vscode" />
+          <JsonView src={data} theme="vscode" />
         </DialogBody>
         <DialogActions>
           <Button onClick={() => setIsOpen(false)}>Close</Button>
