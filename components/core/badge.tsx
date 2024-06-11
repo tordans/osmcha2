@@ -34,11 +34,12 @@ const colors = {
   zinc: 'bg-zinc-600/10 text-zinc-700 group-data-[hover]:bg-zinc-600/20 dark:bg-white/5 dark:text-zinc-400 dark:group-data-[hover]:bg-white/10',
 }
 
-type BadgeProps = { color?: keyof typeof colors }
+type BadgeProps = { color?: keyof typeof colors; rounded?: 'none' | 'left' | 'right' | 'full' }
 
 export function Badge({
   color = 'zinc',
   className,
+  rounded,
   ...props
 }: BadgeProps & React.ComponentPropsWithoutRef<'span'>) {
   return (
@@ -46,8 +47,11 @@ export function Badge({
       {...props}
       className={clsx(
         className,
-        'inline-flex items-center gap-x-1.5 rounded-md px-1.5 py-0.5 text-sm/5 font-medium sm:text-xs/5 forced-colors:outline',
+        'inline-flex items-center gap-x-1.5 px-1.5 py-0.5 text-sm/5 font-medium sm:text-xs/5 forced-colors:outline',
         colors[color],
+        rounded === 'full' ? 'rounded-md' : '',
+        rounded === 'left' ? 'rounded-l-md' : '',
+        rounded === 'right' ? 'rounded-r-md' : '',
       )}
     />
   )
@@ -57,29 +61,41 @@ export const BadgeButton = React.forwardRef(function BadgeButton(
   {
     color = 'zinc',
     className,
+    rounded = 'full',
     children,
     ...props
-  }: BadgeProps & { className?: string; children: React.ReactNode } & (
+  }: BadgeProps & {
+    className?: string
+    rounded?: 'none' | 'left' | 'right' | 'full'
+    children: React.ReactNode
+  } & (
       | Omit<Headless.ButtonProps, 'className'>
       | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>
     ),
   ref: React.ForwardedRef<HTMLElement>,
 ) {
-  let classes = clsx(
+  const classes = clsx(
+    'group relative inline-flex focus:outline-none data-[focus]:outline data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-blue-500',
     className,
-    'group relative inline-flex rounded-md focus:outline-none data-[focus]:outline data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-blue-500',
+    rounded === 'full' ? 'rounded-md' : '',
+    rounded === 'left' ? 'rounded-l-md' : '',
+    rounded === 'right' ? 'rounded-r-md' : '',
   )
 
   return 'href' in props ? (
     <Link {...props} className={classes} ref={ref as React.ForwardedRef<HTMLAnchorElement>}>
       <TouchTarget>
-        <Badge color={color}>{children}</Badge>
+        <Badge color={color} rounded={rounded}>
+          {children}
+        </Badge>
       </TouchTarget>
     </Link>
   ) : (
     <Headless.Button {...props} className={classes} ref={ref}>
       <TouchTarget>
-        <Badge color={color}>{children}</Badge>
+        <Badge color={color} rounded={rounded}>
+          {children}
+        </Badge>
       </TouchTarget>
     </Headless.Button>
   )

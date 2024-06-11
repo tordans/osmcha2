@@ -5,7 +5,7 @@ import { TOsmChaChangeset } from '@app/(map)/_components/Changeset/zod/OsmChaCha
 import { TOsmChaUser } from '@app/(map)/_components/Changeset/zod/OsmChaUser.zod'
 import { TOsmOrgUser } from '@app/(map)/_components/Changeset/zod/OsmOrgUser.zod'
 import { longerEditorShortname } from '@app/(map)/_components/utils/editorShortname'
-import { Badge } from '@components/core/badge'
+import { Badge, BadgeButton } from '@components/core/badge'
 import { Button } from '@components/core/button'
 import { Divider } from '@components/core/divider'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
@@ -49,16 +49,20 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
               {osmOrgUser.user.changesets.count.toLocaleString()} edits
             </p>
             <div title="Number of changesets of this user that where marked bad/good in OSMCha before">
-              {/* TODO: Addd Link https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}],"date__gte":[{"label":"","value":""}]} */}
-              {/* TODO: Addd Link 'https://osmcha.org/?filters={"uids":[{"label":"{osmOrgUser.user.id}","value":"{osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}],"date__gte":[{"label":"","value":""}]}' */}
-              <Badge className="rounded-r-none">
+              <BadgeButton
+                rounded="left"
+                href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}]`}
+              >
                 {osmChaUser.checked_changesets.toLocaleString()}{' '}
                 <HandThumbUpIcon
                   className="inline size-4 text-zinc-600"
                   aria-label="Good changesets"
                 />
-              </Badge>
-              <Badge className="rounded-l-none">
+              </BadgeButton>
+              <BadgeButton
+                rounded="right"
+                href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}]'`}
+              >
                 <span className={clsx(osmChaUser.harmful_changesets ? 'text-orange-700' : '')}>
                   {osmChaUser.harmful_changesets.toLocaleString()}{' '}
                 </span>
@@ -69,7 +73,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
                   )}
                   aria-label="Harmful changesets"
                 />
-              </Badge>
+              </BadgeButton>
             </div>
           </div>
         </div>

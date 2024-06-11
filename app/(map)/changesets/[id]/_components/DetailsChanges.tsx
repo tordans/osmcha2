@@ -112,13 +112,13 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                                   : `Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`
                               }
                             >
-                              <Badge color="blue" className="rounded-r-none">
+                              <Badge color="blue" rounded="left">
                                 {change.nodeStats.added}
                               </Badge>
-                              <Badge color="yellow" className="-my-1 rounded-none">
+                              <Badge color="yellow" className="-my-1" rounded="none">
                                 {change.nodeStats.modified}
                               </Badge>
-                              <Badge color="red" className="rounded-l-none">
+                              <Badge color="red" rounded="right">
                                 {change.nodeStats.deleted}
                               </Badge>
                             </span>
