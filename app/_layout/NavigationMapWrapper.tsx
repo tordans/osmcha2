@@ -5,17 +5,18 @@ import { Bars3Icon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import React, { useState } from 'react'
 import { Logo } from './Logo'
-import { NavigationSidebar } from './NavigationItems'
 import { NavigationMapItemsWrapper } from './NavigationMapItemsWrapper'
 
-export const NavigationMap = () => {
+type Props = { children: React.ReactNode }
+
+export const NavigationMapWrapper = ({ children }: Props) => {
   const [showSidebar, setShowSidebar] = useState(false)
 
   return (
     <>
       {/* Navigaton Flyout */}
       <NavigationMapItemsWrapper open={showSidebar} close={() => setShowSidebar(false)}>
-        <NavigationSidebar />
+        {children}
       </NavigationMapItemsWrapper>
 
       {/* Navigation Button */}

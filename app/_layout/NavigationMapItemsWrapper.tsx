@@ -3,7 +3,7 @@ import * as Headless from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import React from 'react'
 import { Logo } from './Logo'
-import { HeaderNavigationButton } from './NavigationMap'
+import { HeaderNavigationButton } from './NavigationMapWrapper'
 
 type Props = React.PropsWithChildren<{ open: boolean; close: () => void }>
 
