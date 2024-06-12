@@ -11,12 +11,12 @@ import {
 import { FunnelIcon, PlusIcon, UserIcon } from '@heroicons/react/16/solid'
 import { InformationCircleIcon } from '@heroicons/react/20/solid'
 
-export const NavigationSidebar = () => {
+export const NavigationSidebar = async () => {
   // TODO: Fetch Userdata, use avatar logo instead of <UserIcon/>
   // Use https://osmcha.org/api/v1/users/ user.avatar
   // const { osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
 
-  const aois = fetchAois()
+  const aois = await fetchAois()
 
   return (
     <Sidebar>
@@ -37,8 +37,14 @@ export const NavigationSidebar = () => {
           <SidebarItem href={`/?filters={"checked_by":[{"label":"tordans","value":"tordans"}]}`}>
             My Reviews
           </SidebarItem>
-          <SidebarSpacer />
-          <SidebarItem href="/?aoi=3ee95214-1a8e-4a7e-8546-5c9c0ac2b006">Wrangelkiez</SidebarItem>
+          {aois.count && <SidebarSpacer />}
+          {aois.results.features.map((aoi) => {
+            return (
+              <SidebarItem key={aoi.id} href={`/?aoi=${aoi.id}`}>
+                {aoi.properties.name}
+              </SidebarItem>
+            )
+          })}
           <SidebarSpacer />
           <SidebarItem href="/saved-filters">
             <PlusIcon className="size-4" />
