@@ -1,3 +1,4 @@
+import { fetchAois } from '@app/(map)/_fetch/fetchAois'
 import { Avatar } from '@components/core/avatar'
 import {
   Sidebar,
@@ -15,7 +16,7 @@ export const NavigationSidebar = () => {
   // Use https://osmcha.org/api/v1/users/ user.avatar
   // const { osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
 
-  // const aois = fetchAois()
+  const aois = fetchAois()
 
   return (
     <Sidebar>

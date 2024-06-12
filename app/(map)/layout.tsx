@@ -1,22 +1,12 @@
-import { NavigationMap } from '@components/layout/NavigationMap'
-import { Sidebar } from './_layout/Sidebar'
+import { LayoutMap } from '../_layout/LayoutMap'
 
 export default async function MapLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return (
-    <div className="flex h-full gap-3 p-2">
-      <div className="relative isolate flex h-full w-72 flex-col gap-2">
-        <NavigationMap />
-        <nav className="overflow-clip p-0 lg:rounded-lg lg:bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
-          <Sidebar />
-        </nav>
-      </div>
-      <main className="flex-1 overflow-clip lg:rounded-lg lg:bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
-        {children}
-      </main>
-    </div>
-  )
+  // Layouts in NextJS are very special. Which is why we use a server component to handle the layout instead.
+  // One thing they do: Once I use `writeDebugFile` in a component that is imported in a laoyut, this helper fails because "import fs" cannot be found anymore.
+  // Other issues are https://github.com/47ng/nuqs/discussions/572#discussioncomment-9731905
+  return <LayoutMap>{children}</LayoutMap>
 }
