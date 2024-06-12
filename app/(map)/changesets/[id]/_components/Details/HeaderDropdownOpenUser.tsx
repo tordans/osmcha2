@@ -1,3 +1,4 @@
+import { TOsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
 import {
   Dropdown,
   DropdownButton,
@@ -6,7 +7,6 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '@components/core/dropdown'
-import { TOsmChaChangeset } from '@components/zod/OsmChaChangeset.zod'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 
 type Props = { changeset: TOsmChaChangeset }

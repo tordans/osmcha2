@@ -1,5 +1,5 @@
 'use client'
-import { TOsmChaChangesets } from '@components/zod/OsmChaChangesets.zod'
+import { TOsmChaChangesets } from '@app/(map)/_zod/OsmChaChangesets.zod'
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import { clsx } from 'clsx'
 import Link from 'next/link'

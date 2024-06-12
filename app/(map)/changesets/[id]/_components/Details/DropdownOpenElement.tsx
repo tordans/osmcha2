@@ -1,3 +1,4 @@
+import { TOsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
 import {
   Dropdown,
   DropdownButton,
@@ -7,7 +8,6 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '@components/core/dropdown'
-import { TOsmChaRealChangeset } from '@components/zod/OsmChaRealChangeset.zod'
 import { ArrowTopRightOnSquareIcon, ChevronDownIcon } from '@heroicons/react/16/solid'
 
 type Props = { element: TOsmChaRealChangeset['elements'][number] }

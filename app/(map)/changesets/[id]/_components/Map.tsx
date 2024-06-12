@@ -1,8 +1,8 @@
 'use client'
 
-import { TOsmChaChangeset } from '@components/zod/OsmChaChangeset.zod'
-import { TOsmChaRealChangeset } from '@components/zod/OsmChaRealChangeset.zod'
-import { TOsmChaRealChangesetGeojson } from '@components/zod/OsmChaRealChangesetGeojson.zod'
+import { TOsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
+import { TOsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
+import { TOsmChaRealChangesetGeojson } from '@app/(map)/_zod/OsmChaRealChangesetGeojson.zod'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useState } from 'react'
 import {

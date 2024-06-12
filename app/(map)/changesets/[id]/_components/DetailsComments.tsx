@@ -1,4 +1,4 @@
-import { TOsmOrgChangeset } from '@components/zod/OsmOrgChangeset.zod'
+import { TOsmOrgChangeset } from '@app/(map)/_zod/OsmOrgChangeset.zod'
 
 type Props = { discussions: TOsmOrgChangeset['elements'][number]['discussion'] }
 

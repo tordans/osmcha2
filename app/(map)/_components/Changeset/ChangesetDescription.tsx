@@ -1,6 +1,6 @@
 'use client'
-import { TOsmChaChangeset } from '@components/zod/OsmChaChangeset.zod'
-import { TOsmChaChangesets } from '@components/zod/OsmChaChangesets.zod'
+import { TOsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
+import { TOsmChaChangesets } from '@app/(map)/_zod/OsmChaChangesets.zod'
 
 type Props = { changeset: TOsmChaChangesets['features'][number] | TOsmChaChangeset }
 

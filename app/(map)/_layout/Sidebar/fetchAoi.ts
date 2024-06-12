@@ -1,5 +1,4 @@
-import { writeDebugFile } from '@app/(map)/_components/utils/writeDebugFile'
-import { OsmChaAoi } from '@components/zod/OsmChaAoi.zod'
+import { OsmChaAoi } from '@app/(map)/_zod/OsmChaAoi.zod'
 import { ParamAoi } from '../ParamAoi.zod'
 import { searchParamsCache } from '../searchParams'
 

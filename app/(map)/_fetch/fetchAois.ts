@@ -1,5 +1,5 @@
-import { writeDebugFile } from '@app/(map)/_components/utils/writeDebugFile'
-import { OsmChaAois } from '@components/zod/OsmChaAois.zod'
+import { OsmChaAois } from '@app/(map)/_zod/OsmChaAois.zod'
+import { writeDebugFile } from '@app/(map)/_zod/writeDebugFile'
 
 export const fetchAois = async () => {
   const apiUrl = 'https://osmcha.org/api/v1/aoi/'

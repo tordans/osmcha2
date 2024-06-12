@@ -1,5 +1,5 @@
+import { TOsmChaChangesets } from '@app/(map)/_zod/OsmChaChangesets.zod'
 import { Badge } from '@components/core/badge'
-import { TOsmChaChangesets } from '@components/zod/OsmChaChangesets.zod'
 
 type Props = {
   reasons: TOsmChaChangesets['features'][number]['properties']['reasons']
