@@ -5,8 +5,9 @@ export default async function MapLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // Layouts in NextJS are very special. Which is why we use a server component to handle the layout instead.
-  // One thing they do: Once I use `writeDebugFile` in a component that is imported in a laoyut, this helper fails because "import fs" cannot be found anymore.
-  // Other issues are https://github.com/47ng/nuqs/discussions/572#discussioncomment-9731905
+  // Layouts in NextJS are very special.
+  // For now, we use a server component as a wrapper instead.
+  // See https://github.com/47ng/nuqs/discussions/572#discussioncomment-9731905 for more.
+  // We might want ot move this back later.
   return <LayoutMap>{children}</LayoutMap>
 }
