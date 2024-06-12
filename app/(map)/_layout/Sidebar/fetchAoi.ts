@@ -1,6 +1,7 @@
 import 'server-only' // https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns#keeping-server-only-code-out-of-the-client-environment
 
 import { OsmChaAoi } from '@app/(map)/_zod/OsmChaAoi.zod'
+import { writeDebugFile } from '@app/(map)/_zod/writeDebugFile'
 import { ParamAoi } from '../ParamAoi.zod'
 import { searchParamsCache } from '../searchParams'
 

@@ -1,4 +1,4 @@
-import { LayoutContent } from './_layout/LayoutContent'
+import { LayoutContent } from '@app/_layout/LayoutContent'
 
 export default function ContentLayout({
   children,
