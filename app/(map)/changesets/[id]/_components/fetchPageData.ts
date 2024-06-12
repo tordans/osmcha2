@@ -1,3 +1,5 @@
+import 'server-only' // https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns#keeping-server-only-code-out-of-the-client-environment
+
 import { OsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
 import { OsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
 import { OsmChaRealChangesetGeojson } from '@app/(map)/_zod/OsmChaRealChangesetGeojson.zod'
