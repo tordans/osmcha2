@@ -1,12 +1,13 @@
-import { SearchParams } from '@app/(map)/_components/types'
-import { searchParamsCache } from '@app/(map)/_layout/searchParams'
+import { fetchUserData } from '@app/(map)/_data/fetchUserData'
+import { searchParamsCache } from '@app/(map)/_data/searchParams'
+import { SearchParams } from 'nuqs/server'
+import { fetchChangesetData } from '../../_data/fetchChangesetData'
 import { DebugDataHelper } from './_components/DebugDataHelper'
 import { Details } from './_components/Details'
 import { DetailsHeader } from './_components/DetailsHeader'
 import { Map } from './_components/Map'
-import { fetchChangesetData, fetchUserData } from './_components/fetchPageData'
 
-type Props = { params: { id: string } } & SearchParams
+type Props = { params: { id: string }; searchParams: SearchParams }
 
 export default async function ChangesetPage({ params, searchParams }: Props) {
   const { filters, orderBy } = searchParamsCache.parse(searchParams)

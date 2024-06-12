@@ -1,9 +1,9 @@
 'use client'
-import { TOsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
-import { TOsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
-import { TOsmOrgChangeset } from '@app/(map)/_zod/OsmOrgChangeset.zod'
-import { Badge } from '@components/core/badge'
-import { Navbar, NavbarItem, NavbarSection } from '@components/core/navbar'
+import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
+import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
+import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
+import { Badge } from '@app/_components/core/badge'
+import { Navbar, NavbarItem, NavbarSection } from '@app/_components/core/navbar'
 import { useState } from 'react'
 import {
   ChangesetCommentIndicator,

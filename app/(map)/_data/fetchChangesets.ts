@@ -1,12 +1,12 @@
 import 'server-only' // https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns#keeping-server-only-code-out-of-the-client-environment
 
-import { OsmChaChangesets } from '@app/(map)/_zod/OsmChaChangesets.zod'
-import { writeDebugFile } from '@app/(map)/_zod/writeDebugFile'
-import { ParamAoi } from '../ParamAoi.zod'
-import { ParamFilters } from '../ParamFilters.zod'
-import { ParamOrderBy } from '../ParamOrderBy.zod'
-import { ParamPage } from '../ParamPage.zod'
-import { searchParamsCache } from '../searchParams'
+import { OsmChaChangesets } from '@app/(map)/_data/OsmChaChangesets.zod'
+import { writeDebugFile } from '@app/(map)/_data/writeDebugFile'
+import { ParamAoi } from './ParamAoi.zod'
+import { ParamFilters } from './ParamFilters.zod'
+import { ParamOrderBy } from './ParamOrderBy.zod'
+import { ParamPage } from './ParamPage.zod'
+import { searchParamsCache } from './searchParams'
 
 export const fetchChangesets = async () => {
   const filters = ParamFilters.parse(searchParamsCache.get('filters'))

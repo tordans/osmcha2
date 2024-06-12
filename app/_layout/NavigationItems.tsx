@@ -1,5 +1,5 @@
-import { fetchAois } from '@app/(map)/_fetch/fetchAois'
-import { Avatar } from '@components/core/avatar'
+import { fetchAois } from '@app/(map)/_data/fetchAois'
+import { Avatar } from '@app/_components/core/avatar'
 import {
   Sidebar,
   SidebarBody,
@@ -7,7 +7,7 @@ import {
   SidebarItem,
   SidebarSection,
   SidebarSpacer,
-} from '@components/core/sidebar'
+} from '@app/_components/core/sidebar'
 import { FunnelIcon, PlusIcon, UserIcon } from '@heroicons/react/16/solid'
 import { InformationCircleIcon } from '@heroicons/react/20/solid'
 

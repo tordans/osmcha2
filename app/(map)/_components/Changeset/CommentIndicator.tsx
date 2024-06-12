@@ -1,5 +1,5 @@
-import { TOsmChaChangesetProperties } from '@app/(map)/_zod/OsmChaChangeset.zod'
-import { Badge } from '@components/core/badge'
+import { TOsmChaChangesetProperties } from '@app/(map)/_data/OsmChaChangeset.zod'
+import { Badge } from '@app/_components/core/badge'
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 
 type Props = { commentCount: TOsmChaChangesetProperties['comments_count'] }

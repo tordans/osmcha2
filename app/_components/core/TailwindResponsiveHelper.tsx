@@ -1,4 +1,4 @@
-import { isDev } from '@components/utils/isEnv'
+import { isDev } from '@app/_components/utils/isEnv'
 
 export const TailwindResponsiveHelper = () => {
   if (!isDev) return null

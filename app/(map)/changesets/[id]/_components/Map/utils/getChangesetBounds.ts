@@ -1,4 +1,4 @@
-import { TOsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
+import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
 import maplibregl from 'maplibre-gl'
 
 /** @desc This includes some buffer */

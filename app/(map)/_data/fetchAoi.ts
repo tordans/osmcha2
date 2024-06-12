@@ -1,9 +1,9 @@
 import 'server-only' // https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns#keeping-server-only-code-out-of-the-client-environment
 
-import { OsmChaAoi } from '@app/(map)/_zod/OsmChaAoi.zod'
-import { writeDebugFile } from '@app/(map)/_zod/writeDebugFile'
-import { ParamAoi } from '../ParamAoi.zod'
-import { searchParamsCache } from '../searchParams'
+import { OsmChaAoi } from '@app/(map)/_data/OsmChaAoi.zod'
+import { writeDebugFile } from '@app/(map)/_data/writeDebugFile'
+import { ParamAoi } from './ParamAoi.zod'
+import { searchParamsCache } from './searchParams'
 
 export const fetchAoi = async () => {
   const aoi = ParamAoi.parse(searchParamsCache.get('aoi'))

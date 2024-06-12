@@ -1,4 +1,4 @@
-import { TOsmChaRealChangesetGeojson } from '@app/(map)/_zod/OsmChaRealChangesetGeojson.zod'
+import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
 import { Layer, Source } from 'react-map-gl/maplibre'
 import { layers } from './SourceLayerChanges/layers.const'
 

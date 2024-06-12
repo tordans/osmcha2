@@ -1,4 +1,4 @@
-import { TailwindResponsiveHelper } from '@components/core/TailwindResponsiveHelper'
+import { TailwindResponsiveHelper } from '@app/_components/core/TailwindResponsiveHelper'
 import { clsx } from 'clsx'
 import type { Metadata } from 'next'
 import { Open_Sans } from 'next/font/google'

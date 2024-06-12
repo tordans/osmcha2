@@ -1,5 +1,5 @@
 import { NavigationMapWrapper } from '@app/_layout/NavigationMapWrapper'
-import { Sidebar } from '../(map)/_layout/Sidebar'
+import { Sidebar } from '../(map)/_components/Sidebar/Sidebar'
 import { NavigationSidebar } from './NavigationItems'
 
 type Props = { children: React.ReactNode }

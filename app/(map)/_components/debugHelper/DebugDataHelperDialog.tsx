@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
 // https://github.com/YYsuni/react18-json-view
-import { Button } from '@components/core/button'
-import { Dialog, DialogActions, DialogBody, DialogTitle } from '@components/core/dialog'
+import { Button } from '@app/_components/core/button'
+import { Dialog, DialogActions, DialogBody, DialogTitle } from '@app/_components/core/dialog'
 import { MagnifyingGlassIcon } from '@heroicons/react/16/solid'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'

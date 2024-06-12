@@ -1,6 +1,6 @@
-import { localDateTimeWithRelative } from '@app/(map)/_layout/_utils/localDateTime'
-import { Badge } from '@components/core/badge'
+import { Badge } from '@app/_components/core/badge'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
+import { localDateTimeWithRelative } from '../utils/localDateTime'
 
 type Props = {
   checkDate: Date | null

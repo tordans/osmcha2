@@ -1,10 +1,10 @@
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { Suspense } from 'react'
-import { ParamAoi } from './_layout/ParamAoi.zod'
-import { ParamFilters } from './_layout/ParamFilters.zod'
-import { ParamOrderBy } from './_layout/ParamOrderBy.zod'
-import { ParamPage } from './_layout/ParamPage.zod'
-import { searchParamsCache } from './_layout/searchParams'
+import { ParamAoi } from './_data/ParamAoi.zod'
+import { ParamFilters } from './_data/ParamFilters.zod'
+import { ParamOrderBy } from './_data/ParamOrderBy.zod'
+import { ParamPage } from './_data/ParamPage.zod'
+import { searchParamsCache } from './_data/searchParams'
 
 export default async function HomePage({
   searchParams,

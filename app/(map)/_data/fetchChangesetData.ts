@@ -1,13 +1,11 @@
 import 'server-only' // https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns#keeping-server-only-code-out-of-the-client-environment
 
-import { OsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
-import { OsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
-import { OsmChaRealChangesetGeojson } from '@app/(map)/_zod/OsmChaRealChangesetGeojson.zod'
-import { OsmChaUser } from '@app/(map)/_zod/OsmChaUser.zod'
-import { OsmOrgChangeset } from '@app/(map)/_zod/OsmOrgChangeset.zod'
-import { OsmOrgUser } from '@app/(map)/_zod/OsmOrgUser.zod'
-import { writeDebugFile } from '@app/(map)/_zod/writeDebugFile'
-import { realChangesetParser } from '@components/_lib/real-changesets-parser'
+import { OsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
+import { OsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
+import { OsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
+import { OsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
+import { writeDebugFile } from '@app/(map)/_data/writeDebugFile'
+import { realChangesetParser } from '@app/_components/_lib/real-changesets-parser'
 
 export const fetchChangesetData = async (changesetId: string) => {
   const fetchOsmChaChangeset = fetch(`https://osmcha.org/api/v1/changesets/${changesetId}/`, {
@@ -75,23 +73,4 @@ export const fetchChangesetData = async (changesetId: string) => {
     osmChaRealChangesetGeojson,
     osmOrgChangeset,
   }
-}
-
-export const fetchUserData = async (userId: string) => {
-  const fetchOsmOrgUser = await fetch(`https://api.openstreetmap.org/api/0.6/user/${userId}.json`)
-
-  const fetchOsmChaUser = await fetch(`https://osmcha.org/api/v1/user-stats/${userId}/`, {
-    headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
-  })
-
-  console.info('Fetching', [fetchOsmOrgUser, fetchOsmChaUser])
-  const [rawOsmOrgUserResponse, rawOsmChaUserResponse] = await Promise.all([
-    fetchOsmOrgUser,
-    fetchOsmChaUser,
-  ])
-
-  const osmOrgUser = OsmOrgUser.parse(await rawOsmOrgUserResponse.json())
-  const osmChaUser = OsmChaUser.parse(await rawOsmChaUserResponse.json())
-
-  return { osmOrgUser, osmChaUser }
 }

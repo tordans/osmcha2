@@ -1,16 +1,15 @@
 'use client'
-import { TOsmChaChangeset } from '@app/(map)/_zod/OsmChaChangeset.zod'
-import { TOsmChaRealChangeset } from '@app/(map)/_zod/OsmChaRealChangeset.zod'
-import { TOsmChaUser } from '@app/(map)/_zod/OsmChaUser.zod'
-import { TOsmOrgChangeset } from '@app/(map)/_zod/OsmOrgChangeset.zod'
-import { TOsmOrgUser } from '@app/(map)/_zod/OsmOrgUser.zod'
+import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
+import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
+import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
+import { TOsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
+import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
+import { TOsmOrgUser } from '@app/(map)/_data/OsmOrgUser.zod'
+import { realChangesetParser } from '@app/_components/_lib/real-changesets-parser'
 import { XMarkIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { useState } from 'react'
-// https://github.com/YYsuni/react18-json-view
-import { TOsmChaRealChangesetGeojson } from '@app/(map)/_zod/OsmChaRealChangesetGeojson.zod'
-import { realChangesetParser } from '@components/_lib/real-changesets-parser'
-import JsonView from 'react18-json-view'
+import JsonView from 'react18-json-view' // https://github.com/YYsuni/react18-json-view
 import 'react18-json-view/src/style.css'
 
 type Props = {

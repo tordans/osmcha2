@@ -1,6 +1,6 @@
-import { DebugDataHelperDialog } from './DebugDataHelperDialog'
-import { fetchAoi } from './Sidebar/fetchAoi'
-import { fetchChangesets } from './Sidebar/fetchChangesets'
+import { fetchAoi } from '@app/(map)/_data/fetchAoi'
+import { fetchChangesets } from '../../_data/fetchChangesets'
+import { DebugDataHelperDialog } from '../debugHelper/DebugDataHelperDialog'
 import { SidebarChangeset } from './SidebarChangeset'
 
 export const Sidebar = async () => {

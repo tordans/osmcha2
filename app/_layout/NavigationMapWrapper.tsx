@@ -1,5 +1,5 @@
 'use client'
-import { TouchTarget } from '@components/core/button'
+import { TouchTarget } from '@app/_components/core/button'
 import * as Headless from '@headlessui/react'
 import { Bars3Icon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'

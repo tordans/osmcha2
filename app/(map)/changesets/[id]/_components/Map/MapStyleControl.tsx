@@ -4,7 +4,7 @@ import {
   DropdownDivider,
   DropdownItem,
   DropdownMenu,
-} from '@components/core/dropdown'
+} from '@app/_components/core/dropdown'
 import { Square3Stack3DIcon } from '@heroicons/react/20/solid'
 import { Dispatch, SetStateAction } from 'react'
 import { mapStyles, type TMapStyle } from './utils/mapStyles'

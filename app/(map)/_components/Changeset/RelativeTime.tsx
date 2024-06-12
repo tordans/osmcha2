@@ -1,5 +1,5 @@
-import { localDateTime } from '@app/(map)/_layout/_utils/localDateTime'
 import moment from 'moment'
+import { localDateTime } from '../utils/localDateTime'
 
 export const relativeTime = (input: Date | string) => {
   moment.updateLocale('en', {
