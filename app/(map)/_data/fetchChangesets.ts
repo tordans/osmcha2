@@ -24,6 +24,8 @@ export const fetchChangesets = async () => {
   filters.checked_by &&
     apiUrl.searchParams.set('checked_by', filters.checked_by.map((f) => f.value).join(','))
   filters.uids && apiUrl.searchParams.set('uids', filters.uids.map((e) => e.value).join(','))
+  filters.metadata &&
+    apiUrl.searchParams.set('metadata', filters.metadata.map((e) => e.value).join(','))
 
   // TODO: Add some error handling for errors like a 500 due to mailformed params
   console.info('Fetching', apiUrl.toString())

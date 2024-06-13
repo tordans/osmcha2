@@ -10,7 +10,9 @@ export const ParamFilters = z.strictObject({
   users: z.array(LabelValueString).optional(),
   checked_by: z.array(LabelValueString).optional(),
   date__gte: z.array(LabelValueString).optional(),
+  date__lte: z.array(LabelValueString).optional(),
   harmful: z.array(LabelValueBoolean).optional(),
+  metadata: z.array(LabelValueString).optional(),
 })
 
 // My Changesets:
