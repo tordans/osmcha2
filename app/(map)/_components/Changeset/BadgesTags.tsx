@@ -6,9 +6,11 @@ type Props = {
 }
 
 export const BadgesTags = ({ tags }: Props) => {
+  if (!tags.length) return null
+
   return (
     <div className="space-x-1">
-      {tags?.map((tag: { id: number; name: string }) => {
+      {tags.map((tag: { id: number; name: string }) => {
         return (
           <Badge key={tag.id} color={tag.id === 9 ? 'green' : undefined}>
             {tag.name}

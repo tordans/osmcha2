@@ -27,7 +27,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
       <Link
         href={`/changesets/${changeset.id}?${searchParams.toString()}`}
         className={clsx(
-          'group/item relative flex flex-col items-start justify-between gap-1 break-words rounded py-3 pl-3 pr-0',
+          'group/item relative flex flex-col items-start justify-between gap-1 break-words rounded pb-2 pl-3 pr-0.5 pt-2.5',
           current ? 'bg-blue-50' : 'hover:bg-gray-50',
         )}
       >
@@ -39,7 +39,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
           </div>
         </div>
         <div className="flex w-full items-center justify-between gap-1 text-base">
-          <div className="flex w-full flex-col gap-1">
+          <div className="flex w-full flex-col gap-2">
             <ChangesetDescription changeset={changeset} />
 
             {changeset.properties.checked ? (
