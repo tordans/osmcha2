@@ -77,31 +77,35 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
         </div>
       </div>
 
-      <div className="mt-2 flex gap-2">
-        {osmChaChangeset.properties.checked ? (
-          <BadgeCheckedBy
-            checkDate={osmChaChangeset.properties.check_date}
-            harmful={osmChaChangeset.properties.harmful}
-            user={osmChaChangeset.properties.check_user}
-          />
-        ) : (
-          <>
-            <Button outline className="group">
-              <HandThumbUpIcon
-                className="inline size-4 text-zinc-600 group-hover:text-green-500"
-                aria-label="Mark changesets as good"
-              />
-            </Button>
-            <Button outline className="group">
-              <HandThumbDownIcon
-                className="inline size-4 text-zinc-600 group-hover:text-orange-500"
-                aria-label="Mark changesets as harmful"
-              />
-            </Button>
-          </>
-        )}
-        <DropdownOpenChangeset changeset={osmChaChangeset} />
-        <DropdownOpenUser changeset={osmChaChangeset} />
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {osmChaChangeset.properties.checked ? (
+            <BadgeCheckedBy
+              checkDate={osmChaChangeset.properties.check_date}
+              harmful={osmChaChangeset.properties.harmful}
+              user={osmChaChangeset.properties.check_user}
+            />
+          ) : (
+            <>
+              <Button outline className="group">
+                <HandThumbUpIcon
+                  className="inline size-4 text-zinc-600 group-hover:text-green-500"
+                  aria-label="Mark changesets as good"
+                />
+              </Button>
+              <Button outline className="group">
+                <HandThumbDownIcon
+                  className="inline size-4 text-zinc-600 group-hover:text-orange-500"
+                  aria-label="Mark changesets as harmful"
+                />
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <DropdownOpenChangeset changeset={osmChaChangeset} />
+          <DropdownOpenUser changeset={osmChaChangeset} />
+        </div>
       </div>
 
       <Divider className="mp-0.5 mt-1" />
