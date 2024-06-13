@@ -36,45 +36,43 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
         </p>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-1 text-base">
-        <div className="flex flex-col gap-1">
-          <ChangesetDescriptionWithLinkify changeset={osmChaChangeset} />
+      <div className="mt-2 flex flex-col gap-1 text-base">
+        <ChangesetDescriptionWithLinkify changeset={osmChaChangeset} />
 
-          <BadgesReasons reasons={osmChaChangeset.properties.tags} />
-          <BadgesTags tags={osmChaChangeset.properties.tags} />
+        <BadgesReasons reasons={osmChaChangeset.properties.tags} />
+        <BadgesTags tags={osmChaChangeset.properties.tags} />
 
-          <div className="flex items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
-            <p>
-              User created <RelativeTime date={osmOrgUser.user.account_created} /> |{' '}
-              {osmOrgUser.user.changesets.count.toLocaleString()} edits
-            </p>
-            <div title="Number of changesets of this user that where marked bad/good in OSMCha before">
-              <BadgeButton
-                rounded="left"
-                href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}]`}
-              >
-                {osmChaUser.checked_changesets.toLocaleString()}{' '}
-                <HandThumbUpIcon
-                  className="inline size-4 text-zinc-600"
-                  aria-label="Good changesets"
-                />
-              </BadgeButton>
-              <BadgeButton
-                rounded="right"
-                href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}]'`}
-              >
-                <span className={clsx(osmChaUser.harmful_changesets ? 'text-orange-700' : '')}>
-                  {osmChaUser.harmful_changesets.toLocaleString()}{' '}
-                </span>
-                <HandThumbDownIcon
-                  className={clsx(
-                    'inline size-4',
-                    osmChaUser.harmful_changesets ? 'text-orange-500' : 'text-zinc-600',
-                  )}
-                  aria-label="Harmful changesets"
-                />
-              </BadgeButton>
-            </div>
+        <div className="flex items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
+          <p>
+            User created <RelativeTime date={osmOrgUser.user.account_created} /> |{' '}
+            {osmOrgUser.user.changesets.count.toLocaleString()} edits
+          </p>
+          <div title="Number of changesets of this user that where marked bad/good in OSMCha before">
+            <BadgeButton
+              rounded="left"
+              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}]`}
+            >
+              {osmChaUser.checked_changesets.toLocaleString()}{' '}
+              <HandThumbUpIcon
+                className="inline size-4 text-zinc-600"
+                aria-label="Good changesets"
+              />
+            </BadgeButton>
+            <BadgeButton
+              rounded="right"
+              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}]'`}
+            >
+              <span className={clsx(osmChaUser.harmful_changesets ? 'text-orange-700' : '')}>
+                {osmChaUser.harmful_changesets.toLocaleString()}{' '}
+              </span>
+              <HandThumbDownIcon
+                className={clsx(
+                  'inline size-4',
+                  osmChaUser.harmful_changesets ? 'text-orange-500' : 'text-zinc-600',
+                )}
+                aria-label="Harmful changesets"
+              />
+            </BadgeButton>
           </div>
         </div>
       </div>
