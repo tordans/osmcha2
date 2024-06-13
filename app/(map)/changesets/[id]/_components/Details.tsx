@@ -46,9 +46,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
         </NavbarSection>
       </Navbar>
       {panel === 'changes' && <DetailsChanges osmChaRealChangeset={osmChaRealChangeset} />}
-      {panel === 'discussion' && (
-        <DetailsComments discussions={osmOrgChangeset.elements[0].discussion} />
-      )}
+      {panel === 'discussion' && <DetailsComments osmOrgChangeset={osmOrgChangeset} />}
     </section>
   )
 }
