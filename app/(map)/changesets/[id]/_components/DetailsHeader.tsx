@@ -2,7 +2,7 @@
 import { BadgeCheckedBy } from '@app/(map)/_components/Changeset/BadgeCheckedBy'
 import { BadgesReasons } from '@app/(map)/_components/Changeset/BadgesReasons'
 import { BadgesTags } from '@app/(map)/_components/Changeset/BadgesTags'
-import { ChangesetDescription } from '@app/(map)/_components/Changeset/ChangesetDescription'
+import { ChangesetDescriptionWithLinkify } from '@app/(map)/_components/Changeset/ChangesetDescription'
 import { RelativeTime } from '@app/(map)/_components/Changeset/RelativeTime'
 import { longerEditorShortname } from '@app/(map)/_components/utils/editorShortname'
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
@@ -38,7 +38,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
 
       <div className="mt-2 flex items-center justify-between gap-1 text-base">
         <div className="flex flex-col gap-1">
-          <ChangesetDescription changeset={osmChaChangeset} />
+          <ChangesetDescriptionWithLinkify changeset={osmChaChangeset} />
 
           <BadgesReasons reasons={osmChaChangeset.properties.tags} />
           <BadgesTags tags={osmChaChangeset.properties.tags} />
