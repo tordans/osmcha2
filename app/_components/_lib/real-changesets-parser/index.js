@@ -5436,6 +5436,7 @@ function realChangesetElementParser(mutatingJson) {
 }
 // parsers/realChangesetParser.ts
 var realChangesetParser = (input) => {
+  if (!input) return featureCollection([])
   const elements = structuredClone(input.elements)
   const parsedElements = elements.map((element) => mutatingRealChangesetElementParser(element))
   const flatElements = parsedElements.flat()

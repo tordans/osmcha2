@@ -14,19 +14,19 @@ import clsx from 'clsx'
 import { Fragment } from 'react'
 import { DropdownOpenElement } from './Details/DropdownOpenElement'
 
-type Props = { osmChaRealChangeset: TOsmChaRealChangeset }
+type Props = { osmChaRealChangeset: TOsmChaRealChangeset | undefined }
 
 const actionTranslation = { create: 'Created', modify: 'Modified', delete: 'Deleted' } as const
 
 export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
-  type Element = (typeof osmChaRealChangeset.elements)[number] & {
+  type Element = TOsmChaRealChangeset['elements'][number] & {
     nodeStats: { added: number; modified: number; deleted: number }
   }
-  const elements = structuredClone(osmChaRealChangeset.elements) as Element[]
+  const elements = structuredClone(osmChaRealChangeset?.elements) as Element[] | undefined
 
   // For every way, we add a count of nodes that where added, modified or deleted
   // We also delete those notes if they have no own tags, because we don't want to list them separately in this case
-  elements.forEach((element) => {
+  elements?.forEach((element) => {
     if (element.type !== 'way') return
     const nodeStats = { added: 0, modified: 0, deleted: 0 }
     const nodeRefs =
@@ -51,7 +51,7 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
 
   // Group changes by action
   const groupedChanges: Map<Element['action'], Element[]> = new Map()
-  elements.forEach((element) => {
+  elements?.forEach((element) => {
     if (!groupedChanges.has(element.action)) {
       groupedChanges.set(element.action, [])
     }
@@ -61,6 +61,14 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
     create: <PlusCircleIcon className="size-4 flex-none" />,
     modify: <PencilIcon className="size-4 flex-none" />,
     delete: <TrashIcon className="size-4 flex-none" />,
+  }
+
+  if (!osmChaRealChangeset) {
+    return (
+      <span className="flex h-full items-start justify-center pt-10 text-red-500">
+        Error loading changeset data
+      </span>
+    )
   }
 
   return (

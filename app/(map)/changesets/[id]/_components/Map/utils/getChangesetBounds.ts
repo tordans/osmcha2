@@ -1,11 +1,13 @@
-import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
+import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
+import { bbox } from '@turf/bbox'
 import maplibregl from 'maplibre-gl'
 
 /** @desc This includes some buffer */
-export const getChangesetBounds = (bbox: TOsmChaRealChangeset['metadata']['bbox']) => {
+export const getChangesetBounds = (inputPolygon: TOsmChaChangeset['geometry']) => {
+  const inputBbox = bbox(inputPolygon)
   const bounds = new maplibregl.LngLatBounds(
-    new maplibregl.LngLat(Number(bbox.left), Number(bbox.bottom)),
-    new maplibregl.LngLat(Number(bbox.right), Number(bbox.top)),
+    [inputBbox[1], inputBbox[0]],
+    [inputBbox[3], inputBbox[2]],
   )
 
   const left = bounds.getWest()
@@ -19,6 +21,7 @@ export const getChangesetBounds = (bbox: TOsmChaRealChangeset['metadata']['bbox'
     padX = Math.max((right - left) / 5, 0.0001)
     padY = Math.max((top - bottom) / 5, 0.0001)
   }
+
   type Bbox = [number, number, number, number]
-  return [left - padX, bottom - padY, right + padX, top + padY] satisfies Bbox
+  return [left - padX, bottom - padY, right + padX, top + padY] as const satisfies Bbox
 }

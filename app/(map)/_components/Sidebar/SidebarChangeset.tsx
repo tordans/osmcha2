@@ -8,7 +8,7 @@ import { BadgeCheckedBy } from '../Changeset/BadgeCheckedBy'
 import { BadgesReasons } from '../Changeset/BadgesReasons'
 import { BadgesTags } from '../Changeset/BadgesTags'
 import { ChangesetDescription } from '../Changeset/ChangesetDescription'
-import { ChangesetCommentIndicator } from '../Changeset/CommentIndicator'
+import { CommentIndicator } from '../Changeset/CommentIndicator'
 import { RelativeTime } from '../Changeset/RelativeTime'
 import { DebugDataHelperDialog } from '../debugHelper/DebugDataHelperDialog'
 import { editorShortname } from '../utils/editorShortname'
@@ -35,7 +35,7 @@ export const SidebarChangeset = ({ changeset }: Props) => {
           <RelativeTime date={changeset.properties.date} />
           <div className="flex items-center gap-2">
             {editorShortname(changeset.properties.editor)}
-            <ChangesetCommentIndicator commentCount={changeset.properties.comments_count} />
+            <CommentIndicator commentCount={changeset.properties.comments_count} />
           </div>
         </div>
         <div className="flex w-full items-center justify-between gap-1 text-base">

@@ -1,7 +1,6 @@
 'use client'
 
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
-import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
 import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useState } from 'react'
@@ -20,16 +19,11 @@ import { mapStyles, type TMapStyle } from './Map/utils/mapStyles'
 
 type Props = {
   osmChaChangeset: TOsmChaChangeset
-  osmChaRealChangeset: TOsmChaRealChangeset
   osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson
 }
 
-export const Map = ({
-  osmChaChangeset,
-  osmChaRealChangeset,
-  osmChaRealChangesetGeojson,
-}: Props) => {
-  const bounds = getChangesetBounds(osmChaRealChangeset.metadata.bbox)
+export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {
+  const bounds = getChangesetBounds(osmChaChangeset.geometry)
   const [mapStyle, setMapStyle] = useState<TMapStyle>('maptilerDataviz')
 
   return (

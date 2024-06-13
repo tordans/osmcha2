@@ -71,7 +71,9 @@ export const DebugDataHelper = ({
           <details>
             <summary
               className={clsx(
-                osmChaRealChangesetGeojson ? 'cursor-pointer hover:underline' : 'text-gray-400',
+                osmChaRealChangesetGeojson?.features
+                  ? 'cursor-pointer hover:underline'
+                  : 'text-gray-400',
               )}
             >
               OSMCha Real Changeset GeoJson

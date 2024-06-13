@@ -5,6 +5,8 @@ import { layers } from './SourceLayerChanges/layers.const'
 type Props = { osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson }
 
 export const SourceLayerChanges = ({ osmChaRealChangesetGeojson }: Props) => {
+  if (!osmChaRealChangesetGeojson.features) return null
+
   return (
     <Source id="changeset" type="geojson" data={osmChaRealChangesetGeojson}>
       {Object.entries(layers).map(([key, layer]) => {
