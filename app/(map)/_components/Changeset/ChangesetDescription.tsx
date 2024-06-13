@@ -1,9 +1,6 @@
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import { TOsmChaChangesets } from '@app/(map)/_data/OsmChaChangesets.zod'
-import 'linkify-plugin-hashtag'
-import 'linkify-plugin-mention'
-import Linkify from 'linkify-react'
-import Link from 'next/link'
+import { LinkifyText } from '../LinkifyText'
 
 type Props = { changeset: TOsmChaChangesets['features'][number] | TOsmChaChangeset }
 
@@ -27,31 +24,7 @@ export const ChangesetDescriptionWithLinkify = ({ changeset }: Props) => {
   return (
     <p className="w-full hyphens-auto break-words leading-tight" lang="en">
       <strong className="font-semibold">{changeset.properties.user}:</strong>{' '}
-      <Linkify
-        options={{
-          render: {
-            link: renderLink,
-            mention: renderLink,
-          },
-          formatHref: {
-            hashtag: (hashtag) =>
-              // Other option would be ?filters={"metadata":[{"label":"hashtags=${hashtag}","value":"hashtags=${hashtag}"}]}
-              `/?filters={"comment":[{"label":"${hashtag}","value":"${hashtag}"}]}'`,
-            mention: (mention) => `https://www.openstreetmap.org/user/${mention}`,
-          },
-        }}
-      >
-        {changeset.properties.comment}
-      </Linkify>
+      <LinkifyText text={changeset.properties.comment} />
     </p>
-  )
-}
-
-const renderLink = ({ attributes, content }) => {
-  const { href, ...props } = attributes
-  return (
-    <Link to={href} {...props} className="underline decoration-zinc-400 hover:decoration-blue-600">
-      {content}
-    </Link>
   )
 }

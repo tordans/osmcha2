@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const Discussion = z.strictObject({
   id: z.number(),
-  date: z.string(),
+  date: z.coerce.date(),
   uid: z.number(),
   user: z.string(),
   text: z.string(),
