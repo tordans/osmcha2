@@ -39,7 +39,7 @@ type BadgeProps = { color?: keyof typeof colors; rounded?: 'none' | 'left' | 'ri
 export function Badge({
   color = 'zinc',
   className,
-  rounded,
+  rounded = 'full',
   ...props
 }: BadgeProps & React.ComponentPropsWithoutRef<'span'>) {
   return (
