@@ -1,5 +1,6 @@
 import { fetchUserData } from '@app/(map)/_data/fetchUserData'
 import { searchParamsCache } from '@app/(map)/_data/searchParams'
+import { notFound } from 'next/navigation'
 import { SearchParams } from 'nuqs/server'
 import { fetchChangesetData } from '../../_data/fetchChangesetData'
 import { DebugDataHelper } from './_components/DebugDataHelper'
@@ -14,7 +15,31 @@ export default async function ChangesetPage({ params, searchParams }: Props) {
 
   const { osmChaChangeset, osmChaRealChangeset, osmChaRealChangesetGeojson, osmOrgChangeset } =
     await fetchChangesetData(params.id)
-  const { osmOrgUser, osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
+  const userId = osmOrgChangeset?.elements?.[0].uid?.toString() || osmChaChangeset?.properties?.uid
+  const { osmOrgUser, osmChaUser } = await fetchUserData(userId)
+
+  console.log('xxx', userId, {
+    osmChaChangeset,
+    osmChaRealChangeset,
+    osmChaRealChangesetGeojson,
+    osmOrgChangeset,
+    osmOrgUser,
+    osmChaUser,
+  })
+
+  // TODO: Make this more resilient; the UI should not rely on osmChaRealChangeset|osmChaRealChangesetGeojson but other values should be expected (AKA if those are missing we render not notFound()).
+  if (
+    !(
+      osmChaChangeset &&
+      osmChaRealChangeset &&
+      osmChaRealChangesetGeojson &&
+      osmOrgChangeset &&
+      osmOrgUser &&
+      osmChaUser
+    )
+  ) {
+    notFound()
+  }
 
   return (
     <>

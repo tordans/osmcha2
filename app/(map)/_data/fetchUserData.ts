@@ -3,7 +3,9 @@ import 'server-only' // https://nextjs.org/docs/app/building-your-application/re
 import { OsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
 import { OsmOrgUser } from '@app/(map)/_data/OsmOrgUser.zod'
 
-export const fetchUserData = async (userId: string) => {
+export const fetchUserData = async (userId: string | undefined) => {
+  if (!userId) return { osmOrgUser: undefined, osmChaUser: undefined }
+
   const fetchOsmOrgUser = await fetch(`https://api.openstreetmap.org/api/0.6/user/${userId}.json`)
 
   const fetchOsmChaUser = await fetch(`https://osmcha.org/api/v1/user-stats/${userId}/`, {
