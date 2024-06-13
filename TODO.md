@@ -158,3 +158,8 @@ https://osmcha.org/api/v1/blacklisted-users/
 ```
 
 We will need this, once we build the filter form.
+
+### Random lists of improvements
+
+- Mobile UI
+- Linkify Wikidata items in the changes table
