@@ -1,6 +1,5 @@
 import { fetchUserData } from '@app/(map)/_data/fetchUserData'
 import { searchParamsCache } from '@app/(map)/_data/searchParams'
-import { featureCollection } from '@turf/turf'
 import { notFound } from 'next/navigation'
 import { SearchParams } from 'nuqs/server'
 import { fetchChangesetData } from '../../_data/fetchChangesetData'
@@ -29,7 +28,6 @@ export default async function ChangesetPage({ params, searchParams }: Props) {
         <div className="h-full grow">
           <Map
             osmChaChangeset={osmChaChangeset}
-            osmChaRealChangeset={osmChaRealChangeset}
             osmChaRealChangesetGeojson={osmChaRealChangesetGeojson}
           />
         </div>

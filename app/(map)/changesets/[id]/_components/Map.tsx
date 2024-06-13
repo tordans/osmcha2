@@ -19,7 +19,7 @@ import { mapStyles, type TMapStyle } from './Map/utils/mapStyles'
 
 type Props = {
   osmChaChangeset: TOsmChaChangeset
-  osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson
+  osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson | undefined
 }
 
 export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {

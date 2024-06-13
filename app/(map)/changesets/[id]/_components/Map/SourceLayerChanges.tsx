@@ -2,10 +2,10 @@ import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangese
 import { Layer, Source } from 'react-map-gl/maplibre'
 import { layers } from './SourceLayerChanges/layers.const'
 
-type Props = { osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson }
+type Props = { osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson | undefined }
 
 export const SourceLayerChanges = ({ osmChaRealChangesetGeojson }: Props) => {
-  if (!osmChaRealChangesetGeojson.features) return null
+  if (!osmChaRealChangesetGeojson?.features) return null
 
   return (
     <Source id="changeset" type="geojson" data={osmChaRealChangesetGeojson}>
