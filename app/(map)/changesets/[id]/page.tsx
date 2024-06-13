@@ -19,16 +19,6 @@ export default async function ChangesetPage({ params, searchParams }: Props) {
   const userId = osmOrgChangeset?.elements?.[0].uid?.toString() || osmChaChangeset?.properties?.uid
   const { osmOrgUser, osmChaUser } = await fetchUserData(userId)
 
-  console.log('xxx', userId, {
-    osmChaChangeset,
-    osmChaRealChangeset,
-    osmChaRealChangesetGeojson,
-    osmOrgChangeset,
-    osmOrgUser,
-    osmChaUser,
-  })
-
-  // TODO: Make this more resilient; the UI should not rely on osmChaRealChangeset|osmChaRealChangesetGeojson but other values should be expected (AKA if those are missing we render not notFound()).
   if (!(osmChaChangeset && osmOrgChangeset && osmOrgUser && osmChaUser)) {
     notFound()
   }
