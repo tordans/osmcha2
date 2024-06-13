@@ -43,9 +43,13 @@ export const OsmChaChangeset = z.object({
     harmful: z.boolean().nullable(),
     checked: z.boolean(),
     check_date: z.coerce.date().nullable(),
-    metadata: z.object({
-      host: z.string().optional(),
-      changesets_count: z.number().optional(),
-    }),
+    metadata: z.intersection(
+      z.record(z.union([z.string(), z.number()])),
+      z.object({
+        locale: z.string().optional(),
+        host: z.string().optional(),
+        changesets_count: z.number().optional(),
+      }),
+    ),
   }),
 })

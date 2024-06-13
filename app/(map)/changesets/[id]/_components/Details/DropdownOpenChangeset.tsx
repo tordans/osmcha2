@@ -1,3 +1,4 @@
+import { translateUrl } from '@app/(map)/_components/TranslateButton'
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import {
   Dropdown,
@@ -32,6 +33,12 @@ export const DropdownOpenChangeset = ({ changeset }: Props) => {
       <DropdownMenu anchor="left start">
         <DropdownItem href={urlChangesetOsm(changeset.id)} target="_blank">
           OSM Website
+        </DropdownItem>
+        <DropdownItem
+          href={translateUrl(changeset.properties.comment, changeset.properties.metadata?.locale)}
+          target="_blank"
+        >
+          Translate Changeset Comment
         </DropdownItem>
         <DropdownDivider />
         <DropdownSection>
