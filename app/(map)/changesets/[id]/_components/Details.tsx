@@ -5,7 +5,10 @@ import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
 import { Badge } from '@app/_components/core/badge'
 import { Navbar, NavbarItem, NavbarSection } from '@app/_components/core/navbar'
 import { useState } from 'react'
-import { CommentIndicator } from '../../../_components/Changeset/CommentIndicator'
+import {
+  CommentIndicator,
+  NoCommentIndicator,
+} from '../../../_components/Changeset/CommentIndicator'
 import { DetailsChanges } from './DetailsChanges'
 import { DetailsComments } from './DetailsComments'
 
@@ -23,6 +26,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
     osmChaChangeset.properties.create +
     osmChaChangeset.properties.modify +
     osmChaChangeset.properties.delete
+  const commentCount = osmOrgChangeset.elements[0].comments_count
 
   return (
     <section className="h-full overflow-y-scroll p-2">
@@ -33,7 +37,11 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
           </NavbarItem>
           <NavbarItem current={panel === 'discussion'} onClick={() => setPanel('discussion')}>
             Discussion{' '}
-            <CommentIndicator commentCount={osmOrgChangeset.elements[0].comments_count} />
+            {commentCount ? (
+              <CommentIndicator commentCount={commentCount} />
+            ) : (
+              <NoCommentIndicator />
+            )}
           </NavbarItem>
         </NavbarSection>
       </Navbar>
