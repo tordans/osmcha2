@@ -29,26 +29,31 @@ export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {
   return (
     <MapProvider>
       <ReactMapGlMap
-        id="mainMap"
+        id="mainMap" // used for useMap https://visgl.github.io/react-map-gl/docs/api-reference/use-map
+        // Initial view
         initialViewState={{
           bounds,
           fitBoundsOptions: { padding: 100 },
         }}
-        style={{ width: '100%', height: '100%' }}
+        // Style
         // https://cloud.maptiler.com/maps/dataviz/, Acccount tordans private
         mapStyle={mapStyles[mapStyle].url}
-        attributionControl={false}
-        onClick={(e: MapLayerMouseEvent) => console.log(e.features)}
+        attributionControl={false} // We use <AttributionControl /> instead
+        style={{ width: '100%', height: '100%' }}
+        // Interactivity
+        // TODO: Add proper interactivity between map and sidebar
         interactiveLayerIds={Object.keys(layers)}
+        onClick={(e: MapLayerMouseEvent) => console.log(e.features)}
       >
         <SourceLayerBounds bounds={bounds} />
         <SourceLayerChanges osmChaRealChangesetGeojson={osmChaRealChangesetGeojson} />
+
+        <AttributionControl position="bottom-left" compact />
         <MapStyleControl
           useBackground={osmChaChangeset.properties.imagery_used}
           currentMapstyle={mapStyle}
           setMapStyle={setMapStyle}
         />
-        <AttributionControl position="bottom-left" compact />
       </ReactMapGlMap>
     </MapProvider>
   )
