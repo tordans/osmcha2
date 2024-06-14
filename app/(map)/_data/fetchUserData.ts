@@ -12,7 +12,6 @@ export const fetchUserData = async (userId: string | undefined) => {
     headers: { Authorization: `Token ${process.env.NEXT_PUBLIC_TEMPORARY_USER_TOKE}` },
   })
 
-  console.info('Fetching', [fetchOsmOrgUser, fetchOsmChaUser])
   const [rawOsmOrgUserResponse, rawOsmChaUserResponse] = await Promise.all([
     fetchOsmOrgUser,
     fetchOsmChaUser,
