@@ -11,7 +11,8 @@
     "format": "prettier . --write",
     "check": "npm run type-check && npm run format && npm run lint",
     "updatePackages:major": "npx taze major --write && npm install",
-    "updatePackages:minor": "npx taze minor --write && npm install"
+    "updatePackages:minor": "npx taze minor --write && npm install",
+    "prepare": "husky"
   },
   "dependencies": {
     "@headlessui/react": "^2.0.4",
@@ -44,6 +45,7 @@
     "eslint-config-next": "14.2.3",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-compiler": "^0.0.0-experimental-c8b3f72-20240517",
+    "husky": "^9.0.11",
     "postcss": "^8",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.6.0",
