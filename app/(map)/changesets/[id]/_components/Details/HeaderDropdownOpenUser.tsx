@@ -24,6 +24,12 @@ const urlUserOsmCha = (username: string) => {
   // TODO Use typesafe query params
   return `https://osmcha.org/?filters={"users":[{"label":"${username}","value":"${username}"}],"date__gte":[{"label":"","value":""}]}` as const
 }
+const urlUserChangesetsByUserWithComments = (userId: string) => {
+  return `http://resultmaps.neis-one.org/osm-discussion-comments?uid=${userId}` as const
+}
+const urlUserChangesetCommentsByUser = (userId: string) => {
+  return `https://resultmaps.neis-one.org/osm-discussion-comments?uid=${userId}&commented` as const
+}
 
 export const DropdownOpenUser = ({ changeset }: Props) => {
   return (
@@ -46,6 +52,21 @@ export const DropdownOpenUser = ({ changeset }: Props) => {
           </DropdownItem>
           <DropdownItem href={urlUserOsmCha(changeset.properties.user)} target="_blank">
             OSMCha
+          </DropdownItem>
+        </DropdownSection>
+        <DropdownSection>
+          <DropdownHeading>Comments</DropdownHeading>
+          <DropdownItem
+            href={urlUserChangesetsByUserWithComments(changeset.properties.uid)}
+            target="_blank"
+          >
+            Changesets by User with comments
+          </DropdownItem>
+          <DropdownItem
+            href={urlUserChangesetCommentsByUser(changeset.properties.uid)}
+            target="_blank"
+          >
+            Comments on Changesets by User
           </DropdownItem>
         </DropdownSection>
       </DropdownMenu>
