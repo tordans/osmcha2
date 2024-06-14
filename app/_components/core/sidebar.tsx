@@ -3,7 +3,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { LayoutGroup, motion } from 'framer-motion'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import React, { Fragment, useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
@@ -117,7 +117,10 @@ export const SidebarItem = React.forwardRef(function SidebarItem(
   )
 
   const currentPath = usePathname()
-  const current = 'href' in props && currentPath === props.href
+  const currentParams = useSearchParams()
+  const current =
+    'href' in props &&
+    `${currentPath}?${decodeURIComponent(currentParams.toString())}` === props.href
 
   return (
     <span className={clsx(className, 'relative')}>
