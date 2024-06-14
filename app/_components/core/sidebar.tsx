@@ -3,8 +3,8 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { LayoutGroup, motion } from 'framer-motion'
-import { usePathname, useSearchParams } from 'next/navigation'
-import React, { Fragment, useId } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import React, { useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
 
@@ -122,6 +122,8 @@ export const SidebarItem = React.forwardRef(function SidebarItem(
     'href' in props &&
     `${currentPath}?${decodeURIComponent(currentParams.toString())}` === props.href
 
+  const router = useRouter()
+
   return (
     <span className={clsx(className, 'relative')}>
       {current && (
@@ -131,11 +133,36 @@ export const SidebarItem = React.forwardRef(function SidebarItem(
         />
       )}
       {'href' in props ? (
-        <Headless.CloseButton as={Fragment} ref={ref}>
-          <Link className={classes} {...props} data-current={current ? 'true' : undefined}>
+        <>
+          {/* @ts-expect-error TODO some props don't match; the whole onClick router.push+router.refresh part is messy. But needed to get the server components to refresh. Once we know more, we should clean this component up into a specialized thing. */}
+          <Headless.Button
+            {...props}
+            onClick={(event: any) => {
+              props.onClick?.(event)
+              // @ts-expect-error React strict route types acting up again
+              router.push(props.href)
+              router.refresh()
+            }}
+            className={clsx('cursor-pointer', classes)}
+            data-current={current ? 'true' : undefined}
+            ref={ref}
+          >
             <TouchTarget>{children}</TouchTarget>
-          </Link>
-        </Headless.CloseButton>
+          </Headless.Button>
+          {/*
+            // This ways the original component.
+            <Headless.CloseButton as={Fragment} ref={ref}>
+              <Link
+                className={classes}
+                {...props}
+                onClick={() => router.push(props.href)}
+                data-current={current ? 'true' : undefined}
+              >
+                <TouchTarget>{children}</TouchTarget>
+              </Link>
+            </Headless.CloseButton>
+          */}
+        </>
       ) : (
         <Headless.Button
           {...props}
