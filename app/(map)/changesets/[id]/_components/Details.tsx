@@ -4,7 +4,7 @@ import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
 import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
 import { Badge } from '@app/_components/core/badge'
 import { Navbar, NavbarItem, NavbarSection } from '@app/_components/core/navbar'
-import { useState } from 'react'
+import { parseAsStringEnum, useQueryState } from 'nuqs'
 import {
   CommentIndicator,
   NoCommentIndicator,
@@ -19,8 +19,12 @@ type Props = {
 }
 
 export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset }: Props) => {
-  // TODO: Move this state to a nuqs URL serach param
-  const [panel, setPanel] = useState<'changes' | 'discussion'>('changes')
+  const [panel, setPanel] = useQueryState(
+    'details',
+    parseAsStringEnum(['changes', 'comments'])
+      .withDefault('changes')
+      .withOptions({ history: 'replace' }),
+  )
 
   const changesetCount =
     osmChaChangeset.properties.create +
@@ -35,7 +39,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
           <NavbarItem current={panel === 'changes'} onClick={() => setPanel('changes')}>
             Changes <Badge>{changesetCount}</Badge>
           </NavbarItem>
-          <NavbarItem current={panel === 'discussion'} onClick={() => setPanel('discussion')}>
+          <NavbarItem current={panel === 'comments'} onClick={() => setPanel('comments')}>
             Discussion{' '}
             {commentCount ? (
               <CommentIndicator commentCount={commentCount} />
@@ -46,7 +50,7 @@ export const Details = ({ osmChaChangeset, osmChaRealChangeset, osmOrgChangeset 
         </NavbarSection>
       </Navbar>
       {panel === 'changes' && <DetailsChanges osmChaRealChangeset={osmChaRealChangeset} />}
-      {panel === 'discussion' && <DetailsComments osmOrgChangeset={osmOrgChangeset} />}
+      {panel === 'comments' && <DetailsComments osmOrgChangeset={osmOrgChangeset} />}
     </section>
   )
 }

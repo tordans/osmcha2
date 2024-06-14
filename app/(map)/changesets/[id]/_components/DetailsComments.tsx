@@ -16,12 +16,14 @@ export const DetailsComments = ({ osmOrgChangeset }: Props) => {
 
   return (
     <section className="mt-4">
+      {!discussions && <p className="w-full p-5 text-center text-gray-500">No comments, yet</p>}
+
       {discussions?.map((discussion) => {
         const isChangesetUser = discussion.user === changesetUser
         return (
           <div
             key={discussion.id}
-            className="border-b-zinc-40 relative mb-4 border-b pb-4 last:border-b-0"
+            className="relative mb-4 border-b border-b-zinc-50 pb-4 last:border-b-0"
           >
             <div className="flex items-center justify-between gap-1">
               <h4 className="flex items-center gap-1 font-semibold text-zinc-700">
