@@ -2,15 +2,6 @@
 
 See `_references/changeset-map/lib/config.js`
 
-## Changes: Filter empty notes
-
-When note was created but is emtpy and it is is part of a way, filter it in the sidebar because it does not add any value to the list.
-
-## Guard when Real Changeset is missing
-
-It is not uncommon for the real changeset data to be missing yet or forever.
-We need to recover from that, ideally show a message…
-
 ### Add overpass fallback
 
 https://github.com/osmlab/changeset-map/pull/228/commits/338c3ac5a4e987ba4a7699b3ca3de0640f294e0f#diff-7404d92aa704d015273f3031f949a2f0c337d99d7aea2232ddd3ca1a7f8d183fL25
