@@ -1,7 +1,7 @@
 'use client'
 import { BadgeCheckedBy } from '@app/(map)/_components/Changeset/BadgeCheckedBy'
-import { BadgesReasons } from '@app/(map)/_components/Changeset/BadgesReasons'
-import { BadgesTags } from '@app/(map)/_components/Changeset/BadgesTags'
+import { BadgesCheckTags, hasResolvedTags } from '@app/(map)/_components/Changeset/BadgesCheckTags'
+import { BadgesReasonsFlagged } from '@app/(map)/_components/Changeset/BadgesReasonsFlagged'
 import { ChangesetDescriptionWithLinkify } from '@app/(map)/_components/Changeset/ChangesetDescription'
 import { RelativeTime } from '@app/(map)/_components/Changeset/RelativeTime'
 import { longerEditorShortname } from '@app/(map)/_components/utils/editorShortname'
@@ -25,24 +25,26 @@ type Props = {
 export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props) => {
   return (
     <header className="flex flex-col gap-1 bg-zinc-50 py-1 pl-3 pr-1">
-      <div className="w-full">
-        <h1 className="text-lg font-bold">Changeset #{osmChaChangeset.id}</h1>
-        <p className="text-xs text-zinc-500">
-          <RelativeTime date={osmChaChangeset.properties.date} /> |{' '}
-          {longerEditorShortname(
-            osmChaChangeset.properties.editor,
-            osmChaChangeset.properties.metadata.host,
-          )}
-        </p>
-      </div>
+      <DropdownOpenChangeset changeset={osmChaChangeset}>
+        <div className="flex flex-col justify-start text-start">
+          <h1 className="text-lg font-bold">Changeset #{osmChaChangeset.id}</h1>
+          <p className="-mt-0.5 text-xs text-zinc-500">
+            <RelativeTime date={osmChaChangeset.properties.date} /> |{' '}
+            <abbr
+              title={`Editor ${osmChaChangeset.properties.editor} ${osmChaChangeset.properties.metadata.host ? `on ${osmChaChangeset.properties.metadata.host}` : ''}`}
+              className="cursor-help no-underline underline-offset-2 hover:underline"
+            >
+              {longerEditorShortname(
+                osmChaChangeset.properties.editor,
+                osmChaChangeset.properties.metadata.host,
+              )}
+            </abbr>
+          </p>
+        </div>
+      </DropdownOpenChangeset>
 
-      <div className="mt-2 flex flex-col gap-1 text-base">
-        <ChangesetDescriptionWithLinkify changeset={osmChaChangeset} />
-
-        <BadgesReasons reasons={osmChaChangeset.properties.tags} />
-        <BadgesTags tags={osmChaChangeset.properties.tags} />
-
-        <div className="flex items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
+      <DropdownOpenUser changeset={osmChaChangeset}>
+        <div className="flex w-full items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
           <p>
             User created <RelativeTime date={osmOrgUser.user.account_created} /> |{' '}
             {osmOrgUser.user.changesets.count.toLocaleString()} edits
@@ -50,7 +52,8 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
           <div title="Number of changesets of this user that where marked bad/good in OSMCha before">
             <BadgeButton
               rounded="left"
-              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}]`}
+              applyLink={osmChaUser.checked_changesets > 0}
+              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}]}`}
             >
               {osmChaUser.checked_changesets.toLocaleString()}{' '}
               <HandThumbUpIcon
@@ -60,7 +63,8 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
             </BadgeButton>
             <BadgeButton
               rounded="right"
-              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}]'`}
+              applyLink={osmChaUser.harmful_changesets > 0}
+              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}]}`}
             >
               <span className={clsx(osmChaUser.harmful_changesets ? 'text-orange-700' : '')}>
                 {osmChaUser.harmful_changesets.toLocaleString()}{' '}
@@ -75,37 +79,40 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
             </BadgeButton>
           </div>
         </div>
+      </DropdownOpenUser>
+
+      <div className="mt-2 flex flex-col gap-1 text-base">
+        <ChangesetDescriptionWithLinkify changeset={osmChaChangeset} />
+        <BadgesReasonsFlagged reasons={osmChaChangeset.properties.reasons} />
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {osmChaChangeset.properties.checked ? (
+      <div className="mt-2 flex items-center gap-2">
+        {osmChaChangeset.properties.checked ? (
+          <>
             <BadgeCheckedBy
               checkDate={osmChaChangeset.properties.check_date}
               harmful={osmChaChangeset.properties.harmful}
               user={osmChaChangeset.properties.check_user}
+              resolved={hasResolvedTags(osmChaChangeset.properties.tags)}
             />
-          ) : (
-            <>
-              <Button outline className="group">
-                <HandThumbUpIcon
-                  className="inline size-4 text-zinc-600 group-hover:text-green-500"
-                  aria-label="Mark changesets as good"
-                />
-              </Button>
-              <Button outline className="group">
-                <HandThumbDownIcon
-                  className="inline size-4 text-zinc-600 group-hover:text-orange-500"
-                  aria-label="Mark changesets as harmful"
-                />
-              </Button>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownOpenChangeset changeset={osmChaChangeset} />
-          <DropdownOpenUser changeset={osmChaChangeset} />
-        </div>
+            <BadgesCheckTags tags={osmChaChangeset.properties.tags} />
+          </>
+        ) : (
+          <>
+            <Button outline className="group">
+              <HandThumbUpIcon
+                className="inline size-4 text-zinc-600 group-hover:text-green-500"
+                aria-label="Mark changesets as good"
+              />
+            </Button>
+            <Button outline className="group">
+              <HandThumbDownIcon
+                className="inline size-4 text-zinc-600 group-hover:text-orange-500"
+                aria-label="Mark changesets as harmful"
+              />
+            </Button>
+          </>
+        )}
       </div>
 
       <Divider className="mp-0.5 mt-1" />

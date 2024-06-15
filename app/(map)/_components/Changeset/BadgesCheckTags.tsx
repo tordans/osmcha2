@@ -5,14 +5,20 @@ type Props = {
   tags: TOsmChaChangesets['features'][number]['properties']['tags']
 }
 
-export const BadgesTags = ({ tags }: Props) => {
+const isResolvedTag = (tag: { id: number }) => tag.id === 9
+
+export const hasResolvedTags = (tags: Props['tags']) => {
+  return tags.some((tag) => tag.id === 9)
+}
+
+export const BadgesCheckTags = ({ tags }: Props) => {
   if (!tags.length) return null
 
   return (
-    <div className="space-x-1">
+    <div className="flex items-center gap-2">
       {tags.map((tag: { id: number; name: string }) => {
         return (
-          <Badge key={tag.id} color={tag.id === 9 ? 'green' : undefined}>
+          <Badge key={tag.id} color={isResolvedTag(tag) ? 'green' : undefined}>
             {tag.name}
           </Badge>
         )

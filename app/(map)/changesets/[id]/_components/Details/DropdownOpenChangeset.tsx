@@ -11,7 +11,7 @@ import {
 } from '@app/_components/core/dropdown'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 
-type Props = { changeset: TOsmChaChangeset }
+type Props = { children: React.ReactNode; changeset: TOsmChaChangeset }
 
 const urlChangesetOsm = (changesetId: number) => {
   return `https://openstreetmap.org/changeset/${changesetId}` as const
@@ -23,23 +23,25 @@ const urlChangesetRevert = (changesetId: number) => {
   return `https://revert.monicz.dev/?changesets=${changesetId}` as const
 }
 
-export const DropdownOpenChangeset = ({ changeset }: Props) => {
+export const DropdownOpenChangeset = ({ children, changeset }: Props) => {
   return (
     <Dropdown>
-      <DropdownButton outline className="p-0">
-        Changeset
+      <DropdownButton outline className="flex w-full items-center justify-between p-0">
+        {children}
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu anchor="left start">
         <DropdownItem href={urlChangesetOsm(changeset.id)} target="_blank">
           OSM Website
         </DropdownItem>
-        <DropdownItem
-          href={translateUrl(changeset.properties.comment, changeset.properties.metadata?.locale)}
-          target="_blank"
-        >
-          Translate Changeset Comment
-        </DropdownItem>
+        {changeset.properties.comment && (
+          <DropdownItem
+            href={translateUrl(changeset.properties.comment, changeset.properties.metadata?.locale)}
+            target="_blank"
+          >
+            Translate Changeset Comment
+          </DropdownItem>
+        )}
         <DropdownDivider />
         <DropdownSection>
           <DropdownHeading>Tools</DropdownHeading>

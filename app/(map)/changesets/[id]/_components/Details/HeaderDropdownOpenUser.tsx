@@ -9,7 +9,7 @@ import {
 } from '@app/_components/core/dropdown'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 
-type Props = { changeset: TOsmChaChangeset }
+type Props = { children: React.ReactNode; changeset: TOsmChaChangeset }
 
 const urlUserOsm = (username: string) => {
   return `https://openstreetmap.org/user/${username}` as const
@@ -31,11 +31,11 @@ const urlUserChangesetCommentsByUser = (userId: string) => {
   return `https://resultmaps.neis-one.org/osm-discussion-comments?uid=${userId}&commented` as const
 }
 
-export const DropdownOpenUser = ({ changeset }: Props) => {
+export const DropdownOpenUser = ({ children, changeset }: Props) => {
   return (
     <Dropdown>
-      <DropdownButton outline className="p-0">
-        User
+      <DropdownButton outline className="flex w-full items-center justify-between p-0">
+        {children}
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu anchor="left start">

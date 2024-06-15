@@ -5,7 +5,7 @@ type Props = {
   reasons: TOsmChaChangesets['features'][number]['properties']['reasons']
 }
 
-export const BadgesReasons = ({ reasons }: Props) => {
+export const BadgesReasonsFlagged = ({ reasons }: Props) => {
   return (
     <div className="space-x-1">
       {reasons.map((reason: { id: number; name: string }) => {

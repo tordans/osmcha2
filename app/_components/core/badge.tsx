@@ -62,11 +62,13 @@ export const BadgeButton = React.forwardRef(function BadgeButton(
     color = 'zinc',
     className,
     rounded = 'full',
+    applyLink = true, // Use to disable the link conditionally
     children,
     ...props
   }: BadgeProps & {
     className?: string
     rounded?: 'none' | 'left' | 'right' | 'full'
+    applyLink?: boolean
     children: React.ReactNode
   } & (
       | Omit<Headless.ButtonProps, 'className'>
@@ -81,6 +83,14 @@ export const BadgeButton = React.forwardRef(function BadgeButton(
     rounded === 'left' ? 'rounded-l-md' : '',
     rounded === 'right' ? 'rounded-r-md' : '',
   )
+
+  if (applyLink === false) {
+    return (
+      <Badge color={color} rounded={rounded}>
+        {children}
+      </Badge>
+    )
+  }
 
   return 'href' in props ? (
     <Link {...props} className={classes} ref={ref as React.ForwardedRef<HTMLAnchorElement>}>

@@ -5,8 +5,8 @@ import { clsx } from 'clsx'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { BadgeCheckedBy } from '../Changeset/BadgeCheckedBy'
-import { BadgesReasons } from '../Changeset/BadgesReasons'
-import { BadgesTags } from '../Changeset/BadgesTags'
+import { BadgesCheckTags, hasResolvedTags } from '../Changeset/BadgesCheckTags'
+import { BadgesReasonsFlagged } from '../Changeset/BadgesReasonsFlagged'
 import { ChangesetDescription } from '../Changeset/ChangesetDescription'
 import { CommentIndicator } from '../Changeset/CommentIndicator'
 import { RelativeTime } from '../Changeset/RelativeTime'
@@ -47,14 +47,15 @@ export const SidebarChangeset = ({ changeset }: Props) => {
                 checkDate={changeset.properties.check_date}
                 harmful={changeset.properties.harmful}
                 user={changeset.properties.check_user}
+                resolved={hasResolvedTags(changeset.properties.tags)}
               />
             ) : (
-              <BadgesReasons reasons={changeset.properties.tags} />
+              <BadgesReasonsFlagged reasons={changeset.properties.tags} />
             )}
 
             {/* We hide the whole box when id=9/"Resolved" is present because then the tags don't add too much information to the overview list. All data is visible in the <DetailsHeader> */}
             {!changeset.properties.tags.some((t) => t.id === 9) && (
-              <BadgesTags tags={changeset.properties.tags} />
+              <BadgesCheckTags tags={changeset.properties.tags} />
             )}
           </div>
           <ChevronRightIcon

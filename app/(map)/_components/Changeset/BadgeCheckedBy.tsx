@@ -6,12 +6,13 @@ type Props = {
   checkDate: Date | null
   harmful: null | false | true
   user: null | string
+  resolved: boolean
 }
 
-export const BadgeCheckedBy = ({ checkDate, harmful, user }: Props) => {
+export const BadgeCheckedBy = ({ checkDate, harmful, user, resolved }: Props) => {
   return (
     <div title={`Checked on ${checkDate ? localDateTimeWithRelative(checkDate) : 'UNKOWN'}`}>
-      <Badge color={harmful ? 'orange' : 'green'}>
+      <Badge color={resolved ? 'green' : harmful ? 'orange' : 'green'}>
         {harmful ? (
           <HandThumbDownIcon className="size-4" />
         ) : (
