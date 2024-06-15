@@ -65,9 +65,9 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
 
   if (!osmChaRealChangeset) {
     return (
-      <span className="flex h-full items-start justify-center pt-10 text-red-500">
+      <div className="flex h-full items-start justify-center pt-10 text-red-500">
         Error loading changeset data
-      </span>
+      </div>
     )
   }
 
