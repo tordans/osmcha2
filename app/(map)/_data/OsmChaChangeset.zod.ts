@@ -27,7 +27,7 @@ export const OsmChaChangeset = z.object({
     features: z.array(z.record(z.union([z.string(), z.number()]))),
     user: z.string(),
     uid: z.string(),
-    editor: z.string(),
+    editor: z.string().nullable(),
     comment: z.string(),
     comments_count: z.number(),
     source: z.string(),

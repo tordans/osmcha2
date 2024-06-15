@@ -42,7 +42,7 @@ const Properties = z.strictObject({
   comment: z.string(),
   comments_count: z.number(),
   source: z.string(),
-  editor: z.string(),
+  editor: z.string().nullable(),
   imagery_used: z.string(),
   metadata: z.intersection(
     z.record(z.union([z.string(), z.number()])),

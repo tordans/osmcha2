@@ -1,4 +1,6 @@
-export const editorShortname = (longname: string) => {
+export const editorShortname = (longname: string | null | undefined) => {
+  if (!longname) return 'UNKOWN' // Not given
+
   if (longname.toLowerCase().includes('streetcomplete')) return 'StreetComplete'
   if (longname.toLowerCase().includes('josm')) return 'JSOM'
   if (longname.toLowerCase().includes('every door')) return 'Every Door'
@@ -7,7 +9,9 @@ export const editorShortname = (longname: string) => {
   return longname.split(' ').at(0)
 }
 
-export const longerEditorShortname = (longname: string, host?: string) => {
+export const longerEditorShortname = (longname: string | null | undefined, host?: string) => {
+  if (!longname) return 'UNKOWN (Not provided)' // Not given
+
   const shortName = editorShortname(longname)
   if (!host) return shortName
 
