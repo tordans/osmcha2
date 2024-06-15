@@ -1,5 +1,6 @@
 'use client'
 import moment from 'moment'
+import { abbrClasses } from '../text/Abbr'
 import { localDateTime } from '../utils/localDateTime'
 
 export const relativeTime = (input: Date | string) => {
@@ -30,7 +31,7 @@ type Props = { date: Date }
 
 export const RelativeTime = ({ date }: Props) => {
   return (
-    <time title={`${localDateTime(date)}`} className="cursor-help" suppressHydrationWarning>
+    <time title={`${localDateTime(date)}`} className={abbrClasses} suppressHydrationWarning>
       {relativeTime(date)}
     </time>
   )

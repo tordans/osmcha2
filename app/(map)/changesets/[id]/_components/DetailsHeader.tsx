@@ -4,6 +4,7 @@ import { BadgesCheckTags, hasResolvedTags } from '@app/(map)/_components/Changes
 import { BadgesReasonsFlagged } from '@app/(map)/_components/Changeset/BadgesReasonsFlagged'
 import { ChangesetDescriptionWithLinkify } from '@app/(map)/_components/Changeset/ChangesetDescription'
 import { RelativeTime } from '@app/(map)/_components/Changeset/RelativeTime'
+import { Abbr } from '@app/(map)/_components/text/Abbr'
 import { longerEditorShortname } from '@app/(map)/_components/utils/editorShortname'
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import { TOsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
@@ -30,15 +31,14 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
           <h1 className="text-lg font-bold">Changeset #{osmChaChangeset.id}</h1>
           <p className="-mt-0.5 text-xs text-zinc-500">
             <RelativeTime date={osmChaChangeset.properties.date} /> |{' '}
-            <abbr
+            <Abbr
               title={`Editor ${osmChaChangeset.properties.editor} ${osmChaChangeset.properties.metadata.host ? `on ${osmChaChangeset.properties.metadata.host}` : ''}`}
-              className="cursor-help no-underline underline-offset-2 hover:underline"
             >
               {longerEditorShortname(
                 osmChaChangeset.properties.editor,
                 osmChaChangeset.properties.metadata.host,
               )}
-            </abbr>
+            </Abbr>
           </p>
         </div>
       </DropdownOpenChangeset>

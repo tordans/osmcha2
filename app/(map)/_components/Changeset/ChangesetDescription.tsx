@@ -1,6 +1,6 @@
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import { TOsmChaChangesets } from '@app/(map)/_data/OsmChaChangesets.zod'
-import { LinkifyText } from '../LinkifyText'
+import { LinkifyText } from '../text/LinkifyText'
 
 type Props = { changeset: TOsmChaChangesets['features'][number] | TOsmChaChangeset }
 

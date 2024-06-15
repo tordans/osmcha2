@@ -1,6 +1,6 @@
 import { RelativeTime } from '@app/(map)/_components/Changeset/RelativeTime'
 import { DebugDataHelperDialog } from '@app/(map)/_components/debugHelper/DebugDataHelperDialog'
-import { LinkifyText } from '@app/(map)/_components/LinkifyText'
+import { LinkifyText } from '@app/(map)/_components/text/LinkifyText'
 import { TranslateButton } from '@app/(map)/_components/TranslateButton'
 import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
 import { Link } from '@app/_components/core/link'
