@@ -39,3 +39,6 @@ next-env.d.ts
 # https://github.com/osmlab/changeset-map
 # https://github.com/OSMCha/osmcha-frontend/
 /_references
+
+# NextAuth
+certificates

@@ -1,4 +1,6 @@
 import { fetchAois } from '@app/(map)/_data/fetchAois'
+import { fetchUserData } from '@app/(map)/_data/fetchUserData'
+import { auth } from '@app/_components/auth/nextAuth'
 import { Avatar } from '@app/_components/core/avatar'
 import {
   Sidebar,
@@ -10,13 +12,13 @@ import {
 } from '@app/_components/core/sidebar'
 import { FunnelIcon, PlusIcon, UserIcon } from '@heroicons/react/16/solid'
 import { InformationCircleIcon } from '@heroicons/react/20/solid'
+import { NavigationItemLogout } from './NavigationItemLogout'
 
 export const NavigationSidebar = async () => {
-  // TODO: Fetch Userdata, use avatar logo instead of <UserIcon/>
-  // Use https://osmcha.org/api/v1/users/ user.avatar
-  // const { osmChaUser } = await fetchUserData(osmChaChangeset.properties.uid)
-
+  const session = await auth()
+  const { osmOrgUser } = await fetchUserData(session?.user?.id)
   const aois = await fetchAois()
+  // console.log('NavigationSidebar', { session, osmOrgUser, aois })
 
   return (
     <Sidebar>
@@ -62,13 +64,23 @@ export const NavigationSidebar = async () => {
 
         <SidebarSection>
           <SidebarHeader>
-            {/* <Avatar src={PngLogo} square /> */}
-            <Avatar icon={<UserIcon className="size-4" />} square /> <span>About</span>
+            <div className="flex w-full items-center justify-between">
+              <div className="flex items-center gap-1">
+                <UserIcon className="size-4" />
+                Account
+              </div>
+              {osmOrgUser?.user?.img?.href && (
+                <div className="flex items-center gap-1">
+                  {osmOrgUser?.user?.display_name}
+                  <Avatar src={osmOrgUser?.user?.img?.href} square className="size-6" />
+                </div>
+              )}
+            </div>
           </SidebarHeader>
           <SidebarItem href="/user">Edit Account</SidebarItem>
           <SidebarItem href="/teams">Edit Teams</SidebarItem>
           <SidebarItem href="/watchlist">Trusted User</SidebarItem>
-          <SidebarItem>Sign out</SidebarItem>
+          <NavigationItemLogout />
         </SidebarSection>
       </SidebarBody>
     </Sidebar>
