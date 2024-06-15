@@ -30,7 +30,7 @@ type Props = { date: Date }
 
 export const RelativeTime = ({ date }: Props) => {
   return (
-    <time title={`${localDateTime(date)}`} className="cursor-help">
+    <time title={`${localDateTime(date)}`} className="cursor-help" suppressHydrationWarning>
       {relativeTime(date)}
     </time>
   )
