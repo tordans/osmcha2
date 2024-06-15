@@ -16,7 +16,9 @@ import { NavigationItemLogout } from './NavigationItemLogout'
 
 export const NavigationSidebar = async () => {
   const session = await auth()
-  const { osmOrgUser } = await fetchUserData(session?.user?.id)
+  const currentUserId = session?.user?.id
+  const { osmOrgUser } = await fetchUserData(currentUserId)
+  const currentUserName = osmOrgUser?.user?.display_name
   const aois = await fetchAois()
   // console.log('NavigationSidebar', { session, osmOrgUser, aois })
 
@@ -29,14 +31,14 @@ export const NavigationSidebar = async () => {
             <span>Changesets</span>
           </SidebarHeader>
           <SidebarItem href="/">Recent</SidebarItem>
-          {/* TODO: Change uids to current user */}
-          {/* TODO: Click does not fetch new data */}
-          <SidebarItem href={`/?filters={"uids":[{"label":"11881","value":"11881"}]}`}>
+          <SidebarItem
+            href={`/?filters={"uids":[{"label":"${currentUserId}","value":"${currentUserId}"}]}`}
+          >
             My Changesets
           </SidebarItem>
-          {/* TODO: Change uids to current user */}
-          {/* TODO: Click does not fetch new data */}
-          <SidebarItem href={`/?filters={"checked_by":[{"label":"tordans","value":"tordans"}]}`}>
+          <SidebarItem
+            href={`/?filters={"checked_by":[{"label":"${currentUserName}","value":"${currentUserName}"}]}`}
+          >
             My Reviews
           </SidebarItem>
           {aois.count && <SidebarSpacer />}
@@ -71,7 +73,7 @@ export const NavigationSidebar = async () => {
               </div>
               {osmOrgUser?.user?.img?.href && (
                 <div className="flex items-center gap-1">
-                  {osmOrgUser?.user?.display_name}
+                  {currentUserName}
                   <Avatar src={osmOrgUser?.user?.img?.href} square className="size-6" />
                 </div>
               )}
