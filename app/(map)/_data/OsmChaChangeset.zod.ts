@@ -28,7 +28,7 @@ export const OsmChaChangeset = z.object({
     user: z.string(),
     uid: z.string(),
     editor: z.string().nullable(),
-    comment: z.string(),
+    comment: z.string().nullable(),
     comments_count: z.number(),
     source: z.string(),
     imagery_used: z.string(),

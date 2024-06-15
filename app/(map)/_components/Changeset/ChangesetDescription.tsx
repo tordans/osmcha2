@@ -15,7 +15,7 @@ export const ChangesetDescription = ({ changeset }: Props) => {
       lang="en"
     >
       <strong className="font-semibold">{changeset.properties.user}:</strong>{' '}
-      {changeset.properties.comment}
+      {changeset.properties.comment || 'NO COMMENT'}
     </p>
   )
 }
@@ -24,7 +24,7 @@ export const ChangesetDescriptionWithLinkify = ({ changeset }: Props) => {
   return (
     <p className="w-full hyphens-auto break-words leading-tight" lang="en">
       <strong className="font-semibold">{changeset.properties.user}:</strong>{' '}
-      <LinkifyText text={changeset.properties.comment} />
+      <LinkifyText text={changeset.properties.comment || 'NO COMMENT'} />
     </p>
   )
 }

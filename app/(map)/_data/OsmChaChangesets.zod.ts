@@ -39,7 +39,7 @@ const Properties = z.strictObject({
   user: z.string(),
   date: z.coerce.date(),
   area: z.number(),
-  comment: z.string(),
+  comment: z.string().nullable(),
   comments_count: z.number(),
   source: z.string(),
   editor: z.string().nullable(),
