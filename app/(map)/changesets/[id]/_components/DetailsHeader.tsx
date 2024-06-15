@@ -8,7 +8,7 @@ import { longerEditorShortname } from '@app/(map)/_components/utils/editorShortn
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import { TOsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
 import { TOsmOrgUser } from '@app/(map)/_data/OsmOrgUser.zod'
-import { BadgeButton } from '@app/_components/core/badge'
+import { Badge } from '@app/_components/core/badge'
 import { Button } from '@app/_components/core/button'
 import { Divider } from '@app/_components/core/divider'
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
@@ -43,29 +43,27 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
         </div>
       </DropdownOpenChangeset>
 
-      <DropdownOpenUser changeset={osmChaChangeset}>
+      <DropdownOpenUser
+        changeset={osmChaChangeset}
+        userId={osmOrgUser.user.id}
+        checkedGoodCount={osmChaUser.checked_changesets}
+        checkedBadCount={osmChaUser.harmful_changesets}
+        totalCount={osmOrgUser.user.changesets.count}
+      >
         <div className="flex w-full items-center justify-between text-xs text-zinc-500 hover:text-zinc-800">
           <p>
             User created <RelativeTime date={osmOrgUser.user.account_created} /> |{' '}
             {osmOrgUser.user.changesets.count.toLocaleString()} edits
           </p>
           <div title="Number of changesets of this user that where marked bad/good in OSMCha before">
-            <BadgeButton
-              rounded="left"
-              applyLink={osmChaUser.checked_changesets > 0}
-              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Bad only","value":true}]}`}
-            >
+            <Badge rounded="left">
               {osmChaUser.checked_changesets.toLocaleString()}{' '}
               <HandThumbUpIcon
                 className="inline size-4 text-zinc-600"
                 aria-label="Good changesets"
               />
-            </BadgeButton>
-            <BadgeButton
-              rounded="right"
-              applyLink={osmChaUser.harmful_changesets > 0}
-              href={`/?filters={"uids":[{"label":"${osmOrgUser.user.id}","value":"${osmOrgUser.user.id}"}],"harmful":[{"label":"Show Good only","value":false}]}`}
-            >
+            </Badge>
+            <Badge rounded="right">
               <span className={clsx(osmChaUser.harmful_changesets ? 'text-orange-700' : '')}>
                 {osmChaUser.harmful_changesets.toLocaleString()}{' '}
               </span>
@@ -76,7 +74,7 @@ export const DetailsHeader = ({ osmChaChangeset, osmOrgUser, osmChaUser }: Props
                 )}
                 aria-label="Harmful changesets"
               />
-            </BadgeButton>
+            </Badge>
           </div>
         </div>
       </DropdownOpenUser>

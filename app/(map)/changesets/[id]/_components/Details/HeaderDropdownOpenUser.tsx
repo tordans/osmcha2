@@ -9,7 +9,14 @@ import {
 } from '@app/_components/core/dropdown'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 
-type Props = { children: React.ReactNode; changeset: TOsmChaChangeset }
+type Props = {
+  children: React.ReactNode
+  changeset: TOsmChaChangeset
+  userId: number
+  checkedGoodCount: number
+  checkedBadCount: number
+  totalCount: number
+}
 
 const urlUserOsm = (username: string) => {
   return `https://openstreetmap.org/user/${username}` as const
@@ -31,7 +38,14 @@ const urlUserChangesetCommentsByUser = (userId: string) => {
   return `https://resultmaps.neis-one.org/osm-discussion-comments?uid=${userId}&commented` as const
 }
 
-export const DropdownOpenUser = ({ children, changeset }: Props) => {
+export const DropdownOpenUser = ({
+  children,
+  changeset,
+  userId,
+  checkedGoodCount,
+  checkedBadCount,
+  totalCount,
+}: Props) => {
   return (
     <Dropdown>
       <DropdownButton outline className="flex w-full items-center justify-between p-0">
@@ -39,6 +53,22 @@ export const DropdownOpenUser = ({ children, changeset }: Props) => {
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu anchor="left start">
+        <DropdownSection>
+          <DropdownHeading>OSMCha</DropdownHeading>
+          <DropdownItem
+            href={`/?filters={"uids":[{"label":"${userId}","value":"${userId}"}],"harmful":[{"label":"Show Good only","value":false}]}`}
+          >
+            {checkedGoodCount.toLocaleString()} changesets marked as good
+          </DropdownItem>
+          <DropdownItem
+            href={`/?filters={"uids":[{"label":"${userId}","value":"${userId}"}],"harmful":[{"label":"Show Bad only","value":true}]}`}
+          >
+            {checkedBadCount.toLocaleString()} changesets marked as good
+          </DropdownItem>
+          <DropdownItem href={urlUserOsmCha(changeset.properties.user)} target="_blank">
+            {totalCount.toLocaleString()} changesets by user
+          </DropdownItem>
+        </DropdownSection>
         <DropdownSection>
           <DropdownHeading>User {changeset.properties.user}</DropdownHeading>
           <DropdownItem href={urlUserOsm(changeset.properties.user)} target="_blank">
@@ -49,9 +79,6 @@ export const DropdownOpenUser = ({ children, changeset }: Props) => {
           </DropdownItem>
           <DropdownItem href={urlUserMissingmaps(changeset.properties.user)} target="_blank">
             Missing Maps
-          </DropdownItem>
-          <DropdownItem href={urlUserOsmCha(changeset.properties.user)} target="_blank">
-            OSMCha
           </DropdownItem>
         </DropdownSection>
         <DropdownSection>
