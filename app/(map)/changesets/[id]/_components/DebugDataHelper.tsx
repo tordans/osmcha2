@@ -6,6 +6,7 @@ import { TOsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
 import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
 import { TOsmOrgUser } from '@app/(map)/_data/OsmOrgUser.zod'
 import { realChangesetParser } from '@app/_components/_lib/real-changesets-parser'
+import { Link } from '@app/_components/core/link'
 import { XMarkIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -63,7 +64,15 @@ export const DebugDataHelper = ({
                 osmChaRealChangeset ? 'cursor-pointer hover:underline' : 'text-gray-400',
               )}
             >
-              OSMCha Real Changeset
+              OSMCha Real Changeset{' '}
+              <Link
+                href={`https://real-changesets.s3.us-west-2.amazonaws.com/${osmOrgChangeset?.elements?.[0]?.id}.json`}
+                target="_blank"
+                textLink
+                className="ml-2"
+              >
+                API Url
+              </Link>
             </summary>
             <JsonView src={osmChaRealChangeset} theme="vscode" />
           </details>
@@ -71,13 +80,14 @@ export const DebugDataHelper = ({
           <details>
             <summary
               className={clsx(
-                osmChaRealChangesetGeojson?.features
+                osmChaRealChangesetGeojson?.features?.length
                   ? 'cursor-pointer hover:underline'
                   : 'text-gray-400',
               )}
             >
               OSMCha Real Changeset GeoJson
             </summary>
+
             <JsonView src={osmChaRealChangesetGeojson} theme="vscode" />
           </details>
 
