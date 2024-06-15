@@ -5,9 +5,10 @@ import Linkify from 'linkify-react'
 
 type Props = {
   text: string
+  nl2br?: boolean
 }
 
-export const LinkifyText = ({ text }: Props) => {
+export const LinkifyText = ({ text, nl2br = false }: Props) => {
   return (
     <Linkify
       options={{
@@ -18,6 +19,7 @@ export const LinkifyText = ({ text }: Props) => {
             `/?filters={"comment":[{"label":"${hashtag}","value":"${hashtag}"}]}'`,
           mention: (mention) => `https://www.openstreetmap.org/user${mention}`,
         },
+        nl2br,
       }}
     >
       {text}
@@ -34,7 +36,12 @@ const renderLink = ({
   content: string
 }) => {
   return (
-    <Link textLink {...attributes} target={attributes.href.includes('http') ? '_blank' : undefined}>
+    <Link
+      textLink
+      {...attributes}
+      target={attributes.href.includes('http') ? '_blank' : undefined}
+      className="break-all"
+    >
       {content}
     </Link>
   )

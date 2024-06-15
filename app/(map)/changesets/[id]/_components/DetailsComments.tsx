@@ -49,13 +49,9 @@ export const DetailsComments = ({ osmOrgChangeset }: Props) => {
 
             <p
               className="mt-1 border-l-2 border-l-zinc-200 py-1 pl-2"
-              // CSS Solution for `<br>` in text,
-              //    see https://www.dhiwise.com/post/react-line-break-techniques-for-better-text-formatting
-              // A custom Br2nl component did not work,
-              //    see https://github.com/Hypercontext/linkifyjs/discussions/482
-              style={{ whiteSpace: 'pre-line', marginLeft: '4px' }}
+              style={{ marginLeft: '4px' }}
             >
-              <LinkifyText text={discussion.text} />
+              <LinkifyText text={discussion.text} nl2br />
             </p>
             <DebugDataHelperDialog data={discussion} title="Comment" />
           </div>
