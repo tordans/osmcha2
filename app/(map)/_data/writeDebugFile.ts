@@ -1,5 +1,8 @@
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
+
+const tmpDir = path.join(os.tmpdir(), 'osmcha2')
 
 export const writeDebugFile = ({
   parser,
@@ -10,10 +13,14 @@ export const writeDebugFile = ({
   data: any
   filename: string
 }) => {
+  if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir, { recursive: true })
+  }
+
   try {
     parser.parse(data)
   } catch (error) {
-    const file = path.resolve(__dirname, '../../../../../../tmp', `${filename}.json`)
+    const file = path.resolve(tmpDir, `${filename}.json`)
     console.info(
       'ERROR with strict Zod parse. The file that created the error can be inspected at ',
       file,
