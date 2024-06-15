@@ -6,6 +6,7 @@ export const editorShortname = (longname: string | null | undefined) => {
   if (longname.toLowerCase().includes('every door')) return 'Every Door'
   if (longname.toLowerCase().includes('id')) return 'iD'
   if (longname.toLowerCase().includes('rapid')) return 'Rapid'
+  if (longname.toLowerCase().includes('go map')) return 'GoMap'
   return longname.split(' ').at(0)
 }
 
