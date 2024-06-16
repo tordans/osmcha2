@@ -16,5 +16,6 @@ export const searchParamsCache = createSearchParamsCache({
   aoi: parseAsString,
   orderBy: parseAsStringLiteral(orderByOptions.map((o) => o.value)),
   page: parseAsString.withDefault('1'),
+  feature: parseAsString,
   // details: parseAsStringLiteral(['changes', 'comments']).withDefault('changes'), // Only in Details.tsx for now
 })

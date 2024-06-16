@@ -2,14 +2,18 @@
 
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
+import { useHighlightedFeaturesActions } from '@app/(map)/_data/highlightedFeatures.zustand'
+import { useSelectedFeaturesActions } from '@app/(map)/_data/selectedFeatures.zustand'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useState } from 'react'
 import {
   AttributionControl,
+  MapGeoJSONFeature,
   MapLayerMouseEvent,
   MapProvider,
   Map as ReactMapGlMap,
 } from 'react-map-gl/maplibre'
+import { MapDebugHelper } from './Map/MapDebugHelper/MapDebugHelper'
 import { MapStyleControl } from './Map/MapStyleControl'
 import { SourceLayerBounds } from './Map/SourceLayerBounds'
 import { SourceLayerChanges } from './Map/SourceLayerChanges'
@@ -25,6 +29,13 @@ type Props = {
 export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {
   const bounds = getChangesetBounds(osmChaChangeset.geometry)
   const [mapStyle, setMapStyle] = useState<TMapStyle>('maptilerDataviz')
+  const [cursor, setCursor] = useState<'default' | 'pointer'>('default')
+  const { setSelectedFeatures } = useSelectedFeaturesActions()
+  const { setHighlightedFeatures } = useHighlightedFeaturesActions()
+
+  const interactiveLayerIds = Object.keys(layers([], [])).filter(
+    (l) => l.startsWith('modified-') || l.startsWith('added-') || l.startsWith('deleted-'),
+  )
 
   return (
     <MapProvider>
@@ -41,9 +52,29 @@ export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {
         attributionControl={false} // We use <AttributionControl /> instead
         style={{ width: '100%', height: '100%' }}
         // Interactivity
-        // TODO: Add proper interactivity between map and sidebar
-        interactiveLayerIds={Object.keys(layers)}
-        onClick={(e: MapLayerMouseEvent) => console.log(e.features)}
+        cursor={cursor}
+        interactiveLayerIds={interactiveLayerIds}
+        onClick={(e: MapLayerMouseEvent) => {
+          const features = e.features as
+            | (TOsmChaRealChangesetGeojson['features'][number] & MapGeoJSONFeature)[]
+            | undefined
+          if (features?.length) {
+            setSelectedFeatures(features.map((f) => f.properties.id))
+          }
+        }}
+        onMouseEnter={(e: MapLayerMouseEvent) => {
+          const features = e.features as
+            | (TOsmChaRealChangesetGeojson['features'][number] & MapGeoJSONFeature)[]
+            | undefined
+          if (features?.length) {
+            setHighlightedFeatures(features.map((f) => f.properties.id))
+          }
+          setCursor('pointer')
+        }}
+        onMouseLeave={(e: MapLayerMouseEvent) => {
+          setHighlightedFeatures(null)
+          setCursor('default')
+        }}
       >
         <SourceLayerBounds bounds={bounds} />
         <SourceLayerChanges osmChaRealChangesetGeojson={osmChaRealChangesetGeojson} />
@@ -54,6 +85,7 @@ export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {
           currentMapstyle={mapStyle}
           setMapStyle={setMapStyle}
         />
+        <MapDebugHelper />
       </ReactMapGlMap>
     </MapProvider>
   )

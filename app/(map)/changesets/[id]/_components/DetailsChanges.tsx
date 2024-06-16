@@ -1,5 +1,14 @@
 import { TOsmChaRealChangeset } from '@app/(map)/_data/OsmChaRealChangeset.zod'
+import {
+  useHighlightedFeaturesActions,
+  useHighlightedFeaturesFeatures,
+} from '@app/(map)/_data/highlightedFeatures.zustand'
+import {
+  useSelectedFeaturesActions,
+  useSelectedFeaturesFeatures,
+} from '@app/(map)/_data/selectedFeatures.zustand'
 import { Badge } from '@app/_components/core/badge'
+import { Button } from '@app/_components/core/button'
 import {
   Table,
   TableBody,
@@ -8,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@app/_components/core/table'
-import { ArrowRightIcon } from '@heroicons/react/16/solid'
+import { ArrowRightIcon, EyeIcon } from '@heroicons/react/16/solid'
 import { PencilIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/solid'
 import clsx from 'clsx'
 import { Fragment } from 'react'
@@ -19,6 +28,11 @@ type Props = { osmChaRealChangeset: TOsmChaRealChangeset | undefined }
 const actionTranslation = { create: 'Created', modify: 'Modified', delete: 'Deleted' } as const
 
 export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
+  const highlightedFeatures = useHighlightedFeaturesFeatures()
+  const { setHighlightedFeatures } = useHighlightedFeaturesActions()
+  const selectedFeatures = useSelectedFeaturesFeatures()
+  const { setSelectedFeatures } = useSelectedFeaturesActions()
+
   type Element = TOsmChaRealChangeset['elements'][number] & {
     nodeStats: { added: number; modified: number; deleted: number }
   }
@@ -81,7 +95,8 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
             </h2>
             <ul>
               {changes.map((change) => {
-                const current = false // TODO
+                const currentHighlight = highlightedFeatures?.includes(change.id)
+                const currentSelect = selectedFeatures?.includes(change.id)
 
                 const oldTags = change.old?.tags || {}
                 const addedTags = Object.entries(change.tags).filter(
@@ -98,120 +113,128 @@ export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
                 )
 
                 return (
-                  <li key={change.id}>
-                    <div
-                      className={clsx(
-                        'group/item relative flex w-full flex-col items-start justify-between gap-1 rounded px-2 py-2 pr-0',
-                        current ? 'bg-blue-50' : 'hover:bg-gray-50',
-                      )}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <h3 className="flex items-center gap-1">
-                          {groupIcons[action]} {change.type}/{change.id}{' '}
-                          <span className="text-zinc-400">#{change.version}</span>{' '}
-                        </h3>
-                        <div className="flex items-center justify-end gap-1">
-                          {change.nodeStats && (
-                            <span
-                              className="cursor-help text-xs"
-                              title={
-                                Object.values(change.nodeStats).every((v) => v === 0)
-                                  ? 'Only tagging was changed; no changes to the geometry where made.'
-                                  : `Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`
-                              }
-                            >
-                              <Badge color="blue" rounded="left">
-                                {change.nodeStats.added}
-                              </Badge>
-                              <Badge color="yellow" className="-my-1" rounded="none">
-                                {change.nodeStats.modified}
-                              </Badge>
-                              <Badge color="red" rounded="right">
-                                {change.nodeStats.deleted}
-                              </Badge>
-                            </span>
-                          )}{' '}
-                          <DropdownOpenElement element={change} />
-                        </div>
+                  <li
+                    key={change.id}
+                    className={clsx(
+                      'group/item relative flex w-full flex-col items-start justify-between gap-1 rounded px-2 py-2 pr-0',
+                      currentSelect
+                        ? 'bg-yellow-50'
+                        : currentHighlight
+                          ? 'bg-blue-50'
+                          : 'hover:bg-gray-50',
+                    )}
+                    onMouseEnter={() => setHighlightedFeatures([change.id])}
+                    onMouseLeave={() => setHighlightedFeatures(null)}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <h3 className="flex items-center gap-1">
+                        {groupIcons[action]} {change.type}/{change.id}{' '}
+                        <span className="text-zinc-400">#{change.version}</span>{' '}
+                      </h3>
+                      <div className="flex items-center justify-end gap-1">
+                        {change.nodeStats && (
+                          <span
+                            className="cursor-help text-xs"
+                            title={
+                              Object.values(change.nodeStats).every((v) => v === 0)
+                                ? 'Only tagging was changed; no changes to the geometry where made.'
+                                : `Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`
+                            }
+                          >
+                            <Badge color="blue" rounded="left">
+                              {change.nodeStats.added}
+                            </Badge>
+                            <Badge color="yellow" className="-my-1" rounded="none">
+                              {change.nodeStats.modified}
+                            </Badge>
+                            <Badge color="red" rounded="right">
+                              {change.nodeStats.deleted}
+                            </Badge>
+                          </span>
+                        )}{' '}
+                        <Button onClick={() => setSelectedFeatures([change.id])} outline>
+                          <EyeIcon />
+                        </Button>
+                        <DropdownOpenElement element={change} />
                       </div>
-                      <div className="w-full border-t font-mono">
-                        <Table dense bleed classNameTable="text-xs">
-                          <TableHead className="sr-only">
-                            <TableRow className="w-full">
-                              <TableHeader>Key</TableHeader>
-                              <TableHeader>Value</TableHeader>
+                    </div>
+                    <div className="w-full border-t font-mono">
+                      <Table dense bleed classNameTable="text-xs">
+                        <TableHead className="sr-only">
+                          <TableRow className="w-full">
+                            <TableHeader>Key</TableHeader>
+                            <TableHeader>Value</TableHeader>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {addedTags.map(([key, value]) => (
+                            <TableRow key={key} className="w-full">
+                              <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
+                                {key}
+                              </TableCell>
+                              <TableCell
+                                className={clsx(
+                                  'bg-blue-100 align-top text-blue-700',
+                                  value.includes('http') ? 'break-all' : 'break-words',
+                                )}
+                              >
+                                {value}
+                              </TableCell>
                             </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {addedTags.map(([key, value]) => (
-                              <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
-                                  {key}
-                                </TableCell>
-                                <TableCell
-                                  className={clsx(
-                                    'bg-blue-100 align-top text-blue-700',
-                                    value.includes('http') ? 'break-all' : 'break-words',
-                                  )}
-                                >
-                                  {value}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            {removedTags.map(([key, _]) => (
-                              <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
-                                  {key}
-                                </TableCell>
-                                <TableCell
-                                  className={clsx(
-                                    'bg-orange-100 align-top text-orange-500',
-                                    oldTags[key].includes('http') ? 'break-all' : 'break-words',
-                                  )}
-                                >
-                                  {oldTags[key]}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            {changedTags.map(([key, value]) => (
-                              <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
-                                  {key}
-                                </TableCell>
-                                <TableCell
-                                  className={clsx(
-                                    'bg-yellow-100 align-top',
-                                    oldTags[key].includes('http') || value.includes('http')
-                                      ? 'break-all'
-                                      : 'break-words',
-                                  )}
-                                >
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-orange-500">{oldTags[key]}</span>{' '}
-                                    <ArrowRightIcon className="size-3 flex-none" />{' '}
-                                    <span className="text-green-700">{value}</span>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            {unchangedTags.map(([key, value]) => (
-                              <TableRow key={key} className="w-full">
-                                <TableCell className="w-32 max-w-32 truncate" title={key}>
-                                  {key}
-                                </TableCell>
-                                <TableCell
-                                  className={clsx(
-                                    'align-top text-zinc-500',
-                                    value.includes('http') ? 'break-all' : 'break-words',
-                                  )}
-                                >
-                                  {value}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                          ))}
+                          {removedTags.map(([key, _]) => (
+                            <TableRow key={key} className="w-full">
+                              <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
+                                {key}
+                              </TableCell>
+                              <TableCell
+                                className={clsx(
+                                  'bg-orange-100 align-top text-orange-500',
+                                  oldTags[key].includes('http') ? 'break-all' : 'break-words',
+                                )}
+                              >
+                                {oldTags[key]}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {changedTags.map(([key, value]) => (
+                            <TableRow key={key} className="w-full">
+                              <TableCell className="w-32 max-w-32 truncate align-top" title={key}>
+                                {key}
+                              </TableCell>
+                              <TableCell
+                                className={clsx(
+                                  'bg-yellow-100 align-top',
+                                  oldTags[key].includes('http') || value.includes('http')
+                                    ? 'break-all'
+                                    : 'break-words',
+                                )}
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span className="text-orange-500">{oldTags[key]}</span>{' '}
+                                  <ArrowRightIcon className="size-3 flex-none" />{' '}
+                                  <span className="text-green-700">{value}</span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {unchangedTags.map(([key, value]) => (
+                            <TableRow key={key} className="w-full">
+                              <TableCell className="w-32 max-w-32 truncate" title={key}>
+                                {key}
+                              </TableCell>
+                              <TableCell
+                                className={clsx(
+                                  'align-top text-zinc-500',
+                                  value.includes('http') ? 'break-all' : 'break-words',
+                                )}
+                              >
+                                {value}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </li>
                 )

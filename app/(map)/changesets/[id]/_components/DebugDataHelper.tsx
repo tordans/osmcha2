@@ -5,6 +5,8 @@ import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangese
 import { TOsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
 import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
 import { TOsmOrgUser } from '@app/(map)/_data/OsmOrgUser.zod'
+import { useHighlightedFeaturesFeatures } from '@app/(map)/_data/highlightedFeatures.zustand'
+import { useSelectedFeaturesFeatures } from '@app/(map)/_data/selectedFeatures.zustand'
 import { realChangesetParser } from '@app/_components/_lib/real-changesets-parser'
 import { Link } from '@app/_components/core/link'
 import { XMarkIcon } from '@heroicons/react/16/solid'
@@ -31,6 +33,8 @@ export const DebugDataHelper = ({
   osmOrgUser,
 }: Props) => {
   const [show, setShow] = useState(false)
+  const highlightedFeatures = useHighlightedFeaturesFeatures()
+  const selectedFeatures = useSelectedFeaturesFeatures()
 
   return (
     <div
@@ -127,6 +131,28 @@ export const DebugDataHelper = ({
               OSMOrg User
             </summary>
             <JsonView src={osmOrgUser} theme="vscode" />
+          </details>
+
+          <details>
+            <summary
+              className={clsx(
+                highlightedFeatures ? 'cursor-pointer hover:underline' : 'text-gray-400',
+              )}
+            >
+              Highlighted Feature Ids
+            </summary>
+            <JsonView src={highlightedFeatures} theme="vscode" />
+          </details>
+
+          <details>
+            <summary
+              className={clsx(
+                selectedFeatures ? 'cursor-pointer hover:underline' : 'text-gray-400',
+              )}
+            >
+              Seleted Feature Ids
+            </summary>
+            <JsonView src={selectedFeatures} theme="vscode" />
           </details>
         </>
       )}
