@@ -3,6 +3,12 @@
 - We use the NextJS `middleware.ts` to check if a session exists. All non-logged in users are redirected to a info + SignIn page
 - We store the OSM userId as `session.user.id` and the Bearer token in `session.accessToken`.
 - We can access this using the NextAuth helper from any client and server component.
+- Use `OAUTH_DEBUG` to show details on the auth in terminal
+- The oAuth app on osm.org requires those redirect paths (for `npm run dev` and `npm run start`)
+  ```
+  https://osmcha2.test:3000/api/auth/callback/osmcha2
+  https://osmcha2.test:5173/api/auth/callback/osmcha2
+  ```
 
 # Some notes from the journey to get NextAuth working with OSM…
 
@@ -13,6 +19,7 @@
 
 **Workarounds:**
 
+- This only started working once I used `type: 'oidc'` instead of `oauth`. No idea why. `oauth` returns some token error and does not finish.
 - For some reason the provider did not pick up the URLs from the `wellKnown` prop that atlas-app and osm-teams use, so I had to pass them manually.
 - For some reasons next auth does not populate the user object. We do this manually for `atlas-app` but that did not work either. We will to it outside of the oauth process in a server component…
 - openstreetmap.org does not allow `localhost` as redirect URLs (see https://github.com/openstreetmap/openstreetmap-website/issues/3613) so we start the next server with 127.0.0.1. But some part of the process rewrites that to localhost, so it fails. To work around we now user osmcha2.test as test domain which works. An alternative solution seems to be to use the `redirectProxyUrl` but I did not look into this anymore.
