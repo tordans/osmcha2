@@ -2,7 +2,7 @@ I spent the last two weeks on holiday, using my mornings and evenings to explore
 
 ### Background
 
-OSMCha is an invaluable tool that enhances my OSM mapping activities. Years ago, I contributed to improving its mobile experience, which gave me insight into its complex codebase. Unfortunately, the project suffers from a lack of support from a software development perspective. Some of the code is seven years old, and the technical debt makes it difficult to develop new features. When OSMCha became a charter project, I had high hopes for more progress in the project. However, a year later, it's evident that substantial cleanup (like migrating servers and ensuring reliable performance) is still needed and thas is taking up all the time that that the new found home can muster.
+OSMCha is an invaluable tool that enhances my OSM mapping activities. Years ago, I contributed to improving its mobile experience, which gave me insight into its complex codebase. Unfortunately, the project suffers from a lack of support from a software development perspective. Some of the code is seven years old, and the technical debt makes it difficult to develop new features. When OSMCha became a charter project, I had high hopes for more progress. However, a year later, it's evident that substantial cleanup (like migrating servers and ensuring reliable performance) is still needed and is consuming all the available resources.
 
 ### Motivation & Conclusions
 
@@ -18,7 +18,7 @@ During this learning journey/sprint, I aimed to evaluate the current React ecosy
 ### Unplanned Detours
 
 - **Linkify:** I unexpectedly delved into adding links, `@`-mentions, and hashtags with [Linkify](https://linkify.js.org/). It integrates well and enhances the changeset and discussion comments.
-- **Real-Changeset-Parser Package:** Understanding and fixing issues with this Mapbox-era library was necessary. It illustrates the technical debt in OSMCha, a ~7-year-old project with minimal refactoring. I migrated the library to TypeScript and made minor modifications. More learning about ESM npm packages and their integration with modern build processes like NextJS is needed. Ideally, someone else could help with this. Wille and I discussed possibly moving the library to the OSMCha Github organization and updating the npm package.
+- **Real-Changeset-Parser Package:** Understanding and fixing issues with this Mapbox-era library was necessary. It illustrates the technical debt in OSMCha, a ~7-year-old project with minimal refactoring. I migrated the library to TypeScript and made minor modifications. More learning about ESM npm packages and their integration with modern build processes like NextJS is needed. Ideally, someone else could help with this. Wille and I discussed possibly moving the library to the OSMCha GitHub organization and updating the npm package.
 - **OAuth Integration in NextJS:** Integrating OAuth was challenging. I documented my notes in `auth/README.md`.
 
 ### UI Development
@@ -34,7 +34,7 @@ There is still a lot to be done to be able to replace the currrent frontend. OSM
 <details>
 <summary>Here are some tasks still to be completed…</summary>
 
-- **Login Page:** The Auth button currently serves directly from the library. Since this page is the only page that is visible for logged out users, it needs to explain OSMCha and provide a good experience. There is more on how I image the Auth to work in auth/README.md.
+- **Login Page:** The Auth button currently serves directly from the library. Since this page is the only page visible to logged-out users, it needs to explain OSMCha and provide a good user experience. More details on how I envision the Auth workflow can be found in auth/README.md.
 - **Handling Relations:** The changes-list and map don't probably don't handle relations yet. Code from the osmcha-frontend repo needs to be added.
 - **Map and Changes List Interaction:** This interaction is still in draft form.
 - **Review Workflow:** The entire review workflow is a draft. I have ideas to improve the commenting flow.
