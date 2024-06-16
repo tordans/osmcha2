@@ -1,48 +1,48 @@
-I spend the last two weeks on holidays and spend my evenings (and morning) on an learning journey to see how well the React ecosystem is set up to migrate an app like OSMCha in a clean, fast and beautiful way.
+I spent the last two weeks on holiday, using my mornings and evenings to explore how well the React ecosystem can facilitate the clean, fast, and elegant migration of an app like OSMCha.
 
 ### Background
 
-OSMCha is a great piece of software that helps my OSM mapping activity a lot. Ages ago, I contributed some changes to improve the mobile experience and from that time I know the complexity of the current code. In general its sad to see the lack of support for the project from a software development point of view. Some of the code is seven years old and it's in a state where no real feature development can be done due to technical dept. I had high hopes for when the project became a charter project but about a year later it becomes clear that there is still a lot to clean up (thinks like migrating the servers and getting them to perform reliably) before any changes to the frontend can even be added to the roadmap.
+OSMCha is an invaluable tool that enhances my OSM mapping activities. Years ago, I contributed to improving its mobile experience, which gave me insight into its complex codebase. Unfortunately, the project suffers from a lack of support from a software development perspective. Some of the code is seven years old, and the technical debt makes it difficult to develop new features. When OSMCha became a charter project, I hoped for significant improvements. However, a year later, it's evident that substantial cleanup (like migrating servers and ensuring reliable performance) is still needed before frontend changes can be considered.
 
 ### Motivation & Conclusions
 
-For this learning journey / holiday / "sprint" I wanted to see, how well the current react ecosystem works for an application like OSMCha:
+During this learning journey/sprint, I aimed to evaluate the current React ecosystem's suitability for an application like OSMCha:
 
-- React and NextJS recently introduce **React Server Components**, a way to compose frontend and backend components in one React app. I really like the Ruby on Rails vibes that gives. My idea is, to have all API calls happen on the server in react server components and actions and use client components only when (browser) interactivity is added. — My conclusion: The composability of those types of components is great. But at the same time it makes them harder to understand sometimes. However, after some learning, I am happy with the general setup ATM.
-- **Tailwind Catalyst** component library: Tailwind CSS is just great to build bespoke UIs in a component base environment like React. Recently Tailwind UI released [Catalyst](https://catalyst.tailwindui.com/), a component library that gives a great starting point to build beautiful UIs and interactions fast. — My conclusion: This is one of those projects that needs a bespoke UI where every pixel can be adjusted. Catalyst and Tailwind CSS are perfect for this use case.
-- **One repository** using the NextJS app folder: One of the things that make the current OSMCha frontend so hard to work with is, that the changeset-map is it's own repo and npm package. So one goal was, to reduce this complexity and have everything in one nicely structured project. Using the app folder in NextJS make structuring pages, api routes, components, utilities so much cleaner. Its great.
-- **[React Map GL](https://visgl.github.io/react-map-gl/)**: I really enjoy working with react-map-gl. It makes working with Maplibre GL JS very easy and allows for nice react style abstractions of controls, sources and layers.
-- Zustand and Nuqs: I am a big fan of holding all relevant state in the URL. [Nuqs](https://github.com/47ng/nuqs) is a great library for NextJS to do just that. And for all the other, global but non-shareable state, there is Zustand, which is also great to work with.
-- [Zod](https://zod.dev/) for parsing API responses. I used zod extensevly for this project. I had learning some new thinks on how to enable strict parsing of objects. The main reason I spend a lot of time on this is,that it gives me convidence on a type (script) level that the data I think I have is actually in the shape I expect it to be and that shape is a correct representation of the raw data. This was especially usefull, because I did not have an API spec for most of the data that is used in in OSMCha. Right now, the system will explode whenever it encounters an unknown property and in return provides great type savety on the shape of the data.
+- **React and NextJS:** The introduction of **React Server Components** allows for composing frontend and backend components in one React app, reminiscent of Ruby on Rails. My goal was to handle all API calls on the server with React server components, using client components only for interactivity. My conclusion: While the composability of these components is excellent, they can be challenging to understand initially. However, after some learning, I am satisfied with the setup.
+- **Tailwind Catalyst:** Tailwind CSS is fantastic for creating bespoke UIs in a component-based environment like React. The [Catalyst](https://catalyst.tailwindui.com/) component library from Tailwind UI provides a solid starting point for quickly building beautiful UIs and interactions. My conclusion: For a project requiring a highly customized UI, Catalyst and Tailwind CSS are perfect.
+- **Unified Repository with NextJS:** The current OSMCha frontend is complicated by the changeset-map being its own repository and npm package. My goal was to reduce this complexity by consolidating everything into one well-structured project. Using the app folder in NextJS makes structuring pages, API routes, components, and utilities much cleaner. It's great.
+- **React Map GL:** I enjoy working with [react-map-gl](https://visgl.github.io/react-map-gl/). It simplifies working with Maplibre GL JS and allows for neat React-style abstractions of controls, sources, and layers.
+- **State Management with Zustand and Nuqs:** I prefer managing relevant state in the URL. [Nuqs](https://github.com/47ng/nuqs) is excellent for this in NextJS. For other global but non-shareable states, Zustand works well.
+- **API Response Parsing with Zod:** I extensively used [Zod](https://zod.dev/) for parsing API responses. Learning how to enable strict parsing of objects was worthwhile because it ensures that the data I have is in the expected shape and correctly represents the raw data. This was particularly useful without an API spec for most of the data used in OSMCha. The system now fails upon encountering unknown properties, providing robust type safety.
 
-Unplanned detours
+### Unplanned Detours
 
-- **[Linkify](https://linkify.js.org/)**: I did an unplanned deep dive into how to add links to links, `@`-mentions and hastags. As always, there is a ton of libraries which all fit a specific use case. I am happy with how Linkify integrates into the code and how well it adds the desired features to the changeset comments and discussion comments.
-- One unexpected detour was to understand and fix issues with the **real-changeset-parser package**. This is a library from the Mapbox days of OSMCha which is still hosted on the Mapbox gihtub organisation but now a public archive. At the same time, it is part of the core of OSMCha. This is a nice illustration of the kind of technical and dependency dept that needs to be "paid" with a ~7 year old project like OSMCha that did not receive a lot of refactoring time over the years. In this case I migrated the library to TypeScript at https://github.com/tordans/real-changesets-parser/ and added small modifications. I still have a lot to learn about ESM npm packages and how to build them so they can be integrated in a modern build process like NextJS and have nice TypeScript support. It would be great if someone where to take this over. – Long term: I talked to Wille so this library might move into the OSMCha Github Org and maybe the npm package can be updated as well…
-- Another thing that was hard and took time was to **integrate OAuth into NextJS**. I wrote some notes in auth/README.md.
+- **Linkify:** I unexpectedly delved into adding links, `@`-mentions, and hashtags with [Linkify](https://linkify.js.org/). It integrates well and enhances the changeset and discussion comments.
+- **Real-Changeset-Parser Package:** Understanding and fixing issues with this Mapbox-era library was necessary. It illustrates the technical debt in OSMCha, a ~7-year-old project with minimal refactoring. I migrated the library to TypeScript and made minor modifications. More learning about ESM npm packages and their integration with modern build processes like NextJS is needed. Ideally, someone else could take over this task long-term. Wille and I discussed moving the library to the OSMCha Github organization and updating the npm package.
+- **OAuth Integration in NextJS:** Integrating OAuth was challenging. I documented my notes in `auth/README.md`.
 
-All those are technical things. At the same time there was a more vague motivation to start building a **UI for OSMCha** that is different but still as powerful and feature rich as the current UI. I did a lot of iterations on the UI to see how dense the information can be compacted. I think I managed to keep all the data that is present in OSMCha today in various panels and tabs and reorganize it in a different way. There is a vagure vision to allow for a more detailed review workflow with this new UI where you check the changes of a changeset individually and from there step into the full changeset evaluation and adding a helpful comment.
+### UI Development
 
-### Current status & Outlook
+My goal was to create a new, powerful, and feature-rich UI for OSMCha. I iterated on the UI to compact the information efficiently, keeping all current data but reorganized. There's a vision to enable a more detailed review workflow with this new UI, allowing individual changeset checks before full evaluation and commenting.
 
-My holidays are over soon so this "sprint" comes to an end. I am pretty sure I will not have at lot of time to work on this in the next few month due to [another OSM project](https://github.com/osmberlin/osm-traffic-sign-tool/issues/40) (more on that soon). But at the same time, OSMCha is in a kind of slumber for a few years now, so taking it slow with a project like this should fit right in.
+### Current Status & Outlook
 
-I had a quick talk with Wille, the maintainer of OSMCha on this project. Maybe this code can be release as a kind of "next" UI that can be used alongside the current UI. There are tons of feature missing, still, so it would only be useful for testing this new system and UI with live data.
+My holiday is ending, so this "sprint" is wrapping up. I won't have much time to work on this in the coming months due to another OSM project. However, given OSMCha's slow development pace, taking it slow with this project should fit well.
 
-A first step in this direction will be to move the repos under the [osmcha](https://github.com/OSMCha/) organisation and geht the Auth sorted so one can use the app in read-only mode.
+I briefly discussed this project with Wille, the OSMCha maintainer. This code might be released as a "next" UI to be tested alongside the current one, despite missing many features. The first step is to move the repos under the [osmcha](https://github.com/OSMCha/) organization and sort out authentication for read-only access.
 
 ---
 
-### Missing features
+### Missing Features
 
-OSMCha looks like a simple app at first glance but it has quite a big footprint of features. Here is a quick list of things that still need to be done. We will find a ton more once we test it more…
+OSMCha has a significant feature footprint. Here are some tasks still to be completed:
 
-- Login page: Right now the Auth button is served right from the library. Since this page is the only page that is visible for logged out users, it needs to explain OSMCha and provide a good experience. There is more on how I image the Auth to work in auth/README.md
-- Relations are not handled or even tested yet by the changes-list nor the map. There is code in the osmcha-frontend repo for this (some is copied to the TODO.md) that needs to be added.
-- The interaction between Map and Changes list is just a draft for now.
-- The whole review-flow is just a draft for now (more on a possible workflow above). I have ideas on how to change the commenting flow as part of this as well.
-- All pages (about, …) are just draft ATM.
-- Everything to do with forms and writing data is not there at all. I plan to test out server actions for those and use the new form APIs that React introduced. And of course the form helpers that Tailwind UI added. I would very much like to rework the filter form, which can benefit for some UX improvements. And maybe we should add a quick filter UI on top of the changeset list to clearly separate which filters can be used as URL params and which require to save the filter?
-- And then there is the mobile UI. I use OSMCha via RSS on my Phone and the lacking mobile UX is what brought me to contribute to OSMCha in the first place. With this new setup where the map and app are one piece and Tailwind CSS to handle the styling there is a lot that can be improved…
+- **Login Page:** The Auth button currently serves directly from the library. This page needs to explain OSMCha and provide a good user experience.
+- **Handling Relations:** The changes-list and map don't handle or test relations yet. Code from the osmcha-frontend repo needs to be added.
+- **Map and Changes List Interaction:** This interaction is still in draft form.
+- **Review Workflow:** The entire review workflow is a draft. I have ideas to improve the commenting flow.
+- **Additional Pages:** All pages (e.g., about) are drafts.
+- **Form Handling:** I plan to use server actions and new React form APIs for form handling. Tailwind UI's form helpers will also be utilized. The filter form needs UX improvements, and a quick filter UI might be added to the changeset list.
+- **Mobile UI:** The mobile UX needs improvement, which was my initial contribution to OSMCha. With the new setup and Tailwind CSS, significant enhancements are possible.
 
-Again, I don't see that I will have the time to work on those things any time soon. But I hope that having this new codebase might spark some contributions from the community from Users that might know modern React …
+I likely won't have time to address these tasks soon, but I hope the new codebase will encourage community contributions from users familiar with modern React.
