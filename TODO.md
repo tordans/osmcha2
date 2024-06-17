@@ -149,3 +149,40 @@ We will need this, once we build the filter form.
 
 - Mobile UI
 - Linkify Wikidata items in the changes table
+
+### Guard against empty user json response
+
+https://osmcha2.test:3000/changesets/152744764
+
+> "Error: Unexpected end of JSON input"
+
+### Add pagination to changeset list
+
+### Change filter links
+
+- Use nuqs to update the URL, not <Link>
+- Make the call non-shallow, maybe refresh router
+- Pass an object, not string
+- Parse the object with zod
+
+### Add link to OSMCha1
+
+… to the changeset dropdown. To allow quick comparisons.
+
+### Add metadata like source somewhere
+
+https://osmcha2.test:3000/changesets/150440098 was reverted for it's source but the source is not visible in OSMCha2, yet
+(Except for the imagery used in the image switcher)
+
+### Add ELI for more background images
+
+And provide a quick way to use the same image that the changeset used.
+Use the "best" image for a region by default.
+
+### No RealChangeset? > Show text on the map
+
+ATM, the map stays half empty with no RealChangeset. We should at least show a message that the changest geometry is missing.
+
+### Add tooltips
+
+Some of the `title` attribute helper texts are too important to hide behind an attribute; we should have a tooltip library that shows them more prominently. Ideally, we wait for catalyst to add one so we don't have to figure this out ourselves… (again). Or use the new browser API?
