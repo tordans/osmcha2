@@ -164,6 +164,7 @@ https://osmcha2.test:3000/changesets/152744764
 - Make the call non-shallow, maybe refresh router
 - Pass an object, not string
 - Parse the object with zod
+- Maybe https://github.com/47ng/nuqs/discussions/572 is needed to understand when data is passed or not
 
 ### Add link to OSMCha1
 
@@ -186,3 +187,11 @@ ATM, the map stays half empty with no RealChangeset. We should at least show a m
 ### Add tooltips
 
 Some of the `title` attribute helper texts are too important to hide behind an attribute; we should have a tooltip library that shows them more prominently. Ideally, we wait for catalyst to add one so we don't have to figure this out ourselves… (again). Or use the new browser API?
+
+### selectedFeature: Switch to nuqs
+
+Wait for https://github.com/47ng/nuqs/discussions/574 or just do it now and accept the rerenders, they are not a real issue in production anyways.
+
+### selectedFeature: Scroll changes list into view
+
+Maybe we can use https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView to scroll the change into view when a feature is selected on the map?
