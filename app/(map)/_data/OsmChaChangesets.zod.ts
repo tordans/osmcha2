@@ -15,7 +15,7 @@ const ReviewFeature = z.object({
   osm_id: z.number(),
   reasons: z.array(z.number()),
   version: z.number(),
-  primary_tags: z.record(z.unknown()),
+  primary_tags: z.record(z.unknown()).optional(),
 })
 
 const Properties = z.strictObject({
