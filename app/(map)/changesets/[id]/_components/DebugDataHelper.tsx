@@ -36,6 +36,8 @@ export const DebugDataHelper = ({
   const highlightedFeatures = useHighlightedFeaturesFeatures()
   const selectedFeatures = useSelectedFeaturesFeatures()
 
+  if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_PANELS === 'false') return null
+
   return (
     <div
       className={clsx(

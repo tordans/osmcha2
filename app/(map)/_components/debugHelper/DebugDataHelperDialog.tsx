@@ -15,6 +15,8 @@ type Props = {
 export const DebugDataHelperDialog = ({ title, data }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
+  if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_PANELS === 'false') return null
+
   return (
     <>
       <div className="absolute bottom-1 right-1 z-10 flex flex-col rounded-full border border-white/70 bg-pink-300 p-0.5 text-xs shadow-xl print:hidden">

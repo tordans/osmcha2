@@ -50,6 +50,8 @@ export const MapDebugHelper = () => {
 
   // console.log('MapDebugHelper', { layers, sources })
 
+  if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_PANELS === 'false') return null
+
   return (
     <section className="border-xl absolute left-1 top-1 z-50 max-h-[98%] overflow-y-auto rounded bg-pink-300 p-1 text-xs shadow-xl print:hidden">
       <input onChange={(e) => setSearchTerm(e.currentTarget.value)} value={searchTerm} />
