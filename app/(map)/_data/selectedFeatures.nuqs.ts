@@ -1,11 +1,17 @@
+import { memoize } from 'lodash'
 import { parseAsArrayOf, parseAsString, useQueryState } from 'nuqs'
+
+const memoized = memoize(
+  (data) => data,
+  ({ selectedFeatures }) => JSON.stringify(selectedFeatures),
+)
 
 export type TSelectedFeatures = {
   selectedFeatures: null | string[]
-  actions: { setSelectedFeatures: (feature: null | string[]) => void }
+  setSelectedFeatures: (feature: null | string[]) => void
 }
 
-const useSelectedFeatures = () => {
+export const useSelectedFeatures = () => {
   const [selectedFeatures, set] = useQueryState('feature', parseAsArrayOf(parseAsString))
 
   const setSelectedFeatures = (features: typeof selectedFeatures) => {
@@ -18,9 +24,6 @@ const useSelectedFeatures = () => {
     })
   }
 
-  return { selectedFeatures, actions: { setSelectedFeatures } }
+  return memoized({ selectedFeatures, setSelectedFeatures })
+  // return { selectedFeatures, setSelectedFeatures }
 }
-
-export const useSelectedFeaturesFeatures = () => useSelectedFeatures().selectedFeatures
-
-export const useSelectedFeaturesActions = () => useSelectedFeatures().actions

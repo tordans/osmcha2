@@ -3,10 +3,7 @@ import {
   useHighlightedFeaturesActions,
   useHighlightedFeaturesFeatures,
 } from '@app/(map)/_data/highlightedFeatures.zustand'
-import {
-  useSelectedFeaturesActions,
-  useSelectedFeaturesFeatures,
-} from '@app/(map)/_data/selectedFeatures.zustand'
+import { useSelectedFeatures } from '@app/(map)/_data/selectedFeatures.nuqs'
 import { Badge } from '@app/_components/core/badge'
 import { Button } from '@app/_components/core/button'
 import {
@@ -30,8 +27,7 @@ const actionTranslation = { create: 'Created', modify: 'Modified', delete: 'Dele
 export const DetailsChanges = ({ osmChaRealChangeset }: Props) => {
   const highlightedFeatures = useHighlightedFeaturesFeatures()
   const { setHighlightedFeatures } = useHighlightedFeaturesActions()
-  const selectedFeatures = useSelectedFeaturesFeatures()
-  const { setSelectedFeatures } = useSelectedFeaturesActions()
+  const { selectedFeatures, setSelectedFeatures } = useSelectedFeatures()
 
   type Element = TOsmChaRealChangeset['elements'][number] & {
     nodeStats: { added: number; modified: number; deleted: number }

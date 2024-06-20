@@ -1,6 +1,6 @@
 import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
 import { useHighlightedFeaturesFeatures } from '@app/(map)/_data/highlightedFeatures.zustand'
-import { useSelectedFeaturesFeatures } from '@app/(map)/_data/selectedFeatures.zustand'
+import { useSelectedFeatures } from '@app/(map)/_data/selectedFeatures.nuqs'
 import { Layer, Source } from 'react-map-gl/maplibre'
 import { layers } from './SourceLayerChanges/layers.const'
 
@@ -8,7 +8,7 @@ type Props = { osmChaRealChangesetGeojson: TOsmChaRealChangesetGeojson | undefin
 
 export const SourceLayerChanges = ({ osmChaRealChangesetGeojson }: Props) => {
   const highlightedFeatures = useHighlightedFeaturesFeatures()
-  const selectedFeatures = useSelectedFeaturesFeatures()
+  const { selectedFeatures } = useSelectedFeatures()
 
   if (!osmChaRealChangesetGeojson?.features) return null
 

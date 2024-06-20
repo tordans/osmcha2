@@ -6,7 +6,7 @@ import { TOsmChaUser } from '@app/(map)/_data/OsmChaUser.zod'
 import { TOsmOrgChangeset } from '@app/(map)/_data/OsmOrgChangeset.zod'
 import { TOsmOrgUser } from '@app/(map)/_data/OsmOrgUser.zod'
 import { useHighlightedFeaturesFeatures } from '@app/(map)/_data/highlightedFeatures.zustand'
-import { useSelectedFeaturesFeatures } from '@app/(map)/_data/selectedFeatures.zustand'
+import { useSelectedFeatures } from '@app/(map)/_data/selectedFeatures.nuqs'
 import { realChangesetParser } from '@app/_components/_lib/real-changesets-parser'
 import { Link } from '@app/_components/core/link'
 import { XMarkIcon } from '@heroicons/react/16/solid'
@@ -34,7 +34,7 @@ export const DebugDataHelper = ({
 }: Props) => {
   const [show, setShow] = useState(false)
   const highlightedFeatures = useHighlightedFeaturesFeatures()
-  const selectedFeatures = useSelectedFeaturesFeatures()
+  const { selectedFeatures } = useSelectedFeatures()
 
   if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_PANELS === 'false') return null
 

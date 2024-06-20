@@ -3,7 +3,7 @@
 import { TOsmChaChangeset } from '@app/(map)/_data/OsmChaChangeset.zod'
 import { TOsmChaRealChangesetGeojson } from '@app/(map)/_data/OsmChaRealChangesetGeojson.zod'
 import { useHighlightedFeaturesActions } from '@app/(map)/_data/highlightedFeatures.zustand'
-import { useSelectedFeaturesActions } from '@app/(map)/_data/selectedFeatures.zustand'
+import { useSelectedFeatures } from '@app/(map)/_data/selectedFeatures.nuqs'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useState } from 'react'
 import {
@@ -30,7 +30,7 @@ export const Map = ({ osmChaChangeset, osmChaRealChangesetGeojson }: Props) => {
   const bounds = getChangesetBounds(osmChaChangeset.geometry)
   const [mapStyle, setMapStyle] = useState<TMapStyle>('maptilerDataviz')
   const [cursor, setCursor] = useState<'default' | 'pointer'>('default')
-  const { setSelectedFeatures } = useSelectedFeaturesActions()
+  const { setSelectedFeatures } = useSelectedFeatures()
   const { setHighlightedFeatures } = useHighlightedFeaturesActions()
 
   const interactiveLayerIds = Object.keys(layers([], [])).filter(

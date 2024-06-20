@@ -1,5 +1,5 @@
 import { THighlightedFeatures } from '@app/(map)/_data/highlightedFeatures.zustand'
-import { TSelectedFeatures } from '@app/(map)/_data/selectedFeatures.zustand'
+import { TSelectedFeatures } from '@app/(map)/_data/selectedFeatures.nuqs'
 
 export const layers = (
   selectedFeatures: TSelectedFeatures['selectedFeatures'],
