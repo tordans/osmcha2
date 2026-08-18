@@ -1,8 +1,8 @@
 import type { MapLibreAugmentedDiffViewer } from "@osmcha/maplibre-adiff-viewer";
 import bbox from "@turf/bbox";
 import type * as maplibre from "maplibre-gl";
-import Mousetrap from "mousetrap";
-import React, { useEffect, useRef, useState } from "react";
+import { useHotkeys } from "@tanstack/react-hotkeys";
+import React, { useRef, useState } from "react";
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
@@ -77,19 +77,13 @@ function Changeset({
     setBindingsState((prev) => exclusiveKeyToggleState(columnToggleOptions, prev, label));
   }
 
-  useEffect(
-    function bindMapOptionsShortcut() {
-      Mousetrap.bind(CHANGESET_DETAILS_MAP.bindings, () => {
+  useHotkeys(
+    CHANGESET_DETAILS_MAP.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => {
         mapOptionsButtonRef.current?.click();
-      });
-
-      return function unbindMapOptionsShortcut() {
-        for (const binding of CHANGESET_DETAILS_MAP.bindings) {
-          Mousetrap.unbind(binding);
-        }
-      };
-    },
-    [],
+      },
+    })),
   );
 
   function setHighlight(type: string, id: number, isHighlighted: boolean) {

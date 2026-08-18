@@ -1,9 +1,10 @@
 import * as Headless from '@headlessui/react'
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
-import Mousetrap from 'mousetrap'
-import { useEffect, useEffectEvent, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useHotkeys } from '@tanstack/react-hotkeys'
+import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import {
+  bindingKey,
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
   CHANGESET_DETAILS_USER,
@@ -18,12 +19,12 @@ const COLUMN_TABS = [
   {
     key: CHANGESET_DETAILS_DETAILS.label,
     label: 'Changes',
-    bindings: CHANGESET_DETAILS_DETAILS.bindings,
+    hotkeys: CHANGESET_DETAILS_DETAILS.hotkeys,
   },
   {
     key: CHANGESET_DETAILS_DISCUSSIONS.label,
     label: 'Discussion',
-    bindings: CHANGESET_DETAILS_DISCUSSIONS.bindings,
+    hotkeys: CHANGESET_DETAILS_DISCUSSIONS.hotkeys,
   },
 ] as const
 
@@ -69,29 +70,21 @@ export function ReviewColumn({
     if (turningOn) setExpanded(true)
   }
 
-  const onSelectPanel = useEffectEvent((label: string) => {
-    selectPanel(label)
-  })
-
-  useEffect(function bindReviewColumnShortcuts() {
-    for (const tab of COLUMN_TABS) {
-      Mousetrap.bind(tab.bindings, () => onSelectPanel(tab.key))
-    }
-    Mousetrap.bind(CHANGESET_DETAILS_USER.bindings, () => {
-      setUserOpen((open) => !open)
-      setExpanded(true)
-    })
-    return function unbindReviewColumnShortcuts() {
-      for (const tab of COLUMN_TABS) {
-        for (const binding of tab.bindings) {
-          Mousetrap.unbind(binding)
-        }
-      }
-      for (const binding of CHANGESET_DETAILS_USER.bindings) {
-        Mousetrap.unbind(binding)
-      }
-    }
-  }, [])
+  useHotkeys([
+    ...COLUMN_TABS.flatMap((tab) =>
+      tab.hotkeys.map((hotkey) => ({
+        hotkey,
+        callback: () => selectPanel(tab.key),
+      })),
+    ),
+    ...CHANGESET_DETAILS_USER.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => {
+        setUserOpen((open) => !open)
+        setExpanded(true)
+      },
+    })),
+  ])
 
   function onHandlePointerDown(event: PointerEvent<HTMLButtonElement>) {
     dragStartY.current = event.clientY
@@ -160,14 +153,14 @@ export function ReviewColumn({
         <nav aria-label="Review panels" className="flex shrink-0 gap-1 border-b border-zinc-950/10 px-2 py-1">
           <ReviewTab
             current={changesActive}
-            title={`Changes (${CHANGESET_DETAILS_DETAILS.bindings[0]})`}
+            title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
             onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
           >
             Changes {changesetCount > 0 ? <Badge>{changesetCount}</Badge> : null}
           </ReviewTab>
           <ReviewTab
             current={discussionActive}
-            title={`Discussion (${CHANGESET_DETAILS_DISCUSSIONS.bindings[0]})`}
+            title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
             onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
           >
             Discussion{' '}

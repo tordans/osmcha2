@@ -10,8 +10,7 @@ import clsx from 'clsx'
 import { getRouteApi } from '@tanstack/react-router'
 import { parse } from 'date-fns'
 import Linkify from 'linkify-react'
-import Mousetrap from 'mousetrap'
-import { useEffect, useEffectEvent } from 'react'
+import { useHotkeys } from '@tanstack/react-hotkeys'
 import { toast } from 'sonner'
 import {
   OPEN_IN_ACHAVI,
@@ -149,44 +148,48 @@ export function DetailsHeader({
     })
   }
 
-  const onVerifyBad = useEffectEvent(() => handleMarkHarmful(true))
-  const onVerifyClear = useEffectEvent(() => handleMarkHarmful(-1))
-  const onVerifyGood = useEffectEvent(() => handleMarkHarmful(false))
-  const onOpenJosm = useEffectEvent(() => openExternal(urls.josm))
-  const onOpenId = useEffectEvent(() => openExternal(urls.id))
-  const onOpenOsm = useEffectEvent(() => openExternal(urls.osm))
-  const onOpenLevel0 = useEffectEvent(() => openExternal(urls.level0))
-  const onOpenAchavi = useEffectEvent(() => openExternal(urls.achavi))
-  const onOpenHdyc = useEffectEvent(() => {
+  function openHdyc() {
     if (osmUser) openExternal(hdycUrl(osmUser))
-  })
+  }
 
-  useEffect(function bindReviewShortcuts() {
-    const shortcuts = [
-      { bindings: VERIFY_BAD.bindings, handler: onVerifyBad },
-      { bindings: VERIFY_CLEAR.bindings, handler: onVerifyClear },
-      { bindings: VERIFY_GOOD.bindings, handler: onVerifyGood },
-      { bindings: OPEN_IN_JOSM.bindings, handler: onOpenJosm },
-      { bindings: OPEN_IN_ID.bindings, handler: onOpenId },
-      { bindings: OPEN_IN_OSM.bindings, handler: onOpenOsm },
-      { bindings: OPEN_IN_LEVEL0.bindings, handler: onOpenLevel0 },
-      { bindings: OPEN_IN_ACHAVI.bindings, handler: onOpenAchavi },
-      { bindings: OPEN_IN_HDYC.bindings, handler: onOpenHdyc },
-    ]
-
-    for (const shortcut of shortcuts) {
-      Mousetrap.bind(shortcut.bindings, (event) => {
-        event.preventDefault()
-        shortcut.handler()
-      })
-    }
-
-    return function unbindReviewShortcuts() {
-      for (const shortcut of shortcuts) {
-        Mousetrap.unbind(shortcut.bindings)
-      }
-    }
-  }, [])
+  useHotkeys([
+    ...VERIFY_BAD.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => handleMarkHarmful(true),
+    })),
+    ...VERIFY_CLEAR.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => handleMarkHarmful(-1),
+    })),
+    ...VERIFY_GOOD.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => handleMarkHarmful(false),
+    })),
+    ...OPEN_IN_JOSM.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => openExternal(urls.josm),
+    })),
+    ...OPEN_IN_ID.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => openExternal(urls.id),
+    })),
+    ...OPEN_IN_OSM.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => openExternal(urls.osm),
+    })),
+    ...OPEN_IN_LEVEL0.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => openExternal(urls.level0),
+    })),
+    ...OPEN_IN_ACHAVI.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => openExternal(urls.achavi),
+    })),
+    ...OPEN_IN_HDYC.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: openHdyc,
+    })),
+  ])
 
   return (
     <header className="flex flex-col gap-1 bg-zinc-50 py-1 pr-1 pl-3">

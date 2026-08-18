@@ -1,3 +1,4 @@
+import { HotkeysProvider } from '@tanstack/react-hotkeys'
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackAppDevtools } from '../components/shared/devtools/TanStackAppDevtools.tsx'
@@ -58,9 +59,18 @@ function RootLayout() {
   useAppHeight()
 
   return (
-    <AppShell>
-      <Outlet />
-      <TanStackAppDevtools />
-    </AppShell>
+    <HotkeysProvider
+      defaultOptions={{
+        hotkey: {
+          ignoreInputs: true,
+          preventDefault: true,
+        },
+      }}
+    >
+      <AppShell>
+        <Outlet />
+        <TanStackAppDevtools />
+      </AppShell>
+    </HotkeysProvider>
   )
 }

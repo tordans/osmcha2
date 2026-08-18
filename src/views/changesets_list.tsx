@@ -1,6 +1,5 @@
+import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
-import Mousetrap from 'mousetrap'
-import { useEffect, useEffectEvent } from 'react'
 import { Footer } from '../components/list/footer.tsx'
 import { Header } from '../components/list/header.tsx'
 import { List } from '../components/list/index.tsx'
@@ -90,52 +89,32 @@ function ChangesetsList() {
     void refetch()
   }
 
-  const onGoUpDownToChangeset = useEffectEvent(goUpDownToChangeset)
-  const onToggleFilters = useEffectEvent(toggleFilters)
-  const onToggleHelp = useEffectEvent(toggleHelp)
-  const onReloadChangesetsPageData = useEffectEvent(reloadChangesetsPageData)
-
   const handleChangePage = (newPageIndex: number) => {
     setPage(newPageIndex + 1)
   }
 
-  useEffect(function bindChangesetListShortcuts() {
-    const shortcuts = [
-      {
-        bindings: NEXT_CHANGESET.bindings,
-        handler: () => onGoUpDownToChangeset(1),
-      },
-      {
-        bindings: PREV_CHANGESET.bindings,
-        handler: () => onGoUpDownToChangeset(-1),
-      },
-      {
-        bindings: FILTER_BINDING.bindings,
-        handler: onToggleFilters,
-      },
-      {
-        bindings: HELP_BINDING.bindings,
-        handler: onToggleHelp,
-      },
-      {
-        bindings: REFRESH_CHANGESETS.bindings,
-        handler: onReloadChangesetsPageData,
-      },
-    ]
-
-    for (const shortcut of shortcuts) {
-      Mousetrap.bind(shortcut.bindings, (e) => {
-        e.preventDefault()
-        shortcut.handler()
-      })
-    }
-
-    return function unbindChangesetListShortcuts() {
-      for (const shortcut of shortcuts) {
-        Mousetrap.unbind(shortcut.bindings)
-      }
-    }
-  }, [])
+  useHotkeys([
+    ...NEXT_CHANGESET.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => goUpDownToChangeset(1),
+    })),
+    ...PREV_CHANGESET.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: () => goUpDownToChangeset(-1),
+    })),
+    ...FILTER_BINDING.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: toggleFilters,
+    })),
+    ...HELP_BINDING.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: toggleHelp,
+    })),
+    ...REFRESH_CHANGESETS.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: reloadChangesetsPageData,
+    })),
+  ])
 
   const listLocation = {
     pathname: filtersRouteMatch ? '/filters' : '/',

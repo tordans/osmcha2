@@ -1,9 +1,9 @@
 import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
+import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import type * as maplibre from 'maplibre-gl'
-import Mousetrap from 'mousetrap'
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/index.tsx'
 import { FILTER_BY_USER } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
@@ -60,16 +60,12 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     }
   }
 
-  const onFilterChangesetsByUser = useEffectEvent(filterChangesetsByUser)
-
-  useEffect(function bindFilterByUserShortcut() {
-    Mousetrap.bind(FILTER_BY_USER.bindings, onFilterChangesetsByUser)
-    return function unbindFilterByUserShortcut() {
-      for (const k of FILTER_BY_USER.bindings) {
-        Mousetrap.unbind(k)
-      }
-    }
-  }, [])
+  useHotkeys(
+    FILTER_BY_USER.hotkeys.map((hotkey) => ({
+      hotkey,
+      callback: filterChangesetsByUser,
+    })),
+  )
 
   return (
     <ChangesetWorkspace
