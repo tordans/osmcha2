@@ -16,6 +16,18 @@ type CommentFormProps = {
   discussions: any[]
 }
 
+function commentTemplate({
+  changesetIsHarmful,
+  discussions,
+  userDetails,
+}: Pick<CommentFormProps, 'changesetIsHarmful' | 'discussions' | 'userDetails'>) {
+  const userCommentedBefore = discussions.some(
+    (item) => (item.user ?? item.userName) === userDetails.username,
+  )
+  if (changesetIsHarmful == null || userCommentedBefore) return ''
+  return changesetIsHarmful ? (userDetails.message_bad ?? '') : (userDetails.message_good ?? '')
+}
+
 export function CommentForm({
   token,
   changesetId,
@@ -23,29 +35,18 @@ export function CommentForm({
   changesetIsHarmful,
   discussions,
 }: CommentFormProps) {
-  const [value, setValue] = useState('')
+  const template = commentTemplate({ changesetIsHarmful, discussions, userDetails })
+  const [draft, setDraft] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(false)
   const pendingRef = useRef<{ cancel: () => void } | null>(null)
+  const value = draft ?? template
 
-  useEffect(() => {
-    return () => {
+  useEffect(function cancelPendingCommentOnUnmount() {
+    return function cancelPendingComment() {
       pendingRef.current?.cancel()
     }
   }, [])
-
-  useEffect(() => {
-    setValue((current) => {
-      if (current !== '') return current
-      const userCommentedBefore = discussions.some(
-        (item) => (item.user ?? item.userName) === userDetails.username,
-      )
-      if (changesetIsHarmful == null || userCommentedBefore) return current
-      return changesetIsHarmful
-        ? (userDetails.message_bad ?? '')
-        : (userDetails.message_good ?? '')
-    })
-  }, [changesetIsHarmful, discussions, userDetails])
 
   const handleSubmit = () => {
     if (!value) return
@@ -56,7 +57,7 @@ export function CommentForm({
       .then(() => {
         setSuccess(true)
         setError(false)
-        setValue('')
+        setDraft('')
       })
       .catch((e) => {
         if (e?.isCanceled) return
@@ -86,7 +87,7 @@ export function CommentForm({
         placeholder="Provide constructive feedback to the mapper with a changeset comment."
         value={value}
         onChange={(event) => {
-          setValue(event.target.value)
+          setDraft(event.target.value)
           if (error) setError(false)
           if (success) setSuccess(false)
         }}

@@ -253,7 +253,7 @@ function CMap({
   )
 
   useEffect(
-    function syncMapStyleAndFilters() {
+    function synchronizeMapPresentation() {
       if (!mapRef.current || !adiffViewerRef.current) return
 
       const basemapStyle = BASEMAP_STYLES[style] ?? DEFAULT_BASEMAP_STYLE

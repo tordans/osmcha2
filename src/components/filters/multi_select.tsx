@@ -1,8 +1,7 @@
 import { XMarkIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
-import { useEffect, useState } from 'react'
-import { API_URL } from '../../config/index.ts'
-import { fetchReasons } from '../../network/reasons_tags.ts'
+import { useState } from 'react'
+import { useFilterAsyncOptions } from '../../query/hooks/useFilterAsyncOptions.ts'
 import { BadgeButton } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
@@ -22,18 +21,6 @@ type MultiSelectProps = {
   teamMode?: boolean
 }
 
-type ReasonRow = {
-  id: string | number
-  name: string
-}
-
-type TagRow = {
-  id: string | number
-  name: string
-  for_changeset?: boolean
-  trusted?: boolean
-}
-
 export function MultiSelect({
   name,
   display,
@@ -48,58 +35,7 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [inputValue, setInputValue] = useState('')
   const [allToggle, setAllToggle] = useState(name.slice(0, 4) === 'all_')
-  const [asyncOptions, setAsyncOptions] = useState<SearchOption[]>([])
-
-  useEffect(
-    function loadAsyncFilterOptions() {
-      if (!dataURL) return
-      let cancelled = false
-
-      async function load() {
-        if (dataURL === 'suspicion-reasons') {
-          const reasons = (await fetchReasons()) as ReasonRow[]
-          if (cancelled) return
-          setAsyncOptions(
-            reasons.map((reason) => ({
-              label: reason.name,
-              value: reason.id,
-            })),
-          )
-          return
-        }
-
-        const response = await fetch(
-          teamMode ? `${API_URL}/${dataURL}/` : `${API_URL}/${dataURL}/?page_size=200`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: token ? `Token ${token}` : '',
-            },
-          },
-        )
-        const json = (await response.json()) as { results?: TagRow[] }
-        if (cancelled) return
-        const rows = json.results ?? []
-        const mapped = teamMode
-          ? rows.map((row) =>
-              row.trusted
-                ? { label: `${row.name} (verified)`, value: row.name }
-                : { label: row.name.replace('(verified)', ''), value: row.name },
-            )
-          : rows
-              .filter((row) => row.for_changeset)
-              .map((row) => ({ label: row.name, value: row.id }))
-        setAsyncOptions(mapped)
-      }
-
-      void load()
-      return function cancelLoadAsyncFilterOptions() {
-        cancelled = true
-      }
-    },
-    [dataURL, teamMode, token],
-  )
+  const { data: asyncOptions = [] } = useFilterAsyncOptions(dataURL, token, teamMode)
 
   const selected = Array.isArray(value) ? value : []
 

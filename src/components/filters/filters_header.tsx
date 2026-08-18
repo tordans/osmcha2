@@ -1,5 +1,5 @@
 import { LinkIcon, RssIcon, XMarkIcon } from '@heroicons/react/20/solid'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { API_URL } from '../../config/index.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
@@ -24,21 +24,10 @@ type SaveAOIProps = {
 function SaveAOI({ name, aoiList, aoiId, updateAOI, createAOI }: SaveAOIProps) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(name || '')
-  const inputRef = useRef<HTMLInputElement>(null)
 
   if (name !== undefined && !editing && value !== (name || '')) {
     setValue(name || '')
   }
-
-  useEffect(
-    function focusSaveNameInput() {
-      if (!editing) return
-      const input = inputRef.current
-      input?.focus()
-      input?.select()
-    },
-    [editing],
-  )
 
   const handleSubmit = () => {
     setEditing(false)
@@ -54,9 +43,10 @@ function SaveAOI({ name, aoiList, aoiId, updateAOI, createAOI }: SaveAOIProps) {
     return (
       <span className="flex min-w-0 flex-wrap items-center gap-2">
         <Input
-          ref={inputRef}
+          autoFocus
           value={value}
           aria-label="Saved filter name"
+          onFocus={(event) => event.currentTarget.select()}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {

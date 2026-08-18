@@ -5,7 +5,7 @@ import simplify from '@turf/simplify'
 import truncate from '@turf/truncate'
 import clsx from 'clsx'
 import maplibre from 'maplibre-gl'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import {
   TerraDraw,
   TerraDrawPolygonMode,
@@ -13,7 +13,7 @@ import {
   TerraDrawRenderMode,
 } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
-import { nominatimSearch } from '../../network/nominatim.ts'
+import { useNominatimSearch } from '../../query/hooks/useNominatimSearch.ts'
 import { Button } from '../ui/button.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
@@ -59,18 +59,26 @@ function geometryFromValue(value?: Filter) {
 export function LocationSelect({ name, value, placeholder, onChange }: LocationSelectProps) {
   const [queryType, setQueryType] = useState('q')
   const [placeQuery, setPlaceQuery] = useState('')
-  const [placeOptions, setPlaceOptions] = useState<SearchOption[]>([])
+  const [debouncedPlaceQuery, setDebouncedPlaceQuery] = useState('')
   const [activeMode, setActiveMode] = useState('render')
 
   const mapRef = useRef<maplibre.Map | null>(null)
   const drawRef = useRef<TerraDraw | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const onChangeRef = useRef(onChange)
-  const initialValueRef = useRef(value)
-  const updateMapRef = useRef<(data: GeoJSON.Geometry) => void>(() => {})
 
   const selectedQueryType =
     queryTypeOptions.find((option) => option.value === queryType) ?? queryTypeOptions[0]
+  const canSearchPlaces = Boolean(
+    debouncedPlaceQuery &&
+    (debouncedPlaceQuery.length >= 2 || isOneCharInputAllowed(debouncedPlaceQuery)),
+  )
+  const nominatimQuery = useNominatimSearch(debouncedPlaceQuery, queryType, canSearchPlaces)
+  const placeOptions: SearchOption[] = canSearchPlaces
+    ? (nominatimQuery.data ?? []).map((place) => ({
+        label: place.display_name,
+        value: place.geojson,
+      }))
+    : []
 
   function updateMap(data: GeoJSON.Geometry) {
     const map = mapRef.current
@@ -103,12 +111,45 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
     )
   }
 
+  const onDrawFinished = useEffectEvent((id: string | number) => {
+    const draw = drawRef.current
+    if (!draw) return
+    const snapshot = draw.getSnapshot()
+    const feature = snapshot.find((item) => item.id === id)
+    if (!feature) return
+
+    if (feature.geometry.type === 'Polygon') {
+      if (draw.getMode() === 'rectangle') {
+        const bounds = bbox(feature)
+        const wsen = bounds.map((v) => v.toFixed(4)).join(',')
+        onChange('geometry', null)
+        onChange('in_bbox', [{ label: wsen, value: wsen }])
+      } else {
+        onChange('geometry', [{ label: feature.geometry, value: feature.geometry }])
+        onChange('in_bbox', null)
+      }
+    }
+
+    draw.setMode('render')
+    setActiveMode('render')
+    updateMap(feature.geometry)
+  })
+
+  const onMapStyleReady = useEffectEvent(() => {
+    const geometry = geometryFromValue(value)
+    if (geometry) updateMap(geometry as GeoJSON.Geometry)
+  })
+
   useEffect(
-    function syncLocationHandlerRefs() {
-      onChangeRef.current = onChange
-      updateMapRef.current = updateMap
+    function debouncePlaceQuery() {
+      const handle = window.setTimeout(function publishDebouncedPlaceQuery() {
+        setDebouncedPlaceQuery(placeQuery)
+      }, 500)
+      return function cancelDebouncedPlaceQuery() {
+        window.clearTimeout(handle)
+      }
     },
-    [onChange],
+    [placeQuery],
   )
 
   useEffect(function initializeLocationMap() {
@@ -140,33 +181,12 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
 
     map.on('load', () => {
       draw.start()
-      draw.on('finish', (id) => {
-        const snapshot = draw.getSnapshot()
-        const feature = snapshot.find((item) => item.id === id)
-        if (!feature) return
-
-        if (feature.geometry.type === 'Polygon') {
-          if (draw.getMode() === 'rectangle') {
-            const bounds = bbox(feature)
-            const wsen = bounds.map((v) => v.toFixed(4)).join(',')
-            onChangeRef.current('geometry', null)
-            onChangeRef.current('in_bbox', [{ label: wsen, value: wsen }])
-          } else {
-            onChangeRef.current('geometry', [{ label: feature.geometry, value: feature.geometry }])
-            onChangeRef.current('in_bbox', null)
-          }
-        }
-
-        draw.setMode('render')
-        setActiveMode('render')
-        updateMapRef.current(feature.geometry)
-      })
+      draw.on('finish', onDrawFinished)
     })
 
     map.on('style.load', () => {
       map.setProjection({ type: 'globe' })
-      const geometry = geometryFromValue(initialValueRef.current)
-      if (geometry) updateMapRef.current(geometry as GeoJSON.Geometry)
+      onMapStyleReady()
     })
 
     return function removeLocationMap() {
@@ -177,40 +197,11 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
   }, [])
 
   useEffect(
-    function syncLocationGeometryToMap() {
+    function synchronizeLocationGeometryToMap() {
       const geometry = geometryFromValue(value)
       if (geometry) updateMap(geometry as GeoJSON.Geometry)
     },
     [value],
-  )
-
-  useEffect(
-    function searchNominatimPlaces() {
-      const handle = window.setTimeout(function runNominatimSearch() {
-        if (!placeQuery || (placeQuery.length < 2 && !isOneCharInputAllowed(placeQuery))) {
-          setPlaceOptions([])
-          return
-        }
-
-        void nominatimSearch(placeQuery, queryType).then((json) => {
-          if (!Array.isArray(json)) {
-            setPlaceOptions([])
-            return
-          }
-          setPlaceOptions(
-            json.map((place: { display_name: string; geojson: unknown }) => ({
-              label: place.display_name,
-              value: place.geojson,
-            })),
-          )
-        })
-      }, 500)
-
-      return function cancelNominatimSearch() {
-        window.clearTimeout(handle)
-      }
-    },
-    [placeQuery, queryType],
   )
 
   const handlePlaceSelect = (option: SearchOption) => {

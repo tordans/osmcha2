@@ -9,9 +9,8 @@ import {
   CHANGESET_DETAILS_MAP,
 } from "../../config/bindings.ts";
 import { useAuth } from "../../hooks/useAuth.ts";
-import { getUserDetails } from "../../network/openstreetmap.ts";
-import { getUsers } from "../../network/whosthat.ts";
 import { useChangesetMap } from "../../query/hooks/useChangesetMap.ts";
+import { useChangesetMapper } from "../../query/hooks/useChangesetMapper.ts";
 import { DebugDataHelper } from "../debug/DebugDataHelper.tsx";
 import ElementInfo from "../element_info.tsx";
 import { exclusiveKeyToggleState } from "./exclusiveKeyToggle.ts";
@@ -60,11 +59,12 @@ function Changeset({
 }: ChangesetProps) {
   const { token } = useAuth();
   const { data: osmInfo } = useChangesetMap(changesetId);
+  const { userDetails, whosThat } = useChangesetMapper(
+    currentChangeset?.properties?.uid,
+    Boolean(token),
+  );
   const ready = Boolean(changesetId && currentChangeset);
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null);
-
-  const [userDetails, setUserDetails] = useState<any>(null);
-  const [whosThat, setWhosThat] = useState<any>(null);
 
   const [bindingsState, setBindingsState] = useState<Record<string, boolean>>(
     () => {
@@ -79,36 +79,6 @@ function Changeset({
   function exclusiveKeyToggle(label: string) {
     setBindingsState((prev) => exclusiveKeyToggleState(columnToggleOptions, prev, label));
   }
-
-  useEffect(
-    function loadChangesetUserDetails() {
-      const uid = currentChangeset?.properties?.uid;
-      if (!uid || !token) return;
-
-      let cancelled = false;
-
-      getUserDetails(uid)
-        .then((details) => {
-          if (!cancelled) {
-            setUserDetails(details);
-          }
-        })
-        .catch((e) => console.log(e));
-
-      getUsers(uid)
-        .then((users) => {
-          if (!cancelled && users[0]?.names) {
-            setWhosThat(users[0].names);
-          }
-        })
-        .catch((e) => console.log(e));
-
-      return function cancelChangesetUserDetails() {
-        cancelled = true;
-      };
-    },
-    [currentChangeset?.properties?.uid, token],
-  );
 
   useEffect(
     function bindMapOptionsShortcut() {
@@ -200,7 +170,7 @@ function Changeset({
           currentChangeset={currentChangeset}
           camera={camera}
           userDetails={userDetails}
-          whosThat={whosThat || []}
+          whosThat={whosThat}
           bindingsState={bindingsState}
           exclusiveKeyToggle={exclusiveKeyToggle}
           osmInfo={osmInfo}

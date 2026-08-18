@@ -87,23 +87,26 @@ function DebugDataHelperActive({ changesetId, selected, mapRef }: Props) {
   const { token, user } = useAuth()
   const [searchParams] = useSearchParams()
 
-  useEffect(() => {
-    if (!show) return
+  useEffect(
+    function subscribeToMapInspector() {
+      if (!show) return
 
-    const map = mapRef?.current?.map
-    const update = () => {
-      setMapSnapshot(snapshotMap(mapRef?.current ?? null))
-    }
-    update()
-    if (!map) return
+      const map = mapRef?.current?.map
+      const update = () => {
+        setMapSnapshot(snapshotMap(mapRef?.current ?? null))
+      }
+      update()
+      if (!map) return
 
-    map.on('moveend', update)
-    map.on('styledata', update)
-    return () => {
-      map.off('moveend', update)
-      map.off('styledata', update)
-    }
-  }, [show, mapRef])
+      map.on('moveend', update)
+      map.on('styledata', update)
+      return function unsubscribeFromMapInspector() {
+        map.off('moveend', update)
+        map.off('styledata', update)
+      }
+    },
+    [show, mapRef],
+  )
 
   const filters = parseFiltersParam(searchParams.get('filters'))
   const aoi = searchParams.get('aoi')
