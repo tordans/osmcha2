@@ -40,6 +40,7 @@ export default defineConfig({
     '**/__snapshots__/**',
     '**/*.snap',
     'src/views/**',
+    '!src/views/home.tsx',
     'src/components/**',
     '!src/components/ui/',
     '!src/components/ui/**',

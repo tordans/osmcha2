@@ -1,93 +1,42 @@
-import { Link } from "react-router";
-import banner from "../assets/banner.png";
-import osmus from "../assets/osmus.png";
-import work_flow from "../assets/work_flow.png";
-import { appVersion, isLocal } from "../config/index.ts";
-import { isMobile } from "../utils/isMobile.ts";
+import { Heading } from '../components/ui/heading.tsx'
+import { Link } from '../components/ui/link.tsx'
+import { Text } from '../components/ui/text.tsx'
+import { appVersion, isLocal } from '../config/index.ts'
+
+const footerLinkClassName =
+  'inline-flex min-h-11 items-center text-base/6 text-zinc-500 underline decoration-zinc-950/20 sm:text-sm/6 hover-fine:decoration-zinc-950/50'
 
 export function Home() {
-  // Don't show splash screen on mobile
-  if (isMobile()) {
-    return null;
-  }
-
   return (
-    <div className="flex-parent flex-parent--column flex-parent--center-cross h-full">
-      <div className="flex-child flex-child--grow">&nbsp;</div>
-      <div className="flex-parent flex-parent--column flex-parent--center-cross ">
-        <img src={banner} className="osmcha-logo" alt="OSMCHA" />
-        <img
-          src={work_flow}
-          className="pt36 workflow-img"
-          alt="Filter, Select, View, Verify"
-        />
+    <div className="flex min-h-0 flex-1 flex-col px-[max(1.5rem,env(safe-area-inset-left))] pt-[max(1.5rem,env(safe-area-inset-top))] pr-[max(1.5rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
+        <Heading className="text-center">Select a changeset</Heading>
       </div>
-      <div className="flex-child flex-child--grow">&nbsp;</div>
-      <div className="flex-parent flex-parent--column align-center txt-l">
-        <div className="txt-xl">
+      <footer className="flex flex-wrap items-center justify-center gap-x-3">
+        <Text>
           v{appVersion}
-          {isLocal && " Local"}
-        </div>
-        <div className="flex-parent flex-parent--row flex-parent--center-main">
-          <Link
-            className="link link--gray flex-parent flex-parent--row flex-parent--center-cross mx6"
-            to="/about"
-          >
-            <svg className="icon">
-              <use xlinkHref="#icon-info" />
-            </svg>{" "}
-            <span>Guide</span>
-          </Link>{" "}
-          |{" "}
-          <a
-            target="__blank"
-            className="link link--gray flex-parent flex-parent--row flex-parent--center-cross mx6"
-            href="https://github.com/osmcha/osmcha-frontend/blob/master/CONTRIBUTING.md"
-          >
-            <svg className="icon">
-              <use xlinkHref="#icon-github" />
-            </svg>{" "}
-            <span>GitHub</span>
-          </a>{" "}
-          |{" "}
-          <a
-            target="__blank"
-            className="link link--gray flex-parent flex-parent--row flex-parent--center-cross mx6"
-            href="https://openstreetmap.app.neoncrm.com/forms/osmcha"
-          >
-            <svg className="icon">
-              <use xlinkHref="#icon-creditcard" />
-            </svg>{" "}
-            <span>Donate</span>
-          </a>
-          |{" "}
-          <a
-            target="__blank"
-            className="link link--gray flex-parent flex-parent--row flex-parent--center-cross mx6"
-            href="https://github.com/osmcha/osmcha-frontend/issues"
-          >
-            <svg className="icon">
-              <use xlinkHref="#icon-bug" />
-            </svg>{" "}
-            <span>File an issue</span>
-          </a>
-        </div>
-      </div>
-      <div className="flex-parent flex-parent--column align-center txt-l pt12">
-        <p className="block pt36 pb6 txt-m">Supported by</p>
-        <a
-          target="__blank"
-          className="link link--gray flex-parent flex-parent--row flex-parent--center-cross mx6"
-          href="https://openstreetmap.us"
+          {isLocal ? ' Local' : ''}
+        </Text>
+        <Link href="/about" className={footerLinkClassName}>
+          Guide
+        </Link>
+        <Link
+          href="https://github.com/osmcha/osmcha-frontend/blob/master/CONTRIBUTING.md"
+          target="_blank"
+          rel="noreferrer"
+          className={footerLinkClassName}
         >
-          <img
-            src={osmus}
-            className="osmus-img"
-            alt="An OpenStreetMap US charter project"
-          />
-        </a>
-      </div>
-      <div className="flex-child flex-child--grow">&nbsp;</div>
+          GitHub
+        </Link>
+        <Link
+          href="https://openstreetmap.app.neoncrm.com/forms/osmcha"
+          target="_blank"
+          rel="noreferrer"
+          className={footerLinkClassName}
+        >
+          Donate
+        </Link>
+      </footer>
     </div>
-  );
+  )
 }
