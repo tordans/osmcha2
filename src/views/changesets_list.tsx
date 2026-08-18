@@ -135,7 +135,7 @@ function ChangesetsList() {
   ]);
 
   return (
-    <div className="flex-parent flex-parent--column changesets-list h-full min-h-0">
+    <div className="changesets-list flex h-full min-h-0 flex-col">
       <Header
         filters={filters}
         aoiId={aoiId}

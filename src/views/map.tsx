@@ -277,7 +277,7 @@ function CMap(props: CMapProps) {
       <div id="container" className="w-full h-full" />
       {(loading || changesetQuery.isLoading) && (
         <div
-          className="absolute z0"
+          className="absolute z-10"
           style={{
             top: 0,
             right: 0,

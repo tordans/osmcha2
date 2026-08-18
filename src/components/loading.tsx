@@ -1,15 +1,18 @@
+import { ArrowPathIcon } from '@heroicons/react/16/solid'
+import clsx from 'clsx'
+
 interface LoadingProps {
-  height?: string;
-  className?: string;
+  height?: string
+  className?: string
 }
 
-export function Loading({ height, className = "" }: LoadingProps) {
+export function Loading({ height, className = '' }: LoadingProps) {
   return (
     <div
-      style={{ height: height || "auto" }}
-      className={`${className} flex-parent flex-parent--column flex-parent--center-cross flex-parent--center-main flex-child--grow`}
+      style={{ height: height || 'auto' }}
+      className={clsx(className, 'flex flex-1 flex-col items-center justify-center')}
     >
-      <div className="flex-child loading" />
+      <ArrowPathIcon className="size-8 animate-spin text-zinc-400" aria-label="Loading" />
     </div>
-  );
+  )
 }

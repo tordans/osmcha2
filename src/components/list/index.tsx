@@ -1,3 +1,4 @@
+import { GlobeAltIcon } from '@heroicons/react/24/solid'
 import { useCallback, useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { elementInViewport } from '../../utils/element_in_view.ts'
@@ -39,13 +40,9 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
 
   if (!token && location && ['/about', '/filters', '/user', '/'].includes(location)) {
     return (
-      <div className="flex-parent flex-parent--column scroll-styled flex-child--grow py36">
-        <div className="flex-parent flex-parent--column flex-parent--center-cross">
-          <svg className="icon h60 w60 pb3 inline-block align-middle">
-            <use xlinkHref="#icon-osm" />
-          </svg>
-        </div>
-        <div className="flex-parent flex-parent--center-main txt-l pt36 align-center">
+      <div className="flex flex-1 flex-col items-center px-4 py-9">
+        <GlobeAltIcon className="size-14 text-zinc-400" />
+        <div className="mt-9 flex justify-center text-center">
           <SignInButton text="Sign in with your OpenStreetMap account" />
         </div>
       </div>
@@ -55,7 +52,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
   const features = currentPage?.features
 
   return (
-    <ul className="flex-parent flex-parent--column scroll-styled flex-child--grow divide-y divide-gray-100">
+    <ul className="flex min-h-0 flex-1 flex-col divide-y divide-zinc-100">
       {features?.map((f) => (
         <Row
           active={f.id === activeChangesetId}

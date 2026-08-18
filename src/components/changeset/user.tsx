@@ -1,235 +1,171 @@
-import { parse } from "date-fns";
-import React from "react";
-import Markdown from "react-markdown";
-import { Link } from "react-router";
-import remarkGfm from "remark-gfm";
-import { getObjAsQueryParam } from "../../utils/query_params.ts";
-import { Avatar } from "../avatar.tsx";
-import { RelativeTime } from "../relative_time.tsx";
-import { SignInButton } from "./sign_in_button.tsx";
-import { TrustWatchUser } from "./trust_watch_user.tsx";
-import { UserOSMLink } from "./user_osm_link.tsx";
+import { parse } from 'date-fns'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { getObjAsQueryParam } from '../../utils/query_params.ts'
+import { RelativeTime } from '../relative_time.tsx'
+import { Avatar } from '../ui/avatar.tsx'
+import { Button } from '../ui/button.tsx'
+import { Subheading } from '../ui/heading.tsx'
+import { Text, TextLink } from '../ui/text.tsx'
+import { SignInButton } from './sign_in_button.tsx'
+import { TrustWatchUser } from './trust_watch_user.tsx'
+import { UserOSMLink } from './user_osm_link.tsx'
 
 interface UserDetails {
-  uid?: number | string;
-  name?: string;
-  img?: string;
-  accountCreated?: string;
-  count?: number;
-  changesets_in_osmcha?: number;
-  harmful_changesets?: number;
-  checked_changesets?: number;
-  description?: string;
+  uid?: number | string
+  name?: string
+  img?: string
+  accountCreated?: string
+  count?: number
+  changesets_in_osmcha?: number
+  harmful_changesets?: number
+  checked_changesets?: number
+  description?: string
 }
 
 interface UserLinkProps {
-  userDetails: UserDetails;
-  harmful: boolean;
+  userDetails: UserDetails
+  harmful: boolean
 }
 
-class UserLink extends React.PureComponent<UserLinkProps> {
-  getHarmfulObject() {
-    if (this.props.harmful) {
-      return {
-        label: "Show Bad only",
-        value: true,
-      };
-    } else {
-      return {
-        label: "Show Good only",
-        value: false,
-      };
-    }
-  }
-  getLinkContent() {
-    if (this.props.harmful) {
-      return `${this.props.userDetails.harmful_changesets} Bad`;
-    } else {
-      const count =
-        this.props.userDetails.checked_changesets! -
-        this.props.userDetails.harmful_changesets!;
-      return `${count} Good`;
-    }
-  }
-  render() {
-    return (
-      <Link
-        className="txt-underline-on-hover txt-bold cursor-pointer color-gray"
-        to={{
-          search: getObjAsQueryParam("filters", {
-            uids: [
-              {
-                label: this.props.userDetails.uid,
-                value: this.props.userDetails.uid,
-              },
-            ],
-            harmful: [this.getHarmfulObject()],
-            date__gte: [{ label: "", value: "" }],
-          }),
-          pathname: "/",
-        }}
-      >
-        {this.getLinkContent()}
-      </Link>
-    );
-  }
+function avatarSrc(url?: string) {
+  if (!url) return null
+  if (url.startsWith('http://')) return `https://${url.slice(5)}`
+  return url
+}
+
+function UserLink({ userDetails, harmful }: UserLinkProps) {
+  const filterValue = harmful
+    ? { label: 'Show Bad only', value: true }
+    : { label: 'Show Good only', value: false }
+  const label = harmful
+    ? `${userDetails.harmful_changesets} Bad`
+    : `${(userDetails.checked_changesets ?? 0) - (userDetails.harmful_changesets ?? 0)} Good`
+
+  return (
+    <TextLink
+      href={`/?${getObjAsQueryParam('filters', {
+        uids: [{ label: userDetails.uid, value: userDetails.uid }],
+        harmful: [filterValue],
+        date__gte: [{ label: '', value: '' }],
+      })}`}
+    >
+      {label}
+    </TextLink>
+  )
 }
 
 interface UserProps {
-  userDetails: UserDetails;
-  whosThat: string[];
-  changesetUsername?: boolean;
+  userDetails: UserDetails
+  whosThat: string[]
+  changesetUsername?: boolean
 }
 
-export class User extends React.PureComponent<UserProps> {
-  renderUidFilterLink() {
-    return (
-      <Link
-        className="txt-underline-on-hover txt-bold cursor-pointer color-gray"
-        to={{
-          search: getObjAsQueryParam("filters", {
-            uids: [
-              {
-                label: this.props.userDetails.uid,
-                value: this.props.userDetails.uid,
-              },
-            ],
-            date__gte: [{ label: "", value: "" }],
-          }),
-          pathname: "/",
-        }}
-      >
-        {`${this.props.userDetails.count} edits`}
-      </Link>
-    );
-  }
-  render() {
-    const registrationDate = this.props.userDetails.accountCreated
-      ? parse(
-          this.props.userDetails.accountCreated,
-          "yyyy-MM-dd'T'HH:mm:ssX",
-          new Date(),
-        )
-      : null;
+export function User({ userDetails, whosThat }: UserProps) {
+  const registrationDate = userDetails.accountCreated
+    ? parse(userDetails.accountCreated, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
+    : null
+  const initials = userDetails.name?.slice(0, 2).toUpperCase()
+  const editsHref = `/?${getObjAsQueryParam('filters', {
+    uids: [{ label: userDetails.uid, value: userDetails.uid }],
+    date__gte: [{ label: '', value: '' }],
+  })}`
+  const osmchaHref = `/?${getObjAsQueryParam('filters', {
+    users: [{ label: userDetails.name, value: userDetails.name }],
+    date__gte: [{ label: '', value: '' }],
+  })}`
 
-    return (
-      <div className="px12 py6">
-        <h2 className="txt-m txt-uppercase txt-bold mr6 mb3">
-          User {this.props.userDetails.uid && `/ ${this.props.userDetails.uid}`}
-        </h2>
-        {this.props.userDetails.name ? (
-          <div className="flex-parent flex-parent--column align-items--center justify--space-between mb6">
-            <div>
-              <Avatar size={96} url={this.props.userDetails.img} />
-              <div className="mt6 txt-bold color-gray align-center">
-                {this.props.userDetails.name}
-              </div>
-            </div>
-            <div>
-              <p className="txt-s color-gray align-center">
-                {registrationDate != null && (
-                  <React.Fragment>
-                    Joined&nbsp;
-                    <RelativeTime datetime={registrationDate} />
-                    {" | "}
-                  </React.Fragment>
-                )}
-                {this.props.userDetails.count
-                  ? this.renderUidFilterLink()
-                  : `${this.props.userDetails.changesets_in_osmcha} edits registered on OSMCha`}
-              </p>
-            </div>
-            <div>
-              <p className="txt-s color-gray align-center">
-                <UserLink userDetails={this.props.userDetails} harmful={true} />
-                &nbsp;and&nbsp;
-                <UserLink
-                  userDetails={this.props.userDetails}
-                  harmful={false}
-                />
-                &nbsp;changesets
-              </p>
-            </div>
-
-            <div className="mt6">
-              <TrustWatchUser
-                user={this.props.userDetails as { name: string; uid: number }}
-              />
-            </div>
-
-            <div className="mt12">
-              <Link
-                className="mx3 btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition"
-                to={{
-                  search: getObjAsQueryParam("filters", {
-                    users: [
-                      {
-                        label: this.props.userDetails.name,
-                        value: this.props.userDetails.name,
-                      },
-                    ],
-                    date__gte: [{ label: "", value: "" }],
-                  }),
-                  pathname: "/",
-                }}
-              >
-                OSMCha
-              </Link>
-              <UserOSMLink userName={this.props.userDetails.name}>
-                OSM
-              </UserOSMLink>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Open in HDYC"
-                className="mx3 btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition"
-                href={`https://hdyc.neis-one.org/?${this.props.userDetails.name}`}
-              >
-                HDYC
-              </a>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Open in Missing Maps"
-                className="mx3 btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition"
-                href={`https://www.missingmaps.org/users/#/${this.props.userDetails.name}`}
-              >
-                Missing Maps
-              </a>
-            </div>
-
-            {this.props.whosThat.length > 1 && (
-              <div className="txt-s color-gray">
-                Past usernames: &nbsp;
-                {this.props.whosThat.slice(0, -1).map((e, k) => (
-                  <span key={k} className="txt-em">
-                    {e}&nbsp;
-                  </span>
-                ))}
-              </div>
+  return (
+    <div className="px-3 py-2">
+      <Subheading>
+        User {userDetails.uid ? `/ ${userDetails.uid}` : null}
+      </Subheading>
+      {userDetails.name ? (
+        <div className="mt-2 flex flex-col items-center gap-2">
+          <Avatar
+            src={avatarSrc(userDetails.img)}
+            initials={initials}
+            alt={userDetails.name}
+            className="size-24"
+          />
+          <p className="text-center font-semibold text-zinc-700">{userDetails.name}</p>
+          <Text className="text-center">
+            {registrationDate != null && (
+              <>
+                Joined <RelativeTime datetime={registrationDate} />
+                {' | '}
+              </>
             )}
-            <div className="mt12">
-              <div className="txt-subhead txt-s txt-break-url user-description">
-                <Markdown remarkPlugins={[remarkGfm]}>
-                  {this.props.userDetails.description || ""}
-                </Markdown>
-              </div>
-            </div>
+            {userDetails.count ? (
+              <TextLink href={editsHref}>{`${userDetails.count} edits`}</TextLink>
+            ) : (
+              `${userDetails.changesets_in_osmcha} edits registered on OSMCha`
+            )}
+          </Text>
+          <Text className="text-center">
+            <UserLink userDetails={userDetails} harmful={true} />
+            {' and '}
+            <UserLink userDetails={userDetails} harmful={false} />
+            {' changesets'}
+          </Text>
+          <TrustWatchUser user={userDetails as { name: string; uid: number }} />
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-1">
+            <Button
+              outline
+              href={osmchaHref}
+              className="min-h-11 cursor-pointer touch-manipulation select-none"
+            >
+              OSMCha
+            </Button>
+            <UserOSMLink userName={userDetails.name}>OSM</UserOSMLink>
+            <Button
+              outline
+              href={`https://hdyc.neis-one.org/?${userDetails.name}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open in HDYC"
+              className="min-h-11 cursor-pointer touch-manipulation select-none"
+            >
+              HDYC
+            </Button>
+            <Button
+              outline
+              href={`https://www.missingmaps.org/users/#/${userDetails.name}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open in Missing Maps"
+              className="min-h-11 cursor-pointer touch-manipulation select-none"
+            >
+              Missing Maps
+            </Button>
           </div>
-        ) : (
-          <div className="flex-parent flex-parent--column align-items--center justify--space-between mb6">
-            <div>
-              <Avatar size={96} url={this.props.userDetails.img} />
-              <div className="mt6 txt-bold color-gray align-center">
-                {this.props.userDetails.name}
-              </div>
+          {whosThat.length > 1 && (
+            <Text>
+              Past usernames:{' '}
+              {whosThat.slice(0, -1).map((name) => (
+                <em key={name} className="not-italic">
+                  {name}{' '}
+                </em>
+              ))}
+            </Text>
+          )}
+          {userDetails.description ? (
+            <div className="user-description mt-2 w-full text-sm break-words [&_a]:text-blue-700 [&_a]:underline [&_h2]:font-semibold">
+              <Markdown remarkPlugins={[remarkGfm]}>{userDetails.description}</Markdown>
             </div>
-            <div className="flex-parent flex-parent--column mt6 mb3">
-              <SignInButton text="Sign in to see the user details" />
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+          ) : null}
+        </div>
+      ) : (
+        <div className="mt-2 flex flex-col items-center gap-3">
+          <Avatar
+            src={avatarSrc(userDetails.img)}
+            initials={initials}
+            alt=""
+            className="size-24"
+          />
+          <SignInButton text="Sign in to see the user details" />
+        </div>
+      )}
+    </div>
+  )
 }

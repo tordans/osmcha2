@@ -1,132 +1,105 @@
-import React from "react";
-import { postComment } from "../../network/changeset.ts";
-import { cancelablePromise } from "../../utils/promise.ts";
-import { Button } from "../button.tsx";
+import { useEffect, useRef, useState } from 'react'
+import { postComment } from '../../network/changeset.ts'
+import { cancelablePromise } from '../../utils/promise.ts'
+import { Button } from '../ui/button.tsx'
+import { Textarea } from '../ui/textarea.tsx'
 
-type Props = {
-  token: string;
-  changesetId: number;
+type CommentFormProps = {
+  token: string
+  changesetId: number
   userDetails: {
-    username?: string;
-    message_bad?: string;
-    message_good?: string;
-  };
-  changesetIsHarmful: boolean;
-  discussions: any[];
-};
-
-type State = {
-  success: boolean;
-  error: boolean;
-  value: string;
-};
-
-export class CommentForm extends React.PureComponent<Props, State> {
-  postCommentPromise: any;
-  clicked: boolean = false;
-
-  state: State = {
-    success: false,
-    error: false,
-    value: "",
-  };
-
-  componentWillUnmount() {
-    this.postCommentPromise?.cancel();
+    username?: string
+    message_bad?: string
+    message_good?: string
   }
-  componentDidMount() {
-    this.updateValue(this.props);
-  }
-  componentWillReceiveProps(nextProps) {
-    this.updateValue(nextProps);
-  }
-  updateValue(props) {
-    const userCommentedBefore =
-      props.discussions.filter(
-        (item) => item.userName === props.userDetails.username,
-      ).length > 0;
-    if (
-      this.state.value === "" &&
-      props.changesetIsHarmful !== null &&
-      !userCommentedBefore
-    ) {
-      if (props.changesetIsHarmful) {
-        this.setState({ value: props.userDetails.message_bad });
-      } else {
-        this.setState({ value: props.userDetails.message_good });
-      }
+  changesetIsHarmful: boolean
+  discussions: any[]
+}
+
+export function CommentForm({
+  token,
+  changesetId,
+  userDetails,
+  changesetIsHarmful,
+  discussions,
+}: CommentFormProps) {
+  const [value, setValue] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState(false)
+  const pendingRef = useRef<{ cancel: () => void } | null>(null)
+
+  useEffect(() => {
+    return () => {
+      pendingRef.current?.cancel()
     }
-  }
-  onChange = (event: any) => {
-    this.setState({ value: event.target.value });
-    if (this.state.error) {
-      this.setState({ error: false });
-    }
-    if (this.state.success) {
-      this.setState({ success: false });
-    }
-  };
-  postComment = (comment: string) => {
-    if (!comment) return;
-    this.postCommentPromise = cancelablePromise(
-      postComment(this.props.changesetId, comment),
-    );
-    this.postCommentPromise.promise
+  }, [])
+
+  useEffect(() => {
+    setValue((current) => {
+      if (current !== '') return current
+      const userCommentedBefore = discussions.some(
+        (item) => item.userName === userDetails.username,
+      )
+      if (changesetIsHarmful == null || userCommentedBefore) return current
+      return changesetIsHarmful
+        ? (userDetails.message_bad ?? '')
+        : (userDetails.message_good ?? '')
+    })
+  }, [changesetIsHarmful, discussions, userDetails])
+
+  const handleSubmit = () => {
+    if (!value) return
+    pendingRef.current?.cancel()
+    const pending = cancelablePromise(postComment(changesetId, value))
+    pendingRef.current = pending
+    pending.promise
       .then(() => {
-        this.setState({ success: true });
-        this.setState({ error: false });
-        this.setState({ value: "" });
+        setSuccess(true)
+        setError(false)
+        setValue('')
       })
       .catch((e) => {
-        console.log(e);
-        this.setState({ error: true });
-        this.setState({ success: false });
-      });
-  };
-  handleSubmit = () => {
-    this.postComment(this.state.value);
-  };
-  render() {
-    return (
-      <div>
-        {this.props.token && (
-          <div className="flex-parent flex-parent--column mt6 mb3">
-            {this.state.success && (
-              <div className="bg-green-faint color-green inline-block px6 py3 txt-s align-center round my12">
-                <strong>Comment successfully posted.</strong>
-                <br />
-                <span>It will appear on OSMCha after some minutes.</span>
-              </div>
-            )}
-            {this.state.error && (
-              <div className="bg-red-faint color-red-dark inline-block px6 py3 txt-s align-center round my12">
-                <strong>It was not possible to post your comment.</strong>
-              </div>
-            )}
-            <div className="grid grid--gut12">
-              <div className="col col--12">
-                <textarea
-                  placeholder="Provide constructive feedback to the mapper with a changeset comment."
-                  className="textarea"
-                  ref={(r) => {
-                    if (this.clicked) {
-                      r?.select();
-                      this.clicked = false;
-                    }
-                  }}
-                  value={this.state.value}
-                  onChange={this.onChange}
-                />
-                <div className="pt6 fr">
-                  <Button className="input wmax120" onClick={this.handleSubmit}>
-                    Post Comment
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+        if (e?.isCanceled) return
+        console.log(e)
+        setError(true)
+        setSuccess(false)
+      })
   }
+
+  if (!token) return null
+
+  return (
+    <div className="flex flex-col gap-2">
+      {success && (
+        <p className="rounded-lg bg-green-50 px-3 py-2 text-center text-sm text-green-800">
+          <strong className="font-semibold">Comment successfully posted.</strong>
+          <br />
+          It will appear on OSMCha after some minutes.
+        </p>
+      )}
+      {error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-800">
+          <strong className="font-semibold">It was not possible to post your comment.</strong>
+        </p>
+      )}
+      <Textarea
+        placeholder="Provide constructive feedback to the mapper with a changeset comment."
+        value={value}
+        onChange={(event) => {
+          setValue(event.target.value)
+          if (error) setError(false)
+          if (success) setSuccess(false)
+        }}
+        rows={4}
+      />
+      <div className="flex justify-end">
+        <Button
+          onClick={handleSubmit}
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+        >
+          Post Comment
+        </Button>
+      </div>
+    </div>
+  )
 }

@@ -1,38 +1,33 @@
-import { getAuthUrl } from "../../network/auth.ts";
-import { isLocalOAuthHost } from "../../utils/auth.ts";
-import { TokenImport } from "../token_import.tsx";
+import { GlobeAltIcon } from '@heroicons/react/16/solid'
+import { getAuthUrl } from '../../network/auth.ts'
+import { isLocalOAuthHost } from '../../utils/auth.ts'
+import { TokenImport } from '../token_import.tsx'
+import { Button } from '../ui/button.tsx'
 
 interface SignInButtonProps {
-  text: string;
-  className?: string;
+  text: string
 }
 
-function SignInButton({ text, className }: SignInButtonProps) {
+function SignInButton({ text }: SignInButtonProps) {
   if (!isLocalOAuthHost()) {
-    return <TokenImport />;
+    return <TokenImport />
   }
 
   const handleLoginClick = () => {
     getAuthUrl().then((res) => {
-      window.location.assign(res.auth_url);
-    });
-  };
-
-  const extraClasses = className
-    ? className
-    : "border--darken5 border--darken25-on-hover bg-darken10 bg-darken5-on-hover color-gray";
+      window.location.assign(res.auth_url)
+    })
+  }
 
   return (
-    <button
+    <Button
       onClick={handleLoginClick}
-      className={`btn btn--s border border--1 round transition ${extraClasses}`}
+      className="min-h-11 cursor-pointer touch-manipulation select-none"
     >
-      <svg className="icon w18 h18 inline-block align-middle pr3">
-        <use xlinkHref="#icon-osm" />
-      </svg>
+      <GlobeAltIcon data-slot="icon" />
       {text}
-    </button>
-  );
+    </Button>
+  )
 }
 
-export { SignInButton };
+export { SignInButton }
