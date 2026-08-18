@@ -1,21 +1,15 @@
-export type ReviewCamera = {
-  center: {
-    lng: number
-    lat: number
-  }
-  zoom: number
-}
+import type { MapParam } from '../../routing/mapParam.ts'
 
 /** iD / Rapid use Leaflet (raster) zoom, one level above MapLibre. */
-export function editorMapHash(camera?: ReviewCamera | null): string {
-  if (!camera) return ''
-  const { lng, lat } = camera.center
-  const zoom = camera.zoom + 1
-  return `#map=${zoom}/${lat}/${lng}`
+export function editorMapHash(map?: MapParam | null): string {
+  if (!map) return ''
+  const { lng, lat, zoom } = map
+  const editorZoom = zoom + 1
+  return `#map=${editorZoom}/${lat}/${lng}`
 }
 
-export function openInUrls(changesetId: number | string, camera?: ReviewCamera | null) {
-  const hash = editorMapHash(camera)
+export function openInUrls(changesetId: number | string, map?: MapParam | null) {
+  const hash = editorMapHash(map)
   return {
     osm: `https://www.openstreetmap.org/changeset/${changesetId}`,
     achavi: `https://overpass-api.de/achavi/?changeset=${changesetId}&relations=true`,

@@ -18,6 +18,6 @@ export const osmchaSearchSchema = z.object({
 
 export type OsmchaSearch = z.infer<typeof osmchaSearchSchema>
 
-export const searchParamsRegistry = ['filters', 'aoi', 'page', 'token'] as const
+export const searchParamsRegistry = ['filters', 'aoi', 'page', 'token', 'map'] as const
 
 export type SearchParamKey = (typeof searchParamsRegistry)[number]

@@ -13,7 +13,6 @@ import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
 import type { AdiffAction } from './changesetElements.ts'
-import type { ReviewCamera } from './openInUrls.ts'
 
 const COLUMN_TABS = [
   {
@@ -31,7 +30,6 @@ const COLUMN_TABS = [
 type ReviewColumnProps = {
   changesetId: number
   currentChangeset: ReviewChangeset & { properties?: Record<string, any> }
-  camera?: ReviewCamera | null
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
   bindingsState: Record<string, boolean>
@@ -45,7 +43,6 @@ type ReviewColumnProps = {
 export function ReviewColumn({
   changesetId,
   currentChangeset,
-  camera,
   userDetails,
   whosThat = [],
   bindingsState,
@@ -147,7 +144,6 @@ export function ReviewColumn({
       <DetailsHeader
         changesetId={changesetId}
         currentChangeset={currentChangeset}
-        camera={camera}
         userDetails={userDetails}
         whosThat={whosThat}
         userOpen={userOpen}

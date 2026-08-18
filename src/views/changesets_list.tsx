@@ -57,7 +57,10 @@ function ChangesetsList() {
       void navigate({
         to: '/changesets/$id',
         params: { id: nextFeature.id },
-        search,
+        search: (_prev) => ({
+          ...search,
+          map: undefined,
+        }),
       })
     }
   }

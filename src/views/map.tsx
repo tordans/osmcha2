@@ -1,13 +1,18 @@
 import { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
-import * as maplibre from 'maplibre-gl'
+import { useThrottledCallback } from '@tanstack/react-pacer'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { getRouteApi } from '@tanstack/react-router'
+import * as maplibre from 'maplibre-gl'
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
+import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { useMapStore } from '../stores/mapStore.ts'
+
+const changesetRouteApi = getRouteApi('/changesets/$id')
 
 const BING_AERIAL_IMAGERY_STYLE: maplibre.StyleSpecification = {
   version: 8,
@@ -127,7 +132,6 @@ interface CMapProps {
     adiffViewer: MapLibreAugmentedDiffViewer
   } | null>
   setSelected: (action: any) => void
-  setCamera: (camera: any) => void
 }
 
 function CMap({
@@ -136,17 +140,32 @@ function CMap({
   showActions,
   mapRef: mapHandleRef,
   setSelected,
-  setCamera,
 }: CMapProps) {
   const { token } = useAuth()
+  const { map: mapSearch } = changesetRouteApi.useSearch()
+  const navigate = changesetRouteApi.useNavigate()
   const style = useMapStore((state) => state.style)
   const changesetQuery = useChangesetMap(changesetId)
   const mapRef = useRef<maplibre.Map | null>(null)
   const adiffViewerRef = useRef<MapLibreAugmentedDiffViewer>(null)
+  const skipNextMoveEndRef = useRef(true)
   const [readyChangeset, setReadyChangeset] = useState<typeof changesetQuery.data>()
 
   const changeset = changesetQuery.data
   const loading = readyChangeset !== changeset
+
+  const writeMapToUrl = useThrottledCallback(
+    (viewport: { zoom: number; lat: number; lng: number }) => {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          map: serializeMapParam(viewport),
+        }),
+        replace: true,
+      })
+    },
+    { wait: 250 },
+  )
 
   const onMapClick = useEffectEvent((event: any, action: any) => {
     setSelected(action)
@@ -160,9 +179,16 @@ function CMap({
   })
 
   const onMapMoveEnd = useEffectEvent((map: maplibre.Map) => {
-    setCamera({
-      center: map.getCenter(),
+    if (skipNextMoveEndRef.current) {
+      skipNextMoveEndRef.current = false
+      return
+    }
+
+    const center = map.getCenter()
+    writeMapToUrl({
       zoom: map.getZoom(),
+      lat: center.lat,
+      lng: center.lng,
     })
   })
 
@@ -187,6 +213,7 @@ function CMap({
 
       const currentStyleId = useMapStore.getState().style
       const mapStyle = BASEMAP_STYLES[currentStyleId] ?? DEFAULT_BASEMAP_STYLE
+      const mapFromUrl = parseMapParam(mapSearch ?? '')
 
       const map = new maplibre.Map({
         container,
@@ -216,7 +243,14 @@ function CMap({
         setReadyChangeset(changeset)
         adiffViewer.addTo(map)
 
-        if (adiff.actions.length > 0) {
+        skipNextMoveEndRef.current = true
+
+        if (mapFromUrl) {
+          map.jumpTo({
+            center: [mapFromUrl.lng, mapFromUrl.lat],
+            zoom: mapFromUrl.zoom,
+          })
+        } else if (adiff.actions.length > 0) {
           const camera = map.cameraForBounds(adiffViewer.bounds(), {
             padding: 200,
             maxZoom: 18,
@@ -249,7 +283,7 @@ function CMap({
         adiffViewerRef.current = null
       }
     },
-    [token, changeset, mapHandleRef, setSelected],
+    [token, changeset, mapHandleRef, setSelected, mapSearch],
   )
 
   useEffect(

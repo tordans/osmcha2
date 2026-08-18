@@ -7,6 +7,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
+import { getRouteApi } from '@tanstack/react-router'
 import { parse } from 'date-fns'
 import Linkify from 'linkify-react'
 import Mousetrap from 'mousetrap'
@@ -26,6 +27,7 @@ import {
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useIsUserListed } from '../../hooks/useIsUserListed.ts'
 import { useMarkHarmful } from '../../query/hooks/useMarkHarmful.ts'
+import { parseMapParam } from '../../routing/mapParam.ts'
 import { editorShortname } from '../list/editorShortname.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { Badge } from '../ui/badge.tsx'
@@ -42,7 +44,9 @@ import {
 } from '../ui/dropdown.tsx'
 import { Tags } from './tags.tsx'
 import { User } from './user.tsx'
-import { hdycUrl, openExternal, openInUrls, type ReviewCamera } from './openInUrls.ts'
+import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
+
+const changesetRouteApi = getRouteApi('/changesets/$id')
 
 const RESOLVED_TAG_ID = 9
 
@@ -89,7 +93,6 @@ function hasResolvedTag(tags: NamedTag[]) {
 type DetailsHeaderProps = {
   changesetId: number
   currentChangeset: ReviewChangeset
-  camera?: ReviewCamera | null
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
   userOpen?: boolean
@@ -99,12 +102,12 @@ type DetailsHeaderProps = {
 export function DetailsHeader({
   changesetId,
   currentChangeset,
-  camera,
   userDetails,
   whosThat = [],
   userOpen = false,
   onUserOpenChange,
 }: DetailsHeaderProps) {
+  const { map } = changesetRouteApi.useSearch()
   const { token, user } = useAuth()
   const username = (user as { username?: string } | undefined)?.username
   const markHarmfulMutation = useMarkHarmful()
@@ -112,7 +115,7 @@ export function DetailsHeader({
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
   const [isInTrustedlist, isInWatchlist] = useIsUserListed(osmUser, uid, token)
-  const urls = openInUrls(changesetId, camera)
+  const urls = openInUrls(changesetId, parseMapParam(map ?? ''))
   const tags = properties.tags ?? []
   const reasons = properties.reasons ?? []
   const checked = Boolean(properties.checked)

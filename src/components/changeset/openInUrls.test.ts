@@ -14,8 +14,8 @@ describe('openInUrls', () => {
     expect(urls.osm).toBe('https://www.openstreetmap.org/changeset/123')
   })
 
-  test('appends the MapLibre camera as an iD/Rapid hash with raster zoom', () => {
-    const urls = openInUrls(9, { center: { lng: 13.4, lat: 52.5 }, zoom: 14 })
+  test('appends the MapLibre viewport as an iD/Rapid hash with raster zoom', () => {
+    const urls = openInUrls(9, { lng: 13.4, lat: 52.5, zoom: 14 })
     expect(urls.id).toBe('https://www.openstreetmap.org/edit?editor=id#map=15/52.5/13.4')
     expect(urls.rapid).toBe('https://rapideditor.org/edit#map=15/52.5/13.4')
   })

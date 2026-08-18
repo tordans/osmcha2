@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { osmUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { flagFeature, unflagFeature } from '../network/changeset.ts'
+import { searchWithoutMap } from '../routing/mapParam.ts'
 import { DropdownOpenElement } from './changeset/DropdownOpenElement.tsx'
 import { elementCoord, elementOpenInUrls } from './changeset/elementOpenIn.ts'
 import { TagValue } from './tag_value.tsx'
@@ -208,7 +209,7 @@ function MetadataTable({ changesetId, action }: { changesetId: number; action: a
                 <Link
                   to="/changesets/$id"
                   params={{ id: element.changeset }}
-                  search={search}
+                  search={(prev) => searchWithoutMap({ ...prev, ...search })}
                   className={changesetLinkClassName}
                 >
                   {element.changeset}

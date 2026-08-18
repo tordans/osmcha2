@@ -32,7 +32,6 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const { data: currentChangeset, error } = useChangeset(changesetId)
   const changeset = currentChangeset as ChangesetData | undefined
 
-  const [camera, setCamera] = useState<any>(null)
   const [selected, setSelected] = useState<any>(null)
   const [showElements, setShowElements] = useState<Array<string>>(['node', 'way', 'relation'])
   const [showActions, setShowActions] = useState<Array<string>>([
@@ -96,7 +95,6 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
       mapRef={mapRef}
       selected={selected}
       setSelected={setSelected}
-      camera={camera}
     >
       <CMap
         changesetId={changesetId}
@@ -105,7 +103,6 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
         showElements={showElements}
         showActions={showActions}
         setSelected={setSelected}
-        setCamera={setCamera}
       />
     </ChangesetWorkspace>
   )

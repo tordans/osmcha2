@@ -16,7 +16,6 @@ import ElementInfo from "../element_info.tsx";
 import { exclusiveKeyToggleState } from "./exclusiveKeyToggle.ts";
 import { MapOptions } from "./map_options.tsx";
 import { ReviewColumn } from "./ReviewColumn.tsx";
-import type { ReviewCamera } from "./openInUrls.ts";
 
 type ChangesetProps = {
   changesetId: number | null;
@@ -31,7 +30,6 @@ type ChangesetProps = {
   } | null>;
   selected: any;
   setSelected: (selected: any) => void;
-  camera?: ReviewCamera | null;
   children: React.ReactNode;
 };
 
@@ -54,7 +52,6 @@ function Changeset({
   mapRef,
   selected,
   setSelected,
-  camera,
   children,
 }: ChangesetProps) {
   const { token } = useAuth();
@@ -168,7 +165,6 @@ function Changeset({
         <ReviewColumn
           changesetId={changesetId}
           currentChangeset={currentChangeset}
-          camera={camera}
           userDetails={userDetails}
           whosThat={whosThat}
           bindingsState={bindingsState}

@@ -7,5 +7,8 @@ export const Route = createFileRoute('/changesets/$id')({
     parse: (raw) => z.object({ id: z.coerce.number().int().positive() }).parse(raw),
     stringify: ({ id }) => ({ id: String(id) }),
   },
+  validateSearch: z.object({
+    map: z.string().optional(),
+  }),
   component: Changeset,
 })
