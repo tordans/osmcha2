@@ -1,7 +1,7 @@
 import { ArrowRightIcon, EyeIcon } from '@heroicons/react/16/solid'
 import { ExclamationTriangleIcon, PencilIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/solid'
 import clsx from 'clsx'
-import { Fragment, useMemo } from 'react'
+import { Fragment } from 'react'
 import { Loading } from '../loading.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
@@ -52,10 +52,8 @@ export function DetailsChanges({
   setHighlight,
   zoomToAndSelect,
 }: DetailsChangesProps) {
-  const grouped = useMemo(() => {
-    const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
-    return groupElementChanges(buildElementChanges(adiff?.actions ?? [], flagged, reasons))
-  }, [adiff, features, reasons, reviewedFeatures])
+  const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
+  const grouped = groupElementChanges(buildElementChanges(adiff?.actions ?? [], flagged, reasons))
 
   if (!adiff) {
     return <Loading className="pt-10" />

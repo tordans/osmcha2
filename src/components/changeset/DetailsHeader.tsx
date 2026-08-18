@@ -10,7 +10,7 @@ import clsx from 'clsx'
 import { parse } from 'date-fns'
 import Linkify from 'linkify-react'
 import Mousetrap from 'mousetrap'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { toast } from 'sonner'
 import {
   OPEN_IN_ACHAVI,
@@ -112,7 +112,7 @@ export function DetailsHeader({
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
   const [isInTrustedlist, isInWatchlist] = useIsUserListed(osmUser, uid, token)
-  const urls = useMemo(() => openInUrls(changesetId, camera), [camera, changesetId])
+  const urls = openInUrls(changesetId, camera)
   const tags = properties.tags ?? []
   const reasons = properties.reasons ?? []
   const checked = Boolean(properties.checked)
@@ -130,41 +130,45 @@ export function DetailsHeader({
   )
   const checkedBad = userDetails?.harmful_changesets ?? 0
 
-  const handleMarkHarmful = useCallback(
-    (value: boolean | -1) => {
-      if (!token) {
-        toast.error('You must be logged in to mark changesets')
-        return
-      }
-      if (!username) {
-        toast.error('Username not available')
-        return
-      }
-      markHarmfulMutation.mutate({
-        changesetId,
-        harmful: value,
-        username,
-      })
-    },
-    [changesetId, markHarmfulMutation, token, username],
-  )
+  function handleMarkHarmful(value: boolean | -1) {
+    if (!token) {
+      toast.error('You must be logged in to mark changesets')
+      return
+    }
+    if (!username) {
+      toast.error('Username not available')
+      return
+    }
+    markHarmfulMutation.mutate({
+      changesetId,
+      harmful: value,
+      username,
+    })
+  }
 
-  useEffect(() => {
+  const onVerifyBad = useEffectEvent(() => handleMarkHarmful(true))
+  const onVerifyClear = useEffectEvent(() => handleMarkHarmful(-1))
+  const onVerifyGood = useEffectEvent(() => handleMarkHarmful(false))
+  const onOpenJosm = useEffectEvent(() => openExternal(urls.josm))
+  const onOpenId = useEffectEvent(() => openExternal(urls.id))
+  const onOpenOsm = useEffectEvent(() => openExternal(urls.osm))
+  const onOpenLevel0 = useEffectEvent(() => openExternal(urls.level0))
+  const onOpenAchavi = useEffectEvent(() => openExternal(urls.achavi))
+  const onOpenHdyc = useEffectEvent(() => {
+    if (osmUser) openExternal(hdycUrl(osmUser))
+  })
+
+  useEffect(function bindReviewShortcuts() {
     const shortcuts = [
-      { bindings: VERIFY_BAD.bindings, handler: () => handleMarkHarmful(true) },
-      { bindings: VERIFY_CLEAR.bindings, handler: () => handleMarkHarmful(-1) },
-      { bindings: VERIFY_GOOD.bindings, handler: () => handleMarkHarmful(false) },
-      { bindings: OPEN_IN_JOSM.bindings, handler: () => openExternal(urls.josm) },
-      { bindings: OPEN_IN_ID.bindings, handler: () => openExternal(urls.id) },
-      { bindings: OPEN_IN_OSM.bindings, handler: () => openExternal(urls.osm) },
-      { bindings: OPEN_IN_LEVEL0.bindings, handler: () => openExternal(urls.level0) },
-      { bindings: OPEN_IN_ACHAVI.bindings, handler: () => openExternal(urls.achavi) },
-      {
-        bindings: OPEN_IN_HDYC.bindings,
-        handler: () => {
-          if (osmUser) openExternal(hdycUrl(osmUser))
-        },
-      },
+      { bindings: VERIFY_BAD.bindings, handler: onVerifyBad },
+      { bindings: VERIFY_CLEAR.bindings, handler: onVerifyClear },
+      { bindings: VERIFY_GOOD.bindings, handler: onVerifyGood },
+      { bindings: OPEN_IN_JOSM.bindings, handler: onOpenJosm },
+      { bindings: OPEN_IN_ID.bindings, handler: onOpenId },
+      { bindings: OPEN_IN_OSM.bindings, handler: onOpenOsm },
+      { bindings: OPEN_IN_LEVEL0.bindings, handler: onOpenLevel0 },
+      { bindings: OPEN_IN_ACHAVI.bindings, handler: onOpenAchavi },
+      { bindings: OPEN_IN_HDYC.bindings, handler: onOpenHdyc },
     ]
 
     for (const shortcut of shortcuts) {
@@ -174,12 +178,12 @@ export function DetailsHeader({
       })
     }
 
-    return () => {
+    return function unbindReviewShortcuts() {
       for (const shortcut of shortcuts) {
         Mousetrap.unbind(shortcut.bindings)
       }
     }
-  }, [handleMarkHarmful, osmUser, urls])
+  }, [])
 
   return (
     <header className="flex flex-col gap-1 bg-zinc-50 py-1 pr-1 pl-3">

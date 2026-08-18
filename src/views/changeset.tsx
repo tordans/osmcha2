@@ -1,58 +1,53 @@
-import type { MapLibreAugmentedDiffViewer } from "@osmcha/maplibre-adiff-viewer";
-import type * as maplibre from "maplibre-gl";
-import Mousetrap from "mousetrap";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
-
-import { Changeset as ChangesetWorkspace } from "../components/changeset/index.tsx";
-import { FILTER_BY_USER } from "../config/bindings.ts";
-import { useFilters } from "../hooks/useFilters.ts";
-import { useChangeset } from "../query/hooks/useChangeset.ts";
-import { showToast } from "../utils/toast.ts";
-import { CMap } from "../views/map.tsx";
+import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
+import type * as maplibre from 'maplibre-gl'
+import Mousetrap from 'mousetrap'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useParams } from 'react-router'
+import { Changeset as ChangesetWorkspace } from '../components/changeset/index.tsx'
+import { FILTER_BY_USER } from '../config/bindings.ts'
+import { useFilters } from '../hooks/useFilters.ts'
+import { useChangeset } from '../query/hooks/useChangeset.ts'
+import { showToast } from '../utils/toast.ts'
+import { CMap } from '../views/map.tsx'
 
 interface ChangesetData {
   properties?: {
-    user?: string;
-    [key: string]: any;
-  };
-  [key: string]: any;
+    user?: string
+    [key: string]: any
+  }
+  [key: string]: any
 }
 
 function Changeset() {
-  const { id } = useParams<{ id: string }>();
-  const changesetId = id ? parseInt(id, 10) : null;
+  const { id } = useParams<{ id: string }>()
+  const changesetId = id ? parseInt(id, 10) : null
 
-  return <ChangesetSession key={changesetId ?? "none"} changesetId={changesetId} />;
+  return <ChangesetSession key={changesetId ?? 'none'} changesetId={changesetId} />
 }
 
 function ChangesetSession({ changesetId }: { changesetId: number | null }) {
-  const { setFilters } = useFilters();
-  const { data: currentChangeset, error } = useChangeset(changesetId);
-  const changeset = currentChangeset as ChangesetData | undefined;
+  const { setFilters } = useFilters()
+  const { data: currentChangeset, error } = useChangeset(changesetId)
+  const changeset = currentChangeset as ChangesetData | undefined
 
-  const [camera, setCamera] = useState<any>(null);
-  const [selected, setSelected] = useState<any>(null);
-  const [showElements, setShowElements] = useState<Array<string>>([
-    "node",
-    "way",
-    "relation",
-  ]);
+  const [camera, setCamera] = useState<any>(null)
+  const [selected, setSelected] = useState<any>(null)
+  const [showElements, setShowElements] = useState<Array<string>>(['node', 'way', 'relation'])
   const [showActions, setShowActions] = useState<Array<string>>([
-    "create",
-    "modify",
-    "delete",
-    "noop",
-  ]);
+    'create',
+    'modify',
+    'delete',
+    'noop',
+  ])
 
   const mapRef = useRef<{
-    map: maplibre.Map;
-    adiffViewer: MapLibreAugmentedDiffViewer;
-  } | null>(null);
+    map: maplibre.Map
+    adiffViewer: MapLibreAugmentedDiffViewer
+  } | null>(null)
 
-  const filterChangesetsByUser = useCallback(() => {
+  function filterChangesetsByUser() {
     if (changeset?.properties) {
-      const userName = changeset.properties.user;
+      const userName = changeset.properties.user
       setFilters({
         users: [
           {
@@ -60,34 +55,33 @@ function ChangesetSession({ changesetId }: { changesetId: number | null }) {
             value: userName,
           },
         ],
-      });
+      })
     }
-  }, [changeset, setFilters]);
+  }
 
-  useEffect(
-    function bindFilterByUserShortcut() {
-      Mousetrap.bind(FILTER_BY_USER.bindings, filterChangesetsByUser);
-      return function unbindFilterByUserShortcut() {
-        for (const k of FILTER_BY_USER.bindings) {
-          Mousetrap.unbind(k);
-        }
-      };
-    },
-    [filterChangesetsByUser],
-  );
+  const onFilterChangesetsByUser = useEffectEvent(filterChangesetsByUser)
+
+  useEffect(function bindFilterByUserShortcut() {
+    Mousetrap.bind(FILTER_BY_USER.bindings, onFilterChangesetsByUser)
+    return function unbindFilterByUserShortcut() {
+      for (const k of FILTER_BY_USER.bindings) {
+        Mousetrap.unbind(k)
+      }
+    }
+  }, [])
 
   useEffect(
     function toastChangesetLoadError() {
-      if (!error) return;
+      if (!error) return
       showToast({
-        kind: "error",
+        kind: 'error',
         title: `changeset:${changesetId} failed to load`,
-        description: "Try reloading osmcha",
-      });
-      console.error(error);
+        description: 'Try reloading osmcha',
+      })
+      console.error(error)
     },
     [error, changesetId],
-  );
+  )
 
   return (
     <ChangesetWorkspace
@@ -112,7 +106,7 @@ function ChangesetSession({ changesetId }: { changesetId: number | null }) {
         setCamera={setCamera}
       />
     </ChangesetWorkspace>
-  );
+  )
 }
 
-export { Changeset };
+export { Changeset }

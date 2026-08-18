@@ -1,5 +1,5 @@
 import { GlobeAltIcon } from '@heroicons/react/24/solid'
-import { useCallback, useRef } from 'react'
+import { useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { elementInViewport } from '../../utils/element_in_view.ts'
 import { SignInButton } from '../changeset/sign_in_button.tsx'
@@ -26,13 +26,13 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
   const { token } = useAuth()
   const activeRef = useRef<HTMLElement | null>(null)
 
-  const handleScroll = useCallback((r: HTMLElement | null) => {
+  function handleScroll(r: HTMLElement | null) {
     if (!r) return
     activeRef.current = r
     if (!elementInViewport(r)) {
       r.scrollIntoView({ block: 'end', behavior: 'smooth' })
     }
-  }, [])
+  }
 
   if (loading) {
     return <Loading />

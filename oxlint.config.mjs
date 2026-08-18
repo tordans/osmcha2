@@ -28,6 +28,9 @@ export default defineConfig({
     '!src/views/trusted_users.tsx',
     '!src/views/saved_filters.tsx',
     '!src/views/filters.tsx',
+    '!src/views/changeset.tsx',
+    '!src/views/changesets_list.tsx',
+    '!src/views/map.tsx',
     'src/components/**',
     '!src/components/ui/',
     '!src/components/ui/**',
@@ -44,6 +47,8 @@ export default defineConfig({
     '!src/components/secondary_pages_header.tsx',
     '!src/components/sort_header.tsx',
     '!src/components/changeset/DetailsHeader.tsx',
+    '!src/components/changeset/DetailsChanges.tsx',
+    '!src/components/changeset/index.tsx',
     '!src/components/changeset/ReviewColumn.tsx',
     '!src/components/changeset/map_options.tsx',
     '!src/components/changeset/openInUrls.ts',
@@ -57,7 +62,6 @@ export default defineConfig({
     'src/config/**',
     'src/test/**',
     'src/hooks/useAuth.ts',
-    'src/hooks/useFilters.ts',
     'src/hooks/useIsUserListed.ts',
   ],
   rules: {
@@ -85,7 +89,7 @@ export default defineConfig({
       },
     },
     {
-      files: ['**/*.tsx'],
+      files: ['**/*.{ts,tsx}'],
       jsPlugins: [{ name: 'react-hooks-js', specifier: 'eslint-plugin-react-hooks' }],
       rules: {
         ...reactHooksJs.rules,

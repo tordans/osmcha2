@@ -1,6 +1,5 @@
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
-import { memo } from 'react'
 import { useLocation } from 'react-router'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Link } from '../ui/link.tsx'
@@ -29,7 +28,7 @@ interface RowProps {
   inputRef?: (node: HTMLElement | null) => void
 }
 
-function RowInner({ properties, changesetId, data, active, inputRef }: RowProps) {
+export function Row({ properties, changesetId, data, active, inputRef }: RowProps) {
   const { search } = useLocation()
   const editor = properties.editor || properties.created_by
 
@@ -72,5 +71,3 @@ function RowInner({ properties, changesetId, data, active, inputRef }: RowProps)
     </li>
   )
 }
-
-export const Row = memo(RowInner)

@@ -5,7 +5,7 @@ import simplify from '@turf/simplify'
 import truncate from '@turf/truncate'
 import clsx from 'clsx'
 import maplibre from 'maplibre-gl'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   TerraDraw,
   TerraDrawPolygonMode,
@@ -72,7 +72,7 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
   const selectedQueryType =
     queryTypeOptions.find((option) => option.value === queryType) ?? queryTypeOptions[0]
 
-  const updateMap = useCallback((data: GeoJSON.Geometry) => {
+  function updateMap(data: GeoJSON.Geometry) {
     const map = mapRef.current
     if (!map) return
 
@@ -101,14 +101,14 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
       [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
       { padding: 20 },
     )
-  }, [])
+  }
 
   useEffect(
     function syncLocationHandlerRefs() {
       onChangeRef.current = onChange
       updateMapRef.current = updateMap
     },
-    [onChange, updateMap],
+    [onChange],
   )
 
   useEffect(function initializeLocationMap() {
@@ -181,7 +181,7 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
       const geometry = geometryFromValue(value)
       if (geometry) updateMap(geometry as GeoJSON.Geometry)
     },
-    [updateMap, value],
+    [value],
   )
 
   useEffect(

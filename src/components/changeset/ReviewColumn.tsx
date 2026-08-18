@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import Mousetrap from 'mousetrap'
-import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useEffectEvent, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
@@ -66,24 +66,25 @@ export function ReviewColumn({
   const changesActive = Boolean(bindingsState[CHANGESET_DETAILS_DETAILS.label])
   const discussionActive = Boolean(bindingsState[CHANGESET_DETAILS_DISCUSSIONS.label])
 
-  const selectPanel = useCallback(
-    (label: string) => {
-      const turningOn = !bindingsState[label]
-      exclusiveKeyToggle(label)
-      if (turningOn) setExpanded(true)
-    },
-    [bindingsState, exclusiveKeyToggle],
-  )
+  function selectPanel(label: string) {
+    const turningOn = !bindingsState[label]
+    exclusiveKeyToggle(label)
+    if (turningOn) setExpanded(true)
+  }
 
-  useEffect(() => {
+  const onSelectPanel = useEffectEvent((label: string) => {
+    selectPanel(label)
+  })
+
+  useEffect(function bindReviewColumnShortcuts() {
     for (const tab of COLUMN_TABS) {
-      Mousetrap.bind(tab.bindings, () => selectPanel(tab.key))
+      Mousetrap.bind(tab.bindings, () => onSelectPanel(tab.key))
     }
     Mousetrap.bind(CHANGESET_DETAILS_USER.bindings, () => {
       setUserOpen((open) => !open)
       setExpanded(true)
     })
-    return () => {
+    return function unbindReviewColumnShortcuts() {
       for (const tab of COLUMN_TABS) {
         for (const binding of tab.bindings) {
           Mousetrap.unbind(binding)
@@ -93,7 +94,7 @@ export function ReviewColumn({
         Mousetrap.unbind(binding)
       }
     }
-  }, [selectPanel])
+  }, [])
 
   function onHandlePointerDown(event: PointerEvent<HTMLButtonElement>) {
     dragStartY.current = event.clientY

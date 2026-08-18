@@ -2,7 +2,7 @@ import type { MapLibreAugmentedDiffViewer } from "@osmcha/maplibre-adiff-viewer"
 import bbox from "@turf/bbox";
 import type * as maplibre from "maplibre-gl";
 import Mousetrap from "mousetrap";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
@@ -76,95 +76,95 @@ function Changeset({
     },
   );
 
-  const exclusiveKeyToggle = useCallback((label: string) => {
+  function exclusiveKeyToggle(label: string) {
     setBindingsState((prev) => exclusiveKeyToggleState(columnToggleOptions, prev, label));
-  }, []);
+  }
 
-  useEffect(() => {
-    const uid = currentChangeset?.properties?.uid;
-    if (!uid || !token) return;
+  useEffect(
+    function loadChangesetUserDetails() {
+      const uid = currentChangeset?.properties?.uid;
+      if (!uid || !token) return;
 
-    let cancelled = false;
+      let cancelled = false;
 
-    getUserDetails(uid)
-      .then((details) => {
-        if (!cancelled) {
-          setUserDetails(details);
+      getUserDetails(uid)
+        .then((details) => {
+          if (!cancelled) {
+            setUserDetails(details);
+          }
+        })
+        .catch((e) => console.log(e));
+
+      getUsers(uid)
+        .then((users) => {
+          if (!cancelled && users[0]?.names) {
+            setWhosThat(users[0].names);
+          }
+        })
+        .catch((e) => console.log(e));
+
+      return function cancelChangesetUserDetails() {
+        cancelled = true;
+      };
+    },
+    [currentChangeset?.properties?.uid, token],
+  );
+
+  useEffect(
+    function bindMapOptionsShortcut() {
+      Mousetrap.bind(CHANGESET_DETAILS_MAP.bindings, () => {
+        mapOptionsButtonRef.current?.click();
+      });
+
+      return function unbindMapOptionsShortcut() {
+        for (const binding of CHANGESET_DETAILS_MAP.bindings) {
+          Mousetrap.unbind(binding);
         }
-      })
-      .catch((e) => console.log(e));
+      };
+    },
+    [],
+  );
 
-    getUsers(uid)
-      .then((users) => {
-        if (!cancelled && users[0]?.names) {
-          setWhosThat(users[0].names);
-        }
-      })
-      .catch((e) => console.log(e));
+  function setHighlight(type: string, id: number, isHighlighted: boolean) {
+    if (!mapRef.current) return;
+    const { adiffViewer } = mapRef.current;
+    if (isHighlighted) {
+      adiffViewer.highlight(type, id);
+    } else {
+      adiffViewer.unhighlight(type, id);
+    }
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [currentChangeset?.properties?.uid, token]);
+  function zoomToAndSelect(type: string, id: number) {
+    if (!mapRef.current) return;
+    const { map, adiffViewer } = mapRef.current;
 
-  useEffect(() => {
-    Mousetrap.bind(CHANGESET_DETAILS_MAP.bindings, () => {
-      mapOptionsButtonRef.current?.click();
+    const features = adiffViewer.geojson.features.filter(
+      (feature: any) =>
+        feature.properties.type === type && feature.properties.id === id,
+    );
+
+    let bounds = bbox({ type: "FeatureCollection", features });
+    if (bounds.length === 6) {
+      bounds = [bounds[0], bounds[1], bounds[3], bounds[4]];
+    }
+    const nextCamera = map.cameraForBounds(bounds, {
+      padding: 50,
+      maxZoom: 18,
+    });
+    if (nextCamera) {
+      map.jumpTo(nextCamera);
+    }
+
+    adiffViewer.select(type, id);
+
+    const action = adiffViewer.adiff.actions.find((item: any) => {
+      const element = item.new ?? item.old;
+      return element.type === type && element.id === id;
     });
 
-    return () => {
-      for (const binding of CHANGESET_DETAILS_MAP.bindings) {
-        Mousetrap.unbind(binding);
-      }
-    };
-  }, []);
-
-  const setHighlight = useCallback(
-    (type: string, id: number, isHighlighted: boolean) => {
-      if (!mapRef.current) return;
-      const { adiffViewer } = mapRef.current;
-      if (isHighlighted) {
-        adiffViewer.highlight(type, id);
-      } else {
-        adiffViewer.unhighlight(type, id);
-      }
-    },
-    [mapRef],
-  );
-
-  const zoomToAndSelect = useCallback(
-    (type: string, id: number) => {
-      if (!mapRef.current) return;
-      const { map, adiffViewer } = mapRef.current;
-
-      const features = adiffViewer.geojson.features.filter(
-        (feature: any) =>
-          feature.properties.type === type && feature.properties.id === id,
-      );
-
-      let bounds = bbox({ type: "FeatureCollection", features });
-      if (bounds.length === 6) {
-        bounds = [bounds[0], bounds[1], bounds[3], bounds[4]];
-      }
-      const nextCamera = map.cameraForBounds(bounds, {
-        padding: 50,
-        maxZoom: 18,
-      });
-      if (nextCamera) {
-        map.jumpTo(nextCamera);
-      }
-
-      adiffViewer.select(type, id);
-
-      const action = adiffViewer.adiff.actions.find((item: any) => {
-        const element = item.new ?? item.old;
-        return element.type === type && element.id === id;
-      });
-
-      setSelected(action);
-    },
-    [mapRef, setSelected],
-  );
+    setSelected(action);
+  }
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row min-[56rem]:gap-3">

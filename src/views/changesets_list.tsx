@@ -1,37 +1,37 @@
-import Mousetrap from "mousetrap";
-import { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
-import { Footer } from "../components/list/footer.tsx";
-import { Header } from "../components/list/header.tsx";
-import { List } from "../components/list/index.tsx";
+import Mousetrap from 'mousetrap'
+import { useEffect, useEffectEvent, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router'
+import { Footer } from '../components/list/footer.tsx'
+import { Header } from '../components/list/header.tsx'
+import { List } from '../components/list/index.tsx'
 import {
   FILTER_BINDING,
   HELP_BINDING,
   NEXT_CHANGESET,
   PREV_CHANGESET,
   REFRESH_CHANGESETS,
-} from "../config/bindings.ts";
-import { useFilters } from "../hooks/useFilters.ts";
-import { useAOI } from "../query/hooks/useAOI.ts";
-import { useChangesetsPage } from "../query/hooks/useChangesetsPage.ts";
+} from '../config/bindings.ts'
+import { useFilters } from '../hooks/useFilters.ts'
+import { useAOI } from '../query/hooks/useAOI.ts'
+import { useChangesetsPage } from '../query/hooks/useChangesetsPage.ts'
 
 interface ChangesetsPageData {
-  features: Array<{ id: number; properties: any }>;
-  count: number;
-  [key: string]: any;
+  features: Array<{ id: number; properties: any }>
+  count: number
+  [key: string]: any
 }
 
 function ChangesetsList() {
-  const { id: paramId } = useParams<{ id?: string }>();
-  const location = useLocation();
-  const idFromPath = location.pathname.match(/^\/changesets\/(\d+)/)?.[1];
-  const id = paramId ?? idFromPath;
-  const activeChangesetId = id ? parseInt(id, 10) : null;
-  const [pageIndex, setPageIndex] = useState(0);
-  const navigate = useNavigate();
-  const { filters, aoiId, setFilters } = useFilters();
-  const { data: aoi } = useAOI(aoiId);
-  const aoiOrderBy = aoi?.properties?.filters?.order_by ?? null;
+  const { id: paramId } = useParams<{ id?: string }>()
+  const location = useLocation()
+  const idFromPath = location.pathname.match(/^\/changesets\/(\d+)/)?.[1]
+  const id = paramId ?? idFromPath
+  const activeChangesetId = id ? parseInt(id, 10) : null
+  const [pageIndex, setPageIndex] = useState(0)
+  const navigate = useNavigate()
+  const { filters, aoiId, setFilters } = useFilters()
+  const { data: aoi } = useAOI(aoiId)
+  const aoiOrderBy = aoi?.properties?.filters?.order_by ?? null
 
   const {
     data: currentPage,
@@ -41,98 +41,95 @@ function ChangesetsList() {
     pageIndex,
     filters,
     aoiId,
-  });
+  })
 
-  const page = currentPage as ChangesetsPageData | undefined;
+  const page = currentPage as ChangesetsPageData | undefined
 
-  const goUpDownToChangeset = useCallback(
-    (direction: number) => {
-      if (!page?.features) return;
-      const features = page.features;
-      let index = features.findIndex((f: any) => f.id === activeChangesetId);
-      index += direction;
-      const nextFeature = features[index];
-      if (nextFeature) {
-        navigate({
-          pathname: `/changesets/${nextFeature.id}`,
-          search: location.search,
-        });
-      }
-    },
-    [page, activeChangesetId, navigate, location.search],
-  );
-
-  const toggleFilters = useCallback(() => {
-    if (location.pathname === "/filters") {
-      navigate({ pathname: "/", search: location.search });
-    } else {
-      navigate({ pathname: "/filters", search: location.search });
+  function goUpDownToChangeset(direction: number) {
+    if (!page?.features) return
+    const features = page.features
+    let index = features.findIndex((f: any) => f.id === activeChangesetId)
+    index += direction
+    const nextFeature = features[index]
+    if (nextFeature) {
+      void navigate({
+        pathname: `/changesets/${nextFeature.id}`,
+        search: location.search,
+      })
     }
-  }, [location.pathname, location.search, navigate]);
+  }
 
-  const toggleHelp = useCallback(() => {
-    if (location.pathname.startsWith("/about")) {
-      navigate({ pathname: "/", search: location.search });
+  function toggleFilters() {
+    if (location.pathname === '/filters') {
+      void navigate({ pathname: '/', search: location.search })
     } else {
-      navigate({ pathname: "/about", search: location.search });
+      void navigate({ pathname: '/filters', search: location.search })
     }
-  }, [location.pathname, location.search, navigate]);
+  }
+
+  function toggleHelp() {
+    if (location.pathname.startsWith('/about')) {
+      void navigate({ pathname: '/', search: location.search })
+    } else {
+      void navigate({ pathname: '/about', search: location.search })
+    }
+  }
 
   const handleFilterOrderBy = (selected: Array<any>) => {
-    const newFilters = { ...filters, order_by: selected };
-    setFilters(newFilters);
-  };
+    const newFilters = { ...filters, order_by: selected }
+    setFilters(newFilters)
+  }
 
-  const reloadChangesetsPageData = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  function reloadChangesetsPageData() {
+    void refetch()
+  }
+
+  const onGoUpDownToChangeset = useEffectEvent(goUpDownToChangeset)
+  const onToggleFilters = useEffectEvent(toggleFilters)
+  const onToggleHelp = useEffectEvent(toggleHelp)
+  const onReloadChangesetsPageData = useEffectEvent(reloadChangesetsPageData)
 
   const handleChangePage = (newPageIndex: number) => {
-    setPageIndex(newPageIndex);
-  };
+    setPageIndex(newPageIndex)
+  }
 
-  useEffect(() => {
+  useEffect(function bindChangesetListShortcuts() {
     const shortcuts = [
       {
         bindings: NEXT_CHANGESET.bindings,
-        handler: () => goUpDownToChangeset(1),
+        handler: () => onGoUpDownToChangeset(1),
       },
       {
         bindings: PREV_CHANGESET.bindings,
-        handler: () => goUpDownToChangeset(-1),
+        handler: () => onGoUpDownToChangeset(-1),
       },
       {
         bindings: FILTER_BINDING.bindings,
-        handler: toggleFilters,
+        handler: onToggleFilters,
       },
       {
         bindings: HELP_BINDING.bindings,
-        handler: toggleHelp,
+        handler: onToggleHelp,
       },
       {
         bindings: REFRESH_CHANGESETS.bindings,
-        handler: reloadChangesetsPageData,
+        handler: onReloadChangesetsPageData,
       },
-    ];
+    ]
 
     for (const shortcut of shortcuts) {
       Mousetrap.bind(shortcut.bindings, (e) => {
-        e.preventDefault();
-        shortcut.handler();
-      });
+        e.preventDefault()
+        shortcut.handler()
+      })
     }
 
-    return () => {
+    return function unbindChangesetListShortcuts() {
       for (const shortcut of shortcuts) {
-        Mousetrap.unbind(shortcut.bindings);
+        Mousetrap.unbind(shortcut.bindings)
       }
-    };
-  }, [
-    goUpDownToChangeset,
-    reloadChangesetsPageData,
-    toggleFilters,
-    toggleHelp,
-  ]);
+    }
+  }, [])
 
   return (
     <div className="changesets-list flex h-full min-h-0 flex-col">
@@ -154,13 +151,9 @@ function ChangesetsList() {
         pageIndex={pageIndex}
         location={location.pathname}
       />
-      <Footer
-        pageIndex={pageIndex}
-        getChangesetsPage={handleChangePage}
-        count={page?.count}
-      />
+      <Footer pageIndex={pageIndex} getChangesetsPage={handleChangePage} count={page?.count} />
     </div>
-  );
+  )
 }
 
-export { ChangesetsList };
+export { ChangesetsList }
