@@ -1,3 +1,4 @@
+import { getRouteApi, Link } from '@tanstack/react-router'
 import { ArrowRightIcon, ClockIcon, FlagIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { diffArrays } from 'diff'
@@ -18,6 +19,11 @@ import {
 } from './ui/dropdown.tsx'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.tsx'
 import { TextLink } from './ui/text.tsx'
+
+const rootRouteApi = getRouteApi('__root__')
+
+const changesetLinkClassName =
+  'text-zinc-950 underline decoration-zinc-950/50 data-hover:decoration-zinc-950'
 
 interface ElementInfoProps {
   changeset: any
@@ -166,6 +172,7 @@ function FlagButton({
 }
 
 function MetadataTable({ changesetId, action }: { changesetId: number; action: any }) {
+  const search = rootRouteApi.useSearch()
   const showPrevious =
     action.type === 'delete' || (action.type === 'modify' && action.old.version !== action.new.version)
 
@@ -198,7 +205,14 @@ function MetadataTable({ changesetId, action }: { changesetId: number; action: a
           {elements.map((element) => (
             <TableCell key={element.version}>
               {element.changeset !== changesetId ? (
-                <TextLink href={`/changesets/${element.changeset}`}>{element.changeset}</TextLink>
+                <Link
+                  to="/changesets/$id"
+                  params={{ id: element.changeset }}
+                  search={search}
+                  className={changesetLinkClassName}
+                >
+                  {element.changeset}
+                </Link>
               ) : (
                 element.changeset
               )}

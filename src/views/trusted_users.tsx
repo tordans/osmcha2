@@ -1,4 +1,5 @@
 import { TrashIcon } from '@heroicons/react/16/solid'
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { SortHeader } from '../components/sort_header.tsx'
@@ -19,7 +20,6 @@ import {
   useAddToTrustedlist,
   useRemoveFromTrustedlist,
 } from '../query/hooks/useTrustedlistMutations.ts'
-import { getObjAsQueryParam } from '../utils/query_params.ts'
 
 type SortDir = 'asc' | 'desc'
 
@@ -79,15 +79,17 @@ export function TrustedUsers() {
                   <TableCell className="font-medium">{username}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        plain
-                        href={`?${getObjAsQueryParam('filters', {
-                          users: [{ label: username, value: username }],
-                        })}`}
-                        className="min-h-11"
+                      <Link
+                        to="/"
+                        search={{
+                          filters: {
+                            users: [{ label: username, value: username }],
+                          },
+                        }}
+                        className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
                       >
                         Changesets
-                      </Button>
+                      </Link>
                       <Button
                         plain
                         type="button"

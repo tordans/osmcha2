@@ -1,79 +1,102 @@
-import { useSearchParams } from 'react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import type { OsmchaSearch } from '../routing/searchSchemas.ts'
 import { validateFilters } from '../utils/filters.ts'
 
-export function useFilters() {
-  const [searchParams, setSearchParams] = useSearchParams()
+const rootRouteApi = getRouteApi('__root__')
 
-  let filters: Record<string, any> = {}
-  try {
-    const filtersParam = searchParams.get('filters')
-    if (filtersParam) {
-      filters = JSON.parse(filtersParam)
-    }
-  } catch (error) {
-    console.error('Failed to parse filters from URL:', error)
+type NavigateOptions = {
+  replace?: boolean
+}
+
+export function useFilters() {
+  const { filters, aoi, page } = rootRouteApi.useSearch()
+  const navigate = rootRouteApi.useNavigate()
+
+  const updateSearch = (
+    partial: Partial<OsmchaSearch> | ((prev: OsmchaSearch) => Partial<OsmchaSearch>),
+    options?: NavigateOptions,
+  ) => {
+    void navigate({
+      search: (prev) => {
+        const updates = typeof partial === 'function' ? partial(prev) : partial
+        const next: Record<string, unknown> = { ...prev }
+
+        for (const [key, value] of Object.entries(updates)) {
+          if (value === undefined) {
+            delete next[key]
+          } else {
+            next[key] = value
+          }
+        }
+
+        return next as OsmchaSearch
+      },
+      replace: options?.replace ?? true,
+    })
   }
 
-  const aoiId = searchParams.get('aoi')
-
-  function setFilters(newFilters: any) {
+  function setFilters(newFilters: Record<string, unknown>) {
     try {
-      // Validate filters before setting
       validateFilters(newFilters)
 
-      const newParams = new URLSearchParams()
-
-      // Only add filters param if there are filters
-      if (newFilters && Object.keys(newFilters).length > 0) {
+      const hasFilters = newFilters && Object.keys(newFilters).length > 0
+      if (hasFilters) {
         const filtersString = JSON.stringify(newFilters)
-
-        // Check if filters are too large
         if (filtersString.length > 7000) {
           toast.error('Filter too large', {
             description: 'Your filter is too big. Please save it as an AOI instead.',
           })
           return
         }
-
-        newParams.set('filters', filtersString)
       }
 
-      // Preserve AOI if it exists and we're not clearing filters
-      const currentAoi = searchParams.get('aoi')
-      if (currentAoi && Object.keys(newFilters).length > 0) {
-        newParams.set('aoi', currentAoi)
-      }
-
-      setSearchParams(newParams, { replace: false })
+      updateSearch((prev) => ({
+        filters: hasFilters ? newFilters : undefined,
+        page: 1,
+        aoi: hasFilters ? prev.aoi : undefined,
+      }))
     } catch (error) {
       console.error('Failed to set filters:', error)
       toast.error('Invalid filters', {
         description: error instanceof Error ? error.message : 'Failed to apply filters',
       })
-
-      // Clear filters on error
-      setSearchParams(new URLSearchParams(), { replace: false })
+      updateSearch({
+        filters: undefined,
+        aoi: undefined,
+        page: undefined,
+      })
     }
   }
 
   function setAoiId(nextAoiId: string | null) {
-    const newParams = new URLSearchParams()
-    if (nextAoiId) {
-      newParams.set('aoi', nextAoiId)
-    }
-    setSearchParams(newParams, { replace: false })
+    updateSearch({
+      aoi: nextAoiId ?? undefined,
+      filters: undefined,
+      page: 1,
+    })
   }
 
   function clearFilters() {
-    setSearchParams(new URLSearchParams(), { replace: false })
+    updateSearch({
+      filters: undefined,
+      aoi: undefined,
+      page: undefined,
+    })
+  }
+
+  function setPage(nextPage: number) {
+    updateSearch({ page: nextPage <= 1 ? undefined : nextPage })
   }
 
   return {
-    filters,
-    aoiId,
+    filters: filters ?? {},
+    aoiId: aoi ?? null,
+    page,
     setFilters,
     setAoiId,
     clearFilters,
+    setPage,
+    updateSearch,
   }
 }

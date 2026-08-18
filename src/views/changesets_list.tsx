@@ -1,6 +1,6 @@
+import { getRouteApi, useMatch } from '@tanstack/react-router'
 import Mousetrap from 'mousetrap'
-import { useEffect, useEffectEvent, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { useEffect, useEffectEvent } from 'react'
 import { Footer } from '../components/list/footer.tsx'
 import { Header } from '../components/list/header.tsx'
 import { List } from '../components/list/index.tsx'
@@ -15,6 +15,8 @@ import { useFilters } from '../hooks/useFilters.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useChangesetsPage } from '../query/hooks/useChangesetsPage.ts'
 
+const rootRouteApi = getRouteApi('__root__')
+
 interface ChangesetsPageData {
   features: Array<{ id: number; properties: any }>
   count: number
@@ -22,14 +24,14 @@ interface ChangesetsPageData {
 }
 
 function ChangesetsList() {
-  const { id: paramId } = useParams<{ id?: string }>()
-  const location = useLocation()
-  const idFromPath = location.pathname.match(/^\/changesets\/(\d+)/)?.[1]
-  const id = paramId ?? idFromPath
-  const activeChangesetId = id ? parseInt(id, 10) : null
-  const [pageIndex, setPageIndex] = useState(0)
-  const navigate = useNavigate()
-  const { filters, aoiId, setFilters } = useFilters()
+  const changesetMatch = useMatch({ from: '/changesets/$id', shouldThrow: false })
+  const filtersRouteMatch = useMatch({ from: '/filters', shouldThrow: false })
+  const aboutRouteMatch = useMatch({ from: '/about', shouldThrow: false })
+  const activeChangesetId = changesetMatch?.params.id ?? null
+  const navigate = rootRouteApi.useNavigate()
+  const search = rootRouteApi.useSearch()
+  const { filters, aoiId, page, setFilters, setPage } = useFilters()
+  const pageIndex = page - 1
   const { data: aoi } = useAOI(aoiId)
   const aoiOrderBy = aoi?.properties?.filters?.order_by ?? null
 
@@ -43,35 +45,36 @@ function ChangesetsList() {
     aoiId,
   })
 
-  const page = currentPage as ChangesetsPageData | undefined
+  const changesetsPage = currentPage as ChangesetsPageData | undefined
 
   function goUpDownToChangeset(direction: number) {
-    if (!page?.features) return
-    const features = page.features
+    if (!changesetsPage?.features) return
+    const features = changesetsPage.features
     let index = features.findIndex((f: any) => f.id === activeChangesetId)
     index += direction
     const nextFeature = features[index]
     if (nextFeature) {
       void navigate({
-        pathname: `/changesets/${nextFeature.id}`,
-        search: location.search,
+        to: '/changesets/$id',
+        params: { id: nextFeature.id },
+        search,
       })
     }
   }
 
   function toggleFilters() {
-    if (location.pathname === '/filters') {
-      void navigate({ pathname: '/', search: location.search })
+    if (filtersRouteMatch) {
+      void navigate({ to: '/', search })
     } else {
-      void navigate({ pathname: '/filters', search: location.search })
+      void navigate({ to: '/filters', search })
     }
   }
 
   function toggleHelp() {
-    if (location.pathname.startsWith('/about')) {
-      void navigate({ pathname: '/', search: location.search })
+    if (aboutRouteMatch) {
+      void navigate({ to: '/', search })
     } else {
-      void navigate({ pathname: '/about', search: location.search })
+      void navigate({ to: '/about', search })
     }
   }
 
@@ -90,7 +93,7 @@ function ChangesetsList() {
   const onReloadChangesetsPageData = useEffectEvent(reloadChangesetsPageData)
 
   const handleChangePage = (newPageIndex: number) => {
-    setPageIndex(newPageIndex)
+    setPage(newPageIndex + 1)
   }
 
   useEffect(function bindChangesetListShortcuts() {
@@ -131,6 +134,11 @@ function ChangesetsList() {
     }
   }, [])
 
+  const listLocation = {
+    pathname: filtersRouteMatch ? '/filters' : '/',
+    search: '',
+  }
+
   return (
     <div className="changesets-list flex h-full min-h-0 flex-col">
       <Header
@@ -138,8 +146,7 @@ function ChangesetsList() {
         aoiId={aoiId}
         aoiOrderBy={aoiOrderBy}
         handleFilterOrderBy={handleFilterOrderBy}
-        location={location}
-        currentPage={page}
+        currentPage={changesetsPage}
         diff={0}
         diffLoading={false}
         reloadChangesetsPageData={reloadChangesetsPageData}
@@ -147,11 +154,15 @@ function ChangesetsList() {
       <List
         activeChangesetId={activeChangesetId}
         loading={isLoading}
-        currentPage={page}
+        currentPage={changesetsPage}
         pageIndex={pageIndex}
-        location={location.pathname}
+        location={listLocation.pathname}
       />
-      <Footer pageIndex={pageIndex} getChangesetsPage={handleChangePage} count={page?.count} />
+      <Footer
+        pageIndex={pageIndex}
+        getChangesetsPage={handleChangePage}
+        count={changesetsPage?.count}
+      />
     </div>
   )
 }

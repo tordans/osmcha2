@@ -1,4 +1,5 @@
 import { FunnelIcon, TrashIcon } from '@heroicons/react/16/solid'
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { RelativeTime } from '../components/relative_time.tsx'
@@ -18,7 +19,6 @@ import { SaveUser } from '../components/user/save_user.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useWatchlist } from '../query/hooks/useWatchlist.ts'
 import { useAddToWatchlist, useRemoveFromWatchlist } from '../query/hooks/useWatchlistMutations.ts'
-import { getObjAsQueryParam } from '../utils/query_params.ts'
 
 type WatchlistUser = {
   username: string
@@ -125,15 +125,17 @@ export function Watchlist() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        plain
-                        href={`?${getObjAsQueryParam('filters', {
-                          users: [{ label: listed.username, value: listed.username }],
-                        })}`}
-                        className="min-h-11"
+                      <Link
+                        to="/"
+                        search={{
+                          filters: {
+                            users: [{ label: listed.username, value: listed.username }],
+                          },
+                        }}
+                        className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
                       >
                         Changesets
-                      </Button>
+                      </Link>
                       <Button
                         plain
                         type="button"
@@ -154,16 +156,18 @@ export function Watchlist() {
           <SaveUser onCreate={addToWatchList} forWatchlist={true} />
 
           <div>
-            <Button
-              outline
-              href={`?${getObjAsQueryParam('filters', {
-                blacklist: [{ label: 'Yes', value: 'True' }],
-              })}`}
-              className="min-h-11"
+            <Link
+              to="/"
+              search={{
+                filters: {
+                  blacklist: [{ label: 'Yes', value: 'True' }],
+                },
+              }}
+              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
             >
-              <FunnelIcon data-slot="icon" />
+              <FunnelIcon className="size-4" />
               View changesets from users on your watchlist
-            </Button>
+            </Link>
           </div>
         </div>
       ) : null}

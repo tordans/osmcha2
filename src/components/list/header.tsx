@@ -1,4 +1,5 @@
 import { ArrowPathIcon } from '@heroicons/react/16/solid'
+import { getRouteApi, Link, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import filtersConfig from '../../config/filters.json'
 import { useAOI } from '../../query/hooks/useAOI.ts'
@@ -7,6 +8,8 @@ import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Button } from '../ui/button.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 
+const rootRouteApi = getRouteApi('__root__')
+
 type OrderOption = { label: string; value: string }
 
 interface HeaderProps {
@@ -14,10 +17,6 @@ interface HeaderProps {
   aoiId: string | null
   aoiOrderBy: string | null
   handleFilterOrderBy: (value: OrderOption[]) => void
-  location: {
-    search: string
-    pathname: string
-  }
   diffLoading: boolean
   diff: number
   currentPage?: {
@@ -31,21 +30,21 @@ export function Header({
   aoiId,
   aoiOrderBy,
   handleFilterOrderBy,
-  location,
   diffLoading,
   diff,
   currentPage,
   reloadChangesetsPageData,
 }: HeaderProps) {
+  const search = rootRouteApi.useSearch()
+  const filtersRouteMatch = useMatch({ from: '/filters', shouldThrow: false })
   const { data: aoi } = useAOI(aoiId)
   const aoiName = aoi?.properties?.name as string | undefined
   const orderByFilter = filtersConfig.find((f) => f.name === 'order_by')
   const options = (orderByFilter?.options ?? []) as OrderOption[]
   const effectiveOrderBy = aoiId ? aoiOrderBy : filters?.order_by?.[0]?.value
   const selected = options.find((option) => option.value === effectiveOrderBy) ?? null
-  const filtersOpen = location.pathname.includes('/filters')
+  const filtersOpen = Boolean(filtersRouteMatch)
   const filterCount = Object.keys(filters || {}).length
-  const filtersHref = `${filtersOpen ? '/' : '/filters'}${location.search}`
 
   return (
     <div>
@@ -76,9 +75,16 @@ export function Header({
             ))}
           </Listbox>
         </div>
-        <Button outline href={filtersHref} className="min-h-11 shrink-0">
+        <Link
+          to={filtersOpen ? '/' : '/filters'}
+          search={search}
+          className={clsx(
+            'relative isolate inline-flex min-h-11 shrink-0 cursor-pointer touch-manipulation items-baseline justify-center gap-x-2 rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
+            'data-hover:bg-zinc-950/2.5',
+          )}
+        >
           Filters{filterCount > 0 ? ` (${filterCount})` : ''}
-        </Button>
+        </Link>
       </header>
       <header
         className={clsx(

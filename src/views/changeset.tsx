@@ -1,14 +1,16 @@
 import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
+import { getRouteApi } from '@tanstack/react-router'
 import type * as maplibre from 'maplibre-gl'
 import Mousetrap from 'mousetrap'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import { useParams } from 'react-router'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/index.tsx'
 import { FILTER_BY_USER } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import { useChangeset } from '../query/hooks/useChangeset.ts'
 import { showToast } from '../utils/toast.ts'
 import { CMap } from '../views/map.tsx'
+
+const changesetRouteApi = getRouteApi('/changesets/$id')
 
 interface ChangesetData {
   properties?: {
@@ -19,13 +21,13 @@ interface ChangesetData {
 }
 
 function Changeset() {
-  const { id } = useParams<{ id: string }>()
-  const changesetId = id ? parseInt(id, 10) : null
+  const { id } = changesetRouteApi.useParams()
+  const changesetId = id
 
   return <ChangesetSession key={changesetId ?? 'none'} changesetId={changesetId} />
 }
 
-function ChangesetSession({ changesetId }: { changesetId: number | null }) {
+function ChangesetSession({ changesetId }: { changesetId: number }) {
   const { setFilters } = useFilters()
   const { data: currentChangeset, error } = useChangeset(changesetId)
   const changeset = currentChangeset as ChangesetData | undefined

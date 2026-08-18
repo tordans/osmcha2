@@ -1,12 +1,12 @@
 import { parse } from 'date-fns'
+import { Link } from '@tanstack/react-router'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { getObjAsQueryParam } from '../../utils/query_params.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { Avatar } from '../ui/avatar.tsx'
 import { Button } from '../ui/button.tsx'
 import { Subheading } from '../ui/heading.tsx'
-import { Text, TextLink } from '../ui/text.tsx'
+import { Text } from '../ui/text.tsx'
 import { SignInButton } from './sign_in_button.tsx'
 import { TrustWatchUser } from './trust_watch_user.tsx'
 import { UserOSMLink } from './user_osm_link.tsx'
@@ -34,6 +34,9 @@ function avatarSrc(url?: string) {
   return url
 }
 
+const linkClassName =
+  'text-zinc-950 underline decoration-zinc-950/50 data-hover:decoration-zinc-950'
+
 function UserLink({ userDetails, harmful }: UserLinkProps) {
   const filterValue = harmful
     ? { label: 'Show Bad only', value: true }
@@ -43,15 +46,19 @@ function UserLink({ userDetails, harmful }: UserLinkProps) {
     : `${(userDetails.checked_changesets ?? 0) - (userDetails.harmful_changesets ?? 0)} Good`
 
   return (
-    <TextLink
-      href={`/?${getObjAsQueryParam('filters', {
-        uids: [{ label: userDetails.uid, value: userDetails.uid }],
-        harmful: [filterValue],
-        date__gte: [{ label: '', value: '' }],
-      })}`}
+    <Link
+      to="/"
+      search={{
+        filters: {
+          uids: [{ label: userDetails.uid, value: userDetails.uid }],
+          harmful: [filterValue],
+          date__gte: [{ label: '', value: '' }],
+        },
+      }}
+      className={linkClassName}
     >
       {label}
-    </TextLink>
+    </Link>
   )
 }
 
@@ -66,14 +73,6 @@ export function User({ userDetails, whosThat }: UserProps) {
     ? parse(userDetails.accountCreated, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
     : null
   const initials = userDetails.name?.slice(0, 2).toUpperCase()
-  const editsHref = `/?${getObjAsQueryParam('filters', {
-    uids: [{ label: userDetails.uid, value: userDetails.uid }],
-    date__gte: [{ label: '', value: '' }],
-  })}`
-  const osmchaHref = `/?${getObjAsQueryParam('filters', {
-    users: [{ label: userDetails.name, value: userDetails.name }],
-    date__gte: [{ label: '', value: '' }],
-  })}`
 
   return (
     <div className="px-3 py-2">
@@ -97,7 +96,18 @@ export function User({ userDetails, whosThat }: UserProps) {
               </>
             )}
             {userDetails.count ? (
-              <TextLink href={editsHref}>{`${userDetails.count} edits`}</TextLink>
+              <Link
+                to="/"
+                search={{
+                  filters: {
+                    uids: [{ label: userDetails.uid, value: userDetails.uid }],
+                    date__gte: [{ label: '', value: '' }],
+                  },
+                }}
+                className={linkClassName}
+              >
+                {`${userDetails.count} edits`}
+              </Link>
             ) : (
               `${userDetails.changesets_in_osmcha} edits registered on OSMCha`
             )}
@@ -110,13 +120,18 @@ export function User({ userDetails, whosThat }: UserProps) {
           </Text>
           <TrustWatchUser user={userDetails as { name: string; uid: number }} />
           <div className="mt-1 flex flex-wrap items-center justify-center gap-1">
-            <Button
-              outline
-              href={osmchaHref}
-              className="min-h-11 cursor-pointer touch-manipulation select-none"
+            <Link
+              to="/"
+              search={{
+                filters: {
+                  users: [{ label: userDetails.name, value: userDetails.name }],
+                  date__gte: [{ label: '', value: '' }],
+                },
+              }}
+              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
             >
               OSMCha
-            </Button>
+            </Link>
             <UserOSMLink userName={userDetails.name}>OSM</UserOSMLink>
             <Button
               outline

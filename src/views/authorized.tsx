@@ -1,20 +1,20 @@
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router'
 import { completeOAuthLogin } from '../utils/auth.ts'
 
 const oauthCodesStarted = new Set<string>()
 
 export function Authorized() {
-  const location = useLocation()
   const navigate = useNavigate()
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr })
 
   useEffect(
     function completeOAuthFromRedirect() {
-      const params = new URLSearchParams(location.search)
+      const params = new URLSearchParams(searchStr)
       const authCode = params.get('code')
 
       if (!authCode) {
-        void navigate('/', { replace: true })
+        void navigate({ to: '/', replace: true })
         return
       }
 
@@ -23,14 +23,14 @@ export function Authorized() {
 
       completeOAuthLogin(authCode)
         .then(() => {
-          void navigate('/', { replace: true })
+          void navigate({ to: '/', replace: true })
         })
         .catch((error) => {
           console.error('OAuth completion failed:', error)
-          void navigate('/', { replace: true })
+          void navigate({ to: '/', replace: true })
         })
     },
-    [location.search, navigate],
+    [searchStr, navigate],
   )
 
   return <div className="center">Logging in...</div>

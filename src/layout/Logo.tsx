@@ -1,9 +1,14 @@
-import { Link } from '../components/ui/link.tsx'
+import { Link, getRouteApi } from '@tanstack/react-router'
 
-export function Logo({ search = '' }: { search?: string }) {
+const rootRouteApi = getRouteApi('__root__')
+
+export function Logo() {
+  const search = rootRouteApi.useSearch()
+
   return (
     <Link
-      href={search ? `/${search}` : '/'}
+      to="/"
+      search={search}
       className="cursor-pointer touch-manipulation text-lg font-semibold text-zinc-600 select-none"
     >
       <span className="text-blue-600">OSM</span>Cha

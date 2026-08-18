@@ -1,9 +1,9 @@
 import { XMarkIcon } from '@heroicons/react/16/solid'
 import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useChangeset } from '../../query/hooks/useChangeset.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
@@ -21,15 +21,6 @@ type Props = {
   changesetId: number | null
   selected: unknown
   mapRef?: { current: DebugMapHandle | null }
-}
-
-function parseFiltersParam(raw: string | null): unknown {
-  if (raw == null) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return raw
-  }
 }
 
 function snapshotMap(handle: DebugMapHandle | null) {
@@ -79,13 +70,15 @@ export function DebugDataHelper(props: Props) {
   return <DebugDataHelperActive {...props} />
 }
 
+const rootRouteApi = getRouteApi('__root__')
+
 function DebugDataHelperActive({ changesetId, selected, mapRef }: Props) {
   const [show, setShow] = useState(false)
   const [mapSnapshot, setMapSnapshot] = useState<unknown>(undefined)
   const changesetQuery = useChangeset(changesetId)
   const mapQuery = useChangesetMap(changesetId)
   const { token, user } = useAuth()
-  const [searchParams] = useSearchParams()
+  const { filters, aoi } = rootRouteApi.useSearch()
 
   useEffect(
     function subscribeToMapInspector() {
@@ -108,8 +101,8 @@ function DebugDataHelperActive({ changesetId, selected, mapRef }: Props) {
     [show, mapRef],
   )
 
-  const filters = parseFiltersParam(searchParams.get('filters'))
-  const aoi = searchParams.get('aoi')
+  const filtersDump = filters ?? null
+  const aoiDump = aoi ?? null
   const authDump = {
     token: token ? '[redacted]' : null,
     user,
@@ -144,8 +137,8 @@ function DebugDataHelperActive({ changesetId, selected, mapRef }: Props) {
                 : undefined
             }
           />
-          <JsonDetails title="URL filters (?filters=)" data={filters} />
-          <JsonDetails title="URL AOI (?aoi=)" data={aoi} />
+          <JsonDetails title="URL filters (?filters=)" data={filtersDump} />
+          <JsonDetails title="URL AOI (?aoi=)" data={aoiDump} />
           <JsonDetails title="Selected map feature" data={selected} />
           <JsonDetails title="Auth user" data={authDump} />
           <JsonDetails title="Map inspector" data={mapSnapshot} />

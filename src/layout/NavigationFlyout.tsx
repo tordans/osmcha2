@@ -1,8 +1,8 @@
 import * as Headless from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/20/solid'
 import { useQueryClient } from '@tanstack/react-query'
+import { getRouteApi, useMatch } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router'
 import { TokenImport } from '../components/token_import.tsx'
 import { Avatar } from '../components/ui/avatar.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -21,6 +21,8 @@ import { useAllAOIs } from '../query/hooks/useAOI.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
+
+const rootRouteApi = getRouteApi('__root__')
 
 type UserData = {
   username?: string
@@ -43,20 +45,17 @@ function aoiFeatures(data: unknown): AoiFeature[] {
   return []
 }
 
-function withSearch(pathname: string, search: string) {
-  return search ? `${pathname}${search}` : pathname
-}
-
 export function ChromeHeader() {
-  const location = useLocation()
-  const locationKey = `${location.pathname}${location.search}`
+  const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
+  const search = rootRouteApi.useSearch()
+  const locationKey = `${pathname}?${JSON.stringify(search)}`
   const [openFor, setOpenFor] = useState<string | null>(null)
   const open = openFor === locationKey
 
   return (
     <>
       <header className="flex shrink-0 items-center justify-between gap-3 px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-1">
-        <Logo search={location.search} />
+        <Logo />
         <Button
           plain
           aria-label="Open menu"
@@ -77,15 +76,15 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
   const currentUser = user as UserData | undefined
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = rootRouteApi.useNavigate()
+  const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
+  const search = rootRouteApi.useSearch()
   const { filters, aoiId } = useFilters()
   const aoisQuery = useAllAOIs()
   const aois = aoiFeatures(aoisQuery.data)
 
   const username = currentUser?.username
   const uid = currentUser?.uid
-  const search = location.search
 
   const handleLoginClick = () => {
     if (!isOsmOAuthHost()) return
@@ -98,15 +97,21 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
     clearAuth()
     queryClient.clear()
     onClose()
-    void navigate('/')
+    void navigate({ to: '/' })
   }
 
   const goMyChangesets = () => {
     if (uid == null) return
     onClose()
     void navigate({
-      pathname: '/',
-      search: `filters={"uids":[{"label":"${uid}","value":"${uid}"}],"date__gte":[{"label":"","value":""}]}`,
+      to: '/',
+      search: {
+        filters: {
+          uids: [{ label: String(uid), value: String(uid) }],
+          date__gte: [{ label: '', value: '' }],
+        },
+        page: undefined,
+      },
     })
   }
 
@@ -114,21 +119,41 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
     if (!username) return
     onClose()
     void navigate({
-      pathname: '/',
-      search: `filters={"checked_by":[{"label":"${username}","value":"${username}"}],"date__gte":[{"label":"","value":""}]}`,
+      to: '/',
+      search: {
+        filters: {
+          checked_by: [{ label: username, value: username }],
+          date__gte: [{ label: '', value: '' }],
+        },
+        page: undefined,
+      },
     })
   }
 
   const goAoi = (id: string | number) => {
     onClose()
-    void navigate({ pathname: '/', search: `aoi=${id}` })
+    void navigate({
+      to: '/',
+      search: {
+        aoi: String(id),
+        filters: undefined,
+        page: undefined,
+      },
+    })
   }
 
-  const isRecent = location.pathname === '/' && !aoiId && !filters?.uids && !filters?.checked_by
+  const goTo = (
+    to: '/' | '/about' | '/saved-filters' | '/user' | '/teams' | '/trusted-users' | '/watchlist',
+  ) => {
+    onClose()
+    void navigate({ to, search })
+  }
+
+  const isRecent = pathname === '/' && !aoiId && !filters?.uids && !filters?.checked_by
   const isMyChangesets =
-    location.pathname === '/' && uid != null && String(filters?.uids?.[0]?.value) === String(uid)
+    pathname === '/' && uid != null && String(filters?.uids?.[0]?.value) === String(uid)
   const isMyReviews =
-    location.pathname === '/' && Boolean(username) && filters?.checked_by?.[0]?.value === username
+    pathname === '/' && Boolean(username) && filters?.checked_by?.[0]?.value === username
 
   const initials = username?.slice(0, 2).toUpperCase()
 
@@ -144,7 +169,7 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
       >
         <div className="flex h-full flex-col rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5">
           <div className="flex items-center justify-between gap-3 px-4 pt-3">
-            <Logo search={search} />
+            <Logo />
             <Headless.CloseButton
               as={Button}
               plain
@@ -158,7 +183,7 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
             <SidebarBody>
               <SidebarSection>
                 <SidebarHeading>Changesets</SidebarHeading>
-                <SidebarItem href="/" current={isRecent}>
+                <SidebarItem onClick={() => goTo('/')} current={isRecent}>
                   <SidebarLabel>Recent</SidebarLabel>
                 </SidebarItem>
                 {token && uid != null && (
@@ -181,8 +206,8 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
                   </SidebarItem>
                 ))}
                 <SidebarItem
-                  href={withSearch('/saved-filters', search)}
-                  current={location.pathname === '/saved-filters'}
+                  onClick={() => goTo('/saved-filters')}
+                  current={pathname === '/saved-filters'}
                 >
                   <SidebarLabel>Saved filters</SidebarLabel>
                 </SidebarItem>
@@ -190,10 +215,7 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
 
               <SidebarSection>
                 <SidebarHeading>About</SidebarHeading>
-                <SidebarItem
-                  href={withSearch('/about', search)}
-                  current={location.pathname === '/about'}
-                >
+                <SidebarItem onClick={() => goTo('/about')} current={pathname === '/about'}>
                   <SidebarLabel>About</SidebarLabel>
                 </SidebarItem>
               </SidebarSection>
@@ -213,28 +235,19 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
                     </SidebarLabel>
                   </div>
                 )}
-                <SidebarItem
-                  href={withSearch('/user', search)}
-                  current={location.pathname === '/user'}
-                >
+                <SidebarItem onClick={() => goTo('/user')} current={pathname === '/user'}>
                   <SidebarLabel>Account</SidebarLabel>
                 </SidebarItem>
-                <SidebarItem
-                  href={withSearch('/teams', search)}
-                  current={location.pathname.startsWith('/teams')}
-                >
+                <SidebarItem onClick={() => goTo('/teams')} current={pathname.startsWith('/teams')}>
                   <SidebarLabel>Teams</SidebarLabel>
                 </SidebarItem>
                 <SidebarItem
-                  href={withSearch('/trusted-users', search)}
-                  current={location.pathname === '/trusted-users'}
+                  onClick={() => goTo('/trusted-users')}
+                  current={pathname === '/trusted-users'}
                 >
                   <SidebarLabel>Trusted users</SidebarLabel>
                 </SidebarItem>
-                <SidebarItem
-                  href={withSearch('/watchlist', search)}
-                  current={location.pathname === '/watchlist'}
-                >
+                <SidebarItem onClick={() => goTo('/watchlist')} current={pathname === '/watchlist'}>
                   <SidebarLabel>Watchlist</SidebarLabel>
                 </SidebarItem>
                 {token ? (

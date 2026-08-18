@@ -1,7 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from '@tanstack/react-router'
+import { render, screen, waitFor } from '@testing-library/react'
 import MockDate from 'mockdate'
-import { StaticRouter } from 'react-router'
+import { routerSearch } from '../../routing/routerSearch.ts'
+import { osmchaSearchSchema } from '../../routing/searchSchemas.ts'
 import { PrimaryLine } from './primary_line.tsx'
 import { Row } from './row.tsx'
 
@@ -12,6 +21,47 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+const rootRoute = createRootRoute({
+  validateSearch: osmchaSearchSchema,
+  component: () => <Outlet />,
+})
+
+function TestRowPage({ active }) {
+  return (
+    <Row
+      properties={changeset.properties}
+      active={active}
+      changesetId={changeset.id}
+      inputRef={() => {}}
+    />
+  )
+}
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: () => <TestRowPage active={false} />,
+})
+
+const activeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/active',
+  component: () => <TestRowPage active={true} />,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, activeRoute])
+
+function createTestRouter(initialEntry = '/') {
+  return createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [initialEntry] }),
+    parseSearch: routerSearch.parse,
+    stringifySearch: routerSearch.stringify,
+    trailingSlash: 'never',
+    context: { queryClient },
+  })
+}
 
 const changeset = {
   id: 49328744,
@@ -39,24 +89,23 @@ const changeset = {
   },
 }
 
-function renderRow(active) {
-  return render(
+async function renderRow(active) {
+  const router = createTestRouter(active ? '/active' : '/')
+  await router.load()
+  const view = render(
     <QueryClientProvider client={queryClient}>
-      <StaticRouter location="/">
-        <Row
-          properties={changeset.properties}
-          active={active}
-          changesetId={changeset.id}
-          inputRef={() => {}}
-        />
-      </StaticRouter>
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  await waitFor(() => {
+    expect(screen.getByRole('link')).toBeTruthy()
+  })
+  return view
 }
 
-it('renders username, comment, editor, and review status', () => {
+it('renders username, comment, editor, and review status', async () => {
   MockDate.set(1497172627326)
-  const { container } = renderRow(false)
+  const { container } = await renderRow(false)
   const text = container.textContent ?? ''
 
   expect(text).toContain('DaryR')
@@ -70,9 +119,9 @@ it('renders username, comment, editor, and review status', () => {
   MockDate.reset()
 })
 
-it('marks the active row with a blue background and a visible chevron', () => {
+it('marks the active row with a blue background and a visible chevron', async () => {
   MockDate.set(1497172627326)
-  renderRow(true)
+  await renderRow(true)
   const link = screen.getByRole('link')
 
   expect(link.className).toContain('bg-blue-50')

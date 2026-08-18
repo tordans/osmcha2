@@ -1,6 +1,6 @@
 import { RssIcon, TrashIcon } from '@heroicons/react/16/solid'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useState, type KeyboardEvent } from 'react'
-import { useNavigate } from 'react-router'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { Badge } from '../components/ui/badge.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -104,7 +104,7 @@ export function SavedFilters() {
       onSuccess: () => {
         if (aoiIdToRemove === aoiId) {
           clearFilters()
-          void navigate('/user')
+          void navigate({ to: '/user' })
         }
       },
     })
@@ -134,9 +134,13 @@ export function SavedFilters() {
                   <TableRow key={aoi.id}>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Button plain href={`/filters?aoi=${aoi.id}`} className="min-h-11">
+                        <Link
+                          to="/filters"
+                          search={{ aoi: aoi.id }}
+                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-2 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+                        >
                           {aoi.properties?.name}
-                        </Button>
+                        </Link>
                         {aoiId === aoi.id ? <Badge color="zinc">Active</Badge> : null}
                       </div>
                     </TableCell>

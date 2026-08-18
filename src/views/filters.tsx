@@ -1,5 +1,5 @@
+import { getRouteApi } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router'
 import { FiltersHeader } from '../components/filters/filters_header.tsx'
 import { FiltersList } from '../components/filters/filters_list.tsx'
 import type { Filter, Filters } from '../components/filters/index.ts'
@@ -15,28 +15,30 @@ const noDateGte = {
   date__gte: [{ label: '', value: '' }],
 }
 
+const rootRouteApi = getRouteApi('__root__')
+
 export function Filters() {
   const { token } = useAuth()
-  const location = useLocation()
-  const navigate = useNavigate()
+  const navigate = rootRouteApi.useNavigate()
   const { filters: urlFilters, setAoiId, aoiId, clearFilters } = useFilters()
+  const filtersFromUrl = urlFilters as Filters
 
   const { data: aoi, isLoading: aoiLoading } = useAOI(aoiId)
   const createAOIMutation = useCreateAOI()
   const updateAOIMutation = useUpdateAOI()
   const deleteAOIMutation = useDeleteAOI()
 
-  const [localFilters, setLocalFilters] = useState<Filters>(urlFilters)
-  const [prevUrlFilters, setPrevUrlFilters] = useState<Filters>(urlFilters)
+  const [localFilters, setLocalFilters] = useState<Filters>(filtersFromUrl)
+  const [prevUrlFilters, setPrevUrlFilters] = useState<Filters>(filtersFromUrl)
   const [appliedAoiId, setAppliedAoiId] = useState<string | number | undefined>(undefined)
   const [active, setActive] = useState('')
 
   const loading = aoiLoading || createAOIMutation.isPending || updateAOIMutation.isPending
-  const hasUrlFilters = Boolean(urlFilters && Object.keys(urlFilters).length > 0)
+  const hasUrlFilters = Boolean(filtersFromUrl && Object.keys(filtersFromUrl).length > 0)
 
-  if (urlFilters !== prevUrlFilters) {
-    setPrevUrlFilters(urlFilters)
-    setLocalFilters(urlFilters)
+  if (filtersFromUrl !== prevUrlFilters) {
+    setPrevUrlFilters(filtersFromUrl)
+    setLocalFilters(filtersFromUrl)
     setAppliedAoiId(undefined)
   } else if (!hasUrlFilters && aoi?.properties?.filters && aoi.id !== appliedAoiId) {
     setAppliedAoiId(aoi.id)
@@ -48,17 +50,14 @@ export function Filters() {
   }
 
   const handleApply = () => {
-    const newParams = new URLSearchParams()
-    if (localFilters && Object.keys(localFilters).length > 0) {
-      newParams.set('filters', JSON.stringify(localFilters))
-    }
-    if (aoiId) {
-      newParams.set('aoi', aoiId)
-    }
-
+    const hasFilters = localFilters && Object.keys(localFilters).length > 0
     void navigate({
-      pathname: '/',
-      search: newParams.toString(),
+      to: '/',
+      search: {
+        filters: hasFilters ? localFilters : undefined,
+        aoi: aoiId ?? undefined,
+        page: undefined,
+      },
     })
   }
 
@@ -103,7 +102,7 @@ export function Filters() {
 
   const handleClear = () => {
     clearFilters()
-    void navigate('/')
+    void navigate({ to: '/' })
   }
 
   const loadAoiId = (nextAoiId: string) => {
@@ -153,7 +152,6 @@ export function Filters() {
         loadAoiId={loadAoiId}
         handleApply={handleApply}
         handleClear={handleClear}
-        search={location.search}
       />
       <FiltersList
         loading={loading}

@@ -1,7 +1,7 @@
 import { CheckIcon, ClipboardIcon } from '@heroicons/react/16/solid'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import { AccountPage } from '../components/secondary_pages_header.tsx'
 import { Avatar } from '../components/ui/avatar.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -58,7 +58,7 @@ export function User() {
   const handleLogout = () => {
     clearAuth()
     queryClient.clear()
-    void navigate('/')
+    void navigate({ to: '/' })
   }
 
   return (

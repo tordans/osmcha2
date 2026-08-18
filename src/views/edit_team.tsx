@@ -1,10 +1,12 @@
-import { useParams } from 'react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import NewTeam from '../components/teams/new_team.tsx'
 import { Heading } from '../components/ui/heading.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useMappingTeam, useUpdateMappingTeam } from '../query/hooks/useMappingTeams.ts'
+
+const teamRouteApi = getRouteApi('/teams/$id')
 
 type TeamUser = {
   username?: string
@@ -26,8 +28,7 @@ type UserData = {
 }
 
 export function EditMappingTeam() {
-  const { id } = useParams<{ id: string }>()
-  const teamId = id ? parseInt(id, 10) : null
+  const { id: teamId } = teamRouteApi.useParams()
   const { token, user } = useAuth()
   const teamQuery = useMappingTeam(teamId)
   const updateMutation = useUpdateMappingTeam()

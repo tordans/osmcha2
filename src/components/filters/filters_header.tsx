@@ -1,12 +1,14 @@
 import { LinkIcon, RssIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { getRouteApi, Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 import { API_URL } from '../../config/index.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { Button } from '../ui/button.tsx'
 import { Heading } from '../ui/heading.tsx'
 import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
+
+const rootRouteApi = getRouteApi('__root__')
 
 type AoiOption = {
   label: string
@@ -88,7 +90,6 @@ type FiltersHeaderProps = {
   updateAOI: (id: string, name: string) => void
   removeAOI: (id: string) => void
   loading: boolean
-  search: string
   token: string | null
   aoiName?: string
   aoiId?: string
@@ -115,21 +116,20 @@ function aoiFeatures(data: unknown): AoiFeature[] {
 export function FiltersHeader({
   createAOI,
   updateAOI,
-  search,
   token,
   aoiName,
   aoiId,
   handleApply,
   handleClear,
 }: FiltersHeaderProps) {
-  const navigate = useNavigate()
+  const navigate = rootRouteApi.useNavigate()
+  const search = rootRouteApi.useSearch()
   const aoisQuery = useAllAOIs()
   const aoiList: AoiOption[] = aoiFeatures(aoisQuery.data).map((aoi) => ({
     label: aoi.properties?.name || `Filter ${aoi.id}`,
     value: String(aoi.id),
   }))
   const selectedAoi = aoiList.find((aoi) => aoi.value === aoiId) ?? null
-  const closeHref = search ? `/${search}` : '/'
   const shareOrigin = API_URL.replace('/api/v1', '')
 
   return (
@@ -139,14 +139,14 @@ export function FiltersHeader({
           Filters
           {aoiId ? ` / ${aoiName}` : ''}
         </Heading>
-        <Button
-          plain
-          href={closeHref}
+        <Link
+          to="/"
+          search={search}
           aria-label="Close filters"
-          className="min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation p-0 select-none"
+          className="inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none"
         >
-          <XMarkIcon data-slot="icon" />
-        </Button>
+          <XMarkIcon className="size-5" />
+        </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -159,8 +159,8 @@ export function FiltersHeader({
               onChange={(option) => {
                 if (!option) return
                 void navigate({
-                  pathname: '/filters',
-                  search: `aoi=${option.value}`,
+                  to: '/filters',
+                  search: (prev) => ({ ...prev, aoi: option.value, filters: undefined }),
                 })
               }}
             >

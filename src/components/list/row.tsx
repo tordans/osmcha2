@@ -1,11 +1,12 @@
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
+import { getRouteApi, Link } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { useLocation } from 'react-router'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
-import { Link } from '../ui/link.tsx'
 import { PrimaryLine } from './primary_line.tsx'
 import { SecondaryLine } from './secondary_line.tsx'
 import { Title } from './title.tsx'
+
+const rootRouteApi = getRouteApi('__root__')
 
 interface RowProps {
   properties: {
@@ -29,13 +30,15 @@ interface RowProps {
 }
 
 export function Row({ properties, changesetId, data, active, inputRef }: RowProps) {
-  const { search } = useLocation()
+  const search = rootRouteApi.useSearch()
   const editor = properties.editor || properties.created_by
 
   return (
     <li className="relative" ref={inputRef}>
       <Link
-        href={`/changesets/${changesetId}${search}`}
+        to="/changesets/$id"
+        params={{ id: changesetId }}
+        search={search}
         className={clsx(
           'relative flex min-h-11 flex-col items-start justify-between gap-1 rounded pt-2.5 pr-0.5 pb-2 pl-3 break-words',
           'cursor-pointer touch-manipulation select-none',

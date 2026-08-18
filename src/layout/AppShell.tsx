@@ -1,21 +1,21 @@
+import { useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
-import { useLocation } from 'react-router'
 import { TailwindResponsiveHelper } from '../components/debug/TailwindResponsiveHelper.tsx'
 import { ChangesetsList } from '../views/changesets_list.tsx'
 import { BackToListButton } from './BackToListButton.tsx'
 import { ChromeHeader } from './NavigationFlyout.tsx'
-import { isChangesetPath, isFullBleedPath, isListHomePath } from './routes.ts'
 import { useFullBleedLock } from './useFullBleedLock.ts'
 
 const paneCard =
   'min-[56rem]:rounded-lg min-[56rem]:bg-white min-[56rem]:shadow-sm min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5'
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const location = useLocation()
-  const fullBleed = isFullBleedPath(location.pathname)
-  const listHome = isListHomePath(location.pathname)
-  const changeset = isChangesetPath(location.pathname)
+  const listHomeMatch = useMatch({ from: '/', shouldThrow: false })
+  const changesetMatch = useMatch({ from: '/changesets/$id', shouldThrow: false })
+  const listHome = Boolean(listHomeMatch)
+  const changeset = Boolean(changesetMatch)
+  const fullBleed = listHome || changeset
 
   useFullBleedLock(fullBleed)
 
