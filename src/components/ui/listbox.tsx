@@ -36,11 +36,7 @@ export function Listbox<T>({
           'data-disabled:opacity-50 data-disabled:before:bg-zinc-950/5 data-disabled:before:shadow-none',
         ])}
       >
-        <Headless.ListboxSelectedOption
-          options={options}
-          placeholder={
-            placeholder && <span className="block truncate text-zinc-500">{placeholder}</span>
-          }
+        <span
           className={clsx([
             // Basic layout
             'relative block w-full appearance-none rounded-lg py-[calc(--spacing(2.5)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
@@ -59,7 +55,14 @@ export function Listbox<T>({
             // Disabled state
             'group-data-disabled:border-zinc-950/20 group-data-disabled:opacity-100',
           ])}
-        />
+        >
+          <Headless.ListboxSelectedOption
+            options={options}
+            placeholder={
+              placeholder && <span className="block truncate text-zinc-500">{placeholder}</span>
+            }
+          />
+        </span>
         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
           <svg
             className="size-5 stroke-zinc-500 group-data-disabled:stroke-zinc-600 sm:size-4 forced-colors:stroke-[CanvasText]"
