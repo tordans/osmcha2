@@ -22,10 +22,12 @@ interface ChangesetsPageData {
 }
 
 function ChangesetsList() {
-  const { id } = useParams<{ id?: string }>();
+  const { id: paramId } = useParams<{ id?: string }>();
+  const location = useLocation();
+  const idFromPath = location.pathname.match(/^\/changesets\/(\d+)/)?.[1];
+  const id = paramId ?? idFromPath;
   const activeChangesetId = id ? parseInt(id, 10) : null;
   const [pageIndex, setPageIndex] = useState(0);
-  const location = useLocation();
   const navigate = useNavigate();
   const { filters, aoiId, setFilters } = useFilters();
   const { data: aoi } = useAOI(aoiId);
@@ -133,7 +135,7 @@ function ChangesetsList() {
   ]);
 
   return (
-    <div className="flex-parent flex-parent--column changesets-list">
+    <div className="flex-parent flex-parent--column changesets-list h-full min-h-0">
       <Header
         filters={filters}
         aoiId={aoiId}

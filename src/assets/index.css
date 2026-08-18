@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+@theme {
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
 @custom-variant hover-fine {
   @media (hover: hover) and (pointer: fine) {
     &:hover {
@@ -12,10 +16,12 @@ body {
   scroll-behavior: smooth;
   overflow: auto;
 }
-/*html, body {
-  position: fixed;
-  overflow: hidden;
-}*/
+
+html.app-full-bleed,
+html.app-full-bleed body,
+html.app-full-bleed #root {
+  @apply h-[var(--app-height,100dvh)] overflow-hidden overscroll-none;
+}
 
 img {
   image-rendering: -moz-crisp-edges; /* Firefox */
@@ -136,19 +142,24 @@ img {
 }
 
 .changesets-list {
-  height: calc(100vh - 55px);
+  height: 100%;
+  min-height: 0;
 }
 .changesets-list ul {
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
+  min-height: 0;
+  flex: 1 1 0%;
   -webkit-overflow-scrolling: touch;
 }
 .about-page-height {
-  height: 100vh;
+  min-height: 100dvh;
+  height: auto;
 }
 
 .changesets-filters {
-  height: 100vh;
+  min-height: 100dvh;
+  height: auto;
 }
 
 #geometry-map {
@@ -533,62 +544,4 @@ th {
 
 .member-table tr:hover {
   font-weight: bold;
-}
-
-.app-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-}
-
-.app-sidebar {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.app-main {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-@media only screen and (min-width: 801px) {
-  .app-layout {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
-  }
-
-  .app-sidebar {
-    grid-column: 1;
-    border-right: 1px solid #d8d8d8;
-    background-color: #fafafa;
-  }
-
-  .app-main {
-    grid-column: 2;
-  }
-}
-
-/* on small screens, hide the splash screen and just show the changeset list */
-@media only screen and (max-width: 800px) {
-  body.route-home .app-sidebar {
-    display: block;
-  }
-
-  body.route-home .app-main {
-    display: none;
-  }
-
-  body:not(.route-home) .app-sidebar {
-    display: none;
-  }
-
-  body:not(.route-home) .app-main {
-    display: block;
-  }
-
-  .app-sidebar,
-  .app-main {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
 }
