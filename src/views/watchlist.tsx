@@ -1,204 +1,172 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { toast } from "sonner";
-import { RelativeTime } from "../components/relative_time.tsx";
-import { SecondaryPagesHeader } from "../components/secondary_pages_header.tsx";
-import { SortHeader } from "../components/sort_header.tsx";
-import { SaveUser } from "../components/user/save_user.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useWatchlist } from "../query/hooks/useWatchlist.ts";
+import { FunnelIcon, TrashIcon } from '@heroicons/react/16/solid'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { RelativeTime } from '../components/relative_time.tsx'
+import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
+import { SortHeader } from '../components/sort_header.tsx'
+import { Button } from '../components/ui/button.tsx'
 import {
-  useAddToWatchlist,
-  useRemoveFromWatchlist,
-} from "../query/hooks/useWatchlistMutations.ts";
-import { isMobile } from "../utils/isMobile.ts";
-import { getObjAsQueryParam } from "../utils/query_params.ts";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/table.tsx'
+import { Text } from '../components/ui/text.tsx'
+import { SaveUser } from '../components/user/save_user.tsx'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useWatchlist } from '../query/hooks/useWatchlist.ts'
+import { useAddToWatchlist, useRemoveFromWatchlist } from '../query/hooks/useWatchlistMutations.ts'
+import { getObjAsQueryParam } from '../utils/query_params.ts'
 
-interface WatchlistUser {
-  username: string;
-  uid: string;
-  date?: string;
+type WatchlistUser = {
+  username: string
+  uid: string
+  date?: string
 }
 
-type SortKey = "username" | "uid" | "date";
-type SortDir = "asc" | "desc";
+type SortKey = 'username' | 'uid' | 'date'
+type SortDir = 'asc' | 'desc'
 
-function compareUsers(
-  a: WatchlistUser,
-  b: WatchlistUser,
-  key: SortKey,
-): number {
-  if (key === "uid") return Number(a.uid) - Number(b.uid);
-  if (key === "date") return (a.date || "").localeCompare(b.date || "");
-  return a.username.localeCompare(b.username);
+function compareUsers(a: WatchlistUser, b: WatchlistUser, key: SortKey): number {
+  if (key === 'uid') return Number(a.uid) - Number(b.uid)
+  if (key === 'date') return (a.date || '').localeCompare(b.date || '')
+  return a.username.localeCompare(b.username)
 }
 
-interface UserData {
-  avatar?: string;
-  [key: string]: any;
+type UserData = {
+  avatar?: string
 }
 
-function Watchlist() {
-  const { token, user } = useAuth();
-  const currentUser = user as UserData | undefined;
-  const { data: watchlist = [] } = useWatchlist();
-  const addMutation = useAddToWatchlist();
-  const removeMutation = useRemoveFromWatchlist();
-  const [sortKey, setSortKey] = useState<SortKey>("date");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+export function Watchlist() {
+  const { token, user } = useAuth()
+  const currentUser = user as UserData | undefined
+  const { data: watchlist = [] } = useWatchlist()
+  const addMutation = useAddToWatchlist()
+  const removeMutation = useRemoveFromWatchlist()
+  const [sortKey, setSortKey] = useState<SortKey>('date')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const onSort = (key: SortKey) => {
     if (key === sortKey) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
     } else {
-      setSortKey(key);
-      // Names/ids read best ascending; dates most-recent-first.
-      setSortDir(key === "date" ? "desc" : "asc");
+      setSortKey(key)
+      setSortDir(key === 'date' ? 'desc' : 'asc')
     }
-  };
+  }
 
-  const addToWatchList = ({ username, uid }: WatchlistUser) => {
-    if (!username || !uid) return;
-    if (watchlist.some((u) => u.uid === uid)) {
-      toast.error("Already on watchlist", {
+  const addToWatchList = ({ username, uid }: { username: string; uid?: string }) => {
+    if (!username || !uid) return
+    if (watchlist.some((listed) => listed.uid === uid)) {
+      toast.error('Already on watchlist', {
         description: `User ${username} (${uid}) is already on your watchlist.`,
-      });
-      return;
+      })
+      return
     }
-    addMutation.mutate({ username, uid });
-  };
+    addMutation.mutate({ username, uid })
+  }
 
   const removeFromWatchList = (uid: string) => {
-    if (!uid) return;
-    removeMutation.mutate(uid);
-  };
+    if (!uid) return
+    removeMutation.mutate(uid)
+  }
 
   const sorted = [...watchlist].sort((a, b) => {
-    const cmp = compareUsers(a, b, sortKey);
-    return sortDir === "asc" ? cmp : -cmp;
-  });
-  const mobile = isMobile();
+    const cmp = compareUsers(a, b, sortKey)
+    return sortDir === 'asc' ? cmp : -cmp
+  })
 
   return (
-    <div
-      className={`flex-parent flex-parent--column changesets-filters bg-white ${
-        mobile ? "viewport-full" : ""
-      }`}
-    >
+    <AccountPage>
       <SecondaryPagesHeader title="Watchlist" avatar={currentUser?.avatar} />
-      <div
-        className={`${mobile ? "px12" : "px30"} flex-child pb60 filters-scroll`}
-      >
-        {token && (
-          <div className="mt24">
-            <div className="color-gray mb6 ml3">
-              {watchlist.length} {watchlist.length === 1 ? "user" : "users"} on
-              your watchlist
-            </div>
-            <table
-              className="table osmcha-custom-table w-full"
-              style={{ tableLayout: "fixed" }}
-            >
-              <colgroup>
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "25%" }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <SortHeader
-                    label="Username"
-                    sortKey="username"
-                    active={sortKey}
-                    dir={sortDir}
-                    onSort={onSort}
-                  />
-                  <SortHeader
-                    label="ID"
-                    sortKey="uid"
-                    active={sortKey}
-                    dir={sortDir}
-                    onSort={onSort}
-                  />
-                  <SortHeader
-                    label="Added"
-                    sortKey="date"
-                    active={sortKey}
-                    dir={sortDir}
-                    onSort={onSort}
-                  />
-                  <th>
-                    <span className="hide-visually">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((u) => (
-                  <tr key={u.uid} className="bg-darken5-on-hover">
-                    <td className="txt-bold">{u.username}</td>
-                    <td className="color-gray">{u.uid}</td>
-                    <td className="color-gray">
-                      {u.date ? (
-                        <RelativeTime datetime={new Date(u.date)} />
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td className="txt-right">
-                      <Link
-                        className="txt-underline-on-hover color-blue mr12"
-                        to={{
-                          search: getObjAsQueryParam("filters", {
-                            users: [{ label: u.username, value: u.username }],
-                          }),
-                        }}
+      {token ? (
+        <div className="flex flex-col gap-6">
+          <Text>
+            {watchlist.length} {watchlist.length === 1 ? 'user' : 'users'} on your watchlist
+          </Text>
+          <Table striped>
+            <TableHead>
+              <TableRow>
+                <SortHeader
+                  label="Username"
+                  sortKey="username"
+                  active={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                />
+                <SortHeader
+                  label="ID"
+                  sortKey="uid"
+                  active={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                />
+                <SortHeader
+                  label="Added"
+                  sortKey="date"
+                  active={sortKey}
+                  dir={sortDir}
+                  onSort={onSort}
+                />
+                <TableHeader>
+                  <span className="sr-only">Actions</span>
+                </TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sorted.map((listed) => (
+                <TableRow key={listed.uid}>
+                  <TableCell className="font-medium">{listed.username}</TableCell>
+                  <TableCell>{listed.uid}</TableCell>
+                  <TableCell>
+                    {listed.date ? <RelativeTime datetime={new Date(listed.date)} /> : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        plain
+                        href={`?${getObjAsQueryParam('filters', {
+                          users: [{ label: listed.username, value: listed.username }],
+                        })}`}
+                        className="min-h-11"
                       >
                         Changesets
-                      </Link>
-                      <button
+                      </Button>
+                      <Button
+                        plain
                         type="button"
-                        className="bg-transparent color-gray color-red-on-hover cursor-pointer"
+                        className="min-h-11"
                         title="Remove from watchlist"
-                        onClick={() => removeFromWatchList(u.uid)}
+                        onClick={() => removeFromWatchList(listed.uid)}
                       >
-                        <svg className="icon inline-block align-middle w18 h18">
-                          <use xlinkHref="#icon-trash" />
-                        </svg>
+                        <TrashIcon data-slot="icon" />
                         Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-            <div className="mt18">
-              <SaveUser onCreate={addToWatchList} forWatchlist={true} />
-            </div>
-          </div>
-        )}
+          <SaveUser onCreate={addToWatchList} forWatchlist={true} />
 
-        {token && (
-          <div className="mt24">
-            <Link
-              className="btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition"
-              to={{
-                search: getObjAsQueryParam("filters", {
-                  blacklist: [{ label: "Yes", value: "True" }],
-                }),
-              }}
+          <div>
+            <Button
+              outline
+              href={`?${getObjAsQueryParam('filters', {
+                blacklist: [{ label: 'Yes', value: 'True' }],
+              })}`}
+              className="min-h-11"
             >
-              <svg className="icon txt-m mb3 inline-block align-middle">
-                <use xlinkHref="#icon-filter" />
-              </svg>
+              <FunnelIcon data-slot="icon" />
               View changesets from users on your watchlist
-            </Link>
+            </Button>
           </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+      ) : null}
+    </AccountPage>
+  )
 }
-
-export { Watchlist };

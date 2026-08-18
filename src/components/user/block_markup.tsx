@@ -1,13 +1,9 @@
-import type React from "react";
+import type { ReactNode } from 'react'
 
-interface BlockMarkupProps {
-  children: React.ReactNode;
-}
-
-export const BlockMarkup = ({ children }: BlockMarkupProps) => (
-  <div className="flex-child flex-child--grow bg-gray-faint mx12 round p12 my6">
-    <div className="flex-parent flex-parent--row justify--space-between">
+export function BlockMarkup({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-zinc-50 p-4 ring-1 ring-zinc-950/5">
       {children}
     </div>
-  </div>
-);
+  )
+}

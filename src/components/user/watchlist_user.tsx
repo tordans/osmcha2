@@ -1,142 +1,109 @@
-import React from "react";
-import { handleResponse } from "../../network/request.ts";
-import { Button } from "../button.tsx";
+import { useState, type KeyboardEvent } from 'react'
+import { handleResponse } from '../../network/request.ts'
+import { Button } from '../ui/button.tsx'
+import { Input } from '../ui/input.tsx'
+import { Text } from '../ui/text.tsx'
 
-interface WatchListUserProps {
-  onSave: (username: string, uid: string) => void;
+type OsmUser = {
+  uid: string
+  username: string
 }
 
-interface WatchListUserState {
-  username: string;
-  uid: string;
-  isValidUsername: boolean;
-  isValidUid: boolean;
-  pending: boolean;
+type OsmUserJson = {
+  user: { id: number; display_name: string }
 }
 
-interface OsmUser {
-  uid: string;
-  username: string;
+type OsmChangesetsJson = {
+  changesets: Array<{ uid: number }>
 }
 
-export class WatchListUser extends React.Component<
-  WatchListUserProps,
-  WatchListUserState
-> {
-  state: WatchListUserState = {
-    username: "",
-    uid: "",
-    isValidUsername: true,
-    isValidUid: true,
-    pending: false,
-  };
-  // A username and uid identify the same OSM account 1:1. Editing one field
-  // clears the other so the pair can never drift out of sync; adding re-derives
-  // the missing half authoritatively from OSM.
-  setUsername = (event: any) => {
-    this.setState({
-      username: event.target.value,
-      uid: "",
-      isValidUsername: true,
-      isValidUid: true,
-    });
-  };
-  setUid = (event: any) => {
-    this.setState({
-      uid: event.target.value,
-      username: "",
-      isValidUsername: true,
-      isValidUid: true,
-    });
-  };
+export function WatchListUser({ onSave }: { onSave: (username: string, uid: string) => void }) {
+  const [username, setUsername] = useState('')
+  const [uid, setUid] = useState('')
+  const [isValidUsername, setIsValidUsername] = useState(true)
+  const [isValidUid, setIsValidUid] = useState(true)
+  const [pending, setPending] = useState(false)
 
-  fetchByUid = async (uid: string): Promise<OsmUser> => {
-    const res = await fetch(
-      `https://www.openstreetmap.org/api/0.6/user/${uid}.json`,
-    );
-    const data = await handleResponse<any>(res);
-    return { uid: data.user.id.toString(), username: data.user.display_name };
-  };
-
-  fetchByUsername = async (username: string): Promise<OsmUser> => {
-    const res = await fetch(
-      `https://www.openstreetmap.org/api/0.6/changesets.json?display_name=${username}`,
-    );
-    const data = await handleResponse<any>(res);
-    const changeset = data.changesets[0];
-    if (!changeset) throw new Error("No changesets found for user");
-    return this.fetchByUid(changeset.uid.toString());
-  };
-
-  // Resolve whichever identifier was entered to the canonical username/uid pair
-  // from OSM, then hand it off. Verifying and adding are a single action.
-  onAdd = async () => {
-    const { uid, username, pending } = this.state;
-    if (pending) return;
-    const lookup =
-      uid.length > 0
-        ? this.fetchByUid(uid)
-        : username.length > 0
-          ? this.fetchByUsername(username)
-          : null;
-    if (!lookup) {
-      this.setState({ isValidUsername: false, isValidUid: false });
-      return;
-    }
-    this.setState({ pending: true });
-    try {
-      const user = await lookup;
-      this.props.onSave(user.username, user.uid);
-      this.setState({
-        username: "",
-        uid: "",
-        isValidUsername: true,
-        isValidUid: true,
-        pending: false,
-      });
-    } catch {
-      const byUid = uid.length > 0;
-      this.setState({
-        pending: false,
-        isValidUid: !byUid,
-        isValidUsername: byUid,
-      });
-    }
-  };
-
-  onKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter") this.onAdd();
-  };
-
-  render() {
-    const errorClass = "border border--1 border--red";
-    return (
-      <span className="flex-parent flex-parent--row flex-parent--center-cross">
-        <input
-          className={`input ${this.state.isValidUsername ? "" : errorClass}`}
-          value={this.state.username}
-          onChange={this.setUsername}
-          onKeyDown={this.onKeyDown}
-          placeholder="Username"
-          type="text"
-        />
-        <span className="txt-s txt-uppercase color-gray mx6">or</span>
-        <input
-          className={`input ${this.state.isValidUid ? "" : errorClass}`}
-          value={this.state.uid}
-          onChange={this.setUid}
-          onKeyDown={this.onKeyDown}
-          placeholder="UID"
-          type="text"
-        />
-        <Button
-          className="wmax120 ml12"
-          onClick={this.onAdd}
-          disabled={this.state.pending}
-        >
-          {this.state.pending ? "Adding..." : "Add"}
-        </Button>
-      </span>
-    );
+  const fetchByUid = async (userId: string): Promise<OsmUser> => {
+    const res = await fetch(`https://www.openstreetmap.org/api/0.6/user/${userId}.json`)
+    const data = await handleResponse<OsmUserJson>(res)
+    return { uid: data.user.id.toString(), username: data.user.display_name }
   }
+
+  const fetchByUsername = async (displayName: string): Promise<OsmUser> => {
+    const res = await fetch(
+      `https://www.openstreetmap.org/api/0.6/changesets.json?display_name=${displayName}`,
+    )
+    const data = await handleResponse<OsmChangesetsJson>(res)
+    const changeset = data.changesets[0]
+    if (!changeset) throw new Error('No changesets found for user')
+    return fetchByUid(changeset.uid.toString())
+  }
+
+  const onAdd = async () => {
+    if (pending) return
+    const lookup =
+      uid.length > 0 ? fetchByUid(uid) : username.length > 0 ? fetchByUsername(username) : null
+    if (!lookup) {
+      setIsValidUsername(false)
+      setIsValidUid(false)
+      return
+    }
+    setPending(true)
+    try {
+      const user = await lookup
+      onSave(user.username, user.uid)
+      setUsername('')
+      setUid('')
+      setIsValidUsername(true)
+      setIsValidUid(true)
+    } catch {
+      const byUid = uid.length > 0
+      setIsValidUid(!byUid)
+      setIsValidUsername(byUid)
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') void onAdd()
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Input
+        className="min-h-11 min-w-40 flex-1"
+        value={username}
+        invalid={!isValidUsername}
+        onChange={(event) => {
+          setUsername(event.target.value)
+          setUid('')
+          setIsValidUsername(true)
+          setIsValidUid(true)
+        }}
+        onKeyDown={onKeyDown}
+        placeholder="Username"
+        type="text"
+      />
+      <Text className="uppercase">or</Text>
+      <Input
+        className="min-h-11 min-w-40 flex-1"
+        value={uid}
+        invalid={!isValidUid}
+        onChange={(event) => {
+          setUid(event.target.value)
+          setUsername('')
+          setIsValidUsername(true)
+          setIsValidUid(true)
+        }}
+        onKeyDown={onKeyDown}
+        placeholder="UID"
+        type="text"
+      />
+      <Button type="button" className="min-h-11" onClick={() => void onAdd()} disabled={pending}>
+        {pending ? 'Adding...' : 'Add'}
+      </Button>
+    </div>
+  )
 }

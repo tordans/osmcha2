@@ -1,131 +1,113 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { SecondaryPagesHeader } from "../components/secondary_pages_header.tsx";
-import { SortHeader } from "../components/sort_header.tsx";
-import { SaveUser } from "../components/user/save_user.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useTrustedlist } from "../query/hooks/useTrustedlist.ts";
+import { TrashIcon } from '@heroicons/react/16/solid'
+import { useState } from 'react'
+import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
+import { SortHeader } from '../components/sort_header.tsx'
+import { Button } from '../components/ui/button.tsx'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/table.tsx'
+import { Text } from '../components/ui/text.tsx'
+import { SaveUser } from '../components/user/save_user.tsx'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useTrustedlist } from '../query/hooks/useTrustedlist.ts'
 import {
   useAddToTrustedlist,
   useRemoveFromTrustedlist,
-} from "../query/hooks/useTrustedlistMutations.ts";
-import { isMobile } from "../utils/isMobile.ts";
-import { getObjAsQueryParam } from "../utils/query_params.ts";
+} from '../query/hooks/useTrustedlistMutations.ts'
+import { getObjAsQueryParam } from '../utils/query_params.ts'
 
-type SortDir = "asc" | "desc";
+type SortDir = 'asc' | 'desc'
 
-interface UserData {
-  avatar?: string;
-  [key: string]: any;
+type UserData = {
+  avatar?: string
 }
 
-function TrustedUsers() {
-  const { token, user } = useAuth();
-  const currentUser = user as UserData | undefined;
-  const { data: trustedList = [] } = useTrustedlist();
-  const addMutation = useAddToTrustedlist();
-  const removeMutation = useRemoveFromTrustedlist();
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+export function TrustedUsers() {
+  const { token, user } = useAuth()
+  const currentUser = user as UserData | undefined
+  const { data: trustedList } = useTrustedlist()
+  const addMutation = useAddToTrustedlist()
+  const removeMutation = useRemoveFromTrustedlist()
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   const addToTrustedList = ({ username }: { username: string }) => {
-    if (!username) return;
-    addMutation.mutate(username);
-  };
+    if (!username) return
+    addMutation.mutate(username)
+  }
 
   const removeFromTrustedList = (username: string) => {
-    if (!username) return;
-    removeMutation.mutate(username);
-  };
+    if (!username) return
+    removeMutation.mutate(username)
+  }
 
   const sorted = [...trustedList].sort((a, b) => {
-    const cmp = a.localeCompare(b);
-    return sortDir === "asc" ? cmp : -cmp;
-  });
-  const mobile = isMobile();
+    const cmp = a.localeCompare(b)
+    return sortDir === 'asc' ? cmp : -cmp
+  })
 
   return (
-    <div
-      className={`flex-parent flex-parent--column changesets-filters bg-white${
-        mobile ? " viewport-full" : ""
-      }`}
-    >
-      <SecondaryPagesHeader
-        title="Trusted Users"
-        avatar={currentUser?.avatar}
-      />
-      <div
-        className={`${mobile ? "px12" : "px30"} flex-child pb60 filters-scroll`}
-      >
-        {token && (
-          <div className="mt24">
-            <div className="color-gray mb6 ml3">
-              {trustedList.length}{" "}
-              {trustedList.length === 1 ? "trusted user" : "trusted users"}
-            </div>
-            <table
-              className="table osmcha-custom-table w-full"
-              style={{ tableLayout: "fixed" }}
-            >
-              <colgroup>
-                <col style={{ width: "75%" }} />
-                <col style={{ width: "25%" }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <SortHeader
-                    label="Username"
-                    sortKey="username"
-                    active="username"
-                    dir={sortDir}
-                    onSort={() =>
-                      setSortDir(sortDir === "asc" ? "desc" : "asc")
-                    }
-                  />
-                  <th>
-                    <span className="hide-visually">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((username) => (
-                  <tr key={username} className="bg-darken5-on-hover">
-                    <td className="txt-bold">{username}</td>
-                    <td className="txt-right">
-                      <Link
-                        className="txt-underline-on-hover color-blue mr12"
-                        to={{
-                          search: getObjAsQueryParam("filters", {
-                            users: [{ label: username, value: username }],
-                          }),
-                        }}
+    <AccountPage>
+      <SecondaryPagesHeader title="Trusted Users" avatar={currentUser?.avatar} />
+      {token ? (
+        <div className="flex flex-col gap-6">
+          <Text>
+            {trustedList.length} {trustedList.length === 1 ? 'trusted user' : 'trusted users'}
+          </Text>
+          <Table striped>
+            <TableHead>
+              <TableRow>
+                <SortHeader
+                  label="Username"
+                  sortKey="username"
+                  active="username"
+                  dir={sortDir}
+                  onSort={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+                />
+                <TableHeader>
+                  <span className="sr-only">Actions</span>
+                </TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sorted.map((username) => (
+                <TableRow key={username}>
+                  <TableCell className="font-medium">{username}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        plain
+                        href={`?${getObjAsQueryParam('filters', {
+                          users: [{ label: username, value: username }],
+                        })}`}
+                        className="min-h-11"
                       >
                         Changesets
-                      </Link>
-                      <button
+                      </Button>
+                      <Button
+                        plain
                         type="button"
-                        className="bg-transparent color-gray color-red-on-hover cursor-pointer"
+                        className="min-h-11"
                         title="Remove from trusted users"
                         onClick={() => removeFromTrustedList(username)}
                       >
-                        <svg className="icon inline-block align-middle w18 h18">
-                          <use xlinkHref="#icon-trash" />
-                        </svg>
+                        <TrashIcon data-slot="icon" />
                         Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-            <div className="mt18">
-              <SaveUser onCreate={addToTrustedList} />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+          <SaveUser onCreate={addToTrustedList} />
+        </div>
+      ) : null}
+    </AccountPage>
+  )
 }
-
-export { TrustedUsers };

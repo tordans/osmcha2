@@ -1,43 +1,33 @@
-import React from "react";
-import { Button } from "../button.tsx";
+import { useState, type KeyboardEvent } from 'react'
+import { Button } from '../ui/button.tsx'
+import { Input } from '../ui/input.tsx'
 
-interface TrustedListUserProps {
-  onSave: (username: string) => void;
-}
+export function TrustedListUser({ onSave }: { onSave: (username: string) => void }) {
+  const [username, setUsername] = useState('')
 
-interface TrustedListUserState {
-  username: string;
-}
-
-export class TrustedListUser extends React.Component<
-  TrustedListUserProps,
-  TrustedListUserState
-> {
-  state: TrustedListUserState = {
-    username: "",
-  };
-
-  onAdd = () => {
-    const username = this.state.username;
-    if (username && username.length > 0) {
-      this.props.onSave(username);
-      this.setState({ username: "" });
-    }
-  };
-
-  render() {
-    return (
-      <span className="flex-parent flex-parent--row">
-        <input
-          className="input"
-          onChange={(e) => this.setState({ username: e.target.value })}
-          placeholder="Username"
-          type="text"
-        />
-        <Button className="btn wmax120 ml12" onClick={this.onAdd}>
-          Add
-        </Button>
-      </span>
-    );
+  const onAdd = () => {
+    if (!username) return
+    onSave(username)
+    setUsername('')
   }
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') onAdd()
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Input
+        className="min-h-11 min-w-40 flex-1"
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder="Username"
+        type="text"
+      />
+      <Button type="button" className="min-h-11" onClick={onAdd}>
+        Add
+      </Button>
+    </div>
+  )
 }

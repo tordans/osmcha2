@@ -1,117 +1,113 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
-import { Avatar } from "../components/avatar.tsx";
-import { Button } from "../components/button.tsx";
-import { EditUserDetails } from "../components/user/details.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useAuthStore } from "../stores/authStore.ts";
-import { isMobile } from "../utils/isMobile.ts";
+import { CheckIcon, ClipboardIcon } from '@heroicons/react/16/solid'
+import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useNavigate } from 'react-router'
+import { AccountPage } from '../components/secondary_pages_header.tsx'
+import { Avatar } from '../components/ui/avatar.tsx'
+import { Button } from '../components/ui/button.tsx'
+import {
+  DescriptionDetails,
+  DescriptionList,
+  DescriptionTerm,
+} from '../components/ui/description-list.tsx'
+import { Divider } from '../components/ui/divider.tsx'
+import { Heading, Subheading } from '../components/ui/heading.tsx'
+import { Code } from '../components/ui/text.tsx'
+import { EditUserDetails } from '../components/user/details.tsx'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useAuthStore } from '../stores/authStore.ts'
 
-interface UserData {
-  avatar?: string;
-  username?: string;
-  id?: string | number;
-  uid?: string | number;
-  is_staff?: boolean;
-  [key: string]: any;
+type UserData = {
+  avatar?: string
+  username?: string
+  id?: string | number
+  uid?: string | number
+  is_staff?: boolean
 }
 
-function User() {
-  const { token, user } = useAuth();
-  const currentUser = user as UserData | undefined;
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const mobile = isMobile();
-
-  const handleLogout = () => {
-    clearAuth();
-    queryClient.clear();
-    navigate("/");
-  };
+function CopyTokenButton({ token }: { token: string }) {
+  const [copied, setCopied] = useState(false)
 
   return (
-    <div
-      className={`flex-parent flex-parent--column changesets-filters bg-white${
-        mobile ? "viewport-full" : ""
-      }`}
+    <Button
+      plain
+      type="button"
+      className="min-h-11"
+      aria-label="Copy API token"
+      title="Copy Authorization Token"
+      onClick={() => {
+        void navigator.clipboard.writeText(`Token ${token}`).then(() => {
+          setCopied(true)
+        })
+      }}
     >
-      <header className="h55 hmin55 flex-parent px30 bg-gray-faint flex-parent--center-cross justify--space-between color-gray border-b border--gray-light border--1">
-        <span className="txt-l txt-bold color-gray--dark">
-          <span>Account Settings</span>
-        </span>
-
-        <span className="txt-l color-gray--dark">
-          <Button onClick={handleLogout} className="bg-white-on-hover">
-            Logout
-          </Button>
-        </span>
-      </header>
-      <div className="px30 flex-child  pb60  filters-scroll">
-        <span className="flex-parent flex-parent--row align justify--space-between  mr6 txt-bold mt24">
-          <Avatar size={72} url={currentUser?.avatar || ""} />
-          <span
-            className="flex-child flex-child--grow pl24  pt18"
-            style={{ alignSelf: "center" }}
-          >
-            <h2 className="txt-xl">
-              Welcome, {currentUser?.username || "stranger"}!
-            </h2>
-            <div className="flex-child flex-child--grow">&nbsp;</div>
-          </span>
-        </span>
-        <div className="flex-parent flex-parent--column align justify--space-between">
-          <h2 className="pl12 txt-xl mr6 txt-bold mt24 mb12 border-b border--gray-light border--1">
-            Info
-          </h2>
-          <span className="ml12 flex-parent flex-parent--row my3">
-            <p className="flex-child txt-bold w120">OSMCha ID: </p>
-            <p className="flex-child">{currentUser?.id}</p>
-          </span>
-          <span className="ml12 flex-parent flex-parent--row my3">
-            <p className="flex-child txt-bold w120">OSM ID: </p>
-            <p className="flex-child">{currentUser?.uid}</p>
-          </span>
-          <span className="ml12 flex-parent flex-parent--row my3">
-            <p className="flex-child txt-bold w120">Username: </p>
-            <p className="flex-child">{currentUser?.username}</p>
-          </span>
-          {currentUser?.is_staff && (
-            <span className="ml12 flex-parent flex-parent--row my3">
-              <p className="flex-child txt-bold w120">Staff: </p>
-              <p className="flex-child">Yes</p>
-            </span>
-          )}
-          <span className="ml12 flex-parent flex-parent--row my3">
-            <p className="flex-child txt-bold w120">API key: </p>
-            <p className="flex-child">
-              <span className="pre pb6 pt6">Token {token}</span>
-              <div
-                className="txt--s pl6 pointer inline"
-                onClick={() => navigator.clipboard.writeText(`Token ${token}`)}
-                title="Copy Authorization Token"
-              >
-                <svg className="icon icon--m mt-neg3 inline-block align-middle color-darken25 color-darken50-on-hover transition">
-                  <use xlinkHref="#icon-clipboard" />
-                </svg>
-              </div>
-            </p>
-          </span>
-
-          {token && (
-            <div>
-              <div className="mt24 mb12">
-                <h2 className="pl12 txt-xl mr6 txt-bold border-b border--gray-light border--1">
-                  Review Comments Template
-                </h2>
-                <EditUserDetails />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+      {copied ? <CheckIcon data-slot="icon" /> : <ClipboardIcon data-slot="icon" />}
+      {copied ? 'Copied' : 'Copy'}
+    </Button>
+  )
 }
 
-export { User };
+export function User() {
+  const { token, user } = useAuth()
+  const currentUser = user as UserData | undefined
+  const clearAuth = useAuthStore((state) => state.clearAuth)
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const initials = currentUser?.username?.slice(0, 2).toUpperCase()
+
+  const handleLogout = () => {
+    clearAuth()
+    queryClient.clear()
+    void navigate('/')
+  }
+
+  return (
+    <AccountPage>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <Heading>Account Settings</Heading>
+        <Button outline type="button" className="min-h-11" onClick={handleLogout}>
+          Logout
+        </Button>
+      </header>
+
+      <div className="flex items-center gap-4">
+        <Avatar src={currentUser?.avatar} initials={initials} alt="" className="size-16" />
+        <Heading level={2}>Welcome, {currentUser?.username || 'stranger'}!</Heading>
+      </div>
+
+      <Divider soft />
+
+      <section className="flex flex-col gap-4">
+        <Subheading>Info</Subheading>
+        <DescriptionList>
+          <DescriptionTerm>OSMCha ID</DescriptionTerm>
+          <DescriptionDetails>{currentUser?.id}</DescriptionDetails>
+          <DescriptionTerm>OSM ID</DescriptionTerm>
+          <DescriptionDetails>{currentUser?.uid}</DescriptionDetails>
+          <DescriptionTerm>Username</DescriptionTerm>
+          <DescriptionDetails>{currentUser?.username}</DescriptionDetails>
+          {currentUser?.is_staff ? (
+            <>
+              <DescriptionTerm>Staff</DescriptionTerm>
+              <DescriptionDetails>Yes</DescriptionDetails>
+            </>
+          ) : null}
+          <DescriptionTerm>API key</DescriptionTerm>
+          <DescriptionDetails>
+            <div className="flex flex-wrap items-center gap-2">
+              <Code className="break-all">{token ? `Token ${token}` : '—'}</Code>
+              {token ? <CopyTokenButton token={token} /> : null}
+            </div>
+          </DescriptionDetails>
+        </DescriptionList>
+      </section>
+
+      {token ? (
+        <section className="flex flex-col gap-4">
+          <Subheading>Review Comments Template</Subheading>
+          <EditUserDetails key={String(currentUser?.id ?? 'pending')} />
+        </section>
+      ) : null}
+    </AccountPage>
+  )
+}
