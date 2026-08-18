@@ -1,155 +1,150 @@
-import { useMapStore } from "../../stores/mapStore.ts";
+import * as Headless from '@headlessui/react'
+import { Square3Stack3DIcon } from '@heroicons/react/20/solid'
+import clsx from 'clsx'
+import { forwardRef } from 'react'
+import { useMapStore } from '../../stores/mapStore.ts'
+import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
+import { Divider } from '../ui/divider.tsx'
+import { Label } from '../ui/fieldset.tsx'
 
-// helper functions for adding/removing elements from an array when a
-// checkbox is toggled
 const add = (arr: string[], elem: string): string[] => {
-  const set = new Set(arr);
-  set.add(elem);
-  return Array.from(set);
-};
+  const set = new Set(arr)
+  set.add(elem)
+  return Array.from(set)
+}
 
 const remove = (arr: string[], elem: string): string[] => {
-  const set = new Set(arr);
-  set.delete(elem);
-  return Array.from(set);
-};
+  const set = new Set(arr)
+  set.delete(elem)
+  return Array.from(set)
+}
 
 const toggle = (arr: string[], elem: string): string[] => {
-  return arr.indexOf(elem) === -1 ? add(arr, elem) : remove(arr, elem);
-};
-
-interface MapOptionsProps {
-  showElements: Array<string>;
-  showActions: Array<string>;
-  setShowElements: (elements: Array<string>) => void;
-  setShowActions: (actions: Array<string>) => void;
+  return arr.indexOf(elem) === -1 ? add(arr, elem) : remove(arr, elem)
 }
 
 const layerOptions = [
-  { label: "Bing Maps Aerial", value: "bing" },
-  { label: "Esri World Imagery", value: "esri" },
-  { label: "Esri World Imagery (Clarity) Beta", value: "esri-clarity" },
-  { label: "OpenStreetMap Carto", value: "carto" },
-];
+  { label: 'Bing Maps Aerial', value: 'bing' },
+  { label: 'Esri World Imagery', value: 'esri' },
+  { label: 'Esri World Imagery (Clarity) Beta', value: 'esri-clarity' },
+  { label: 'OpenStreetMap Carto', value: 'carto' },
+] as const
 
-export function MapOptions({
-  showElements,
-  showActions,
-  setShowElements,
-  setShowActions,
-}: MapOptionsProps) {
-  const style = useMapStore((state) => state.style);
-  const setStyle = useMapStore((state) => state.setStyle);
+type MapOptionsProps = {
+  showElements: Array<string>
+  showActions: Array<string>
+  setShowElements: (elements: Array<string>) => void
+  setShowActions: (actions: Array<string>) => void
+}
+
+export const MapOptions = forwardRef<HTMLButtonElement, MapOptionsProps>(function MapOptions(
+  { showElements, showActions, setShowElements, setShowActions },
+  ref,
+) {
+  const style = useMapStore((state) => state.style)
+  const setStyle = useMapStore((state) => state.setStyle)
 
   return (
-    <div className="px12 py6">
-      <h2 className="txt-m txt-uppercase txt-bold mr6 mb3">Map Controls</h2>
-      <section>
-        <h6 className="cursor-pointer txt-bold">Filter by actions</h6>
+    <Headless.Popover>
+      <Headless.PopoverButton
+        ref={ref}
+        aria-label="Map options"
+        className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100"
+      >
+        <Square3Stack3DIcon className="size-5 text-zinc-700" />
+      </Headless.PopoverButton>
+      <Headless.PopoverPanel
+        anchor="top end"
+        className="z-40 w-72 rounded-xl bg-white p-3 shadow-lg ring-1 ring-zinc-950/10"
+      >
+        <h2 className="mb-2 text-base font-semibold text-zinc-950">Map controls</h2>
 
-        <ul className="flex-parent">
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                style={{ accentColor: "#39DBC0" }}
-                checked={showActions.includes("create")}
-                onChange={() => setShowActions(toggle(showActions, "create"))}
+        <section className="space-y-2">
+          <h3 className="text-base font-medium text-zinc-700">Filter by actions</h3>
+          <div className="space-y-1">
+            <CheckboxField>
+              <Checkbox
+                color="emerald"
+                checked={showActions.includes('create')}
+                onChange={() => setShowActions(toggle(showActions, 'create'))}
               />
-              Added
-            </label>
-          </li>
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                style={{ accentColor: "#E7BA60" }}
-                checked={showActions.includes("modify")}
-                onChange={() => setShowActions(toggle(showActions, "modify"))}
+              <Label>Added</Label>
+            </CheckboxField>
+            <CheckboxField>
+              <Checkbox
+                color="amber"
+                checked={showActions.includes('modify')}
+                onChange={() => setShowActions(toggle(showActions, 'modify'))}
               />
-              Modified
-            </label>
-          </li>
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                style={{ accentColor: "#CC2C47" }}
-                checked={showActions.includes("delete")}
-                onChange={() => setShowActions(toggle(showActions, "delete"))}
+              <Label>Modified</Label>
+            </CheckboxField>
+            <CheckboxField>
+              <Checkbox
+                color="red"
+                checked={showActions.includes('delete')}
+                onChange={() => setShowActions(toggle(showActions, 'delete'))}
               />
-              Deleted
-            </label>
-          </li>
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                style={{ accentColor: "#8B79C4" }}
-                checked={showActions.includes("noop")}
-                onChange={() => setShowActions(toggle(showActions, "noop"))}
+              <Label>Deleted</Label>
+            </CheckboxField>
+            <CheckboxField>
+              <Checkbox
+                color="violet"
+                checked={showActions.includes('noop')}
+                onChange={() => setShowActions(toggle(showActions, 'noop'))}
               />
-              Unchanged
-            </label>
-          </li>
-        </ul>
-      </section>
-      <section>
-        <h6 className="txt-bold">Filter by type</h6>
-        <ul className="flex-parent">
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                checked={showElements.includes("node")}
-                onChange={() => setShowElements(toggle(showElements, "node"))}
+              <Label>Unchanged</Label>
+            </CheckboxField>
+          </div>
+        </section>
+
+        <Divider className="my-3" />
+
+        <section className="space-y-2">
+          <h3 className="text-base font-medium text-zinc-700">Filter by type</h3>
+          <div className="space-y-1">
+            <CheckboxField>
+              <Checkbox
+                checked={showElements.includes('node')}
+                onChange={() => setShowElements(toggle(showElements, 'node'))}
               />
-              Nodes{" "}
-              <svg className="icon h18 w18 inline-block align-middle color-black">
-                <use xlinkHref="#icon-marker" />
-              </svg>
-            </label>
-          </li>
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                checked={showElements.includes("way")}
-                onChange={() => setShowElements(toggle(showElements, "way"))}
+              <Label>Nodes</Label>
+            </CheckboxField>
+            <CheckboxField>
+              <Checkbox
+                checked={showElements.includes('way')}
+                onChange={() => setShowElements(toggle(showElements, 'way'))}
               />
-              Ways{" "}
-              <svg className="icon h18 w18 inline-block align-middle color-black">
-                <use xlinkHref="#icon-polyline" />
-              </svg>
-            </label>
-          </li>
-          <li className="px6">
-            <label>
-              <input
-                type="checkbox"
-                checked={showElements.includes("relation")}
-                onChange={() =>
-                  setShowElements(toggle(showElements, "relation"))
-                }
+              <Label>Ways</Label>
+            </CheckboxField>
+            <CheckboxField>
+              <Checkbox
+                checked={showElements.includes('relation')}
+                onChange={() => setShowElements(toggle(showElements, 'relation'))}
               />
-              Relations{" "}
-              <svg className="icon h18 w18 inline-block align-middle color-black">
-                <use xlinkHref="#icon-viewport" />
-              </svg>
-            </label>
-          </li>
-        </ul>
-      </section>
-      <section>
-        <h6 className="cursor-pointer txt-bold">Map style</h6>
-        <select value={style} onChange={(e) => setStyle(e.target.value)}>
+              <Label>Relations</Label>
+            </CheckboxField>
+          </div>
+        </section>
+
+        <Divider className="my-3" />
+
+        <section className="space-y-1">
+          <h3 className="text-base font-medium text-zinc-700">Map style</h3>
           {layerOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setStyle(opt.value)}
+              className={clsx(
+                'flex min-h-11 w-full cursor-pointer items-center rounded-lg px-2 text-left text-base touch-manipulation select-none',
+                style === opt.value ? 'bg-zinc-950/5 font-medium' : 'active:bg-zinc-950/5',
+              )}
+            >
               {opt.label}
-            </option>
+            </button>
           ))}
-        </select>
-      </section>
-    </div>
-  );
-}
+        </section>
+      </Headless.PopoverPanel>
+    </Headless.Popover>
+  )
+})

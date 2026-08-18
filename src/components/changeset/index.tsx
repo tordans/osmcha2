@@ -2,7 +2,7 @@ import type { MapLibreAugmentedDiffViewer } from "@osmcha/maplibre-adiff-viewer"
 import bbox from "@turf/bbox";
 import type * as maplibre from "maplibre-gl";
 import Mousetrap from "mousetrap";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
@@ -18,20 +18,12 @@ import { getUserDetails } from "../../network/openstreetmap.ts";
 import { getUsers } from "../../network/whosthat.ts";
 import { useChangesetMap } from "../../query/hooks/useChangesetMap.ts";
 import ElementInfo from "../element_info.tsx";
-import { Box } from "./box.tsx";
-import { ControlLayout } from "./control_layout.tsx";
-import { Discussions } from "./discussions.tsx";
-import { Features } from "./features.tsx";
-import { Floater } from "./floater.tsx";
-import { GeometryChanges } from "./geometry_changes.tsx";
-import { Header } from "./header.tsx";
 import { MapOptions } from "./map_options.tsx";
-import { OtherFeatures } from "./other_features.tsx";
-import { TagChanges } from "./tag_changes.tsx";
-import { User } from "./user.tsx";
+import { ReviewColumn } from "./ReviewColumn.tsx";
+import type { ReviewCamera } from "./openInUrls.ts";
 
 type ChangesetProps = {
-  changesetId: number;
+  changesetId: number | null;
   currentChangeset: any;
   showElements: Array<string>;
   showActions: Array<string>;
@@ -43,9 +35,11 @@ type ChangesetProps = {
   }>;
   selected: any;
   setSelected: (selected: any) => void;
+  camera?: ReviewCamera | null;
+  children: React.ReactNode;
 };
 
-const toggleOptions = [
+const columnToggleOptions = [
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_SUSPICIOUS,
   CHANGESET_DETAILS_TAGS,
@@ -53,13 +47,11 @@ const toggleOptions = [
   CHANGESET_DETAILS_OTHER_FEATURES,
   CHANGESET_DETAILS_USER,
   CHANGESET_DETAILS_DISCUSSIONS,
-  CHANGESET_DETAILS_MAP,
 ];
 
 /**
- * This is the UI overlay that appears on top of the map in the changeset view.
- * It displays information about the changeset in the upper left, and may also display
- * information about the currently selected element in the lower right.
+ * Review workspace: map pane (children) plus the review column / bottom sheet.
+ * Selected-feature card and map options stay on the map.
  */
 function Changeset({
   changesetId,
@@ -71,19 +63,22 @@ function Changeset({
   mapRef,
   selected,
   setSelected,
+  camera,
+  children,
 }: ChangesetProps) {
   const { token } = useAuth();
   const { data: osmInfo } = useChangesetMap(changesetId);
+  const ready = Boolean(changesetId && currentChangeset);
+  const mapOptionsButtonRef = useRef<HTMLButtonElement>(null);
 
   const [userDetails, setUserDetails] = useState<any>(null);
   const [whosThat, setWhosThat] = useState<any>(null);
 
-  // Keyboard toggle state - track which sections are visible
   const [bindingsState, setBindingsState] = useState<Record<string, boolean>>(
     () => {
       const initial: Record<string, boolean> = {};
-      for (const opt of toggleOptions) {
-        initial[opt.label] = opt === CHANGESET_DETAILS_DETAILS; // Only details visible by default
+      for (const opt of columnToggleOptions) {
+        initial[opt.label] = opt === CHANGESET_DETAILS_DETAILS;
       }
       return initial;
     },
@@ -92,14 +87,13 @@ function Changeset({
   const exclusiveKeyToggle = useCallback((label: string) => {
     setBindingsState((prev) => {
       const newState: Record<string, boolean> = {};
-      for (const opt of toggleOptions) {
+      for (const opt of columnToggleOptions) {
         newState[opt.label] = opt.label === label ? !prev[label] : false;
       }
       return newState;
     });
   }, []);
 
-  // Fetch user details when changeset changes
   useEffect(() => {
     const uid = currentChangeset?.properties?.uid;
     if (!uid || !token) return;
@@ -127,24 +121,18 @@ function Changeset({
     };
   }, [currentChangeset?.properties?.uid, token]);
 
-  // Setup keyboard shortcuts
   useEffect(() => {
-    for (const opt of toggleOptions) {
-      Mousetrap.bind(opt.bindings, () => exclusiveKeyToggle(opt.label));
-    }
+    Mousetrap.bind(CHANGESET_DETAILS_MAP.bindings, () => {
+      mapOptionsButtonRef.current?.click();
+    });
 
     return () => {
-      for (const opt of toggleOptions) {
-        for (const binding of opt.bindings) {
-          Mousetrap.unbind(binding);
-        }
+      for (const binding of CHANGESET_DETAILS_MAP.bindings) {
+        Mousetrap.unbind(binding);
       }
     };
-  }, [exclusiveKeyToggle]);
+  }, []);
 
-  /// Given an OSM Element type (node/way/relation) and ID number,
-  /// add or remove a highlight effect for the corresponding map features.
-  /// (Used for indicating elements when references to them in the UI are hovered)
   const setHighlight = useCallback(
     (type: string, id: number, isHighlighted: boolean) => {
       if (!mapRef.current) return;
@@ -158,196 +146,83 @@ function Changeset({
     [mapRef],
   );
 
-  /// Given an OSM Element type (node/way/relation) and ID number,
-  /// zoom the map to show that element, and select it in the overlay.
   const zoomToAndSelect = useCallback(
     (type: string, id: number) => {
       if (!mapRef.current) return;
       const { map, adiffViewer } = mapRef.current;
 
-      // find the feature(s) in the geojson that represent this element
-      // (there may be two, the old and new versions, if the element was modified)
       const features = adiffViewer.geojson.features.filter(
         (feature: any) =>
           feature.properties.type === type && feature.properties.id === id,
       );
 
-      // zoom the map to the bounding box of the feature(s)
       let bounds = bbox({ type: "FeatureCollection", features });
       if (bounds.length === 6) {
         bounds = [bounds[0], bounds[1], bounds[3], bounds[4]];
       }
-      const camera = map.cameraForBounds(bounds, {
+      const nextCamera = map.cameraForBounds(bounds, {
         padding: 50,
         maxZoom: 18,
       });
-      if (camera) {
-        map.jumpTo(camera);
+      if (nextCamera) {
+        map.jumpTo(nextCamera);
       }
 
-      // style the feature(s) on the map to indicate that they're selected
       adiffViewer.select(type, id);
 
-      // find the action in the adiff that affects this element
-      const action = adiffViewer.adiff.actions.find((action: any) => {
-        const element = action.new ?? action.old;
+      const action = adiffViewer.adiff.actions.find((item: any) => {
+        const element = item.new ?? item.old;
         return element.type === type && element.id === id;
       });
 
-      // show the ElementInfo overlay for that action
       setSelected(action);
     },
     [mapRef, setSelected],
   );
 
-  const toggleDetails = () =>
-    exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label);
-  const toggleFeatures = () =>
-    exclusiveKeyToggle(CHANGESET_DETAILS_SUSPICIOUS.label);
-  const toggleOtherFeatures = () =>
-    exclusiveKeyToggle(CHANGESET_DETAILS_OTHER_FEATURES.label);
-  const toggleTags = () => exclusiveKeyToggle(CHANGESET_DETAILS_TAGS.label);
-  const toggleGeometryChanges = () =>
-    exclusiveKeyToggle(CHANGESET_DETAILS_GEOMETRY_CHANGES.label);
-  const toggleDiscussions = () =>
-    exclusiveKeyToggle(CHANGESET_DETAILS_DISCUSSIONS.label);
-  const toggleUser = () => exclusiveKeyToggle(CHANGESET_DETAILS_USER.label);
-  const toggleMapOptions = () =>
-    exclusiveKeyToggle(CHANGESET_DETAILS_MAP.label);
-
-  const properties = currentChangeset?.properties || {};
-  const features = properties.features || [];
-  const discussions = osmInfo?.metadata?.changeset?.comments || [];
-
   return (
-    <React.Fragment>
-      <div
-        className="absolute flex-parent flex-parent--column clip"
-        style={{ top: 0, left: 0 }}
-      >
-        <div className="flex-child clip">
-          <ControlLayout
-            toggleDetails={toggleDetails}
-            toggleFeatures={toggleFeatures}
-            toggleOtherFeatures={toggleOtherFeatures}
-            toggleTags={toggleTags}
-            toggleGeometryChanges={toggleGeometryChanges}
-            toggleDiscussions={toggleDiscussions}
-            toggleUser={toggleUser}
-            toggleMapOptions={toggleMapOptions}
-            features={features}
-            bindingsState={bindingsState}
-            discussions={discussions}
-          />
-          <Floater style={{ marginTop: 5, marginLeft: 41 }}>
-            {bindingsState[CHANGESET_DETAILS_DETAILS.label] && (
-              <Box key={3} className=" responsive-box round-tr round-br">
-                <Header
-                  toggleUser={toggleUser}
-                  changesetId={changesetId}
-                  properties={properties}
-                  userEditCount={userDetails?.count || 0}
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_SUSPICIOUS.label] && (
-              <Box key={2} className=" responsive-box round-tr round-br">
-                <Features
-                  changesetId={changesetId}
-                  properties={properties}
-                  setHighlight={setHighlight}
-                  zoomToAndSelect={zoomToAndSelect}
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_TAGS.label] && (
-              <Box key={5} className=" responsive-box round-tr round-br">
-                <TagChanges
-                  changesetId={changesetId}
-                  adiff={osmInfo?.adiff}
-                  setHighlight={setHighlight}
-                  zoomToAndSelect={zoomToAndSelect}
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_GEOMETRY_CHANGES.label] && (
-              <Box key={5} className=" responsive-box round-tr round-br">
-                <GeometryChanges
-                  changesetId={changesetId}
-                  adiff={osmInfo?.adiff}
-                  setHighlight={setHighlight}
-                  zoomToAndSelect={zoomToAndSelect}
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_OTHER_FEATURES.label] && (
-              <Box key={5} className=" responsive-box round-tr round-br">
-                <OtherFeatures
-                  changesetId={changesetId}
-                  adiff={osmInfo?.adiff}
-                  setHighlight={setHighlight}
-                  zoomToAndSelect={zoomToAndSelect}
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_DISCUSSIONS.label] && (
-              <Box key={1} className=" responsive-box  round-tr round-br">
-                <Discussions
-                  changesetAuthor={properties.user}
-                  discussions={discussions}
-                  changesetIsHarmful={properties.harmful}
-                  changesetId={changesetId}
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_USER.label] && (
-              <Box key={0} className="responsive-box round-tr round-br">
-                <User
-                  userDetails={{
-                    uid: properties.uid,
-                    name: properties.user,
-                    ...userDetails,
-                  }}
-                  whosThat={whosThat || []}
-                  changesetUsername
-                />
-              </Box>
-            )}
-            {bindingsState[CHANGESET_DETAILS_MAP.label] && (
-              <Box key={4} className="responsive-box round-tr round-br">
-                <MapOptions
-                  showElements={showElements}
-                  showActions={showActions}
-                  setShowElements={setShowElements}
-                  setShowActions={setShowActions}
-                />
-              </Box>
-            )}
-          </Floater>
+    <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row min-[56rem]:gap-3">
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden min-[56rem]:rounded-lg min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5">
+        {children}
+        <div
+          className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-10 flex flex-col-reverse items-end gap-2 min-[56rem]:top-auto min-[56rem]:bottom-[max(0.75rem,env(safe-area-inset-bottom))] min-[56rem]:flex-col"
+        >
+          {ready && changesetId && selected && (
+            <div className="max-h-[40%] min-w-0 max-w-[min(100%,24rem)] overflow-y-auto rounded-lg bg-white px-3 py-2 shadow-sm ring-1 ring-zinc-950/10 min-[56rem]:max-h-[60%] min-[56rem]:max-w-[34rem]">
+              <ElementInfo
+                action={selected}
+                setHighlight={setHighlight}
+                changeset={currentChangeset}
+                changesetId={changesetId}
+              />
+            </div>
+          )}
+          {ready && (
+            <MapOptions
+              ref={mapOptionsButtonRef}
+              showElements={showElements}
+              showActions={showActions}
+              setShowElements={setShowElements}
+              setShowActions={setShowActions}
+            />
+          )}
         </div>
       </div>
-      {selected && (
-        <div
-          className="absolute bg-white px12 py6 z5 round"
-          style={{
-            bottom: 0,
-            right: 0,
-            margin: "10px",
-            minWidth: "400px",
-            maxWidth: "550px",
-            maxHeight: "60vh",
-            overflowY: "auto",
-          }}
-        >
-          <ElementInfo
-            action={selected}
-            setHighlight={setHighlight}
-            changeset={currentChangeset}
-            changesetId={changesetId}
-          />
-        </div>
+      {ready && changesetId && (
+        <ReviewColumn
+          changesetId={changesetId}
+          currentChangeset={currentChangeset}
+          camera={camera}
+          userDetails={userDetails}
+          whosThat={whosThat || []}
+          bindingsState={bindingsState}
+          exclusiveKeyToggle={exclusiveKeyToggle}
+          osmInfo={osmInfo}
+          setHighlight={setHighlight}
+          zoomToAndSelect={zoomToAndSelect}
+        />
       )}
-    </React.Fragment>
+    </div>
   );
 }
 

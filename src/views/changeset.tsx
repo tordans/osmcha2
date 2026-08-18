@@ -4,14 +4,12 @@ import Mousetrap from "mousetrap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 
-import { Changeset as ChangesetOverlay } from "../components/changeset/index.tsx";
+import { Changeset as ChangesetWorkspace } from "../components/changeset/index.tsx";
 import { FILTER_BY_USER } from "../config/bindings.ts";
-import { useAuth } from "../hooks/useAuth.ts";
 import { useFilters } from "../hooks/useFilters.ts";
 import { useChangeset } from "../query/hooks/useChangeset.ts";
 import { showToast } from "../utils/toast.ts";
 import { CMap } from "../views/map.tsx";
-import { NavbarChangeset } from "../views/navbar_changeset.tsx";
 
 interface ChangesetData {
   properties?: {
@@ -21,23 +19,12 @@ interface ChangesetData {
   [key: string]: any;
 }
 
-interface UserData {
-  username?: string;
-  [key: string]: any;
-}
-
 function Changeset() {
-  const { user } = useAuth();
-  const currentUser = user as UserData | undefined;
   const { setFilters } = useFilters();
   const { id } = useParams<{ id: string }>();
   const changesetId = id ? parseInt(id, 10) : null;
 
-  const {
-    data: currentChangeset,
-    isLoading,
-    error,
-  } = useChangeset(changesetId);
+  const { data: currentChangeset, error } = useChangeset(changesetId);
 
   const changeset = currentChangeset as ChangesetData | undefined;
 
@@ -55,9 +42,6 @@ function Changeset() {
     "noop",
   ]);
 
-  // This ref is passed to CMap, which updates it with references to the MapLibre map
-  // and AdiffViewer instance. Other components can use this ref to imperatively update
-  // the map state.
   const mapRef = useRef<{
     map: maplibre.Map;
     adiffViewer: MapLibreAugmentedDiffViewer;
@@ -87,7 +71,6 @@ function Changeset() {
   }, [filterChangesetsByUser]);
 
   useEffect(() => {
-    // Reset selected element and filter choices when switching between changesets
     setSelected(null);
     setShowElements(["node", "way", "relation"]);
     setShowActions(["create", "modify", "delete", "noop"]);
@@ -105,39 +88,28 @@ function Changeset() {
   }, [error, changesetId]);
 
   return (
-    <div className="flex-parent flex-parent--column h-full">
-      <NavbarChangeset
-        changesetId={changesetId || 0}
-        currentChangeset={changeset}
-        username={currentUser?.username}
-        camera={camera}
+    <ChangesetWorkspace
+      changesetId={changesetId}
+      currentChangeset={changeset}
+      showElements={showElements}
+      showActions={showActions}
+      setShowElements={setShowElements}
+      setShowActions={setShowActions}
+      mapRef={mapRef}
+      selected={selected}
+      setSelected={setSelected}
+      camera={camera}
+    >
+      <CMap
+        changesetId={changesetId}
+        mapRef={mapRef}
+        className="h-full w-full"
+        showElements={showElements}
+        showActions={showActions}
+        setSelected={setSelected}
+        setCamera={setCamera}
       />
-      <div className="flex-child flex-child--grow relative">
-        <CMap
-          changesetId={changesetId}
-          mapRef={mapRef}
-          className="z0 fixed bottom right"
-          showElements={showElements}
-          showActions={showActions}
-          setSelected={setSelected}
-          setCamera={setCamera}
-        />
-
-        {!isLoading && changeset && changesetId && (
-          <ChangesetOverlay
-            changesetId={changesetId}
-            currentChangeset={changeset}
-            showElements={showElements}
-            showActions={showActions}
-            setShowElements={setShowElements}
-            setShowActions={setShowActions}
-            mapRef={mapRef}
-            selected={selected}
-            setSelected={setSelected}
-          />
-        )}
-      </div>
-    </div>
+    </ChangesetWorkspace>
   );
 }
 
