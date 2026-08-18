@@ -1,0 +1,68 @@
+import { defineConfig } from 'oxlint'
+import reactHooksJs from 'oxlint-config-react-hooks-js/configs/recommended-latest.json' with { type: 'json' }
+
+// OSMCha v2 bootstrap — ignore legacy Assembly UI so oxlint stays green.
+// Keep in sync with oxfmt.config.mjs. Lint src/components/ui/** as new Tailwind UI lands.
+export default defineConfig({
+  plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'react'],
+  options: { typeAware: true },
+  ignorePatterns: [
+    '.agents/**',
+    '.cursor/**',
+    '.output/**',
+    'playwright-report/**',
+    'test-results/**',
+    'build/**',
+    'coverage/**',
+    'dist/**',
+    'node_modules/**',
+    '**/__snapshots__/**',
+    '**/*.snap',
+    'src/views/**',
+    'src/components/**',
+    '!src/components/ui/',
+    '!src/components/ui/**',
+    'src/network/**',
+    'src/query/**',
+    'src/stores/**',
+    'src/utils/**',
+    'src/config/**',
+    'src/test/**',
+    'src/hooks/useAuth.ts',
+    'src/hooks/useFilters.ts',
+    'src/hooks/useIsUserListed.ts',
+  ],
+  rules: {
+    'typescript/switch-exhaustiveness-check': 'error',
+    // Type-aware rules that are noisy in FMC apps — keep off unless you tighten deliberately.
+    // 'typescript/no-floating-promises': 'off',
+    // 'typescript/no-duplicate-type-constituents': 'off',
+    // 'typescript/no-redundant-type-constituents': 'off',
+    // 'typescript/restrict-template-expressions': 'off',
+    // 'typescript/no-base-to-string': 'off',
+    // 'typescript/await-thenable': 'off',
+    // 'typescript/unbound-method': 'off',
+    // 'typescript/no-meaningless-void-operator': 'off',
+    // 'typescript/no-useless-default-assignment': 'off',
+    // 'typescript/no-misused-spread': 'off',
+    // 'typescript/require-array-sort-compare': 'off',
+    // 'typescript/no-array-delete': 'off',
+  },
+  overrides: [
+    {
+      files: ['**/*.test.ts', '**/*.test.tsx'],
+      rules: {
+        'typescript/no-non-null-assertion': 'off',
+        'react/rules-of-hooks': 'off',
+      },
+    },
+    {
+      files: ['**/*.tsx'],
+      jsPlugins: [{ name: 'react-hooks-js', specifier: 'eslint-plugin-react-hooks' }],
+      rules: {
+        ...reactHooksJs.rules,
+        'react/react-compiler': 'error',
+      },
+    },
+  ],
+})

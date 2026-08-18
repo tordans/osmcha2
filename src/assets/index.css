@@ -1,3 +1,13 @@
+@import 'tailwindcss';
+
+@custom-variant hover-fine {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
 body {
   scroll-behavior: smooth;
   overflow: auto;

@@ -19,7 +19,6 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "downlevelIteration": true,
     "module": "ESNext",
     "types": ["vite/client"]
   },
