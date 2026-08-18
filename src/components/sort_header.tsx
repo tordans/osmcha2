@@ -1,42 +1,29 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/16/solid'
 import { TableHeader } from './ui/table.tsx'
 
-type SortHeaderProps<K extends string> = {
+type SortHeaderProps = {
   label: string
-  sortKey: K
-  active: K
-  dir: 'asc' | 'desc'
-  onSort: (key: K) => void
+  sorted: false | 'asc' | 'desc'
+  onSort: () => void
   className?: string
 }
 
-export function SortHeader<K extends string>({
-  label,
-  sortKey,
-  active,
-  dir,
-  onSort,
-  className,
-}: SortHeaderProps<K>) {
-  const isActive = active === sortKey
-
+export function SortHeader({ label, sorted, onSort, className }: SortHeaderProps) {
   return (
     <TableHeader
-      aria-sort={isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}
       className={className}
     >
       <button
         type="button"
         className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-1 select-none"
-        onClick={() => onSort(sortKey)}
+        onClick={() => onSort()}
       >
         {label}
-        {isActive ? (
-          dir === 'asc' ? (
-            <ChevronUpIcon className="size-4" />
-          ) : (
-            <ChevronDownIcon className="size-4" />
-          )
+        {sorted === 'asc' ? (
+          <ChevronUpIcon className="size-4" />
+        ) : sorted === 'desc' ? (
+          <ChevronDownIcon className="size-4" />
         ) : null}
       </button>
     </TableHeader>

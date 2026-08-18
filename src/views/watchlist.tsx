@@ -1,6 +1,13 @@
 import { FunnelIcon, TrashIcon } from '@heroicons/react/16/solid'
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import {
+  createColumnHelper,
+  createSortedRowModel,
+  flexRender,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+} from '@tanstack/react-table'
 import { toast } from 'sonner'
 import { RelativeTime } from '../components/relative_time.tsx'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
@@ -26,36 +33,25 @@ type WatchlistUser = {
   date?: string
 }
 
-type SortKey = 'username' | 'uid' | 'date'
-type SortDir = 'asc' | 'desc'
-
-function compareUsers(a: WatchlistUser, b: WatchlistUser, key: SortKey): number {
-  if (key === 'uid') return Number(a.uid) - Number(b.uid)
-  if (key === 'date') return (a.date || '').localeCompare(b.date || '')
-  return a.username.localeCompare(b.username)
-}
-
 type UserData = {
   avatar?: string
 }
 
+const EMPTY_WATCHLIST: WatchlistUser[] = []
+
+const features = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+})
+
+const columnHelper = createColumnHelper<typeof features, WatchlistUser>()
+
 export function Watchlist() {
   const { token, user } = useAuth()
   const currentUser = user as UserData | undefined
-  const { data: watchlist = [] } = useWatchlist()
+  const { data: watchlist = EMPTY_WATCHLIST } = useWatchlist()
   const addMutation = useAddToWatchlist()
   const removeMutation = useRemoveFromWatchlist()
-  const [sortKey, setSortKey] = useState<SortKey>('date')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
-
-  const onSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortKey(key)
-      setSortDir(key === 'date' ? 'desc' : 'asc')
-    }
-  }
 
   const addToWatchList = ({ username, uid }: { username: string; uid?: string }) => {
     if (!username || !uid) return
@@ -73,9 +69,66 @@ export function Watchlist() {
     removeMutation.mutate(uid)
   }
 
-  const sorted = [...watchlist].sort((a, b) => {
-    const cmp = compareUsers(a, b, sortKey)
-    return sortDir === 'asc' ? cmp : -cmp
+  const columns = columnHelper.columns([
+    columnHelper.accessor('username', {
+      sortFn: (rowA, rowB) => rowA.original.username.localeCompare(rowB.original.username),
+    }),
+    columnHelper.accessor('uid', {
+      sortFn: (rowA, rowB) => Number(rowA.original.uid) - Number(rowB.original.uid),
+    }),
+    columnHelper.accessor((row) => row.date ?? '', {
+      id: 'date',
+      sortDescFirst: true,
+      sortFn: (rowA, rowB, columnId) =>
+        String(rowA.getValue(columnId)).localeCompare(String(rowB.getValue(columnId))),
+      cell: ({ row }) => {
+        const date = row.original.date
+        return date ? <RelativeTime datetime={new Date(date)} /> : '—'
+      },
+    }),
+    columnHelper.display({
+      id: 'actions',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const listed = row.original
+        return (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Link
+              to="/"
+              search={{
+                filters: {
+                  users: [{ label: listed.username, value: listed.username }],
+                },
+              }}
+              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+            >
+              Changesets
+            </Link>
+            <Button
+              plain
+              type="button"
+              className="min-h-11"
+              title="Remove from watchlist"
+              onClick={() => removeFromWatchList(listed.uid)}
+            >
+              <TrashIcon data-slot="icon" />
+              Remove
+            </Button>
+          </div>
+        )
+      },
+    }),
+  ])
+
+  const table = useTable({
+    features,
+    data: watchlist,
+    columns,
+    initialState: {
+      sorting: [{ id: 'date', desc: true }],
+    },
+    enableSortingRemoval: false,
+    getRowId: (row) => row.uid,
   })
 
   return (
@@ -91,24 +144,18 @@ export function Watchlist() {
               <TableRow>
                 <SortHeader
                   label="Username"
-                  sortKey="username"
-                  active={sortKey}
-                  dir={sortDir}
-                  onSort={onSort}
+                  sorted={table.getColumn('username')?.getIsSorted() ?? false}
+                  onSort={() => table.getColumn('username')?.toggleSorting()}
                 />
                 <SortHeader
                   label="ID"
-                  sortKey="uid"
-                  active={sortKey}
-                  dir={sortDir}
-                  onSort={onSort}
+                  sorted={table.getColumn('uid')?.getIsSorted() ?? false}
+                  onSort={() => table.getColumn('uid')?.toggleSorting()}
                 />
                 <SortHeader
                   label="Added"
-                  sortKey="date"
-                  active={sortKey}
-                  dir={sortDir}
-                  onSort={onSort}
+                  sorted={table.getColumn('date')?.getIsSorted() ?? false}
+                  onSort={() => table.getColumn('date')?.toggleSorting()}
                 />
                 <TableHeader>
                   <span className="sr-only">Actions</span>
@@ -116,38 +163,16 @@ export function Watchlist() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sorted.map((listed) => (
-                <TableRow key={listed.uid}>
-                  <TableCell className="font-medium">{listed.username}</TableCell>
-                  <TableCell>{listed.uid}</TableCell>
-                  <TableCell>
-                    {listed.date ? <RelativeTime datetime={new Date(listed.date)} /> : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Link
-                        to="/"
-                        search={{
-                          filters: {
-                            users: [{ label: listed.username, value: listed.username }],
-                          },
-                        }}
-                        className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
-                      >
-                        Changesets
-                      </Link>
-                      <Button
-                        plain
-                        type="button"
-                        className="min-h-11"
-                        title="Remove from watchlist"
-                        onClick={() => removeFromWatchList(listed.uid)}
-                      >
-                        <TrashIcon data-slot="icon" />
-                        Remove
-                      </Button>
-                    </div>
-                  </TableCell>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getAllCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className={cell.column.id === 'username' ? 'font-medium' : undefined}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>

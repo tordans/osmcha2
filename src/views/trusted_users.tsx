@@ -1,6 +1,13 @@
 import { TrashIcon } from '@heroicons/react/16/solid'
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import {
+  createColumnHelper,
+  createSortedRowModel,
+  flexRender,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+} from '@tanstack/react-table'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { SortHeader } from '../components/sort_header.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -21,11 +28,22 @@ import {
   useRemoveFromTrustedlist,
 } from '../query/hooks/useTrustedlistMutations.ts'
 
-type SortDir = 'asc' | 'desc'
+type TrustedUserRow = {
+  username: string
+}
 
 type UserData = {
   avatar?: string
 }
+
+const EMPTY_TRUSTED: TrustedUserRow[] = []
+
+const features = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+})
+
+const columnHelper = createColumnHelper<typeof features, TrustedUserRow>()
 
 export function TrustedUsers() {
   const { token, user } = useAuth()
@@ -33,7 +51,6 @@ export function TrustedUsers() {
   const { data: trustedList } = useTrustedlist()
   const addMutation = useAddToTrustedlist()
   const removeMutation = useRemoveFromTrustedlist()
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
   const addToTrustedList = ({ username }: { username: string }) => {
     if (!username) return
@@ -45,9 +62,56 @@ export function TrustedUsers() {
     removeMutation.mutate(username)
   }
 
-  const sorted = [...trustedList].sort((a, b) => {
-    const cmp = a.localeCompare(b)
-    return sortDir === 'asc' ? cmp : -cmp
+  const data =
+    trustedList.length === 0 ? EMPTY_TRUSTED : trustedList.map((username) => ({ username }))
+
+  const columns = columnHelper.columns([
+    columnHelper.accessor('username', {
+      sortFn: (rowA, rowB) => rowA.original.username.localeCompare(rowB.original.username),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const username = row.original.username
+        return (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Link
+              to="/"
+              search={{
+                filters: {
+                  users: [{ label: username, value: username }],
+                },
+              }}
+              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+            >
+              Changesets
+            </Link>
+            <Button
+              plain
+              type="button"
+              className="min-h-11"
+              title="Remove from trusted users"
+              onClick={() => removeFromTrustedList(username)}
+            >
+              <TrashIcon data-slot="icon" />
+              Remove
+            </Button>
+          </div>
+        )
+      },
+    }),
+  ])
+
+  const table = useTable({
+    features,
+    data,
+    columns,
+    initialState: {
+      sorting: [{ id: 'username', desc: false }],
+    },
+    enableSortingRemoval: false,
+    getRowId: (row) => row.username,
   })
 
   return (
@@ -63,10 +127,8 @@ export function TrustedUsers() {
               <TableRow>
                 <SortHeader
                   label="Username"
-                  sortKey="username"
-                  active="username"
-                  dir={sortDir}
-                  onSort={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+                  sorted={table.getColumn('username')?.getIsSorted() ?? false}
+                  onSort={() => table.getColumn('username')?.toggleSorting()}
                 />
                 <TableHeader>
                   <span className="sr-only">Actions</span>
@@ -74,34 +136,16 @@ export function TrustedUsers() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sorted.map((username) => (
-                <TableRow key={username}>
-                  <TableCell className="font-medium">{username}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Link
-                        to="/"
-                        search={{
-                          filters: {
-                            users: [{ label: username, value: username }],
-                          },
-                        }}
-                        className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
-                      >
-                        Changesets
-                      </Link>
-                      <Button
-                        plain
-                        type="button"
-                        className="min-h-11"
-                        title="Remove from trusted users"
-                        onClick={() => removeFromTrustedList(username)}
-                      >
-                        <TrashIcon data-slot="icon" />
-                        Remove
-                      </Button>
-                    </div>
-                  </TableCell>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getAllCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className={cell.column.id === 'username' ? 'font-medium' : undefined}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>
