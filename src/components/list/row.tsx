@@ -2,6 +2,7 @@ import { ChevronRightIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import { memo } from 'react'
 import { useLocation } from 'react-router'
+import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Link } from '../ui/link.tsx'
 import { PrimaryLine } from './primary_line.tsx'
 import { SecondaryLine } from './secondary_line.tsx'
@@ -24,10 +25,11 @@ interface RowProps {
   }
   active?: boolean
   changesetId: number
+  data?: unknown
   inputRef?: (node: HTMLElement | null) => void
 }
 
-function RowInner({ properties, changesetId, active, inputRef }: RowProps) {
+function RowInner({ properties, changesetId, data, active, inputRef }: RowProps) {
   const { search } = useLocation()
   const editor = properties.editor || properties.created_by
 
@@ -63,6 +65,10 @@ function RowInner({ properties, changesetId, active, inputRef }: RowProps) {
           />
         </div>
       </Link>
+      <DebugDataHelperDialog
+        data={data ?? { id: changesetId, properties }}
+        title="OSMCha Changeset from OSMCha Changeset List"
+      />
     </li>
   )
 }

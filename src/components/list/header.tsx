@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import filtersConfig from '../../config/filters.json'
 import { useAOI } from '../../query/hooks/useAOI.ts'
 import numberWithCommas from '../../utils/number_with_commas.ts'
+import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Button } from '../ui/button.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 
@@ -49,8 +50,9 @@ export function Header({
   return (
     <div>
       {aoiId && (
-        <div className="border-b border-zinc-200 bg-zinc-100 px-3 py-2 font-semibold">
+        <div className="relative border-b border-zinc-200 bg-zinc-100 px-3 py-2 font-semibold">
           Saved Filter: {aoiName || aoiId}
+          <DebugDataHelperDialog data={aoi} title="AOI Object" />
         </div>
       )}
       <header className="flex min-h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-1.5">

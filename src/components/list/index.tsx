@@ -58,6 +58,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
           active={f.id === activeChangesetId}
           properties={f.properties}
           changesetId={f.id}
+          data={f}
           inputRef={f.id === activeChangesetId ? handleScroll : undefined}
           key={f.id}
         />

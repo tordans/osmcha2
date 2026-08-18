@@ -60,6 +60,8 @@ export default defineConfig({
     '!src/components/user/**',
     '!src/components/teams/',
     '!src/components/teams/**',
+    '!src/components/debug/',
+    '!src/components/debug/**',
     '!src/components/secondary_pages_header.tsx',
     '!src/components/sort_header.tsx',
     '!src/components/changeset/DetailsHeader.tsx',

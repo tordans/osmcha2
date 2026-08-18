@@ -12,6 +12,7 @@ import { useAuth } from "../../hooks/useAuth.ts";
 import { getUserDetails } from "../../network/openstreetmap.ts";
 import { getUsers } from "../../network/whosthat.ts";
 import { useChangesetMap } from "../../query/hooks/useChangesetMap.ts";
+import { DebugDataHelper } from "../debug/DebugDataHelper.tsx";
 import ElementInfo from "../element_info.tsx";
 import { MapOptions } from "./map_options.tsx";
 import { ReviewColumn } from "./ReviewColumn.tsx";
@@ -213,6 +214,11 @@ function Changeset({
           zoomToAndSelect={zoomToAndSelect}
         />
       )}
+      <DebugDataHelper
+        changesetId={changesetId}
+        selected={selected}
+        mapRef={mapRef}
+      />
     </div>
   );
 }

@@ -11,9 +11,12 @@ interface RuntimeEnv {
   readonly OSMCHA_NOMINATIM_URL?: string
   readonly OSMCHA_DEFAULT_FROM_DATE?: string
   readonly OSMCHA_DEFAULT_TO_DATE?: string
+  readonly OSMCHA_ENABLE_DEBUG_PANELS?: string
 }
 
-interface ImportMetaEnv extends RuntimeEnv {}
+interface ImportMetaEnv extends RuntimeEnv {
+  readonly VITE_OSMCHA_ENABLE_DEBUG_PANELS?: string
+}
 
 interface ImportMeta {
   readonly env: ImportMetaEnv

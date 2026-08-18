@@ -2,6 +2,7 @@ import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import { parse } from 'date-fns'
 import Linkify from 'linkify-react'
 import { useAuth } from '../../hooks/useAuth.ts'
+import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { CommentForm } from './comment.tsx'
 import { SignInButton } from './sign_in_button.tsx'
@@ -72,6 +73,7 @@ function Discussions({
                   {comment.text}
                 </Linkify>
               </p>
+              <DebugDataHelperDialog data={comment} title="Comment" />
             </div>
           )
         })

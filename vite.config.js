@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: process.env.VITE_BASE || '/',
+    envPrefix: ['VITE_', 'OSMCHA_ENABLE_DEBUG_PANELS'],
     plugins,
 
     define: {

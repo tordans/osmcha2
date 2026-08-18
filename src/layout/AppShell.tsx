@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router'
+import { TailwindResponsiveHelper } from '../components/debug/TailwindResponsiveHelper.tsx'
 import { ChangesetsList } from '../views/changesets_list.tsx'
 import { BackToListButton } from './BackToListButton.tsx'
 import { ChromeHeader } from './NavigationFlyout.tsx'
@@ -73,6 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {changeset && <BackToListButton />}
         </main>
       </div>
+      <TailwindResponsiveHelper />
     </div>
   )
 }
