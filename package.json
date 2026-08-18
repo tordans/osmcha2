@@ -69,6 +69,9 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@tanstack/devtools-vite": "^0.8.3",
+    "@tanstack/react-devtools": "^0.10.10",
+    "@tanstack/react-router-devtools": "^1.167.1",
     "@tanstack/router-plugin": "^1.168.30",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19",

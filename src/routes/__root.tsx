@@ -1,11 +1,20 @@
-import { createRootRoute, Outlet, redirect } from '@tanstack/react-router'
+import type { QueryClient } from '@tanstack/react-query'
+import { createRootRouteWithContext, Outlet, redirect } from '@tanstack/react-router'
+import { TanStackAppDevtools } from '../components/shared/devtools/TanStackAppDevtools.tsx'
 import { useAppHeight } from '../hooks/useAppHeight.ts'
 import { AppShell } from '../layout/AppShell.tsx'
+import { aoiQueryOptions } from '../query/options/aoi.ts'
+import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
 import { osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   validateSearch: osmchaSearchSchema,
+  loaderDeps: ({ search }) => ({
+    filters: search.filters,
+    aoi: search.aoi,
+    page: search.page,
+  }),
   beforeLoad: ({ location, search }) => {
     const { pathname, searchStr, hash } = location
     if (pathname.length > 1 && pathname.endsWith('/')) {
@@ -25,6 +34,23 @@ export const Route = createRootRoute({
       })
     }
   },
+  loader: async ({ context, deps }) => {
+    const token = useAuthStore.getState().token
+    if (!token) return
+
+    const pageIndex = deps.page - 1
+    await context.queryClient.ensureQueryData(
+      changesetsPageQueryOptions({
+        pageIndex,
+        filters: deps.filters ?? {},
+        aoiId: deps.aoi ?? null,
+      }),
+    )
+
+    if (deps.aoi) {
+      await context.queryClient.ensureQueryData(aoiQueryOptions(deps.aoi))
+    }
+  },
   component: RootLayout,
 })
 
@@ -34,6 +60,7 @@ function RootLayout() {
   return (
     <AppShell>
       <Outlet />
+      <TanStackAppDevtools />
     </AppShell>
   )
 }

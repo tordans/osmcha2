@@ -2,6 +2,7 @@ import { copyFileSync, existsSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
+import { devtools } from '@tanstack/devtools-vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -36,6 +37,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'OSMCHA_')
 
   const plugins = [
+    devtools(),
     tanstackRouter({
       target: 'react',
       routesDirectory: './src/routes',
