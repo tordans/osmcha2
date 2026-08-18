@@ -6,12 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
-  CHANGESET_DETAILS_GEOMETRY_CHANGES,
   CHANGESET_DETAILS_MAP,
-  CHANGESET_DETAILS_OTHER_FEATURES,
-  CHANGESET_DETAILS_SUSPICIOUS,
-  CHANGESET_DETAILS_TAGS,
-  CHANGESET_DETAILS_USER,
 } from "../../config/bindings.ts";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { getUserDetails } from "../../network/openstreetmap.ts";
@@ -41,11 +36,6 @@ type ChangesetProps = {
 
 const columnToggleOptions = [
   CHANGESET_DETAILS_DETAILS,
-  CHANGESET_DETAILS_SUSPICIOUS,
-  CHANGESET_DETAILS_TAGS,
-  CHANGESET_DETAILS_GEOMETRY_CHANGES,
-  CHANGESET_DETAILS_OTHER_FEATURES,
-  CHANGESET_DETAILS_USER,
   CHANGESET_DETAILS_DISCUSSIONS,
 ];
 
@@ -85,10 +75,10 @@ function Changeset({
   );
 
   const exclusiveKeyToggle = useCallback((label: string) => {
-    setBindingsState((prev) => {
+    setBindingsState(() => {
       const newState: Record<string, boolean> = {};
       for (const opt of columnToggleOptions) {
-        newState[opt.label] = opt.label === label ? !prev[label] : false;
+        newState[opt.label] = opt.label === label;
       }
       return newState;
     });
@@ -218,6 +208,7 @@ function Changeset({
           bindingsState={bindingsState}
           exclusiveKeyToggle={exclusiveKeyToggle}
           osmInfo={osmInfo}
+          selected={selected}
           setHighlight={setHighlight}
           zoomToAndSelect={zoomToAndSelect}
         />

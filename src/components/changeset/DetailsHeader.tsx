@@ -41,6 +41,7 @@ import {
   DropdownSection,
 } from '../ui/dropdown.tsx'
 import { Tags } from './tags.tsx'
+import { User } from './user.tsx'
 import { hdycUrl, openExternal, openInUrls, type ReviewCamera } from './openInUrls.ts'
 
 const RESOLVED_TAG_ID = 9
@@ -50,10 +51,13 @@ type NamedTag = { id?: number; name: string }
 export type ReviewUserDetails = {
   uid?: number | string
   name?: string
-  count?: number
+  img?: string
   accountCreated?: string
+  count?: number
+  changesets_in_osmcha?: number
   checked_changesets?: number
   harmful_changesets?: number
+  description?: string
 }
 
 export type ReviewChangeset = {
@@ -87,6 +91,9 @@ type DetailsHeaderProps = {
   currentChangeset: ReviewChangeset
   camera?: ReviewCamera | null
   userDetails?: ReviewUserDetails | null
+  whosThat?: string[]
+  userOpen?: boolean
+  onUserOpenChange?: (open: boolean) => void
 }
 
 export function DetailsHeader({
@@ -94,6 +101,9 @@ export function DetailsHeader({
   currentChangeset,
   camera,
   userDetails,
+  whosThat = [],
+  userOpen = false,
+  onUserOpenChange,
 }: DetailsHeaderProps) {
   const { token, user } = useAuth()
   const username = (user as { username?: string } | undefined)?.username
@@ -286,6 +296,31 @@ export function DetailsHeader({
           </DropdownSection>
         </DropdownMenu>
       </Dropdown>
+
+      <details
+        className="rounded-lg"
+        open={userOpen}
+        onToggle={(event) => {
+          onUserOpenChange?.((event.currentTarget as HTMLDetailsElement).open)
+        }}
+      >
+        <summary
+          className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg px-1 text-sm/5 font-medium text-zinc-700 touch-manipulation select-none marker:content-none [&::-webkit-details-marker]:hidden active:bg-zinc-950/5"
+          title="User details (3)"
+        >
+          <span>User details</span>
+          <span className="text-xs font-normal text-zinc-400">3</span>
+        </summary>
+        <User
+          userDetails={{
+            ...userDetails,
+            uid: properties.uid ?? userDetails?.uid,
+            name: osmUser,
+          }}
+          whosThat={whosThat}
+          changesetUsername
+        />
+      </details>
 
       <div className="mt-2 flex flex-col gap-1 text-base">
         <p className="w-full leading-tight break-words hyphens-auto" lang="en">

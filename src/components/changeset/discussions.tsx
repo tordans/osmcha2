@@ -1,24 +1,24 @@
-import { parse } from "date-fns";
-import Linkify from "linkify-react";
-import { useAuth } from "../../hooks/useAuth.ts";
-
-import { RelativeTime } from "../relative_time.tsx";
-import { CommentForm } from "./comment.tsx";
-import { SignInButton } from "./sign_in_button.tsx";
-import TranslateButton from "./translate_button.tsx";
-import { UserOSMLink } from "./user_osm_link.tsx";
+import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
+import { parse } from 'date-fns'
+import Linkify from 'linkify-react'
+import { useAuth } from '../../hooks/useAuth.ts'
+import { RelativeTime } from '../relative_time.tsx'
+import { CommentForm } from './comment.tsx'
+import { SignInButton } from './sign_in_button.tsx'
+import TranslateButton from './translate_button.tsx'
+import { UserOSMLink } from './user_osm_link.tsx'
 
 interface DiscussionsProps {
-  discussions: any[];
-  changesetId: number;
-  changesetAuthor: string;
-  changesetIsHarmful: boolean;
+  discussions: any[]
+  changesetId: number
+  changesetAuthor: string
+  changesetIsHarmful: boolean
 }
 
 interface UserDetails {
-  username?: string;
-  message_bad?: string;
-  message_good?: string;
+  username?: string
+  message_bad?: string
+  message_good?: string
 }
 
 function Discussions({
@@ -27,97 +27,58 @@ function Discussions({
   changesetAuthor,
   changesetIsHarmful,
 }: DiscussionsProps) {
-  const { token, user } = useAuth();
-  const userDetails = user as UserDetails | undefined;
-
-  const renderComments = () => {
-    if (discussions.length === 0) {
-      return (
-        <div className="flex-parent flex-parent--column flex-parent--center-cross mb12">
-          <svg className="icon icon--xxl color-darken25">
-            <use xlinkHref="#icon-contact" />
-          </svg>
-          <p className="txt-m">{"No discussions, yet."}</p>
-        </div>
-      );
-    } else {
-      return (
-        <div className="">
-          {discussions.map((comment, i) => (
-            <div
-              key={i}
-              className="flex-parent flex-parent--column justify--space-between border border--gray-light round p6 my6 mt12"
-            >
-              <div className="flex-parent flex-parent--row justify--space-between txt-s ">
-                <span>
-                  By{" "}
-                  <strong>
-                    <UserOSMLink
-                      userName={comment.user}
-                      linkClasses={"txt-underline-on-hover cursor-pointer"}
-                    >
-                      {comment.user}
-                    </UserOSMLink>{" "}
-                  </strong>
-                  {changesetAuthor === comment.user && (
-                    <span style={{ color: "#aaa" }}>(changeset author)</span>
-                  )}
-                </span>
-                <span>
-                  <RelativeTime
-                    datetime={parse(
-                      comment.date,
-                      "yyyy-MM-dd'T'HH:mm:ssX",
-                      new Date(),
-                    )}
-                  />
-                </span>
-              </div>
-              <div className="flex-parent flex-parent--column mt6 mb3">
-                <p className="txt-break-url">
-                  <Linkify
-                    options={{
-                      target: "_blank",
-                      rel: "noopener noreferrer",
-                      className: "link",
-                    }}
-                  >
-                    {comment.text}
-                  </Linkify>
-                </p>
-              </div>
-              <div className="flex-parent justify--flex-end">
-                <TranslateButton text={comment.text} />
-              </div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-  };
+  const { token, user } = useAuth()
+  const userDetails = user as UserDetails | undefined
 
   return (
-    <div className="px12 py6">
-      <h2 className="txt-m mr6 mb3">
-        <span className="txt-uppercase txt-bold">Discussions </span>
-        for changeset by {changesetAuthor}
-      </h2>
-      {token ? (
-        renderComments()
+    <section className="mt-4 px-3">
+      {discussions.length === 0 ? (
+        <p className="w-full p-5 text-center text-zinc-500">No comments, yet</p>
       ) : (
-        <div>
-          <div className="flex-parent flex-parent--column flex-parent--center-cross mb12">
-            <svg className="icon icon--xxl color-darken25">
-              <use xlinkHref="#icon-contact" />
-            </svg>
-          </div>
-          <div className="flex-parent flex-parent--inline flex-parent--center-main mt6 mb3">
-            <SignInButton text="Sign in to read and post comments" />
-          </div>
-        </div>
+        discussions.map((comment, index) => {
+          const isChangesetUser = comment.user === changesetAuthor
+          const commentDate = comment.date
+            ? parse(comment.date, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
+            : null
+          return (
+            <div
+              key={comment.id ?? `${comment.user}-${comment.date}-${index}`}
+              className="relative mb-4 border-b border-b-zinc-100 pb-4 last:border-b-0"
+            >
+              <div className="flex items-center justify-between gap-1">
+                <h4 className="flex items-center gap-1 font-semibold text-zinc-700">
+                  <ChatBubbleLeftIcon className="size-4 flex-none" />
+                  <span>
+                    Comment by{' '}
+                    <UserOSMLink userName={comment.user} linkClasses="text-blue-700 underline">
+                      {comment.user}
+                    </UserOSMLink>{' '}
+                    {isChangesetUser ? (
+                      <span className="font-normal text-zinc-400">(changeset author)</span>
+                    ) : null}{' '}
+                    {commentDate ? <RelativeTime datetime={commentDate} /> : null}:
+                  </span>
+                </h4>
+                <TranslateButton text={comment.text} />
+              </div>
+              <p className="mt-1 border-l-2 border-l-zinc-200 py-1 pl-2 break-words">
+                <Linkify
+                  options={{
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    className: 'text-blue-700 underline',
+                  }}
+                >
+                  {comment.text}
+                </Linkify>
+              </p>
+            </div>
+          )
+        })
       )}
-      {token && (
-        <div className="flex-parent flex-parent--column justify--space-between my6 mt12">
+
+      {token ? (
+        <div className="my-3">
           <CommentForm
             changesetId={changesetId}
             changesetIsHarmful={changesetIsHarmful}
@@ -126,9 +87,13 @@ function Discussions({
             userDetails={userDetails || {}}
           />
         </div>
+      ) : (
+        <div className="flex justify-center py-4">
+          <SignInButton text="Sign in to post comments" />
+        </div>
       )}
-    </div>
-  );
+    </section>
+  )
 }
 
-export { Discussions };
+export { Discussions }

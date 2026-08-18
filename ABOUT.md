@@ -355,13 +355,9 @@ Yes. Keyboard shortcuts on OSMCha help the reviewer to go through a list of chan
 | Undo or clear changeset review                   | `U` or `C`        |
 | Filter edits of the current changeset's user     | `A`               |
 | **Changeset panels**                             |                   |
-| Toggle Changeset details                         | `1`               |
-| Toggle Flagged features                          | `2`               |
-| Toggle Tag Changes                               | `3`               |
-| Toggle Geometry Changes                          | `4`               |
-| Toggle Other Features                            | `5`               |
-| Toggle Changeset discussions                     | `6`               |
-| Toggle User profile                              | `7`               |
+| Toggle Changes tab                               | `1`               |
+| Toggle Discussion tab                            | `2`               |
+| Toggle User details                              | `3`               |
 | Toggle Map controls                              | `8`               |
 | **Other**                                        |                   |
 | Toggle Filters page                              | `\`               |

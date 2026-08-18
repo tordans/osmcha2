@@ -1,77 +1,30 @@
-import {
-  ArrowsPointingOutIcon,
-  ChatBubbleLeftIcon,
-  ExclamationTriangleIcon,
-  EyeIcon,
-  HashtagIcon,
-  PlusIcon,
-  UserIcon,
-} from '@heroicons/react/20/solid'
+import * as Headless from '@headlessui/react'
+import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import Mousetrap from 'mousetrap'
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
-  CHANGESET_DETAILS_GEOMETRY_CHANGES,
-  CHANGESET_DETAILS_OTHER_FEATURES,
-  CHANGESET_DETAILS_SUSPICIOUS,
-  CHANGESET_DETAILS_TAGS,
   CHANGESET_DETAILS_USER,
 } from '../../config/bindings.ts'
-import { CreateDeleteModify } from '../create_delete_modify.tsx'
-import { Details } from './details.tsx'
+import { Badge } from '../ui/badge.tsx'
+import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
-import { Features } from './features.tsx'
-import { GeometryChanges } from './geometry_changes.tsx'
-import { OtherFeatures } from './other_features.tsx'
-import { TagChanges } from './tag_changes.tsx'
-import { User } from './user.tsx'
+import type { AdiffAction } from './changesetElements.ts'
 import type { ReviewCamera } from './openInUrls.ts'
 
 const COLUMN_TABS = [
   {
     key: CHANGESET_DETAILS_DETAILS.label,
-    label: 'Details',
+    label: 'Changes',
     bindings: CHANGESET_DETAILS_DETAILS.bindings,
-    icon: EyeIcon,
-  },
-  {
-    key: CHANGESET_DETAILS_SUSPICIOUS.label,
-    label: 'Flagged features',
-    bindings: CHANGESET_DETAILS_SUSPICIOUS.bindings,
-    icon: ExclamationTriangleIcon,
-  },
-  {
-    key: CHANGESET_DETAILS_TAGS.label,
-    label: 'Tag changes',
-    bindings: CHANGESET_DETAILS_TAGS.bindings,
-    icon: HashtagIcon,
-  },
-  {
-    key: CHANGESET_DETAILS_GEOMETRY_CHANGES.label,
-    label: 'Geometry changes',
-    bindings: CHANGESET_DETAILS_GEOMETRY_CHANGES.bindings,
-    icon: ArrowsPointingOutIcon,
-  },
-  {
-    key: CHANGESET_DETAILS_OTHER_FEATURES.label,
-    label: 'Other features',
-    bindings: CHANGESET_DETAILS_OTHER_FEATURES.bindings,
-    icon: PlusIcon,
   },
   {
     key: CHANGESET_DETAILS_DISCUSSIONS.label,
     label: 'Discussion',
     bindings: CHANGESET_DETAILS_DISCUSSIONS.bindings,
-    icon: ChatBubbleLeftIcon,
-  },
-  {
-    key: CHANGESET_DETAILS_USER.label,
-    label: 'User',
-    bindings: CHANGESET_DETAILS_USER.bindings,
-    icon: UserIcon,
   },
 ] as const
 
@@ -83,7 +36,8 @@ type ReviewColumnProps = {
   whosThat?: string[]
   bindingsState: Record<string, boolean>
   exclusiveKeyToggle: (label: string) => void
-  osmInfo?: { adiff?: any; metadata?: { changeset?: { comments?: any[] } } }
+  osmInfo?: { adiff?: { actions?: AdiffAction[] }; metadata?: { changeset?: { comments?: any[] } } }
+  selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
 }
@@ -97,22 +51,25 @@ export function ReviewColumn({
   bindingsState,
   exclusiveKeyToggle,
   osmInfo,
+  selected,
   setHighlight,
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const [expanded, setExpanded] = useState(false)
+  const [userOpen, setUserOpen] = useState(false)
   const dragStartY = useRef<number | null>(null)
   const dragged = useRef(false)
   const properties: Record<string, any> = currentChangeset.properties ?? {}
-  const features = properties.features || []
   const discussions = osmInfo?.metadata?.changeset?.comments || []
+  const changesetCount =
+    (properties.create ?? 0) + (properties.modify ?? 0) + (properties.delete ?? 0)
+  const changesActive = Boolean(bindingsState[CHANGESET_DETAILS_DETAILS.label])
+  const discussionActive = Boolean(bindingsState[CHANGESET_DETAILS_DISCUSSIONS.label])
 
   const selectPanel = useCallback(
     (label: string) => {
       exclusiveKeyToggle(label)
-      if (label !== CHANGESET_DETAILS_DETAILS.label) {
-        setExpanded(true)
-      }
+      setExpanded(true)
     },
     [exclusiveKeyToggle],
   )
@@ -121,11 +78,18 @@ export function ReviewColumn({
     for (const tab of COLUMN_TABS) {
       Mousetrap.bind(tab.bindings, () => selectPanel(tab.key))
     }
+    Mousetrap.bind(CHANGESET_DETAILS_USER.bindings, () => {
+      setUserOpen((open) => !open)
+      setExpanded(true)
+    })
     return () => {
       for (const tab of COLUMN_TABS) {
         for (const binding of tab.bindings) {
           Mousetrap.unbind(binding)
         }
+      }
+      for (const binding of CHANGESET_DETAILS_USER.bindings) {
+        Mousetrap.unbind(binding)
       }
     }
   }, [selectPanel])
@@ -183,6 +147,9 @@ export function ReviewColumn({
         currentChangeset={currentChangeset}
         camera={camera}
         userDetails={userDetails}
+        whosThat={whosThat}
+        userOpen={userOpen}
+        onUserOpenChange={setUserOpen}
       />
 
       <div
@@ -192,87 +159,43 @@ export function ReviewColumn({
           'min-[56rem]:flex',
         )}
       >
-        <nav
-          aria-label="Review panels"
-          className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-zinc-950/10 px-1 py-1"
-        >
-          {COLUMN_TABS.map((tab) => {
-            const Icon = tab.icon
-            const active = Boolean(bindingsState[tab.key])
-            const dimmed =
-              (tab.key === CHANGESET_DETAILS_SUSPICIOUS.label && features.length === 0) ||
-              (tab.key === CHANGESET_DETAILS_DISCUSSIONS.label && discussions.length === 0)
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                aria-label={tab.label}
-                aria-pressed={active}
-                title={`${tab.label} (${tab.bindings[0]})`}
-                onClick={() => selectPanel(tab.key)}
-                className={clsx(
-                  'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg touch-manipulation select-none',
-                  active ? 'bg-zinc-950/5 text-zinc-950' : 'text-zinc-500 active:bg-zinc-950/5',
-                  dimmed && !active && 'text-zinc-300',
-                )}
-              >
-                <Icon className="size-5" />
-              </button>
-            )
-          })}
+        <nav aria-label="Review panels" className="flex shrink-0 gap-1 border-b border-zinc-950/10 px-2 py-1">
+          <ReviewTab
+            current={changesActive}
+            title={`Changes (${CHANGESET_DETAILS_DETAILS.bindings[0]})`}
+            onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
+          >
+            Changes {changesetCount > 0 ? <Badge>{changesetCount}</Badge> : null}
+          </ReviewTab>
+          <ReviewTab
+            current={discussionActive}
+            title={`Discussion (${CHANGESET_DETAILS_DISCUSSIONS.bindings[0]})`}
+            onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
+          >
+            Discussion{' '}
+            {discussions.length > 0 ? (
+              <Badge aria-label={`${discussions.length} comments`} className="flex flex-none items-center gap-1">
+                <ChatBubbleLeftIcon className="size-4" /> {discussions.length}
+              </Badge>
+            ) : (
+              <ChatBubbleLeftIcon className="size-4 text-zinc-300" aria-label="No comments" />
+            )}
+          </ReviewTab>
         </nav>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {bindingsState[CHANGESET_DETAILS_DETAILS.label] && (
-            <div className="px-3 py-2">
-              <CreateDeleteModify
-                showZero
-                className="mb-2"
-                create={properties.create}
-                modify={properties.modify}
-                delete={properties.delete}
-              />
-              <Details changesetId={changesetId} properties={properties} />
-            </div>
-          )}
-          {bindingsState[CHANGESET_DETAILS_SUSPICIOUS.label] && (
-            <Features
-              changesetId={changesetId}
-              properties={{
-                features: properties.features ?? [],
-                reviewed_features: properties.reviewed_features ?? [],
-                reasons: properties.reasons ?? [],
-              }}
-              setHighlight={setHighlight}
-              zoomToAndSelect={zoomToAndSelect}
-            />
-          )}
-          {bindingsState[CHANGESET_DETAILS_TAGS.label] && (
-            <TagChanges
-              changesetId={changesetId}
+          {changesActive && (
+            <DetailsChanges
               adiff={osmInfo?.adiff}
+              features={properties.features ?? []}
+              reviewedFeatures={properties.reviewed_features ?? []}
+              reasons={properties.reasons ?? []}
+              selected={selected}
               setHighlight={setHighlight}
               zoomToAndSelect={zoomToAndSelect}
             />
           )}
-          {bindingsState[CHANGESET_DETAILS_GEOMETRY_CHANGES.label] && (
-            <GeometryChanges
-              changesetId={changesetId}
-              adiff={osmInfo?.adiff}
-              setHighlight={setHighlight}
-              zoomToAndSelect={zoomToAndSelect}
-            />
-          )}
-          {bindingsState[CHANGESET_DETAILS_OTHER_FEATURES.label] && (
-            <OtherFeatures
-              changesetId={changesetId}
-              adiff={osmInfo?.adiff}
-              setHighlight={setHighlight}
-              zoomToAndSelect={zoomToAndSelect}
-            />
-          )}
-          {bindingsState[CHANGESET_DETAILS_DISCUSSIONS.label] && (
+          {discussionActive && (
             <Discussions
               changesetAuthor={properties.user ?? ''}
               discussions={discussions}
@@ -280,19 +203,39 @@ export function ReviewColumn({
               changesetId={changesetId}
             />
           )}
-          {bindingsState[CHANGESET_DETAILS_USER.label] && (
-            <User
-              userDetails={{
-                uid: properties.uid,
-                name: properties.user,
-                ...userDetails,
-              }}
-              whosThat={whosThat}
-              changesetUsername
-            />
-          )}
         </div>
       </div>
     </section>
+  )
+}
+
+function ReviewTab({
+  current,
+  title,
+  onClick,
+  children,
+}: {
+  current: boolean
+  title: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <Headless.Button
+      type="button"
+      title={title}
+      aria-pressed={current}
+      data-current={current ? 'true' : undefined}
+      onClick={onClick}
+      className={clsx(
+        'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-lg p-2 text-left text-sm/5 font-medium text-zinc-950 touch-manipulation select-none',
+        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+        'active:bg-zinc-950/5',
+        current && 'bg-zinc-950/5',
+      )}
+    >
+      {children}
+      {current ? <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-zinc-950" /> : null}
+    </Headless.Button>
   )
 }
