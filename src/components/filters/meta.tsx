@@ -1,63 +1,87 @@
-import React from "react";
-import Select from "react-select";
-import type { Filters } from "./index.ts";
+import { XMarkIcon } from '@heroicons/react/16/solid'
+import { Button } from '../ui/button.tsx'
+import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
+import type { Filters } from './index.ts'
 
-interface MetaProps {
-  placeholder: string;
-  name: string;
-  activeFilters: Filters;
-  metaOf: Array<string>;
-  options: Array<any>;
-  replaceFiltersState: (a: Filters) => void;
+type MetaOption = {
+  label: string
+  value: Filters
 }
 
-export class Meta extends React.PureComponent<MetaProps> {
-  handleChange = (data: any) => {
-    let activeFilters = { ...this.props.activeFilters };
-    if (!activeFilters) activeFilters = {};
+type MetaProps = {
+  placeholder?: string
+  name: string
+  activeFilters: Filters
+  metaOf: Array<string>
+  options: MetaOption[]
+  replaceFiltersState: (filters: Filters) => void
+}
 
-    for (const f of this.props.metaOf) {
-      delete activeFilters[f];
-    }
+export function Meta({
+  placeholder,
+  name,
+  activeFilters,
+  metaOf,
+  options,
+  replaceFiltersState,
+}: MetaProps) {
+  const current = findCurrentValue(activeFilters, options)
 
-    if (data?.value) {
-      activeFilters = { ...activeFilters, ...data.value };
-    }
+  return (
+    <div className="flex items-center gap-2">
+      <Listbox<MetaOption | null>
+        name={name}
+        value={current}
+        placeholder={placeholder}
+        aria-label={placeholder || name}
+        onChange={(option) => {
+          const next = { ...activeFilters }
+          for (const key of metaOf) {
+            delete next[key]
+          }
+          if (option?.value) {
+            Object.assign(next, option.value)
+          }
+          replaceFiltersState(next)
+        }}
+      >
+        {options.map((option) => (
+          <ListboxOption key={option.label} value={option}>
+            <ListboxLabel>{option.label}</ListboxLabel>
+          </ListboxOption>
+        ))}
+      </Listbox>
+      {current ? (
+        <Button
+          plain
+          type="button"
+          aria-label="Clear"
+          className="min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation p-0 select-none"
+          onClick={() => {
+            const next = { ...activeFilters }
+            for (const key of metaOf) {
+              delete next[key]
+            }
+            replaceFiltersState(next)
+          }}
+        >
+          <XMarkIcon data-slot="icon" />
+        </Button>
+      ) : null}
+    </div>
+  )
+}
 
-    this.props.replaceFiltersState(activeFilters);
-  };
+function findCurrentValue(activeFilters: Filters | undefined, options: MetaOption[]) {
+  if (!activeFilters) return null
 
-  findCurrentValue = () => {
-    const { activeFilters } = this.props;
-    if (!activeFilters) return null;
-
-    for (const [k, v] of Object.entries(activeFilters)) {
-      for (const option of this.props.options) {
-        if (
-          v &&
-          Object.keys(option.value)[0] === k &&
-          v?.[0]?.value === option.value[k][0].value
-        ) {
-          return option;
-        }
+  for (const [key, value] of Object.entries(activeFilters)) {
+    for (const option of options) {
+      const optionKey = Object.keys(option.value)[0]
+      if (value && optionKey === key && value?.[0]?.value === option.value[key]?.[0]?.value) {
+        return option
       }
     }
-    return null;
-  };
-
-  render() {
-    const { name, placeholder } = this.props;
-    const value = this.findCurrentValue();
-    return (
-      <Select
-        className="react-select"
-        name={name}
-        value={value}
-        options={this.props.options}
-        placeholder={placeholder}
-        onChange={this.handleChange}
-        isClearable={true}
-      />
-    );
   }
+  return null
 }

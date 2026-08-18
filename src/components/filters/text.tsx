@@ -1,60 +1,53 @@
-import React from "react";
-import type { Filter } from "./index.ts";
+import { useState } from 'react'
+import { Input } from '../ui/input.tsx'
+import { filterOptionLabel, type Filter } from './index.ts'
 
-interface TextProps {
-  name: string;
-  display: string;
-  type: string;
-  placeholder: string;
-  value: Filter;
-  className: string;
-  onChange: (a: string, value?: Filter) => any;
-  min?: string;
-  max?: string;
+type TextProps = {
+  name: string
+  display: string
+  type: string
+  placeholder?: string
+  value?: Filter
+  className?: string
+  onChange: (name: string, value?: Filter | null) => void
+  min?: string | number
+  max?: string | number
 }
 
-interface TextState {
-  isValid: boolean;
-}
+export function Text({
+  name,
+  display,
+  type,
+  placeholder,
+  value,
+  className,
+  onChange,
+  min,
+  max,
+}: TextProps) {
+  const [isValid, setIsValid] = useState(true)
+  const raw = value?.[0]?.value
+  const inputValue = raw == null ? '' : filterOptionLabel(raw)
 
-export class Text extends React.Component<TextProps, TextState> {
-  static defaultProps = {
-    className: "",
-  };
-  state: TextState = {
-    isValid: true,
-  };
-  handleFormChange = (event: any) => {
-    const target = event.target;
-    const value = target.type === "checkbox" ? target.checked : target.value;
-    const name = target.name;
-    this.setState({ isValid: target.validity.valid });
-    if (!value || value === "") {
-      return this.props.onChange(name);
-    }
-    this.props.onChange(name, [
-      {
-        label: value,
-        value,
-      },
-    ]);
-  };
-  render() {
-    const { name, type, placeholder, display, value, className, min, max } =
-      this.props;
-    const { isValid } = this.state;
-    const errorClass = "border border--1 border--red";
-    return (
-      <input
-        name={name}
-        className={`input ${className} ${isValid ? "" : errorClass}`}
-        value={value?.[0]?.value || ""}
-        onChange={this.handleFormChange}
-        type={type}
-        placeholder={placeholder || display}
-        min={min ?? undefined}
-        max={max ?? undefined}
-      />
-    );
-  }
+  return (
+    <Input
+      name={name}
+      className={className}
+      value={inputValue}
+      type={type === 'number' ? 'number' : 'text'}
+      placeholder={placeholder || display}
+      min={min}
+      max={max}
+      invalid={!isValid}
+      onChange={(event) => {
+        const next = event.target.value
+        setIsValid(event.target.validity.valid)
+        if (!next) {
+          onChange(name)
+          return
+        }
+        onChange(name, [{ label: next, value: next }])
+      }}
+    />
+  )
 }

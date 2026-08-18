@@ -1,354 +1,329 @@
-import area from "@turf/area";
-import bbox from "@turf/bbox";
-import bboxPolygon from "@turf/bbox-polygon";
-import simplify from "@turf/simplify";
-import truncate from "@turf/truncate";
-import debounce from "lodash.debounce";
-import maplibre from "maplibre-gl";
-import { useCallback, useEffect, useRef, useState } from "react";
-import Select from "react-select";
-import AsyncSelect from "react-select/async";
+import area from '@turf/area'
+import bbox from '@turf/bbox'
+import bboxPolygon from '@turf/bbox-polygon'
+import simplify from '@turf/simplify'
+import truncate from '@turf/truncate'
+import clsx from 'clsx'
+import maplibre from 'maplibre-gl'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   TerraDraw,
   TerraDrawPolygonMode,
   TerraDrawRectangleMode,
   TerraDrawRenderMode,
-} from "terra-draw";
-import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
+} from 'terra-draw'
+import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
+import { nominatimSearch } from '../../network/nominatim.ts'
+import { Button } from '../ui/button.tsx'
+import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
+import { Text } from '../ui/text.tsx'
+import type { Filter } from './index.ts'
+import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
-import { nominatimSearch } from "../../network/nominatim.ts";
+type QueryTypeOption = { value: string; label: string }
 
-const LocationSelect = (props) => {
-  const { name, value, placeholder, onChange } = props;
+const queryTypeOptions: QueryTypeOption[] = [
+  { value: 'q', label: 'Any' },
+  { value: 'city', label: 'City' },
+  { value: 'county', label: 'County' },
+  { value: 'state', label: 'State' },
+  { value: 'country', label: 'Country' },
+]
 
-  const [queryType, setQueryType] = useState("q");
-  const [isLoading, setIsLoading] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [activeMode, setActiveMode] = useState("render");
+type LocationSelectProps = {
+  name: string
+  value?: Filter
+  placeholder?: string
+  onChange: (name: string, value?: Filter | null) => void
+}
 
-  const mapRef = useRef<maplibre.Map | null>(null);
-  const drawRef = useRef<TerraDraw | null>(null);
+function isOneCharInputAllowed(input: string) {
+  try {
+    return /\p{scx=Han}|\p{scx=Hangul}|\p{scx=Hiragana}|\p{scx=Katakana}/u.test(input)
+  } catch {
+    return true
+  }
+}
 
-  const queryTypeOptions = [
-    { value: "q", label: "Any" },
-    { value: "city", label: "City" },
-    { value: "county", label: "County" },
-    { value: "state", label: "State" },
-    { value: "country", label: "Country" },
-  ];
+function geometryFromValue(value?: Filter) {
+  if (!value || value.length === 0) return null
+  const geometry = value[0]?.value
+  if (geometry && typeof geometry === 'object') return geometry
+  if (geometry && typeof geometry === 'string') {
+    const bounds = geometry.split(',').map(Number)
+    return bboxPolygon(bounds as [number, number, number, number]).geometry
+  }
+  return null
+}
 
-  const updateMap = useCallback((data) => {
-    const map = mapRef.current;
-    if (!map) return;
+export function LocationSelect({ name, value, placeholder, onChange }: LocationSelectProps) {
+  const [queryType, setQueryType] = useState('q')
+  const [placeQuery, setPlaceQuery] = useState('')
+  const [placeOptions, setPlaceOptions] = useState<SearchOption[]>([])
+  const [activeMode, setActiveMode] = useState('render')
 
-    // called with geojson polygon of a feature that was retrieved by
-    // name from Nominatim
-    if (map.getSource("feature")) {
-      (map.getSource("feature") as any).setData(data);
+  const mapRef = useRef<maplibre.Map | null>(null)
+  const drawRef = useRef<TerraDraw | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const onChangeRef = useRef(onChange)
+  const initialValueRef = useRef(value)
+  const updateMapRef = useRef<(data: GeoJSON.Geometry) => void>(() => {})
+
+  const selectedQueryType =
+    queryTypeOptions.find((option) => option.value === queryType) ?? queryTypeOptions[0]
+
+  const updateMap = useCallback((data: GeoJSON.Geometry) => {
+    const map = mapRef.current
+    if (!map) return
+
+    if (map.getSource('feature')) {
+      ;(map.getSource('feature') as maplibre.GeoJSONSource).setData(
+        data as unknown as GeoJSON.GeoJSON,
+      )
     } else {
-      map.addSource("feature", { type: "geojson", data });
+      map.addSource('feature', { type: 'geojson', data: data as unknown as GeoJSON.GeoJSON })
     }
 
-    if (map.getLayer("geometry") === undefined) {
+    if (map.getLayer('geometry') === undefined) {
       map.addLayer({
-        id: "geometry",
-        type: "fill",
-        source: "feature",
+        id: 'geometry',
+        type: 'fill',
+        source: 'feature',
         paint: {
-          "fill-color": "#088",
-          "fill-opacity": 0.3,
+          'fill-color': '#088',
+          'fill-opacity': 0.3,
         },
-      });
+      })
     }
 
-    const bounds = bbox(data);
+    const bounds = bbox(data as unknown as GeoJSON.Feature)
     map.fitBounds(
-      [
-        bounds.slice(0, 2) as [number, number],
-        bounds.slice(2, 4) as [number, number],
-      ],
+      [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
       { padding: 20 },
-    );
-  }, []);
+    )
+  }, [])
 
-  useEffect(() => {
+  useEffect(
+    function syncLocationHandlerRefs() {
+      onChangeRef.current = onChange
+      updateMapRef.current = updateMap
+    },
+    [onChange, updateMap],
+  )
+
+  useEffect(function initializeLocationMap() {
+    const container = containerRef.current
+    if (!container) return
+
     const map = new maplibre.Map({
-      container: "geometry-map",
-      style: "/positron.json",
-    });
+      container,
+      style: '/positron.json',
+    })
 
-    map.setMaxPitch(0);
-    map.dragRotate.disable();
-    map.boxZoom.disable();
-    map.touchZoomRotate.disableRotation();
-    map.keyboard.disableRotation();
+    map.setMaxPitch(0)
+    map.dragRotate.disable()
+    map.boxZoom.disable()
+    map.touchZoomRotate.disableRotation()
+    map.keyboard.disableRotation()
 
     const draw = new TerraDraw({
       adapter: new TerraDrawMapLibreGLAdapter({ map }),
       modes: [
         new TerraDrawRectangleMode(),
         new TerraDrawPolygonMode(),
-        new TerraDrawRenderMode({ modeName: "render", styles: {} }),
+        new TerraDrawRenderMode({ modeName: 'render', styles: {} }),
       ],
-    });
+    })
 
-    mapRef.current = map;
-    drawRef.current = draw;
+    mapRef.current = map
+    drawRef.current = draw
 
-    map.on("load", () => {
-      draw.start();
+    map.on('load', () => {
+      draw.start()
+      draw.on('finish', (id) => {
+        const snapshot = draw.getSnapshot()
+        const feature = snapshot.find((item) => item.id === id)
+        if (!feature) return
 
-      draw.on("finish", (id) => {
-        const snapshot = draw.getSnapshot();
-        const feature = snapshot.find((f) => f.id === id);
-
-        if (!feature) return;
-
-        if (feature.geometry.type === "Polygon") {
-          if (draw.getMode() === "rectangle") {
-            const bounds = bbox(feature);
-            const wsen = bounds.map((v) => v.toFixed(4)).join(",");
-            onChange("geometry", null);
-            onChange("in_bbox", [{ label: wsen, value: wsen }]);
+        if (feature.geometry.type === 'Polygon') {
+          if (draw.getMode() === 'rectangle') {
+            const bounds = bbox(feature)
+            const wsen = bounds.map((v) => v.toFixed(4)).join(',')
+            onChangeRef.current('geometry', null)
+            onChangeRef.current('in_bbox', [{ label: wsen, value: wsen }])
           } else {
-            onChange("geometry", [
-              { label: feature.geometry, value: feature.geometry },
-            ]);
-            onChange("in_bbox", null);
+            onChangeRef.current('geometry', [{ label: feature.geometry, value: feature.geometry }])
+            onChangeRef.current('in_bbox', null)
           }
         }
 
-        // Set mode back to render after completing a shape
-        draw.setMode("render");
-        setActiveMode("render");
-        updateMap(feature.geometry);
-      });
-    });
+        draw.setMode('render')
+        setActiveMode('render')
+        updateMapRef.current(feature.geometry)
+      })
+    })
 
-    map.on("style.load", () => {
-      map.setProjection({ type: "globe" });
+    map.on('style.load', () => {
+      map.setProjection({ type: 'globe' })
+      const geometry = geometryFromValue(initialValueRef.current)
+      if (geometry) updateMapRef.current(geometry as GeoJSON.Geometry)
+    })
 
-      // Display initial bbox or polygon (if it exists) on the map
-      if (value && value.length > 0) {
-        const { value: geometry } = value[0];
-        if (geometry && typeof geometry === "object") {
-          // geometry is a GeoJSON polygon
-          updateMap(geometry);
-        } else if (geometry && typeof geometry === "string") {
-          // geometry is a bbox string (WSEN, comma-separated)
-          const bounds = geometry.split(",").map(Number);
-          updateMap(
-            bboxPolygon(bounds as [number, number, number, number]).geometry,
-          );
-        }
-      }
-    });
-
-    return () => map?.remove();
-  }, [onChange, updateMap, value]);
-
-  // Check if one character input is allowed (for East Asian languages)
-  const isOneCharInputAllowed = useCallback((input) => {
-    // Allowing one character input if it contains characters from certain scripts while
-    // guarding against browsers that don't support this kind of regular expression
-    try {
-      return /\p{scx=Han}|\p{scx=Hangul}|\p{scx=Hiragana}|\p{scx=Katakana}/u.test(
-        input,
-      );
-    } catch {
-      // Allowing always is better than never allowing for the above-mentioned scripts
-      return true;
+    return function removeLocationMap() {
+      map.remove()
+      mapRef.current = null
+      drawRef.current = null
     }
-  }, []);
+  }, [])
 
-  // Load options from server
-  const loadOptions = useCallback(
-    async (inputValue) => {
-      setIsLoading(true);
+  useEffect(
+    function syncLocationGeometryToMap() {
+      const geometry = geometryFromValue(value)
+      if (geometry) updateMap(geometry as GeoJSON.Geometry)
+    },
+    [updateMap, value],
+  )
 
-      if (inputValue.length >= 2 || isOneCharInputAllowed(inputValue)) {
-        try {
-          const json = await nominatimSearch(inputValue, queryType);
+  useEffect(
+    function searchNominatimPlaces() {
+      const handle = window.setTimeout(function runNominatimSearch() {
+        if (!placeQuery || (placeQuery.length < 2 && !isOneCharInputAllowed(placeQuery))) {
+          setPlaceOptions([])
+          return
+        }
 
+        void nominatimSearch(placeQuery, queryType).then((json) => {
           if (!Array.isArray(json)) {
-            setIsLoading(false);
-            return [];
+            setPlaceOptions([])
+            return
           }
+          setPlaceOptions(
+            json.map((place: { display_name: string; geojson: unknown }) => ({
+              label: place.display_name,
+              value: place.geojson,
+            })),
+          )
+        })
+      }, 500)
 
-          const data = json.map((d) => ({
-            label: d.display_name,
-            value: d.geojson,
-          }));
-
-          setIsLoading(false);
-          return data;
-        } catch (_e) {
-          setIsLoading(false);
-          return [];
-        }
-      } else {
-        setIsLoading(false);
-        return [];
+      return function cancelNominatimSearch() {
+        window.clearTimeout(handle)
       }
     },
-    [queryType, isOneCharInputAllowed],
-  );
+    [placeQuery, queryType],
+  )
 
-  const debouncedLoadOptions = useCallback(
-    debounce((inputValue, callback) => {
-      loadOptions(inputValue).then(callback);
-    }, 500),
-    [],
-  );
+  const handlePlaceSelect = (option: SearchOption) => {
+    const draw = drawRef.current
+    draw?.clear()
 
-  const handleChange = useCallback(
-    (selectedOption) => {
-      if (selectedOption) {
-        const draw = drawRef.current;
-        if (draw) {
-          draw.clear();
-        }
+    const geometry = option.value as Parameters<typeof area>[0]
+    const tolerance = area(geometry) / 10 ** 6 < 1000 ? 0.01 : 0.1
+    const simplified = simplify(geometry, {
+      tolerance,
+      highQuality: true,
+    })
 
-        const tolerance =
-          area(selectedOption.value) / 10 ** 6 < 1000 ? 0.01 : 0.1;
-        const simplified_geometry = simplify(selectedOption.value, {
-          tolerance: tolerance,
-          highQuality: true,
-        });
+    onChange('geometry', [{ label: simplified, value: simplified }])
+    onChange('in_bbox', null)
+    updateMap(truncate(simplified, { precision: 6, coordinates: 2 }) as GeoJSON.Geometry)
+  }
 
-        onChange("geometry", [
-          { label: simplified_geometry, value: simplified_geometry },
-        ]);
-        onChange("in_bbox", null);
+  const handleModeChange = (mode: string) => {
+    const draw = drawRef.current
+    if (!draw) return
+    draw.clear()
+    draw.setMode(mode as 'rectangle' | 'polygon' | 'render')
+    setActiveMode(mode)
+  }
 
-        updateMap(
-          truncate(simplified_geometry, { precision: 6, coordinates: 2 }),
-        );
-      }
-    },
-    [updateMap, onChange],
-  );
-
-  const handleQueryTypeChange = useCallback((selectedOption) => {
-    setQueryType(selectedOption.value);
-  }, []);
-
-  const handleInputChange = useCallback((newValue) => {
-    setInputValue(newValue);
-  }, []);
-
-  const handleModeChange = useCallback((mode) => {
-    const draw = drawRef.current;
-    if (draw) {
-      draw.clear();
-      draw.setMode(mode);
-      setActiveMode(mode);
-    }
-  }, []);
-
-  const handleClear = useCallback(() => {
-    const draw = drawRef.current;
-    const map = mapRef.current;
-    if (draw) {
-      draw.clear();
-      draw.setMode("render");
-      setActiveMode("render");
-    }
-    if (map?.getSource("feature")) {
-      (map.getSource("feature") as any).setData({
-        type: "Feature",
+  const handleClear = () => {
+    const draw = drawRef.current
+    const map = mapRef.current
+    draw?.clear()
+    draw?.setMode('render')
+    setActiveMode('render')
+    if (map?.getSource('feature')) {
+      ;(map.getSource('feature') as maplibre.GeoJSONSource).setData({
+        type: 'Feature',
         geometry: null,
-      });
+      } as unknown as GeoJSON.GeoJSON)
     }
-    onChange("geometry", null);
-    onChange("in_bbox", null);
-  }, [onChange]);
+    onChange('geometry', null)
+    onChange('in_bbox', null)
+  }
 
   return (
-    <div>
-      <div className="grid grid--gut12">
-        <div className="col col--4">
-          <Select
-            onChange={handleQueryTypeChange}
-            options={queryTypeOptions}
-            value={queryTypeOptions.find(
-              (option) => option.value === queryType,
-            )}
-            placeholder="Place Type"
-          />
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-12">
+        <div className="sm:col-span-4">
+          <Listbox<QueryTypeOption>
+            value={selectedQueryType}
+            aria-label="Place type"
+            onChange={(option) => {
+              if (option) setQueryType(option.value)
+            }}
+          >
+            {queryTypeOptions.map((option) => (
+              <ListboxOption key={option.value} value={option}>
+                <ListboxLabel>{option.label}</ListboxLabel>
+              </ListboxOption>
+            ))}
+          </Listbox>
         </div>
-        <div className="col col--8 pl3">
-          <AsyncSelect
+        <div className="sm:col-span-8">
+          <SearchCombobox
             name={name}
-            className="react-select"
-            loadOptions={debouncedLoadOptions}
-            onChange={handleChange}
-            onInputChange={handleInputChange}
-            inputValue={inputValue}
-            isLoading={isLoading}
+            options={placeOptions}
             placeholder={placeholder}
-            cacheOptions={false}
-            defaultOptions={false}
+            clientFilter={false}
+            onQueryChange={setPlaceQuery}
+            onSelect={handlePlaceSelect}
           />
         </div>
       </div>
-      <div className="grid grid--gut12 pt6">
-        <div className="col col--12">
-          <div className="flex-parent flex-parent--row flex-parent--center-cross mb6">
-            <div className="flex-child flex-child--no-shrink mr6">
-              <button
-                className={`btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition ${
-                  activeMode === "rectangle"
-                    ? "bg-darken25 bg-darken25-on-hover"
-                    : ""
-                }`}
-                onClick={() => handleModeChange("rectangle")}
-              >
-                <svg className="icon h18 w18 inline-block align-middle">
-                  <use xlinkHref="#icon-polygon" />
-                </svg>
-                Box
-              </button>
-            </div>
-            <div className="flex-child flex-child--no-shrink mr6">
-              <button
-                className={`btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition ${
-                  activeMode === "polygon"
-                    ? "bg-darken25 bg-darken25-on-hover"
-                    : ""
-                }`}
-                onClick={() => handleModeChange("polygon")}
-              >
-                <svg className="icon h18 w18 inline-block align-middle">
-                  <use xlinkHref="#icon-pencil" />
-                </svg>
-                Polygon
-              </button>
-            </div>
-            <div className="flex-child flex-child--no-shrink">
-              <button
-                className="btn btn--s border border--1 border--darken5 border--darken25-on-hover round bg-darken10 bg-darken5-on-hover color-gray transition"
-                onClick={handleClear}
-                title="Clear selection"
-              >
-                <svg className="icon h18 w18 inline-block align-middle">
-                  <use xlinkHref="#icon-close" />
-                </svg>
-                Clear
-              </button>
-            </div>
-          </div>
-          <div id="geometry-map" />
-        </div>
-      </div>
-      <p>
-        {activeMode === "rectangle" &&
-          "Click two corners to draw a bounding box."}
-        {activeMode === "polygon" &&
-          "Click a series of points to draw a polygon; click back on the first point to finish."}
-      </p>
-    </div>
-  );
-};
 
-export { LocationSelect };
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          outline
+          className={clsx(
+            'min-h-11 cursor-pointer touch-manipulation select-none',
+            activeMode === 'rectangle' && 'bg-zinc-200',
+          )}
+          onClick={() => handleModeChange('rectangle')}
+        >
+          Box
+        </Button>
+        <Button
+          type="button"
+          outline
+          className={clsx(
+            'min-h-11 cursor-pointer touch-manipulation select-none',
+            activeMode === 'polygon' && 'bg-zinc-200',
+          )}
+          onClick={() => handleModeChange('polygon')}
+        >
+          Polygon
+        </Button>
+        <Button
+          type="button"
+          outline
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={handleClear}
+        >
+          Clear
+        </Button>
+      </div>
+
+      <div id="geometry-map" ref={containerRef} className="h-[300px] w-full touch-manipulation" />
+
+      {activeMode === 'rectangle' ? <Text>Click two corners to draw a bounding box.</Text> : null}
+      {activeMode === 'polygon' ? (
+        <Text>
+          Click a series of points to draw a polygon; click back on the first point to finish.
+        </Text>
+      ) : null}
+    </div>
+  )
+}

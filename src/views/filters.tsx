@@ -1,168 +1,147 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-import { FiltersHeader } from "../components/filters/filters_header.tsx";
-import { FiltersList } from "../components/filters/filters_list.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { useFilters } from "../hooks/useFilters.ts";
-import { useAOI } from "../query/hooks/useAOI.ts";
-import {
-  useCreateAOI,
-  useDeleteAOI,
-  useUpdateAOI,
-} from "../query/hooks/useAOIMutations.ts";
-import { deserializeFiltersFromObject } from "../utils/filters.ts";
-import { isMobile } from "../utils/isMobile.ts";
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
+import { FiltersHeader } from '../components/filters/filters_header.tsx'
+import { FiltersList } from '../components/filters/filters_list.tsx'
+import type { Filter, Filters } from '../components/filters/index.ts'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useFilters } from '../hooks/useFilters.ts'
+import { useAOI } from '../query/hooks/useAOI.ts'
+import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
+import { deserializeFiltersFromObject } from '../utils/filters.ts'
 
-const NEW_AOI = "unnamed *";
+const NEW_AOI = 'unnamed *'
 
 const noDateGte = {
-  date__gte: [{ label: "", value: "" }],
-};
+  date__gte: [{ label: '', value: '' }],
+}
 
-function Filters() {
-  const { token } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { filters: urlFilters, setAoiId, aoiId, clearFilters } = useFilters();
+export function Filters() {
+  const { token } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { filters: urlFilters, setAoiId, aoiId, clearFilters } = useFilters()
 
-  const { data: aoi, isLoading: aoiLoading } = useAOI(aoiId);
-  const createAOIMutation = useCreateAOI();
-  const updateAOIMutation = useUpdateAOI();
-  const deleteAOIMutation = useDeleteAOI();
+  const { data: aoi, isLoading: aoiLoading } = useAOI(aoiId)
+  const createAOIMutation = useCreateAOI()
+  const updateAOIMutation = useUpdateAOI()
+  const deleteAOIMutation = useDeleteAOI()
 
-  const [localFilters, setLocalFilters] = useState(urlFilters);
-  const [active, setActive] = useState("");
+  const [localFilters, setLocalFilters] = useState<Filters>(urlFilters)
+  const [prevUrlFilters, setPrevUrlFilters] = useState<Filters>(urlFilters)
+  const [appliedAoiId, setAppliedAoiId] = useState<string | number | undefined>(undefined)
+  const [active, setActive] = useState('')
 
-  const loading =
-    aoiLoading || createAOIMutation.isPending || updateAOIMutation.isPending;
+  const loading = aoiLoading || createAOIMutation.isPending || updateAOIMutation.isPending
+  const hasUrlFilters = Boolean(urlFilters && Object.keys(urlFilters).length > 0)
 
-  // Sync local filters with URL filters when they change
-  useEffect(() => {
-    setLocalFilters(urlFilters);
-  }, [urlFilters]);
-
-  // Populate filters from AOI when loading a saved filter (no URL filters)
-  useEffect(() => {
-    const hasUrlFilters = urlFilters && Object.keys(urlFilters).length > 0;
-    if (aoi?.properties?.filters && !hasUrlFilters) {
-      const deserializedFilters = deserializeFiltersFromObject(
-        aoi.properties.filters,
-      );
-      setLocalFilters(deserializedFilters);
-    }
-  }, [aoi, urlFilters]);
+  if (urlFilters !== prevUrlFilters) {
+    setPrevUrlFilters(urlFilters)
+    setLocalFilters(urlFilters)
+    setAppliedAoiId(undefined)
+  } else if (!hasUrlFilters && aoi?.properties?.filters && aoi.id !== appliedAoiId) {
+    setAppliedAoiId(aoi.id)
+    setLocalFilters(deserializeFiltersFromObject(aoi.properties.filters))
+  }
 
   const handleFocus = (name: string) => {
-    setActive(name);
-  };
+    setActive(name)
+  }
 
   const handleApply = () => {
-    const newParams = new URLSearchParams();
+    const newParams = new URLSearchParams()
     if (localFilters && Object.keys(localFilters).length > 0) {
-      newParams.set("filters", JSON.stringify(localFilters));
+      newParams.set('filters', JSON.stringify(localFilters))
     }
     if (aoiId) {
-      newParams.set("aoi", aoiId);
+      newParams.set('aoi', aoiId)
     }
 
-    navigate({
-      pathname: "/",
+    void navigate({
+      pathname: '/',
       search: newParams.toString(),
-    });
-  };
+    })
+  }
 
-  const handleChange = (name: string, values?: any) => {
+  const handleChange = (name: string, values?: Filter | null) => {
     setLocalFilters((prevFilters) => {
-      const newFilters = { ...prevFilters };
+      const newFilters = { ...prevFilters }
 
-      // if someone cleared date__gte filter
-      // we use the convention defined at `noDateGte`
-      // to signify no default gte.
-      if (name === "date__gte" && values == null) {
-        return { ...newFilters, ...noDateGte };
+      if (name === 'date__gte' && values == null) {
+        return { ...newFilters, ...noDateGte }
       } else if (values == null) {
-        // clear this filter
-        delete newFilters[name];
+        delete newFilters[name]
       } else {
-        newFilters[name] = values;
+        newFilters[name] = values
       }
-      return newFilters;
-    });
-  };
+      return newFilters
+    })
+  }
 
-  const handleToggleAll = (name: string, values?: any) => {
+  const handleToggleAll = (name: string, values?: Filter | null) => {
     setLocalFilters((prevFilters) => {
-      const newFilters = { ...prevFilters };
-      const isAll = name.slice(0, 4) === "all_";
+      const newFilters = { ...prevFilters }
+      const isAll = name.slice(0, 4) === 'all_'
 
-      // delete the opposite value
       if (isAll) {
-        delete newFilters[name.slice(4)];
+        delete newFilters[name.slice(4)]
       } else {
-        delete newFilters["all_" + name];
+        delete newFilters[`all_${name}`]
       }
 
-      // regularly handle change
       if (!values) {
-        delete newFilters[name];
+        delete newFilters[name]
       } else {
-        newFilters[name] = values;
+        newFilters[name] = values
       }
-      return newFilters;
-    });
-  };
+      return newFilters
+    })
+  }
 
-  const replaceFiltersState = (filters: any) => {
-    setLocalFilters(filters);
-  };
+  const replaceFiltersState = (next: Filters) => {
+    setLocalFilters(next)
+  }
 
   const handleClear = () => {
-    clearFilters();
-    navigate("/");
-  };
+    clearFilters()
+    void navigate('/')
+  }
 
-  const loadAoiId = (aoiId: string) => {
-    setAoiId(aoiId);
-  };
+  const loadAoiId = (nextAoiId: string) => {
+    setAoiId(nextAoiId)
+  }
 
   const getAOIName = () => {
-    if (loading) return "";
-    return aoi?.properties?.name || NEW_AOI;
-  };
+    if (loading) return ''
+    return aoi?.properties?.name || NEW_AOI
+  }
 
   const getAOIId = () => {
-    if (loading) return "";
-    return aoi?.id;
-  };
+    if (loading) return ''
+    return aoi?.id
+  }
 
   const removeAOI = (aoiIdToRemove: string) => {
-    const currentAoiId = getAOIId();
+    const currentAoiId = getAOIId()
     if (aoiIdToRemove === currentAoiId) {
-      handleClear();
+      handleClear()
     }
-    deleteAOIMutation.mutate(aoiIdToRemove);
-  };
+    deleteAOIMutation.mutate(aoiIdToRemove)
+  }
 
   const createAOI = (name: string) => {
-    createAOIMutation.mutate({ name, filters: localFilters });
-  };
+    createAOIMutation.mutate({ name, filters: localFilters })
+  }
 
   const updateAOI = (aoiIdToUpdate: string, name: string) => {
     updateAOIMutation.mutate({
       aoiId: aoiIdToUpdate,
       name,
       filters: localFilters,
-    });
-  };
-
-  const mobile = isMobile();
+    })
+  }
 
   return (
-    <div
-      className={`flex-parent flex-parent--column changesets-filters bg-white ${
-        mobile ? "viewport-full" : ""
-      }`}
-    >
+    <div className="flex min-h-dvh flex-col bg-white px-[max(1rem,env(safe-area-inset-left))] pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <FiltersHeader
         createAOI={createAOI}
         updateAOI={updateAOI}
@@ -170,7 +149,7 @@ function Filters() {
         loading={loading}
         token={token}
         aoiName={getAOIName()}
-        aoiId={getAOIId()}
+        aoiId={getAOIId() ? String(getAOIId()) : undefined}
         loadAoiId={loadAoiId}
         handleApply={handleApply}
         handleClear={handleClear}
@@ -185,9 +164,9 @@ function Filters() {
         handleToggleAll={handleToggleAll}
         replaceFiltersState={replaceFiltersState}
         token={token}
+        handleApply={handleApply}
+        handleClear={handleClear}
       />
     </div>
-  );
+  )
 }
-
-export { Filters };

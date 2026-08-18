@@ -1,276 +1,255 @@
-import React from "react";
-import Select from "react-select";
-import AsyncSelect from "react-select/async";
-import CreatableSelect from "react-select/creatable";
-import { API_URL } from "../../config/index.ts";
-import { fetchReasons } from "../../network/reasons_tags.ts";
-import type { Filter } from "./index.ts";
+import { XMarkIcon } from '@heroicons/react/16/solid'
+import clsx from 'clsx'
+import { useEffect, useState } from 'react'
+import { API_URL } from '../../config/index.ts'
+import { fetchReasons } from '../../network/reasons_tags.ts'
+import { BadgeButton } from '../ui/badge.tsx'
+import { Button } from '../ui/button.tsx'
+import { Input } from '../ui/input.tsx'
+import { filterOptionKey, filterOptionLabel, type Filter, type FilterOption } from './index.ts'
+import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
-interface MultiSelectProps {
-  name: string;
-  display: string;
-  value: Filter;
-  type: string;
-  placeholder: string;
-  options: Array<any>;
-  dataURL?: string;
-  onChange: (a: string, value?: Filter) => any;
-  showAllToggle: boolean;
-  token: string | null;
+type MultiSelectProps = {
+  name: string
+  display: string
+  value?: Filter
+  placeholder?: string
+  options?: FilterOption[]
+  dataURL?: string
+  onChange: (name: string, value?: Filter | null) => void
+  showAllToggle?: boolean
+  token: string | null
+  teamMode?: boolean
 }
 
-interface MultiSelectState {
-  inputValue: string;
-  allToggle: boolean;
-  reasons: any;
+type ReasonRow = {
+  id: string | number
+  name: string
 }
 
-export class MultiSelect extends React.PureComponent<
-  MultiSelectProps,
-  MultiSelectState
-> {
-  state: MultiSelectState = {
-    inputValue: "",
-    allToggle: this.props.name.slice(0, 4) === "all_",
-    reasons: null,
-  };
+type TagRow = {
+  id: string | number
+  name: string
+  for_changeset?: boolean
+  trusted?: boolean
+}
 
-  componentDidMount() {
-    // Special case for "Reasons for Flagging" field
-    if (this.props.dataURL === "suspicion-reasons") {
-      fetchReasons().then((reasons) => {
-        this.setState({ reasons });
-      });
+export function MultiSelect({
+  name,
+  display,
+  value,
+  placeholder,
+  options = [],
+  dataURL,
+  onChange,
+  showAllToggle = false,
+  token,
+  teamMode = false,
+}: MultiSelectProps) {
+  const [inputValue, setInputValue] = useState('')
+  const [allToggle, setAllToggle] = useState(name.slice(0, 4) === 'all_')
+  const [asyncOptions, setAsyncOptions] = useState<SearchOption[]>([])
+
+  useEffect(
+    function loadAsyncFilterOptions() {
+      if (!dataURL) return
+      let cancelled = false
+
+      async function load() {
+        if (dataURL === 'suspicion-reasons') {
+          const reasons = (await fetchReasons()) as ReasonRow[]
+          if (cancelled) return
+          setAsyncOptions(
+            reasons.map((reason) => ({
+              label: reason.name,
+              value: reason.id,
+            })),
+          )
+          return
+        }
+
+        const response = await fetch(
+          teamMode ? `${API_URL}/${dataURL}/` : `${API_URL}/${dataURL}/?page_size=200`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: token ? `Token ${token}` : '',
+            },
+          },
+        )
+        const json = (await response.json()) as { results?: TagRow[] }
+        if (cancelled) return
+        const rows = json.results ?? []
+        const mapped = teamMode
+          ? rows.map((row) =>
+              row.trusted
+                ? { label: `${row.name} (verified)`, value: row.name }
+                : { label: row.name.replace('(verified)', ''), value: row.name },
+            )
+          : rows
+              .filter((row) => row.for_changeset)
+              .map((row) => ({ label: row.name, value: row.id }))
+        setAsyncOptions(mapped)
+      }
+
+      void load()
+      return function cancelLoadAsyncFilterOptions() {
+        cancelled = true
+      }
+    },
+    [dataURL, teamMode, token],
+  )
+
+  const selected = Array.isArray(value) ? value : []
+
+  const sendData = (nextToggle: boolean, data: Filter) => {
+    let fieldName = name.slice(0, 4) === 'all_' ? name.slice(4) : name
+    fieldName = `${nextToggle ? 'all_' : ''}${fieldName}`
+    if (data.length === 0) {
+      onChange(fieldName)
+      return
     }
+    onChange(
+      fieldName,
+      data.map((option) => ({ label: option.label, value: option.value })),
+    )
   }
 
-  getAsyncOptions = (inputValue: string) => {
-    if (!this.props.dataURL) return Promise.resolve([]);
-
-    // Special case for "Reasons for Flagging" field
-    if (this.props.dataURL === "suspicion-reasons" && this.state.reasons) {
-      const filteredReasons = this.state.reasons.filter((reason) =>
-        reason.name.toLowerCase().includes(inputValue.toLowerCase()),
-      );
-      const options = filteredReasons.map((d) => ({
-        ...d,
-        label: d.name,
-        value: d.id,
-      }));
-      return Promise.resolve(options);
+  const addOption = (option: SearchOption) => {
+    const next: FilterOption = {
+      label: option.label,
+      value: option.value as FilterOption['value'],
     }
+    if (selected.some((item) => filterOptionKey(item.value) === filterOptionKey(next.value))) return
+    sendData(allToggle, [...selected, next])
+    setInputValue('')
+  }
 
-    return fetch(`${API_URL}/${this.props.dataURL}/?page_size=200`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: this.props.token ? `Token ${this.props.token}` : "",
-      },
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((json) => {
-        const data = json.results
-          .filter((d) => d.for_changeset)
-          .map((d) => ({ ...d, label: d.name, value: d.id }));
-        return data;
-      });
-  };
+  const removeOption = (option: FilterOption) => {
+    const next = selected.filter(
+      (item) => filterOptionKey(item.value) !== filterOptionKey(option.value),
+    )
+    sendData(allToggle, next)
+  }
 
-  onChangeLocal = (data: readonly any[] | null) => {
-    this.sendData(this.state.allToggle, data ? Array.from(data) : []);
-  };
+  const handleToggle = () => {
+    const nextToggle = !allToggle
+    if (selected.length > 0) {
+      sendData(nextToggle, selected)
+    }
+    setAllToggle(nextToggle)
+  }
 
-  sendData = (allToggle: boolean, data: Array<any>) => {
-    let name =
-      this.props.name.slice(0, 4) === "all_"
-        ? this.props.name.slice(4)
-        : this.props.name;
+  const addFreeform = () => {
+    const trimmed = inputValue.trim()
+    if (!trimmed) return
+    addOption({ label: trimmed, value: trimmed })
+  }
 
-    name = `${allToggle ? "all_" : ""}${name}`;
-    if (data.length === 0) return this.props.onChange(name);
-    var processed = data.map((o) => ({ label: o.label, value: o.value })); // remove any bogus keys
-    this.props.onChange(name, processed);
-  };
+  const pickerOptions: SearchOption[] = dataURL
+    ? asyncOptions
+    : options.map((option) => ({
+        label: filterOptionLabel(option.label),
+        value: option.value,
+      }))
 
-  renderSelect = () => {
-    const { name, options, placeholder, value, display, dataURL } = this.props;
+  const showPicker = Boolean(dataURL) || options.length > 0
 
-    const handleKeyDown: React.KeyboardEventHandler = (event) => {
-      if (this.state.inputValue === "") return;
-      if (event.key === "Enter" || event.key === "Tab") {
-        const oldValues = Array.isArray(value) ? value : [];
-        const newValue = {
-          value: this.state.inputValue,
-          label: this.state.inputValue,
-        };
-        this.sendData(this.state.allToggle, [...oldValues, newValue]);
-        this.setState({ inputValue: "" });
-        event.preventDefault();
-      }
-    };
+  return (
+    <div className="space-y-2">
+      {showAllToggle ? (
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            outline
+            className={clsx(
+              'min-h-11 cursor-pointer touch-manipulation select-none',
+              !allToggle && 'bg-zinc-200',
+            )}
+            onClick={() => {
+              if (allToggle) handleToggle()
+            }}
+          >
+            OR
+          </Button>
+          <Button
+            type="button"
+            outline
+            className={clsx(
+              'min-h-11 cursor-pointer touch-manipulation select-none',
+              allToggle && 'bg-zinc-200',
+            )}
+            onClick={() => {
+              if (!allToggle) handleToggle()
+            }}
+          >
+            AND
+          </Button>
+        </div>
+      ) : null}
 
-    if (dataURL) {
-      // Special case for "Reasons for Flagging" field, which fetches reasons list once and
-      // then filters the options client-side
-      if (dataURL === "suspicion-reasons") {
-        const options =
-          this.state.reasons?.map((d) => ({
-            ...d,
-            label: d.name,
-            value: d.id,
-          })) ?? [];
-        return (
-          <Select
-            isMulti
+      {selected.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {selected.map((item) => (
+            <BadgeButton
+              key={filterOptionKey(item.value)}
+              color="zinc"
+              className="cursor-pointer touch-manipulation select-none"
+              aria-label={`Remove ${filterOptionLabel(item.label)}`}
+              onClick={() => removeOption(item)}
+            >
+              {filterOptionLabel(item.label)}
+              <XMarkIcon data-slot="icon" className="size-4" />
+            </BadgeButton>
+          ))}
+        </div>
+      ) : null}
+
+      {showPicker ? (
+        <SearchCombobox
+          name={name}
+          options={pickerOptions.filter(
+            (option) =>
+              !selected.some(
+                (item) => filterOptionKey(item.value) === filterOptionKey(option.value),
+              ),
+          )}
+          placeholder={placeholder}
+          ariaLabel={placeholder || display}
+          allowCreate={!dataURL && options.length > 0}
+          createLabel={(query) => `Add ${query} to ${display}`}
+          onSelect={addOption}
+        />
+      ) : (
+        <div className="flex items-center gap-2">
+          <Input
             name={name}
-            className="react-select"
-            value={value}
-            options={options}
-            onChange={this.onChangeLocal}
+            value={inputValue}
             placeholder={placeholder}
-            isClearable
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (inputValue === '') return
+              if (event.key === 'Enter' || event.key === 'Tab') {
+                event.preventDefault()
+                addFreeform()
+              }
+            }}
           />
-        );
-      }
-
-      return (
-        <AsyncSelect
-          isMulti
-          name={name}
-          className="react-select"
-          value={value}
-          loadOptions={this.getAsyncOptions}
-          onChange={this.onChangeLocal}
-          placeholder={placeholder}
-        />
-      );
-    }
-
-    if (options && options.length > 0) {
-      // this Select has a fixed list of options that the user can search through,
-      // and also permits the user to add new options
-      return (
-        <CreatableSelect
-          className="react-select"
-          isMulti
-          isClearable
-          formatCreateLabel={(label) => `Add ${label} to ${display}`}
-          name={name}
-          value={value}
-          options={options}
-          onChange={this.onChangeLocal}
-          placeholder={placeholder}
-        />
-      );
-    } else {
-      // this Select is a free-form input that has no pre-defined options
-      // (and therefore no dropdown to pick from them); instead the user can
-      // type anything they want to add it to the list of selections
-      return (
-        <CreatableSelect
-          className="react-select"
-          isMulti
-          isClearable
-          menuIsOpen={false}
-          components={{ DropdownIndicator: null }}
-          formatCreateLabel={(label) => `Add ${label} to ${display}`}
-          name={name}
-          value={value}
-          inputValue={this.state.inputValue}
-          onChange={this.onChangeLocal}
-          onInputChange={(inputValue) => this.setState({ inputValue })}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-        />
-      );
-    }
-  };
-
-  handleToggle = () => {
-    const { value } = this.props;
-    if (value && Array.isArray(value)) {
-      this.sendData(!this.state.allToggle, value);
-    }
-    this.setState({
-      allToggle: !this.state.allToggle,
-    });
-  };
-
-  render() {
-    return (
-      <div className="">
-        {this.props.showAllToggle && (
-          <span className="relative fr">
-            <span className="absolute" style={{ left: -95, top: -30 }}>
-              <div className="toggle-group txt-s mr18">
-                <label className="toggle-container">
-                  <input
-                    checked={!this.state.allToggle}
-                    name={`toggle${this.props.name}`}
-                    type="radio"
-                    onClick={this.handleToggle}
-                  />
-                  <div className="toggle toggle--gray-light">OR</div>
-                </label>
-                <label className="toggle-container">
-                  <input
-                    name={`toggle${this.props.name}`}
-                    type="radio"
-                    checked={this.state.allToggle}
-                    onClick={this.handleToggle}
-                  />
-                  <div className="toggle toggle--gray-light">AND</div>
-                </label>
-              </div>
-            </span>
-          </span>
-        )}
-        {this.renderSelect()}
-      </div>
-    );
-  }
+          <Button
+            type="button"
+            outline
+            className="min-h-11 shrink-0 cursor-pointer touch-manipulation select-none"
+            onClick={addFreeform}
+          >
+            Add
+          </Button>
+        </div>
+      )}
+    </div>
+  )
 }
 
-export class MappingTeamMultiSelect extends MultiSelect {
-  getAsyncOptions = () => {
-    if (!this.props.dataURL) return Promise.resolve([]);
-    return fetch(`${API_URL}/${this.props.dataURL}/`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: this.props.token ? `Token ${this.props.token}` : "",
-      },
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((json) => {
-        const data = json.results.map((d) => {
-          if (d.trusted) {
-            return { ...d, label: `${d.name} (verified)`, value: d.name };
-          } else {
-            return {
-              ...d,
-              label: d.name.replace("(verified)", ""),
-              value: d.name,
-            };
-          }
-        });
-        return data;
-      });
-  };
-
-  sendData = (allToggle: boolean, data: Array<any>) => {
-    let name =
-      this.props.name.slice(0, 4) === "all_"
-        ? this.props.name.slice(4)
-        : this.props.name;
-
-    name = `${allToggle ? "all_" : ""}${name}`;
-    if (data.length === 0) return this.props.onChange(name);
-    var processed = data.map((o) => ({ label: o.label, value: o.value })); // remove any bogus keys
-    this.props.onChange(name, processed);
-  };
+export function MappingTeamMultiSelect(props: MultiSelectProps) {
+  return <MultiSelect {...props} teamMode />
 }

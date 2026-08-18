@@ -1,192 +1,229 @@
-import { startOfDay } from "date-fns";
-import React from "react";
-import filters from "../../config/filters.json";
-import { getDefaultFromDate } from "../../utils/filters.ts";
-import { loadingEnhancer } from "../loading_enhancer.tsx";
-import type { Filter } from "./index.ts";
-import {
-  DateField,
-  LocationSelect,
-  MappingTeamMultiSelect,
-  Meta,
-  MultiSelect,
-  parseStoredDate,
-  Radio,
-  Text,
-  Wrapper,
-} from "./index.ts";
+import { startOfDay } from 'date-fns'
+import filters from '../../config/filters.json'
+import { getDefaultFromDate } from '../../utils/filters.ts'
+import { Button } from '../ui/button.tsx'
+import { Subheading } from '../ui/heading.tsx'
+import { DateField, parseStoredDate } from './date.tsx'
+import type { Filter, FilterOption, Filters } from './index.ts'
+import { LocationSelect } from './location.tsx'
+import { Meta } from './meta.tsx'
+import { MappingTeamMultiSelect, MultiSelect } from './multi_select.tsx'
+import { Radio } from './radio.tsx'
+import { Text } from './text.tsx'
+import { Wrapper } from './wrapper.tsx'
 
-const defaultDate = getDefaultFromDate().date__gte;
+const defaultDate = getDefaultFromDate().date__gte
 
-var filtersData = filters.filter((f) => {
-  return !f.ignore;
-});
+const filtersData = filters.filter((f) => {
+  return !('ignore' in f && f.ignore)
+})
 
-type Props = {
-  filters: any;
-  loading: boolean;
-  active: string;
-  token: string | null;
-  handleChange: (name: string, values?: Filter) => void;
-  handleFocus: (name: string) => void;
-  replaceFiltersState: (filters: any) => void;
-  handleToggleAll: (name: string, values?: Filter) => void;
-};
+type FilterConfig = (typeof filtersData)[number] & {
+  range?: boolean
+  type?: string
+  name: string
+  display: string
+  placeholder?: string
+  description?: string
+  options?: Array<{ label: string; value: unknown }>
+  data_url?: string
+  all?: boolean
+  metaOf?: string[]
+  min?: string | number
+  max?: string | number
+}
 
-class _FiltersList extends React.PureComponent<Props> {
-  renderFilters = (f: any, k: number) => {
+type FiltersListProps = {
+  filters: Filters
+  loading: boolean
+  active: string
+  token: string | null
+  handleChange: (name: string, values?: Filter | null) => void
+  handleFocus: (name: string) => void
+  replaceFiltersState: (filters: Filters) => void
+  handleToggleAll: (name: string, values?: Filter | null) => void
+  handleApply: () => void
+  handleClear: () => void
+}
+
+export function FiltersList({
+  filters: currentFilters,
+  loading,
+  active,
+  token,
+  handleChange,
+  handleFocus,
+  replaceFiltersState,
+  handleToggleAll,
+  handleApply,
+  handleClear,
+}: FiltersListProps) {
+  if (loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-16">
+        <p className="text-base text-zinc-500">Loading filters…</p>
+      </div>
+    )
+  }
+
+  const renderFilter = (config: FilterConfig, key: number) => {
     const propsToSend = {
-      name: f.name,
-      type: f.type,
-      display: f.display,
-      value: this.props.filters[f.name],
-      placeholder: f.placeholder,
-      options: f.options,
-      onChange: this.props.handleChange,
-      dataURL: f.data_url,
-      min: f.min,
-      max: f.max,
-    };
+      name: config.name,
+      type: config.type ?? 'text',
+      display: config.display,
+      value: currentFilters[config.name],
+      placeholder: config.placeholder ?? '',
+      options: config.options,
+      onChange: handleChange,
+      dataURL: config.data_url,
+      min: config.min,
+      max: config.max,
+    }
     const wrapperProps = {
-      name: f.name,
-      handleFocus: () => this.props.handleFocus(f.name),
-      hasValue: f.name in this.props.filters,
-      display: f.display,
-      key: k,
-      description: this.props.active === f.name && f.description,
-    };
-    if (f.range && f.type === "number") {
-      const gteValue = this.props.filters[f.name + "__gte"];
-      const lteValue = this.props.filters[f.name + "__lte"];
+      name: config.name,
+      handleFocus: () => handleFocus(config.name),
+      hasValue: config.name in currentFilters,
+      display: config.display,
+      key,
+      description: active === config.name ? config.description : undefined,
+    }
+
+    if (config.range && config.type === 'number') {
+      const gteValue = currentFilters[`${config.name}__gte`]
+      const lteValue = currentFilters[`${config.name}__lte`]
       return (
         <Wrapper
           {...wrapperProps}
           hasValue={
-            f.name + "__gte" in this.props.filters ||
-            f.name + "__lte" in this.props.filters
+            `${config.name}__gte` in currentFilters || `${config.name}__lte` in currentFilters
           }
         >
-          <span className="flex-parent flex-parent--row">
+          <div className="grid grid-cols-2 gap-2">
             <Text
               {...propsToSend}
-              className="mr3"
-              name={f.name + "__gte"}
+              name={`${config.name}__gte`}
               value={gteValue}
-              placeholder={"from"}
-              max={lteValue?.[0]?.value}
+              placeholder="from"
+              max={lteValue?.[0]?.value as string | number | undefined}
               min="0"
             />
             <Text
               {...propsToSend}
-              name={f.name + "__lte"}
+              name={`${config.name}__lte`}
               value={lteValue}
-              placeholder={"to"}
-              min={gteValue?.[0]?.value}
+              placeholder="to"
+              min={gteValue?.[0]?.value as string | number | undefined}
             />
-          </span>
+          </div>
         </Wrapper>
-      );
+      )
     }
-    if (!f.range && f.type === "number") {
+
+    if (!config.range && config.type === 'number') {
       return (
         <Wrapper {...wrapperProps}>
-          <Text {...propsToSend} className="mr3" min="1" max="100" />
+          <Text {...propsToSend} min="1" max="100" />
         </Wrapper>
-      );
+      )
     }
-    if (f.range && f.type === "date") {
-      let gteValue = this.props.filters[f.name + "__gte"];
-      if (f.name === "date") {
-        gteValue = this.props.filters[f.name + "__gte"] || defaultDate;
+
+    if (config.range && config.type === 'date') {
+      let gteValue = currentFilters[`${config.name}__gte`]
+      if (config.name === 'date') {
+        gteValue = currentFilters[`${config.name}__gte`] || defaultDate
       }
-      const lteValue = this.props.filters[f.name + "__lte"];
-      const today = startOfDay(new Date());
-      const gteDate = parseStoredDate(gteValue?.[0]?.value) ?? undefined;
-      const lteDate = parseStoredDate(lteValue?.[0]?.value) ?? undefined;
+      const lteValue = currentFilters[`${config.name}__lte`]
+      const today = startOfDay(new Date())
+      const gteDate = parseStoredDate(gteValue?.[0]?.value as string | undefined) ?? undefined
+      const lteDate = parseStoredDate(lteValue?.[0]?.value as string | undefined) ?? undefined
       return (
         <Wrapper
           {...wrapperProps}
           hasValue={
-            f.name + "__gte" in this.props.filters ||
-            f.name + "__lte" in this.props.filters
+            `${config.name}__gte` in currentFilters || `${config.name}__lte` in currentFilters
           }
         >
-          <span className="flex-parent flex-parent--row h36">
+          <div className="grid grid-cols-2 gap-2">
             <DateField
-              {...propsToSend}
-              name={f.name + "__gte"}
+              name={`${config.name}__gte`}
+              display={config.display}
               value={gteValue}
-              className="mr3"
-              placeholder={"From"}
+              placeholder="From"
+              onChange={handleChange}
               max={lteDate || today}
             />
             <DateField
-              {...propsToSend}
-              name={f.name + "__lte"}
+              name={`${config.name}__lte`}
+              display={config.display}
               value={lteValue}
-              className="ml3"
-              placeholder={"To"}
+              placeholder="To"
+              onChange={handleChange}
               min={gteDate}
               max={today}
             />
-          </span>
+          </div>
         </Wrapper>
-      );
+      )
     }
-    if (f.type === "text") {
+
+    if (config.type === 'text') {
       return (
         <Wrapper {...wrapperProps}>
           <Text {...propsToSend} />
         </Wrapper>
-      );
+      )
     }
-    if (f.type === "radio") {
+
+    if (config.type === 'radio') {
       return (
         <Wrapper {...wrapperProps}>
-          <Radio {...propsToSend} />
+          <Radio {...propsToSend} options={(config.options ?? []) as FilterOption[]} />
         </Wrapper>
-      );
+      )
     }
-    if (f.type === "meta") {
+
+    if (config.type === 'meta') {
       return (
         <Wrapper
           {...wrapperProps}
-          hasValue={f.metaOf.find((fi: string) => fi in this.props.filters)}
+          hasValue={Boolean(config.metaOf?.find((field) => field in currentFilters))}
         >
           <Meta
             {...propsToSend}
-            replaceFiltersState={this.props.replaceFiltersState}
-            metaOf={f.metaOf}
-            activeFilters={this.props.filters}
+            replaceFiltersState={replaceFiltersState}
+            metaOf={config.metaOf ?? []}
+            activeFilters={currentFilters}
+            options={(config.options ?? []) as unknown as Parameters<typeof Meta>[0]['options']}
           />
         </Wrapper>
-      );
+      )
     }
-    if (f.type === "text_comma") {
-      let { name, value, onChange } = propsToSend;
-      if (f.all) {
-        onChange = this.props.handleToggleAll;
+
+    if (config.type === 'text_comma') {
+      let { name, value, onChange } = propsToSend
+      if (config.all) {
+        onChange = handleToggleAll
       }
-      if (f.all && `all_${f.name}` in this.props.filters) {
-        name = `all_${f.name}`;
-        value = this.props.filters[name];
+      if (config.all && `all_${config.name}` in currentFilters) {
+        name = `all_${config.name}`
+        value = currentFilters[name]
       }
 
       return (
         <Wrapper
           {...wrapperProps}
           name={name}
-          hasValue={name in this.props.filters}
-          description={this.props.active === f.name && f.description}
+          hasValue={name in currentFilters}
+          description={active === config.name ? config.description : undefined}
         >
-          {name.endsWith("_teams") ? (
+          {name.endsWith('_teams') ? (
             <MappingTeamMultiSelect
               {...propsToSend}
               name={name}
               value={value}
               onChange={onChange}
-              showAllToggle={f.all}
-              token={this.props.token}
+              showAllToggle={config.all}
+              token={token}
             />
           ) : (
             <MultiSelect
@@ -194,73 +231,102 @@ class _FiltersList extends React.PureComponent<Props> {
               name={name}
               value={value}
               onChange={onChange}
-              showAllToggle={f.all}
-              token={this.props.token}
+              showAllToggle={Boolean(config.all)}
+              token={token}
             />
           )}
         </Wrapper>
-      );
+      )
     }
-  };
 
-  render() {
-    return (
-      <div className="px30 flex-child filters-scroll">
-        <h2 className="txt-xl mr6 txt-bold mt24 border-b border--gray-light border--1">
-          Basic
-        </h2>
-        {filtersData.slice(0, 2).map((f: any, k) => this.renderFilters(f, k))}
+    return null
+  }
+
+  return (
+    <div className="flex flex-col gap-8 pt-6">
+      <FilterSection title="Basic">
+        {filtersData
+          .slice(0, 2)
+          .map((config, index) => renderFilter(config as FilterConfig, index))}
         <Wrapper
           name="location"
           display="Location"
-          hasValue={
-            "geometry" in this.props.filters || "in_bbox" in this.props.filters
-          }
-          handleFocus={() => this.props.handleFocus("location")}
+          hasValue={'geometry' in currentFilters || 'in_bbox' in currentFilters}
+          handleFocus={() => handleFocus('location')}
           description={
-            this.props.active === "location" &&
-            "Filter changesets whose bounding box intersects a chosen area"
+            active === 'location'
+              ? 'Filter changesets whose bounding box intersects a chosen area'
+              : undefined
           }
         >
           <LocationSelect
             name="location"
-            value={this.props.filters.geometry || this.props.filters.in_bbox}
+            value={currentFilters.geometry || currentFilters.in_bbox}
             placeholder="Type a place name"
-            onChange={this.props.handleChange}
+            onChange={handleChange}
           />
         </Wrapper>
-        {filtersData.slice(2, 3).map((f: any, k) => this.renderFilters(f, k))}
-        <h2 className="txt-xl mr6 txt-bold mt30  border-b border--gray-light border--1">
-          OSM Features
-        </h2>
-        {filtersData.slice(3, 4).map((f: any, k) => this.renderFilters(f, k))}
-        <span className="flex-child flex-child--grow wmin420 wmax435" />
-        <h2 className="txt-xl mr6 txt-bold mt30  border-b border--gray-light border--1">
-          Flags
-        </h2>
-        {filtersData.slice(4, 6).map((f: any, k) => this.renderFilters(f, k))}
-        <span className="flex-child flex-child--grow wmin420 wmax435" />
+        {filtersData
+          .slice(2, 3)
+          .map((config, index) => renderFilter(config as FilterConfig, index))}
+      </FilterSection>
 
-        <h2 className="txt-xl mr6 txt-bold mt30  border-b border--gray-light border--1">
-          Review
-        </h2>
-        {filtersData.slice(6, 10).map((f: any, k) => this.renderFilters(f, k))}
-        <span className="flex-child flex-child--grow wmin420 wmax435" />
+      <FilterSection title="OSM Features">
+        {filtersData
+          .slice(3, 4)
+          .map((config, index) => renderFilter(config as FilterConfig, index))}
+      </FilterSection>
 
-        <h2 className="txt-xl mr6 txt-bold mt30  border-b border--gray-light border--1">
-          Users & Teams
-        </h2>
-        {filtersData.slice(10, 17).map((f: any, k) => this.renderFilters(f, k))}
-        <span className="flex-child flex-child--grow wmin420 wmax435" />
+      <FilterSection title="Flags">
+        {filtersData
+          .slice(4, 6)
+          .map((config, index) => renderFilter(config as FilterConfig, index))}
+      </FilterSection>
 
-        <h2 className="txt-xl mr6 txt-bold mt30  border-b border--gray-light border--1">
-          Changeset Details
-        </h2>
-        {filtersData.slice(17).map((f: any, k) => this.renderFilters(f, k))}
-        <span className="flex-child flex-child--grow wmin420 wmax435" />
+      <FilterSection title="Review">
+        {filtersData
+          .slice(6, 10)
+          .map((config, index) => renderFilter(config as FilterConfig, index))}
+      </FilterSection>
+
+      <FilterSection title="Users & Teams">
+        {filtersData
+          .slice(10, 17)
+          .map((config, index) => renderFilter(config as FilterConfig, index))}
+      </FilterSection>
+
+      <FilterSection title="Changeset Details">
+        {filtersData.slice(17).map((config, index) => renderFilter(config as FilterConfig, index))}
+      </FilterSection>
+
+      <div className="flex flex-wrap gap-2 pb-4">
+        <Button
+          type="button"
+          outline
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={handleClear}
+        >
+          Reset
+        </Button>
+        <Button
+          type="button"
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={handleApply}
+        >
+          Apply
+        </Button>
       </div>
-    );
-  }
+    </div>
+  )
 }
-const FiltersList = loadingEnhancer(_FiltersList);
-export { FiltersList };
+
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <Subheading level={2} className="border-b border-zinc-950/10 pb-2">
+        {title}
+      </Subheading>
+      <div className="mt-4 space-y-6">{children}</div>
+    </section>
+  )
+}

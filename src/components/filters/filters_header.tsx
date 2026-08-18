@@ -1,96 +1,128 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { API_URL } from "../../config/index.ts";
-import { fetchAllAOIs } from "../../network/aoi.ts";
-import { Button } from "../button.tsx";
-import { Dropdown } from "../dropdown.tsx";
+import { LinkIcon, RssIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { API_URL } from '../../config/index.ts'
+import { useAllAOIs } from '../../query/hooks/useAOI.ts'
+import { Button } from '../ui/button.tsx'
+import { Heading } from '../ui/heading.tsx'
+import { Input } from '../ui/input.tsx'
+import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 
-interface SaveAOIProps {
-  name?: string;
-  aoiList: Array<any>;
-  aoiId?: string;
-  updateAOI: (id: string, name: string) => void;
-  createAOI: (name: string) => void;
+type AoiOption = {
+  label: string
+  value: string
+}
+
+type SaveAOIProps = {
+  name?: string
+  aoiList: AoiOption[]
+  aoiId?: string
+  updateAOI: (id: string, name: string) => void
+  createAOI: (name: string) => void
 }
 
 function SaveAOI({ name, aoiList, aoiId, updateAOI, createAOI }: SaveAOIProps) {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(name || "");
-  const clicked = useRef(false);
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(name || '')
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    setValue(name || "");
-  }, [name]);
+  if (name !== undefined && !editing && value !== (name || '')) {
+    setValue(name || '')
+  }
 
-  const onClick = () => {
-    clicked.current = true;
-    setEditing(true);
-    setValue(name || "");
-  };
-
-  const onKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === "Enter") {
-      handleSubmit();
-    } else if (event.key === "Escape") {
-      setEditing(false);
-      setValue(name || "");
-      clicked.current = false;
-    }
-  };
+  useEffect(
+    function focusSaveNameInput() {
+      if (!editing) return
+      const input = inputRef.current
+      input?.focus()
+      input?.select()
+    },
+    [editing],
+  )
 
   const handleSubmit = () => {
-    setEditing(false);
-    const matchingAoi = aoiList.find((aoi) => aoi.value === aoiId);
+    setEditing(false)
+    const matchingAoi = aoiList.find((aoi) => aoi.value === aoiId)
     if (aoiId && matchingAoi) {
-      updateAOI(aoiId, value);
+      updateAOI(aoiId, value)
     } else {
-      createAOI(value);
+      createAOI(value)
     }
-  };
+  }
+
+  if (editing) {
+    return (
+      <span className="flex min-w-0 flex-wrap items-center gap-2">
+        <Input
+          ref={inputRef}
+          value={value}
+          aria-label="Saved filter name"
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              handleSubmit()
+            } else if (event.key === 'Escape') {
+              setEditing(false)
+              setValue(name || '')
+            }
+          }}
+        />
+        <Button
+          type="button"
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={handleSubmit}
+        >
+          Confirm Save
+        </Button>
+      </span>
+    )
+  }
 
   return (
-    <span>
-      {editing ? (
-        <span>
-          <input
-            ref={(r) => {
-              if (clicked.current && r) {
-                r.select();
-                clicked.current = false;
-              }
-            }}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={onKeyDown}
-          />
-          <Button onClick={handleSubmit} className="mx3">
-            Confirm Save
-          </Button>
-        </span>
-      ) : (
-        <Button onClick={onClick} className="border--0 bg-transparent">
-          Save
-        </Button>
-      )}
-    </span>
-  );
+    <Button
+      type="button"
+      outline
+      className="min-h-11 cursor-pointer touch-manipulation select-none"
+      onClick={() => {
+        setEditing(true)
+        setValue(name || '')
+      }}
+    >
+      Save
+    </Button>
+  )
 }
 
-interface FiltersHeaderProps {
-  createAOI: (name: string) => void;
-  updateAOI: (id: string, name: string) => void;
-  removeAOI: (id: string) => void;
-  loading: boolean;
-  search: string;
-  token: string | null;
-  aoiName?: string;
-  aoiId?: string;
-  handleApply: () => void;
-  handleClear: () => void;
-  loadAoiId: (id: string) => void;
+type FiltersHeaderProps = {
+  createAOI: (name: string) => void
+  updateAOI: (id: string, name: string) => void
+  removeAOI: (id: string) => void
+  loading: boolean
+  search: string
+  token: string | null
+  aoiName?: string
+  aoiId?: string
+  handleApply: () => void
+  handleClear: () => void
+  loadAoiId: (id: string) => void
 }
 
-function FiltersHeader({
+type AoiFeature = {
+  id: string | number
+  properties?: { name?: string }
+}
+
+function aoiFeatures(data: unknown): AoiFeature[] {
+  if (!data) return []
+  if (Array.isArray(data)) return data as AoiFeature[]
+  if (typeof data === 'object' && data !== null && 'features' in data) {
+    const features = (data as { features: unknown }).features
+    if (Array.isArray(features)) return features as AoiFeature[]
+  }
+  return []
+}
+
+export function FiltersHeader({
   createAOI,
   updateAOI,
   search,
@@ -100,110 +132,84 @@ function FiltersHeader({
   handleApply,
   handleClear,
 }: FiltersHeaderProps) {
-  const navigate = useNavigate();
-  const [aoiList, setAoiList] = useState<Array<any>>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (token) {
-      fetchAllAOIs()
-        .then((r) => {
-          if (cancelled) return;
-          const list = r.features.map((aoi: any) => ({
-            label: aoi.properties.name,
-            value: aoi.id,
-          }));
-          setAoiList(list);
-        })
-        .catch((e) => console.log(e));
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
-
-  const renderRssLink = () => {
-    if (aoiId) {
-      return (
-        <a
-          className="txt--s pl6"
-          href={`${API_URL}/aoi/${aoiId}/changesets/feed/`}
-          title="RSS Feed"
-        >
-          <svg className="icon icon--s mt-neg3 inline-block align-middle bg-gray-faint color-darken25 color-darken50-on-hover transition">
-            <use xlinkHref="#icon-rss" />
-          </svg>
-        </a>
-      );
-    }
-    return null;
-  };
-
-  const renderAoiLink = () => {
-    if (aoiId) {
-      return (
-        <div
-          className="txt--s pl6 pointer inline"
-          onClick={() =>
-            navigator.clipboard.writeText(
-              `${API_URL.replace("/api/v1", "")}/?aoi=${aoiId}`,
-            )
-          }
-          title="Copy filter URL"
-        >
-          <svg className="icon icon--s mt-neg3 inline-block align-middle bg-gray-faint color-darken25 color-darken50-on-hover transition">
-            <use xlinkHref="#icon-link" />
-          </svg>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const onAoiSelect = (arr: Array<any>) => {
-    if (arr.length === 1) {
-      navigate({
-        pathname: "/filters",
-        search: `aoi=${arr[0].value}`,
-      });
-    } else if (arr.length > 1) {
-      throw new Error("filter select array is big");
-    }
-  };
-
-  const renderFilterInfo = () => {
-    const dropdown = (
-      <Dropdown
-        display={"My Filters"}
-        options={aoiList}
-        onChange={onAoiSelect}
-        value={[]}
-        onAdd={() => {}}
-        onRemove={() => {}}
-        position="left"
-      />
-    );
-    if (token && aoiList.length) {
-      return <span>{dropdown}</span>;
-    }
-    return null;
-  };
+  const navigate = useNavigate()
+  const aoisQuery = useAllAOIs()
+  const aoiList: AoiOption[] = aoiFeatures(aoisQuery.data).map((aoi) => ({
+    label: aoi.properties?.name || `Filter ${aoi.id}`,
+    value: String(aoi.id),
+  }))
+  const selectedAoi = aoiList.find((aoi) => aoi.value === aoiId) ?? null
+  const closeHref = search ? `/${search}` : '/'
+  const shareOrigin = API_URL.replace('/api/v1', '')
 
   return (
-    <header className="h55 hmin55 flex-parent px30 bg-gray-faint flex-parent--center-cross justify--space-between color-gray border-b border--gray-light border--1">
-      <span className="txt-s color-gray--dark">{renderFilterInfo()}</span>
-      <span className="txt-l txt-bold color-gray--dark">
-        <span>
+    <header className="flex flex-col gap-3 border-b border-zinc-950/10 pb-4">
+      <div className="flex items-start justify-between gap-3">
+        <Heading className="min-w-0 text-xl/8 sm:text-2xl/8">
           Filters
-          {aoiId && <span> / {aoiName}</span>}
-          {renderAoiLink()}
-          {renderRssLink()}
-        </span>
-      </span>
-      <span className="txt-l color-gray--dark">
-        {token && (
+          {aoiId ? ` / ${aoiName}` : ''}
+        </Heading>
+        <Button
+          plain
+          href={closeHref}
+          aria-label="Close filters"
+          className="min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation p-0 select-none"
+        >
+          <XMarkIcon data-slot="icon" />
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {token && aoiList.length > 0 ? (
+          <div className="min-w-40 flex-1 sm:max-w-56">
+            <Listbox<AoiOption | null>
+              value={selectedAoi}
+              placeholder="My Filters"
+              aria-label="My Filters"
+              onChange={(option) => {
+                if (!option) return
+                void navigate({
+                  pathname: '/filters',
+                  search: `aoi=${option.value}`,
+                })
+              }}
+            >
+              {aoiList.map((option) => (
+                <ListboxOption key={option.value} value={option}>
+                  <ListboxLabel>{option.label}</ListboxLabel>
+                </ListboxOption>
+              ))}
+            </Listbox>
+          </div>
+        ) : null}
+
+        {aoiId ? (
+          <>
+            <Button
+              type="button"
+              plain
+              aria-label="Copy filter URL"
+              title="Copy filter URL"
+              className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+              onClick={() => {
+                void navigator.clipboard.writeText(`${shareOrigin}/?aoi=${aoiId}`)
+              }}
+            >
+              <LinkIcon data-slot="icon" />
+            </Button>
+            <Button
+              plain
+              href={`${API_URL}/aoi/${aoiId}/changesets/feed/`}
+              aria-label="RSS Feed"
+              title="RSS Feed"
+              className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+            >
+              <RssIcon data-slot="icon" />
+            </Button>
+          </>
+        ) : null}
+
+        {token ? (
           <SaveAOI
             name={aoiName}
             aoiId={aoiId}
@@ -211,21 +217,24 @@ function FiltersHeader({
             createAOI={createAOI}
             updateAOI={updateAOI}
           />
-        )}
-        <Button className="border--0 bg-transparent" onClick={handleClear}>
+        ) : null}
+
+        <Button
+          type="button"
+          outline
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={handleClear}
+        >
           Reset
         </Button>
-        <Button onClick={handleApply} className="mx3">
+        <Button
+          type="button"
+          className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={handleApply}
+        >
           Apply
         </Button>
-        <Link to={{ search, pathname: "/" }} className="mx3 pointer">
-          <svg className="icon icon--m inline-block align-middle bg-gray-faint color-darken25 color-darken50-on-hover transition">
-            <use xlinkHref="#icon-close" />
-          </svg>
-        </Link>
-      </span>
+      </div>
     </header>
-  );
+  )
 }
-
-export { FiltersHeader };

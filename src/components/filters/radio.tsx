@@ -1,37 +1,54 @@
-import React from "react";
-import Select from "react-select";
-import type { Filter } from "./index.ts";
+import { XMarkIcon } from '@heroicons/react/16/solid'
+import { Button } from '../ui/button.tsx'
+import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
+import { filterOptionKey, filterOptionLabel, type Filter, type FilterOption } from './index.ts'
 
-interface RadioProps {
-  name: string;
-  display: string;
-  type: string;
-  placeholder: string;
-  options: Array<any>;
-  value: Filter;
-  onChange: (a: string, value?: Filter) => any;
+type RadioProps = {
+  name: string
+  placeholder?: string
+  options: FilterOption[]
+  value?: Filter
+  onChange: (name: string, value?: Filter | null) => void
 }
 
-export class Radio extends React.PureComponent<RadioProps> {
-  onChangeLocal = (data: any) => {
-    if (!data || data.value === "") {
-      return this.props.onChange(this.props.name);
-    }
-    this.props.onChange(this.props.name, [data]);
-  };
+export function Radio({ name, options, placeholder, value, onChange }: RadioProps) {
+  const selected = value?.[0] ?? null
+  const selectedOption =
+    options.find((option) => filterOptionKey(option.value) === filterOptionKey(selected?.value)) ??
+    null
 
-  render() {
-    const { name, options, placeholder, value } = this.props;
-    return (
-      <Select
-        className="react-select"
+  return (
+    <div className="flex items-center gap-2">
+      <Listbox<FilterOption | null>
         name={name}
-        value={value?.[0] || null}
-        options={options}
+        value={selectedOption}
         placeholder={placeholder}
-        onChange={this.onChangeLocal}
-        isClearable
-      />
-    );
-  }
+        aria-label={placeholder || name}
+        onChange={(option) => {
+          if (!option || option.value === '') {
+            onChange(name)
+            return
+          }
+          onChange(name, [option])
+        }}
+      >
+        {options.map((option) => (
+          <ListboxOption key={filterOptionKey(option.value)} value={option}>
+            <ListboxLabel>{filterOptionLabel(option.label)}</ListboxLabel>
+          </ListboxOption>
+        ))}
+      </Listbox>
+      {selectedOption ? (
+        <Button
+          plain
+          type="button"
+          aria-label="Clear"
+          className="min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation p-0 select-none"
+          onClick={() => onChange(name)}
+        >
+          <XMarkIcon data-slot="icon" />
+        </Button>
+      ) : null}
+    </div>
+  )
 }
