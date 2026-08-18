@@ -1,6 +1,8 @@
 import { RssIcon, TrashIcon } from '@heroicons/react/16/solid'
+import { useForm } from '@tanstack/react-form'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useState, type KeyboardEvent } from 'react'
+import { useState } from 'react'
+import { z } from 'zod'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { Badge } from '../components/ui/badge.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -37,24 +39,20 @@ function aoiList(data: unknown): AoiFeature[] {
 
 function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
   const [editing, setEditing] = useState(false)
-  const [value, setValue] = useState('')
 
-  const commit = () => {
-    setEditing(false)
-    if (value) {
-      onCreate(value)
-      setValue('')
-    }
-  }
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      commit()
-    } else if (event.key === 'Escape') {
+  const form = useForm({
+    defaultValues: { name: '' },
+    validators: {
+      onSubmit: z.object({
+        name: z.string().trim().min(1, 'Filter name is required'),
+      }),
+    },
+    onSubmit: ({ value, formApi }) => {
+      onCreate(value.name.trim())
+      formApi.reset()
       setEditing(false)
-      setValue('')
-    }
-  }
+    },
+  })
 
   if (!editing) {
     return (
@@ -65,18 +63,34 @@ function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Input
-        className="min-h-11 min-w-40 flex-1"
-        placeholder="Filter name"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onKeyDown={handleKeyDown}
-      />
-      <Button type="button" className="min-h-11" onClick={commit}>
+    <form
+      className="flex flex-wrap items-center gap-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        void form.handleSubmit()
+      }}
+    >
+      <form.Field name="name">
+        {(field) => (
+          <Input
+            className="min-h-11 min-w-40 flex-1"
+            placeholder="Filter name"
+            value={field.state.value}
+            onBlur={field.handleBlur}
+            onChange={(event) => field.handleChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setEditing(false)
+                form.reset()
+              }
+            }}
+          />
+        )}
+      </form.Field>
+      <Button type="submit" className="min-h-11">
         Save
       </Button>
-    </div>
+    </form>
   )
 }
 

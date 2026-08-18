@@ -1,4 +1,6 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useForm } from '@tanstack/react-form'
+import { useState } from 'react'
+import { z } from 'zod'
 import { handleResponse } from '../../network/request.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
@@ -17,12 +19,19 @@ type OsmChangesetsJson = {
   changesets: Array<{ uid: number }>
 }
 
+const watchlistUserSchema = z
+  .object({
+    username: z.string(),
+    uid: z.string(),
+  })
+  .refine((value) => value.username.length > 0 || value.uid.length > 0, {
+    message: 'Username or UID is required',
+    path: ['username'],
+  })
+
 export function WatchListUser({ onSave }: { onSave: (username: string, uid: string) => void }) {
-  const [username, setUsername] = useState('')
-  const [uid, setUid] = useState('')
-  const [isValidUsername, setIsValidUsername] = useState(true)
-  const [isValidUid, setIsValidUid] = useState(true)
   const [pending, setPending] = useState(false)
+  const [lookupError, setLookupError] = useState<'username' | 'uid' | null>(null)
 
   const fetchByUid = async (userId: string): Promise<OsmUser> => {
     const res = await fetch(`https://www.openstreetmap.org/api/0.6/user/${userId}.json`)
@@ -40,70 +49,90 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
     return fetchByUid(changeset.uid.toString())
   }
 
-  const onAdd = async () => {
-    if (pending) return
-    const lookup =
-      uid.length > 0 ? fetchByUid(uid) : username.length > 0 ? fetchByUsername(username) : null
-    if (!lookup) {
-      setIsValidUsername(false)
-      setIsValidUid(false)
-      return
-    }
-    setPending(true)
-    try {
-      const user = await lookup
-      onSave(user.username, user.uid)
-      setUsername('')
-      setUid('')
-      setIsValidUsername(true)
-      setIsValidUid(true)
-    } catch {
-      const byUid = uid.length > 0
-      setIsValidUid(!byUid)
-      setIsValidUsername(byUid)
-    } finally {
-      setPending(false)
-    }
-  }
+  const form = useForm({
+    defaultValues: { username: '', uid: '' },
+    validators: {
+      onSubmit: watchlistUserSchema,
+    },
+    onSubmit: async ({ value, formApi }) => {
+      if (pending) return
+      setPending(true)
+      setLookupError(null)
+      try {
+        const lookup =
+          value.uid.length > 0
+            ? fetchByUid(value.uid)
+            : value.username.length > 0
+              ? fetchByUsername(value.username)
+              : null
+        if (!lookup) return
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') void onAdd()
-  }
+        const user = await lookup
+        onSave(user.username, user.uid)
+        formApi.reset()
+      } catch {
+        const byUid = value.uid.length > 0
+        setLookupError(byUid ? 'uid' : 'username')
+      } finally {
+        setPending(false)
+      }
+    },
+  })
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Input
-        className="min-h-11 min-w-40 flex-1"
-        value={username}
-        invalid={!isValidUsername}
-        onChange={(event) => {
-          setUsername(event.target.value)
-          setUid('')
-          setIsValidUsername(true)
-          setIsValidUid(true)
+    <form
+      className="flex flex-wrap items-center gap-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        void form.handleSubmit()
+      }}
+    >
+      <form.Field
+        name="username"
+        listeners={{
+          onChange: () => {
+            form.setFieldValue('uid', '')
+            setLookupError(null)
+          },
         }}
-        onKeyDown={onKeyDown}
-        placeholder="Username"
-        type="text"
-      />
+      >
+        {(field) => (
+          <Input
+            className="min-h-11 min-w-40 flex-1"
+            value={field.state.value}
+            invalid={lookupError === 'username'}
+            onBlur={field.handleBlur}
+            onChange={(event) => field.handleChange(event.target.value)}
+            placeholder="Username"
+            type="text"
+          />
+        )}
+      </form.Field>
       <Text className="uppercase">or</Text>
-      <Input
-        className="min-h-11 min-w-40 flex-1"
-        value={uid}
-        invalid={!isValidUid}
-        onChange={(event) => {
-          setUid(event.target.value)
-          setUsername('')
-          setIsValidUsername(true)
-          setIsValidUid(true)
+      <form.Field
+        name="uid"
+        listeners={{
+          onChange: () => {
+            form.setFieldValue('username', '')
+            setLookupError(null)
+          },
         }}
-        onKeyDown={onKeyDown}
-        placeholder="UID"
-        type="text"
-      />
-      <Button type="button" className="min-h-11" onClick={() => void onAdd()} disabled={pending}>
+      >
+        {(field) => (
+          <Input
+            className="min-h-11 min-w-40 flex-1"
+            value={field.state.value}
+            invalid={lookupError === 'uid'}
+            onBlur={field.handleBlur}
+            onChange={(event) => field.handleChange(event.target.value)}
+            placeholder="UID"
+            type="text"
+          />
+        )}
+      </form.Field>
+      <Button type="submit" className="min-h-11" disabled={pending}>
         {pending ? 'Adding...' : 'Add'}
       </Button>
-    </div>
+    </form>
   )
 }

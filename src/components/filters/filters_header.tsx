@@ -1,6 +1,8 @@
 import { LinkIcon, RssIcon, XMarkIcon } from '@heroicons/react/20/solid'
+import { useForm } from '@tanstack/react-form'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { z } from 'zod'
 import { API_URL } from '../../config/index.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { Button } from '../ui/button.tsx'
@@ -25,48 +27,57 @@ type SaveAOIProps = {
 
 function SaveAOI({ name, aoiList, aoiId, updateAOI, createAOI }: SaveAOIProps) {
   const [editing, setEditing] = useState(false)
-  const [value, setValue] = useState(name || '')
 
-  if (name !== undefined && !editing && value !== (name || '')) {
-    setValue(name || '')
-  }
-
-  const handleSubmit = () => {
-    setEditing(false)
-    const matchingAoi = aoiList.find((aoi) => aoi.value === aoiId)
-    if (aoiId && matchingAoi) {
-      updateAOI(aoiId, value)
-    } else {
-      createAOI(value)
-    }
-  }
+  const form = useForm({
+    defaultValues: { name: name || '' },
+    validators: {
+      onSubmit: z.object({
+        name: z.string().trim().min(1, 'Filter name is required'),
+      }),
+    },
+    onSubmit: ({ value }) => {
+      setEditing(false)
+      const trimmedName = value.name.trim()
+      const matchingAoi = aoiList.find((aoi) => aoi.value === aoiId)
+      if (aoiId && matchingAoi) {
+        updateAOI(aoiId, trimmedName)
+      } else {
+        createAOI(trimmedName)
+      }
+    },
+  })
 
   if (editing) {
     return (
-      <span className="flex min-w-0 flex-wrap items-center gap-2">
-        <Input
-          autoFocus
-          value={value}
-          aria-label="Saved filter name"
-          onFocus={(event) => event.currentTarget.select()}
-          onChange={(event) => setValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              handleSubmit()
-            } else if (event.key === 'Escape') {
-              setEditing(false)
-              setValue(name || '')
-            }
-          }}
-        />
-        <Button
-          type="button"
-          className="min-h-11 cursor-pointer touch-manipulation select-none"
-          onClick={handleSubmit}
-        >
+      <form
+        className="flex min-w-0 flex-wrap items-center gap-2"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void form.handleSubmit()
+        }}
+      >
+        <form.Field name="name">
+          {(field) => (
+            <Input
+              autoFocus
+              value={field.state.value}
+              aria-label="Saved filter name"
+              onFocus={(event) => event.currentTarget.select()}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  setEditing(false)
+                  form.setFieldValue('name', name || '')
+                }
+              }}
+            />
+          )}
+        </form.Field>
+        <Button type="submit" className="min-h-11 cursor-pointer touch-manipulation select-none">
           Confirm Save
         </Button>
-      </span>
+      </form>
     )
   }
 
@@ -76,8 +87,8 @@ function SaveAOI({ name, aoiList, aoiId, updateAOI, createAOI }: SaveAOIProps) {
       outline
       className="min-h-11 cursor-pointer touch-manipulation select-none"
       onClick={() => {
+        form.setFieldValue('name', name || '')
         setEditing(true)
-        setValue(name || '')
       }}
     >
       Save

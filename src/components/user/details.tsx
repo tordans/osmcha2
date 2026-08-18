@@ -1,5 +1,6 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
-import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
+import { z } from 'zod'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useUpdateUserDetails } from '../../query/hooks/useUpdateUserDetails.ts'
 import { Button } from '../ui/button.tsx'
@@ -13,61 +14,84 @@ type UserDetails = {
   comment_feature?: boolean
 }
 
+const userDetailsSchema = z.object({
+  messageGood: z.string(),
+  messageBad: z.string(),
+})
+
 export function EditUserDetails() {
   const { token, user } = useAuth()
   const updateMutation = useUpdateUserDetails()
   const userDetails = user as UserDetails | undefined
-
-  const [messageGood, setMessageGood] = useState(userDetails?.message_good || '')
-  const [messageBad, setMessageBad] = useState(userDetails?.message_bad || '')
   const commentFeature = userDetails?.comment_feature ?? false
 
-  const handleSubmit = () => {
-    if (!token) return
-    updateMutation.mutate({
-      messageGood,
-      messageBad,
-      commentFeature,
-    })
-  }
+  const form = useForm({
+    defaultValues: {
+      messageGood: userDetails?.message_good || '',
+      messageBad: userDetails?.message_bad || '',
+    },
+    validators: {
+      onSubmit: userDetailsSchema,
+    },
+    onSubmit: ({ value }) => {
+      if (!token) return
+      updateMutation.mutate({
+        messageGood: value.messageGood,
+        messageBad: value.messageBad,
+        commentFeature,
+      })
+    },
+  })
 
   return (
-    <FieldGroup>
-      <Field>
-        <Label className="flex items-center gap-2">
-          Default comment for changesets reviewed as GOOD
-          <HandThumbUpIcon className="size-4 text-green-700" />
-        </Label>
-        <Textarea
-          rows={4}
-          placeholder="Define a default message to the changesets you review as good. You can edit it before post a comment."
-          value={messageGood}
-          onChange={(event) => setMessageGood(event.target.value)}
-        />
-      </Field>
-      <Field>
-        <Label className="flex items-center gap-2">
-          Default comment for changesets reviewed as BAD
-          <HandThumbDownIcon className="size-4 text-red-700" />
-        </Label>
-        <Textarea
-          rows={4}
-          placeholder="Define a default message to the changesets you review as bad. You can edit it before post a comment."
-          value={messageBad}
-          onChange={(event) => setMessageBad(event.target.value)}
-        />
-      </Field>
-      <div>
-        <Button
-          type="button"
-          className="min-h-11"
-          onClick={handleSubmit}
-          disabled={updateMutation.isPending}
-        >
-          Save Preferences
-        </Button>
-        {updateMutation.isPending ? <Text className="mt-2">Saving…</Text> : null}
-      </div>
-    </FieldGroup>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        void form.handleSubmit()
+      }}
+    >
+      <FieldGroup>
+        <form.Field name="messageGood">
+          {(field) => (
+            <Field>
+              <Label className="flex items-center gap-2">
+                Default comment for changesets reviewed as GOOD
+                <HandThumbUpIcon className="size-4 text-green-700" />
+              </Label>
+              <Textarea
+                rows={4}
+                placeholder="Define a default message to the changesets you review as good. You can edit it before post a comment."
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+        <form.Field name="messageBad">
+          {(field) => (
+            <Field>
+              <Label className="flex items-center gap-2">
+                Default comment for changesets reviewed as BAD
+                <HandThumbDownIcon className="size-4 text-red-700" />
+              </Label>
+              <Textarea
+                rows={4}
+                placeholder="Define a default message to the changesets you review as bad. You can edit it before post a comment."
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+        <div>
+          <Button type="submit" className="min-h-11" disabled={updateMutation.isPending}>
+            Save Preferences
+          </Button>
+          {updateMutation.isPending ? <Text className="mt-2">Saving…</Text> : null}
+        </div>
+      </FieldGroup>
+    </form>
   )
 }

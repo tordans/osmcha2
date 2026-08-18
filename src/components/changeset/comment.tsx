@@ -1,3 +1,4 @@
+import { useForm } from '@tanstack/react-form'
 import { useEffect, useRef, useState } from 'react'
 import { postComment } from '../../network/changeset.ts'
 import { cancelablePromise } from '../../utils/promise.ts'
@@ -36,36 +37,39 @@ export function CommentForm({
   discussions,
 }: CommentFormProps) {
   const template = commentTemplate({ changesetIsHarmful, discussions, userDetails })
-  const [draft, setDraft] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState(false)
   const pendingRef = useRef<{ cancel: () => void } | null>(null)
-  const value = draft ?? template
+
+  const form = useForm({
+    defaultValues: { comment: template },
+    onSubmit: ({ value, formApi }) => {
+      const commentValue = value.comment.trim()
+      if (!commentValue) return
+
+      pendingRef.current?.cancel()
+      const pending = cancelablePromise(postComment(changesetId, commentValue))
+      pendingRef.current = pending
+      pending.promise
+        .then(() => {
+          setSuccess(true)
+          setError(false)
+          formApi.reset({ comment: '' })
+        })
+        .catch((e) => {
+          if (e?.isCanceled) return
+          console.log(e)
+          setError(true)
+          setSuccess(false)
+        })
+    },
+  })
 
   useEffect(function cancelPendingCommentOnUnmount() {
     return function cancelPendingComment() {
       pendingRef.current?.cancel()
     }
   }, [])
-
-  const handleSubmit = () => {
-    if (!value) return
-    pendingRef.current?.cancel()
-    const pending = cancelablePromise(postComment(changesetId, value))
-    pendingRef.current = pending
-    pending.promise
-      .then(() => {
-        setSuccess(true)
-        setError(false)
-        setDraft('')
-      })
-      .catch((e) => {
-        if (e?.isCanceled) return
-        console.log(e)
-        setError(true)
-        setSuccess(false)
-      })
-  }
 
   if (!token) return null
 
@@ -83,20 +87,26 @@ export function CommentForm({
           <strong className="font-semibold">It was not possible to post your comment.</strong>
         </p>
       )}
-      <Textarea
-        placeholder="Provide constructive feedback to the mapper with a changeset comment."
-        value={value}
-        onChange={(event) => {
-          setDraft(event.target.value)
-          if (error) setError(false)
-          if (success) setSuccess(false)
-        }}
-        rows={4}
-      />
+      <form.Field name="comment">
+        {(field) => (
+          <Textarea
+            placeholder="Provide constructive feedback to the mapper with a changeset comment."
+            value={field.state.value}
+            onBlur={field.handleBlur}
+            onChange={(event) => {
+              field.handleChange(event.target.value)
+              if (error) setError(false)
+              if (success) setSuccess(false)
+            }}
+            rows={4}
+          />
+        )}
+      </form.Field>
       <div className="flex justify-end">
         <Button
-          onClick={handleSubmit}
+          type="button"
           className="min-h-11 cursor-pointer touch-manipulation select-none"
+          onClick={() => void form.handleSubmit()}
         >
           Post Comment
         </Button>

@@ -1,27 +1,36 @@
-import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
+import { z } from 'zod'
 import { useAuthStore } from '../stores/authStore.ts'
 import { Button } from './ui/button.tsx'
 import { Input } from './ui/input.tsx'
 import { Text, TextLink } from './ui/text.tsx'
+
+const tokenSchema = z.object({
+  token: z.string().trim().min(1, 'API token is required'),
+})
 
 interface TokenImportProps {
   compact?: boolean
 }
 
 export function TokenImport({ compact = false }: TokenImportProps) {
-  const [value, setValue] = useState('')
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    const token = value.trim()
-    if (!token) return
-    useAuthStore.getState().setToken(token)
-    setValue('')
-  }
+  const form = useForm({
+    defaultValues: { token: '' },
+    validators: {
+      onSubmit: tokenSchema,
+    },
+    onSubmit: ({ value }) => {
+      useAuthStore.getState().setToken(value.token.trim())
+      form.reset()
+    },
+  })
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(event) => {
+        event.preventDefault()
+        void form.handleSubmit()
+      }}
       className={compact ? 'flex items-center gap-2' : 'flex flex-col items-center gap-2'}
     >
       {!compact && (
@@ -34,25 +43,34 @@ export function TokenImport({ compact = false }: TokenImportProps) {
         </Text>
       )}
       <div className="flex items-center gap-2">
-        <Input
-          type="password"
-          name="osmcha-api-token"
-          placeholder="API token"
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          aria-label="OSMCha API token"
-          className="w-44"
-        />
-        <Button
-          type="submit"
-          disabled={!value.trim()}
-          className="min-h-11 cursor-pointer touch-manipulation select-none"
-        >
-          Save
-        </Button>
+        <form.Field name="token">
+          {(field) => (
+            <Input
+              type="password"
+              name="osmcha-api-token"
+              placeholder="API token"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-label="OSMCha API token"
+              className="w-44"
+            />
+          )}
+        </form.Field>
+        <form.Subscribe selector={(state) => state.values.token}>
+          {(token) => (
+            <Button
+              type="submit"
+              disabled={!token.trim()}
+              className="min-h-11 cursor-pointer touch-manipulation select-none"
+            >
+              Save
+            </Button>
+          )}
+        </form.Subscribe>
       </div>
     </form>
   )
