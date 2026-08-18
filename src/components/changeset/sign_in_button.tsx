@@ -1,4 +1,6 @@
 import { getAuthUrl } from "../../network/auth.ts";
+import { isLocalOAuthHost } from "../../utils/auth.ts";
+import { TokenImport } from "../token_import.tsx";
 
 interface SignInButtonProps {
   text: string;
@@ -6,6 +8,10 @@ interface SignInButtonProps {
 }
 
 function SignInButton({ text, className }: SignInButtonProps) {
+  if (!isLocalOAuthHost()) {
+    return <TokenImport />;
+  }
+
   const handleLoginClick = () => {
     getAuthUrl().then((res) => {
       window.location.assign(res.auth_url);

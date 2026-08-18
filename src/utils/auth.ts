@@ -3,6 +3,52 @@ import { postFinalTokensOSMCha } from "../network/auth.ts";
 import { useAuthStore } from "../stores/authStore.ts";
 
 /**
+ * OSM OAuth against production only works when this origin is localhost
+ * (Django overrides the redirect URI for those hosts).
+ */
+export function isLocalOAuthHost(
+  hostname: string = window.location.hostname,
+): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
+/**
+ * If `search` contains a non-empty `token` param, return it and the same query
+ * with `token` removed. Does not persist or log the value.
+ *
+ * Splits on `&` instead of URLSearchParams so OSMCha's unencoded JSON
+ * `filters={...}` query is left intact.
+ */
+export function takeAuthTokenFromSearch(
+  search: string,
+): { token: string; nextSearch: string } | null {
+  const raw = search.startsWith("?") ? search.slice(1) : search;
+  if (!raw) return null;
+
+  const rest: string[] = [];
+  let token = "";
+  for (const part of raw.split("&")) {
+    const eq = part.indexOf("=");
+    const key = eq === -1 ? part : part.slice(0, eq);
+    if (key === "token") {
+      if (!token) {
+        const value = eq === -1 ? "" : part.slice(eq + 1);
+        try {
+          token = decodeURIComponent(value.replace(/\+/g, " ")).trim();
+        } catch {
+          token = value.trim();
+        }
+      }
+      continue;
+    }
+    rest.push(part);
+  }
+  if (!token) return null;
+  const next = rest.join("&");
+  return { token, nextSearch: next ? `?${next}` : "" };
+}
+
+/**
  * Completes OAuth login flow by exchanging code for token.
  */
 export async function completeOAuthLogin(code: string) {

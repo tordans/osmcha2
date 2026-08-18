@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router'
+import { Route, Routes, useLocation, useNavigate } from 'react-router'
 import { useAppHeight } from './hooks/useAppHeight.ts'
+import { useAuthStore } from './stores/authStore.ts'
+import { takeAuthTokenFromSearch } from './utils/auth.ts'
 import { About } from './views/about.tsx'
 import { Authorized } from './views/authorized.tsx'
 import { Changeset } from './views/changeset.tsx'
@@ -17,6 +19,7 @@ import { Watchlist } from './views/watchlist.tsx'
 
 export const App = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   useAppHeight()
 
   useEffect(() => {
@@ -28,6 +31,19 @@ export const App = () => {
       document.body.className = ''
     }
   }, [location])
+
+  useEffect(
+    function consumeAuthTokenQueryParam() {
+      const result = takeAuthTokenFromSearch(location.search)
+      if (!result) return
+      useAuthStore.getState().setToken(result.token)
+      void navigate(
+        { pathname: location.pathname, search: result.nextSearch, hash: location.hash },
+        { replace: true },
+      )
+    },
+    [location.hash, location.pathname, location.search, navigate],
+  )
 
   return (
     <div className="app-layout">

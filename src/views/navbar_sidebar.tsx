@@ -3,9 +3,11 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "../components/button.tsx";
 import { Dropdown } from "../components/dropdown.tsx";
 import { Navbar } from "../components/navbar.tsx";
+import { TokenImport } from "../components/token_import.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { getAuthUrl } from "../network/auth.ts";
 import { useAuthStore } from "../stores/authStore.ts";
+import { isLocalOAuthHost } from "../utils/auth.ts";
 import { isMobile } from "../utils/isMobile.ts";
 
 interface UserData {
@@ -24,6 +26,7 @@ function NavbarSidebar() {
   const mobile = isMobile();
 
   const handleLoginClick = () => {
+    if (!isLocalOAuthHost()) return;
     getAuthUrl().then((res) => {
       window.location.assign(res.auth_url);
     });
@@ -137,10 +140,12 @@ function NavbarSidebar() {
           </Link>
           {token ? (
             <div className="pointer">{renderUserMenuOptions()}</div>
-          ) : (
+          ) : isLocalOAuthHost() ? (
             <Button onClick={handleLoginClick} iconName="osm">
               Sign in
             </Button>
+          ) : (
+            <TokenImport compact />
           )}
         </div>
       }
