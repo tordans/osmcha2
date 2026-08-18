@@ -20,12 +20,15 @@ interface ChangesetData {
 }
 
 function Changeset() {
-  const { setFilters } = useFilters();
   const { id } = useParams<{ id: string }>();
   const changesetId = id ? parseInt(id, 10) : null;
 
-  const { data: currentChangeset, error } = useChangeset(changesetId);
+  return <ChangesetSession key={changesetId ?? "none"} changesetId={changesetId} />;
+}
 
+function ChangesetSession({ changesetId }: { changesetId: number | null }) {
+  const { setFilters } = useFilters();
+  const { data: currentChangeset, error } = useChangeset(changesetId);
   const changeset = currentChangeset as ChangesetData | undefined;
 
   const [camera, setCamera] = useState<any>(null);
@@ -61,31 +64,30 @@ function Changeset() {
     }
   }, [changeset, setFilters]);
 
-  useEffect(() => {
-    Mousetrap.bind(FILTER_BY_USER.bindings, filterChangesetsByUser);
-    return () => {
-      for (const k of FILTER_BY_USER.bindings) {
-        Mousetrap.unbind(k);
-      }
-    };
-  }, [filterChangesetsByUser]);
+  useEffect(
+    function bindFilterByUserShortcut() {
+      Mousetrap.bind(FILTER_BY_USER.bindings, filterChangesetsByUser);
+      return function unbindFilterByUserShortcut() {
+        for (const k of FILTER_BY_USER.bindings) {
+          Mousetrap.unbind(k);
+        }
+      };
+    },
+    [filterChangesetsByUser],
+  );
 
-  useEffect(() => {
-    setSelected(null);
-    setShowElements(["node", "way", "relation"]);
-    setShowActions(["create", "modify", "delete", "noop"]);
-  }, []);
-
-  useEffect(() => {
-    if (error) {
+  useEffect(
+    function toastChangesetLoadError() {
+      if (!error) return;
       showToast({
         kind: "error",
         title: `changeset:${changesetId} failed to load`,
         description: "Try reloading osmcha",
       });
       console.error(error);
-    }
-  }, [error, changesetId]);
+    },
+    [error, changesetId],
+  );
 
   return (
     <ChangesetWorkspace

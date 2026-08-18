@@ -35,14 +35,20 @@ export function Tags({ changesetId, disabled, currentChangeset }: TagsProps) {
         })
     }
 
+    let cancelled = false
     cachedTagsPromise
       .then((json) => {
+        if (cancelled) return
         const selectData = json.results.filter((d: any) => d.is_visible && d.for_changeset)
         setOptions(selectData.map((d: any) => ({ label: d.name, value: d.id })))
       })
       .catch((error) => {
+        if (cancelled) return
         console.error('Error processing tags:', error)
       })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const onAdd = (obj: { label: string; value: number }) => {

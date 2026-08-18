@@ -38,7 +38,7 @@ export function CommentForm({
     setValue((current) => {
       if (current !== '') return current
       const userCommentedBefore = discussions.some(
-        (item) => item.userName === userDetails.username,
+        (item) => (item.user ?? item.userName) === userDetails.username,
       )
       if (changesetIsHarmful == null || userCommentedBefore) return current
       return changesetIsHarmful

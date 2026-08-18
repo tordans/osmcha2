@@ -82,6 +82,7 @@ function Discussions({
       {token ? (
         <div className="my-3">
           <CommentForm
+            key={changesetId}
             changesetId={changesetId}
             changesetIsHarmful={changesetIsHarmful}
             discussions={discussions}

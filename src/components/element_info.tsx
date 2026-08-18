@@ -1,7 +1,7 @@
 import { ArrowRightIcon, ClockIcon, FlagIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import { diffArrays } from 'diff'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { osmUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { flagFeature, unflagFeature } from '../network/changeset.ts'
@@ -77,7 +77,13 @@ function ElementInfo({ changeset, changesetId, action, setHighlight }: ElementIn
       <div className="mt-2 flex flex-wrap items-center gap-1">
         <HistoryDropdown id={elementId} />
         <DropdownOpenElement type={type} id={id} lat={lat} lon={lon} />
-        <FlagButton changeset={changeset} changesetId={changesetId} featureId={elementId} token={token} />
+        <FlagButton
+          key={elementId}
+          changeset={changeset}
+          changesetId={changesetId}
+          featureId={elementId}
+          token={token}
+        />
       </div>
       <MetadataTable changesetId={changesetId} action={action} />
       <TagsTable action={action} />
@@ -129,23 +135,22 @@ function FlagButton({
   featureId: string
   token: string | null
 }) {
-  const [flagged, setFlagged] = useState(false)
+  const reviewedFeatures = changeset?.properties?.reviewed_features || []
+  const serverFlagged = reviewedFeatures.some(
+    (entry: { id?: string }) => entry.id === featureId.replace('/', '-'),
+  )
+  const [optimisticFlagged, setOptimisticFlagged] = useState<boolean | null>(null)
+  const flagged = optimisticFlagged ?? serverFlagged
 
-  useEffect(() => {
-    const reviewedFeatures = changeset?.properties?.reviewed_features || []
-    const isFlagged =
-      reviewedFeatures.find((e: any) => e.id === featureId.replace('/', '-')) !== undefined
-    setFlagged(isFlagged)
-  }, [changeset, featureId])
-
-  const handleClick = async () => {
+  const handleClick = () => {
     if (!token) return
+    const next = !flagged
+    setOptimisticFlagged(next)
     if (flagged) {
       unflagFeature(changesetId, featureId)
     } else {
       flagFeature(changesetId, featureId)
     }
-    setFlagged(!flagged)
   }
 
   return (
