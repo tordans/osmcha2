@@ -1,85 +1,58 @@
-import { Link } from "react-router";
-import thumbsDown from "../../assets/thumbs-down.svg";
-import thumbsUp from "../../assets/thumbs-up.svg";
-import { getObjAsQueryParam } from "../../utils/query_params.ts";
-import { CreateDeleteModify } from "../create_delete_modify.tsx";
-import { NumberOfComments } from "./comments.tsx";
+import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
+import { Badge } from '../ui/badge.tsx'
+
+type NamedTag = { id?: number; name: string }
 
 interface SecondaryLineProps {
-  changesetId: number;
-  properties: {
-    checked: boolean;
-    check_user: string;
-    harmful: boolean;
-    comments_count: number;
-    create: number;
-    modify: number;
-    delete: number;
-  };
+  checked?: boolean
+  checkUser?: string | null
+  harmful?: boolean | null
+  reasons?: NamedTag[]
+  tags?: NamedTag[]
 }
 
-export function SecondaryLine({ changesetId, properties }: SecondaryLineProps) {
-  return (
-    <span className="flex-parent flex-parent--row justify--space-between txt-light txt-s color-gray">
-      <span>
-        <Link
-          to={{
-            search: window.location.search,
-            pathname: `/changesets/${changesetId}`,
-          }}
-          className="txt-underline-on-hover"
-        >
-          <span className="mr6">{changesetId}</span>
-        </Link>
-        {properties.checked ? (
-          <Link
-            to={{
-              search: getObjAsQueryParam("filters", {
-                users: [
-                  {
-                    label: properties.check_user,
-                    value: properties.check_user,
-                  },
-                ],
-                date__gte: [{ label: "", value: "" }],
-              }),
-              pathname: "/",
-            }}
-            title={`See ${properties.check_user}'s changesets`}
-            className="txt-underline-on-hover"
-          >
-            {properties.harmful ? (
-              <img
-                src={thumbsDown}
-                alt="Marked as bad"
-                className="icon inline-block"
-              />
-            ) : (
-              <img
-                src={thumbsUp}
-                alt="Marked as good"
-                className="icon inline-block"
-              />
-            )}
-            {properties.check_user && (
-              <span className="pl6">{`by ${properties.check_user}`}</span>
-            )}
-          </Link>
-        ) : null}
-      </span>
-      <span className="flex-parent flex-parent--row">
-        {properties.comments_count > 0 && (
-          <NumberOfComments count={properties.comments_count} />
-        )}
-        <CreateDeleteModify
-          showZero
-          className="mr3"
-          create={properties.create}
-          modify={properties.modify}
-          delete={properties.delete}
-        />
-      </span>
-    </span>
-  );
+const RESOLVED_TAG_ID = 9
+
+function hasResolvedTag(tags: NamedTag[]) {
+  return tags.some((tag) => tag.id === RESOLVED_TAG_ID)
 }
-//  <svg className="icon inline-block align-middle "> //       <use xlinkHref="#icon-options" /> //     </svg>
+
+export function SecondaryLine({
+  checked,
+  checkUser,
+  harmful,
+  reasons = [],
+  tags = [],
+}: SecondaryLineProps) {
+  const resolved = hasResolvedTag(tags)
+
+  return (
+    <div className="flex flex-col gap-2">
+      {checked ? (
+        <Badge color={resolved ? 'green' : harmful ? 'orange' : 'green'}>
+          {harmful ? (
+            <HandThumbDownIcon className="size-4" />
+          ) : (
+            <HandThumbUpIcon className="size-4" />
+          )}{' '}
+          by {checkUser || <i>Unknown user</i>}
+        </Badge>
+      ) : (
+        reasons.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1">
+            {reasons.map((reason) => (
+              <Badge key={reason.id ?? reason.name}>{reason.name}</Badge>
+            ))}
+          </div>
+        )
+      )}
+      {!resolved && tags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          {tags.map((tag) => (
+            <Badge key={tag.id ?? tag.name}>{tag.name}</Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

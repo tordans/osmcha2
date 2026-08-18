@@ -1,49 +1,27 @@
-import { parse } from "date-fns";
-import { useAuth } from "../../hooks/useAuth.ts";
-import { useIsUserListed } from "../../hooks/useIsUserListed.ts";
-import { RelativeTime } from "../relative_time.tsx";
+import { parse } from 'date-fns'
+import { RelativeTime } from '../relative_time.tsx'
+import { NumberOfComments } from './comments.tsx'
+import { editorShortname } from './editorShortname.ts'
 
 interface TitleProps {
-  properties: {
-    user: string;
-    uid: number;
-  };
-  date: string;
+  date: string
+  editor?: string | null
+  commentsCount?: number
 }
 
-function Title({ properties, date }: TitleProps) {
-  const { token } = useAuth();
-  const [isInTrustedlist, isInWatchlist] = useIsUserListed(
-    properties.user,
-    properties.uid,
-    token,
-  );
+function parseChangesetDate(date: string): Date {
+  const parsed = parse(date, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
+  return Number.isNaN(parsed.getTime()) ? new Date(date) : parsed
+}
 
+export function Title({ date, editor, commentsCount }: TitleProps) {
   return (
-    <div>
-      <span className="flex-parent flex-parent--row justify--space-between align-items--center">
-        <strong className="txt-m mt3 mr6">
-          {properties.user || <i>OSM User</i>}
-          {isInTrustedlist && (
-            <svg className="icon inline-block align-middle pl3 w18 h18 color-yellow">
-              <use xlinkHref="#icon-star" />
-            </svg>
-          )}
-          {isInWatchlist && (
-            <svg className="icon inline-block align-middle pl3 w18 h18 color-red">
-              <use xlinkHref="#icon-alert" />
-            </svg>
-          )}
-        </strong>
-        <span className="txt-s mr3">
-          &nbsp;
-          <RelativeTime
-            datetime={parse(date, "yyyy-MM-dd'T'HH:mm:ssX", new Date())}
-          />
-        </span>
-      </span>
+    <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
+      <RelativeTime datetime={parseChangesetDate(date)} />
+      <div className="flex items-center gap-2">
+        {editorShortname(editor)}
+        <NumberOfComments count={commentsCount} />
+      </div>
     </div>
-  );
+  )
 }
-
-export { Title };

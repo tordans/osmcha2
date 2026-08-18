@@ -1,78 +1,72 @@
-import { useCallback, useRef } from "react";
-import { useAuth } from "../../hooks/useAuth.ts";
-import { elementInViewport } from "../../utils/element_in_view.ts";
-import { SignInButton } from "../changeset/sign_in_button.tsx";
-import { Loading } from "../loading.tsx";
-import { Row } from "./row.tsx";
+import { useCallback, useRef } from 'react'
+import { useAuth } from '../../hooks/useAuth.ts'
+import { elementInViewport } from '../../utils/element_in_view.ts'
+import { SignInButton } from '../changeset/sign_in_button.tsx'
+import { Loading } from '../loading.tsx'
+import { Row } from './row.tsx'
 
 type CurrentPage = {
   features: Array<{
-    id: number;
-    properties: any;
-  }>;
-  count: number;
-};
+    id: number
+    properties: any
+  }>
+  count: number
+}
 
 type Props = {
-  currentPage?: CurrentPage;
-  activeChangesetId: number | null;
-  pageIndex: number;
-  loading?: boolean;
-  location?: string;
-};
+  currentPage?: CurrentPage
+  activeChangesetId: number | null
+  pageIndex: number
+  loading?: boolean
+  location?: string
+}
 
 function List({ currentPage, activeChangesetId, loading, location }: Props) {
-  const { token } = useAuth();
-  const activeRef = useRef<HTMLElement | null>(null);
+  const { token } = useAuth()
+  const activeRef = useRef<HTMLElement | null>(null)
 
   const handleScroll = useCallback((r: HTMLElement | null) => {
-    if (!r) return;
-    activeRef.current = r;
+    if (!r) return
+    activeRef.current = r
     if (!elementInViewport(r)) {
-      r.scrollIntoView({ block: "end", behavior: "smooth" });
+      r.scrollIntoView({ block: 'end', behavior: 'smooth' })
     }
-  }, []);
+  }, [])
 
   if (loading) {
-    return <Loading />;
+    return <Loading />
   }
 
-  if (
-    !token &&
-    location &&
-    ["/about", "/filters", "/user", "/"].includes(location)
-  ) {
+  if (!token && location && ['/about', '/filters', '/user', '/'].includes(location)) {
     return (
       <div className="flex-parent flex-parent--column scroll-styled flex-child--grow py36">
         <div className="flex-parent flex-parent--column flex-parent--center-cross">
-          <svg className="icon h60 w60 inline-block align-middle pb3">
+          <svg className="icon h60 w60 pb3 inline-block align-middle">
             <use xlinkHref="#icon-osm" />
           </svg>
         </div>
-        <div className="flex-parent flex-parent--center-main align-center txt-l pt36">
+        <div className="flex-parent flex-parent--center-main txt-l pt36 align-center">
           <SignInButton text="Sign in with your OpenStreetMap account" />
         </div>
       </div>
-    );
+    )
   }
 
-  const features = currentPage?.features;
+  const features = currentPage?.features
 
   return (
-    <ul className="flex-parent flex-parent--column scroll-styled flex-child--grow">
-      <div>
-        {features?.map((f, k) => (
-          <Row
-            active={f.id === activeChangesetId}
-            properties={f.properties}
-            changesetId={f.id}
-            inputRef={f.id === activeChangesetId ? handleScroll : undefined}
-            key={k}
-          />
-        ))}
-      </div>
+    <ul className="flex-parent flex-parent--column scroll-styled flex-child--grow divide-y divide-gray-100">
+      {features?.map((f) => (
+        <Row
+          active={f.id === activeChangesetId}
+          properties={f.properties}
+          changesetId={f.id}
+          inputRef={f.id === activeChangesetId ? handleScroll : undefined}
+          key={f.id}
+        />
+      ))}
     </ul>
-  );
+  )
 }
 
-export { List };
+export { List }

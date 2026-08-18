@@ -1,34 +1,44 @@
-import React from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/16/solid'
+import { Button } from '../ui/button.tsx'
 
 interface PageRangeProps {
-  page: string | number;
-  pageIndex: number;
-  disabled?: boolean;
-  active: boolean;
-  getChangesetsPage: (pageIndex: number) => unknown;
+  page: string | number
+  pageIndex: number
+  disabled?: boolean
+  active: boolean
+  getChangesetsPage: (pageIndex: number) => unknown
 }
 
-export class PageRange extends React.PureComponent<PageRangeProps> {
-  render() {
-    return (
-      <button
-        onClick={this._onClick}
-        disabled={this.props.disabled}
-        className={`flex-child btn btn--s color-gray round bg-gray-faint bg-darken10-on-active bg-darken5-on-hover
-          ${this.props.active && "is-active "}
-          `}
-      >
-        {typeof this.props.page === "number" ? (
-          this.props.page + 1
-        ) : (
-          <svg className="icon icon--s inline-block align-middle ">
-            <use xlinkHref={`#icon-${this.props.page}`} />
-          </svg>
-        )}
-      </button>
-    );
-  }
-  _onClick = () => {
-    this.props.getChangesetsPage(this.props.pageIndex);
-  };
+export function PageRange({
+  page,
+  pageIndex,
+  disabled,
+  active,
+  getChangesetsPage,
+}: PageRangeProps) {
+  const label =
+    typeof page === 'number'
+      ? `Page ${page + 1}`
+      : page === 'arrow-left'
+        ? 'Previous page'
+        : 'Next page'
+
+  return (
+    <Button
+      {...(active ? { color: 'zinc' as const } : { plain: true as const })}
+      disabled={disabled}
+      onClick={() => getChangesetsPage(pageIndex)}
+      className="min-h-11 min-w-11"
+      aria-label={label}
+      aria-current={active ? 'page' : undefined}
+    >
+      {typeof page === 'number' ? (
+        page + 1
+      ) : page === 'arrow-left' ? (
+        <ChevronLeftIcon data-slot="icon" className="size-5" />
+      ) : (
+        <ChevronRightIcon data-slot="icon" className="size-5" />
+      )}
+    </Button>
+  )
 }

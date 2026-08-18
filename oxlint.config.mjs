@@ -22,6 +22,8 @@ export default defineConfig({
     'src/components/**',
     '!src/components/ui/',
     '!src/components/ui/**',
+    '!src/components/list/',
+    '!src/components/list/**',
     'src/network/**',
     'src/query/**',
     'src/stores/**',

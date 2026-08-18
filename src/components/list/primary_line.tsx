@@ -1,17 +1,30 @@
-import { Reasons } from "../reasons.tsx";
+import { ExclamationTriangleIcon, StarIcon } from '@heroicons/react/16/solid'
+import { useAuth } from '../../hooks/useAuth.ts'
+import { useIsUserListed } from '../../hooks/useIsUserListed.ts'
 
 interface PrimaryLineProps {
-  reasons: any[];
-  comment: string;
-  tags: any[];
+  user?: string
+  uid?: number | string
+  comment?: string | null
 }
 
-export function PrimaryLine({ reasons, comment, tags }: PrimaryLineProps) {
+export function PrimaryLine({ user, uid, comment }: PrimaryLineProps) {
+  const { token } = useAuth()
+  const [isInTrustedlist, isInWatchlist] = useIsUserListed(user ?? '', Number(uid) || 0, token)
+
   return (
-    <span className="flex-parent flex-parent--column">
-      <p className="flex-child truncate-3-lines my6 txt-break-url">{comment}</p>
-      <Reasons reasons={reasons} color="blue" />
-      <Reasons reasons={tags} color="red" />
-    </span>
-  );
+    <p className="w-full leading-tight hyphens-auto" lang="en">
+      <strong className="font-semibold">
+        {user || <i>OSM User</i>}
+        {isInTrustedlist && (
+          <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
+        )}
+        {isInWatchlist && (
+          <ExclamationTriangleIcon className="ml-1 inline-block size-4 align-text-bottom text-red-500" />
+        )}
+        :
+      </strong>{' '}
+      {comment || 'NO COMMENT'}
+    </p>
+  )
 }

@@ -1,70 +1,70 @@
-import React from "react";
-import { Link } from "react-router";
-import { PrimaryLine } from "./primary_line.tsx";
-import { SecondaryLine } from "./secondary_line.tsx";
-import { Title } from "./title.tsx";
+import { ChevronRightIcon } from '@heroicons/react/20/solid'
+import clsx from 'clsx'
+import { memo } from 'react'
+import { useLocation } from 'react-router'
+import { Link } from '../ui/link.tsx'
+import { PrimaryLine } from './primary_line.tsx'
+import { SecondaryLine } from './secondary_line.tsx'
+import { Title } from './title.tsx'
 
 interface RowProps {
-  properties: any;
-  active?: boolean;
-  changesetId: number;
-  inputRef?: (a: any) => any;
+  properties: {
+    user?: string
+    uid?: number | string
+    date?: string
+    editor?: string | null
+    created_by?: string | null
+    comment?: string | null
+    comments_count?: number
+    checked?: boolean
+    check_user?: string | null
+    harmful?: boolean | null
+    reasons?: Array<{ id?: number; name: string }>
+    tags?: Array<{ id?: number; name: string }>
+  }
+  active?: boolean
+  changesetId: number
+  inputRef?: (node: HTMLElement | null) => void
 }
 
-export class Row extends React.Component<RowProps> {
-  shouldComponentUpdate(nextProps: any) {
-    return (
-      nextProps.properties !== this.props.properties ||
-      this.props.active ||
-      nextProps.active
-    );
-  }
+function RowInner({ properties, changesetId, active, inputRef }: RowProps) {
+  const { search } = useLocation()
+  const editor = properties.editor || properties.created_by
 
-  wasOpen = false;
-
-  render() {
-    const { properties, changesetId, active, inputRef, ...other } = this.props;
-    if (!this.wasOpen) {
-      // way to show read/unread state without
-      // performance compromise. The moment component
-      // gets active we set wasOpen to true and never
-      // toggle it back to any other state.
-      this.wasOpen = !!this.props.active;
-    }
-
-    let borderClass = "border-l border-l--4 border-color-neutral";
-    if (properties.harmful === true)
-      borderClass = "border-l border-l--4 border-color-bad";
-    if (properties.harmful === false)
-      borderClass = "border-l border-l--4 border-color-good";
-
-    let backgroundClass = "";
-
-    backgroundClass += active ? "light-blue" : this.wasOpen ? "bg-darken5" : "";
-    return (
-      <div>
-        <div className={`${backgroundClass} ${borderClass}`} ref={inputRef}>
-          <div
-            {...other}
-            className="p12 cursor-pointer flex-parent flex-parent--column border-b border-b--1 border--gray-light flex-parent flex-parent--column"
-          >
-            <Link
-              to={{
-                search: window.location.search,
-                pathname: `/changesets/${changesetId}`,
-              }}
-            >
-              <Title properties={properties} date={properties.date} />
-              <PrimaryLine
-                reasons={properties.reasons}
-                tags={properties.tags}
-                comment={properties.comment}
-              />
-            </Link>
-            <SecondaryLine changesetId={changesetId} properties={properties} />
+  return (
+    <li className="relative" ref={inputRef}>
+      <Link
+        href={`/changesets/${changesetId}${search}`}
+        className={clsx(
+          'relative flex min-h-11 flex-col items-start justify-between gap-1 rounded pt-2.5 pr-0.5 pb-2 pl-3 break-words',
+          'cursor-pointer touch-manipulation select-none',
+          active ? 'bg-blue-50 active:bg-blue-100' : 'hover:bg-gray-50 active:bg-zinc-100',
+        )}
+      >
+        <Title
+          date={properties.date ?? ''}
+          editor={editor}
+          commentsCount={properties.comments_count}
+        />
+        <div className="flex w-full items-center justify-between gap-1 text-base">
+          <div className="flex w-full flex-col gap-2">
+            <PrimaryLine user={properties.user} uid={properties.uid} comment={properties.comment} />
+            <SecondaryLine
+              checked={properties.checked}
+              checkUser={properties.check_user}
+              harmful={properties.harmful}
+              reasons={properties.reasons}
+              tags={properties.tags}
+            />
           </div>
+          <ChevronRightIcon
+            className={clsx('size-6 flex-none', active ? 'text-blue-500' : 'text-zinc-300')}
+            aria-hidden="true"
+          />
         </div>
-      </div>
-    );
-  }
+      </Link>
+    </li>
+  )
 }
+
+export const Row = memo(RowInner)

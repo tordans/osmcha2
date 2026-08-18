@@ -1,14 +1,12 @@
+import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
+import { Badge } from '../ui/badge.tsx'
+
 export function NumberOfComments({ count }: { count?: number }) {
-  const displayCount = count ?? 0;
+  if (!count) return null
+
   return (
-    <span
-      className="mr6"
-      title={`${displayCount} comment${displayCount > 1 ? "s" : ""}`}
-    >
-      <span>{displayCount}</span>
-      <svg className="icon h18 w18 inline-block align-middle color-darken25">
-        <use xlinkHref="#icon-contact" />
-      </svg>
-    </span>
-  );
+    <Badge aria-label={`${count} comments`} className="flex flex-none items-center gap-1">
+      <ChatBubbleLeftIcon className="size-4" /> {count}
+    </Badge>
+  )
 }
