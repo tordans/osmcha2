@@ -1,17 +1,18 @@
-FROM node:22-alpine as builder
+FROM oven/bun:1.3.14-alpine AS builder
 
 WORKDIR /app
-RUN apk update && apk add curl git jq
+RUN apk add --no-cache jq
 
-COPY package.json package-lock.json .
-RUN npm clean-install
+# Do not copy bunfig.toml before install (globalStore breaks image installs).
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN bun run build
 
 FROM nginx:alpine
 
-RUN apk update && apk add jq
+RUN apk add --no-cache jq
 
 COPY --from=builder /app/build /srv/www
 COPY docker/nginx.conf /etc/nginx/templates/default.conf.template

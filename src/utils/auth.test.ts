@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { isLocalOAuthHost, takeAuthTokenFromSearch } from "./auth.ts";
+import { isOsmOAuthHost, takeAuthTokenFromSearch } from "./auth.ts";
 
-describe("isLocalOAuthHost", () => {
-  it("allows OSM OAuth on localhost and 127.0.0.1", () => {
-    expect(isLocalOAuthHost("localhost")).toBe(true);
-    expect(isLocalOAuthHost("127.0.0.1")).toBe(true);
+describe("isOsmOAuthHost", () => {
+  it("allows OSM OAuth on localhost and osmcha.org", () => {
+    expect(isOsmOAuthHost("localhost")).toBe(true);
+    expect(isOsmOAuthHost("127.0.0.1")).toBe(true);
+    expect(isOsmOAuthHost("osmcha.org")).toBe(true);
+    expect(isOsmOAuthHost("www.osmcha.org")).toBe(true);
   });
 
-  it("blocks OSM OAuth on public hosts", () => {
-    expect(isLocalOAuthHost("osmcha.github.io")).toBe(false);
-    expect(isLocalOAuthHost("osmcha.org")).toBe(false);
-    expect(isLocalOAuthHost("example.com")).toBe(false);
+  it("blocks OSM OAuth on other public hosts", () => {
+    expect(isOsmOAuthHost("osmcha.github.io")).toBe(false);
+    expect(isOsmOAuthHost("example.com")).toBe(false);
   });
 });
 

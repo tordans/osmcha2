@@ -3,13 +3,19 @@ import { postFinalTokensOSMCha } from "../network/auth.ts";
 import { useAuthStore } from "../stores/authStore.ts";
 
 /**
- * OSM OAuth against production only works when this origin is localhost
- * (Django overrides the redirect URI for those hosts).
+ * OSM OAuth only completes when this origin is a registered redirect:
+ * localhost / 127.0.0.1 (Django origin override) or osmcha.org.
+ * Other public hosts (e.g. github.io) must paste an API token.
  */
-export function isLocalOAuthHost(
+export function isOsmOAuthHost(
   hostname: string = window.location.hostname,
 ): boolean {
-  return hostname === "localhost" || hostname === "127.0.0.1";
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "osmcha.org" ||
+    hostname === "www.osmcha.org"
+  )
 }
 
 /**

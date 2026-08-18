@@ -1,6 +1,6 @@
 import { GlobeAltIcon } from '@heroicons/react/16/solid'
 import { getAuthUrl } from '../../network/auth.ts'
-import { isLocalOAuthHost } from '../../utils/auth.ts'
+import { isOsmOAuthHost } from '../../utils/auth.ts'
 import { TokenImport } from '../token_import.tsx'
 import { Button } from '../ui/button.tsx'
 
@@ -9,7 +9,7 @@ interface SignInButtonProps {
 }
 
 function SignInButton({ text }: SignInButtonProps) {
-  if (!isLocalOAuthHost()) {
+  if (!isOsmOAuthHost()) {
     return <TokenImport />
   }
 

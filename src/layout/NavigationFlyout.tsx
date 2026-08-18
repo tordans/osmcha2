@@ -19,7 +19,7 @@ import { useFilters } from '../hooks/useFilters.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { useAllAOIs } from '../query/hooks/useAOI.ts'
 import { useAuthStore } from '../stores/authStore.ts'
-import { isLocalOAuthHost } from '../utils/auth.ts'
+import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
 
 type UserData = {
@@ -88,7 +88,7 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
   const search = location.search
 
   const handleLoginClick = () => {
-    if (!isLocalOAuthHost()) return
+    if (!isOsmOAuthHost()) return
     void getAuthUrl().then((res) => {
       window.location.assign(res.auth_url)
     })
@@ -241,7 +241,7 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
                   <SidebarItem onClick={handleLogout}>
                     <SidebarLabel>Sign out</SidebarLabel>
                   </SidebarItem>
-                ) : isLocalOAuthHost() ? (
+                ) : isOsmOAuthHost() ? (
                   <SidebarItem onClick={handleLoginClick}>
                     <SidebarLabel>Sign in</SidebarLabel>
                   </SidebarItem>

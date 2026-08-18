@@ -16,19 +16,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: npm
+          bun-version: 1.3.14
 
       - name: Install dependencies
-        run: npm clean-install
+        run: bun install --frozen-lockfile
 
-      - run: npm run typecheck
-
-      - run: npx biome format .
-
-      - run: npm run lint
-
-      - run: npm test
+      - run: bun run check-ci

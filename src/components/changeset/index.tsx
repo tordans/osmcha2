@@ -14,6 +14,7 @@ import { getUsers } from "../../network/whosthat.ts";
 import { useChangesetMap } from "../../query/hooks/useChangesetMap.ts";
 import { DebugDataHelper } from "../debug/DebugDataHelper.tsx";
 import ElementInfo from "../element_info.tsx";
+import { exclusiveKeyToggleState } from "./exclusiveKeyToggle.ts";
 import { MapOptions } from "./map_options.tsx";
 import { ReviewColumn } from "./ReviewColumn.tsx";
 import type { ReviewCamera } from "./openInUrls.ts";
@@ -76,13 +77,7 @@ function Changeset({
   );
 
   const exclusiveKeyToggle = useCallback((label: string) => {
-    setBindingsState(() => {
-      const newState: Record<string, boolean> = {};
-      for (const opt of columnToggleOptions) {
-        newState[opt.label] = opt.label === label;
-      }
-      return newState;
-    });
+    setBindingsState((prev) => exclusiveKeyToggleState(columnToggleOptions, prev, label));
   }, []);
 
   useEffect(() => {

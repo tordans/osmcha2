@@ -1,10 +1,10 @@
 import { GlobeAltIcon } from '@heroicons/react/24/solid'
-import { isLocalOAuthHost } from '../utils/auth.ts'
+import { isOsmOAuthHost } from '../utils/auth.ts'
 import { SignInButton } from './changeset/sign_in_button.tsx'
 import { TokenImport } from './token_import.tsx'
 
 export function SignIn() {
-  const localOAuth = isLocalOAuthHost()
+  const localOAuth = isOsmOAuthHost()
 
   return (
     <div className="flex h-full flex-col items-center justify-center bg-zinc-50 px-4">

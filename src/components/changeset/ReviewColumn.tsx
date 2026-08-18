@@ -68,10 +68,11 @@ export function ReviewColumn({
 
   const selectPanel = useCallback(
     (label: string) => {
+      const turningOn = !bindingsState[label]
       exclusiveKeyToggle(label)
-      setExpanded(true)
+      if (turningOn) setExpanded(true)
     },
-    [exclusiveKeyToggle],
+    [bindingsState, exclusiveKeyToggle],
   )
 
   useEffect(() => {

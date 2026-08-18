@@ -13,13 +13,13 @@
       name="keywords"
       content="OpenStreetMap, OSM, validation, changeset, open data, quality assurance"
     />
-    <link rel="preload" href="env.json" as="fetch" type="application/json" />
+    <link rel="preload" href="%BASE_URL%env.json" as="fetch" type="application/json" />
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module">
-      fetch(new URL('env.json', import.meta.url))
+      fetch(`${import.meta.env.BASE_URL}env.json`)
         .then((res) => res.json())
         .then((env) => {
           window.env = env

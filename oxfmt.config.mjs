@@ -69,6 +69,8 @@ export default defineConfig({
     '!src/components/changeset/map_options.tsx',
     '!src/components/changeset/openInUrls.ts',
     '!src/components/changeset/openInUrls.test.ts',
+    '!src/components/changeset/exclusiveKeyToggle.ts',
+    '!src/components/changeset/exclusiveKeyToggle.test.ts',
     'src/network/**',
     'src/query/**',
     'src/stores/**',
