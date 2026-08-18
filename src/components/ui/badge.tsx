@@ -25,10 +25,14 @@ const colors = {
   zinc: 'bg-zinc-600/10 text-zinc-700 group-data-hover:bg-zinc-600/20',
 }
 
-type BadgeProps = { color?: keyof typeof colors }
+type BadgeProps = {
+  color?: keyof typeof colors
+  rounded?: 'none' | 'left' | 'right' | 'full'
+}
 
 export function Badge({
   color = 'zinc',
+  rounded = 'full',
   className,
   ...props
 }: BadgeProps & React.ComponentPropsWithoutRef<'span'>) {
@@ -37,7 +41,10 @@ export function Badge({
       {...props}
       className={clsx(
         className,
-        'inline-flex items-center gap-x-1.5 rounded-md px-1.5 py-0.5 text-sm/5 font-medium sm:text-xs/5 forced-colors:outline',
+        'inline-flex items-center gap-x-1.5 px-1.5 py-0.5 text-sm/5 font-medium sm:text-xs/5 forced-colors:outline',
+        rounded === 'full' && 'rounded-md',
+        rounded === 'left' && 'rounded-l-md',
+        rounded === 'right' && 'rounded-r-md',
         colors[color],
       )}
     />
@@ -47,6 +54,7 @@ export function Badge({
 export const BadgeButton = forwardRef(function BadgeButton(
   {
     color = 'zinc',
+    rounded = 'full',
     className,
     children,
     ...props
@@ -58,19 +66,26 @@ export const BadgeButton = forwardRef(function BadgeButton(
 ) {
   const classes = clsx(
     className,
-    'group relative inline-flex rounded-md focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+    'group relative inline-flex focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+    rounded === 'full' && 'rounded-md',
+    rounded === 'left' && 'rounded-l-md',
+    rounded === 'right' && 'rounded-r-md',
   )
 
   return typeof props.href === 'string' ? (
     <Link {...props} className={classes} ref={ref as React.ForwardedRef<HTMLAnchorElement>}>
       <TouchTarget>
-        <Badge color={color}>{children}</Badge>
+        <Badge color={color} rounded={rounded}>
+          {children}
+        </Badge>
       </TouchTarget>
     </Link>
   ) : (
     <Headless.Button {...props} className={classes} ref={ref}>
       <TouchTarget>
-        <Badge color={color}>{children}</Badge>
+        <Badge color={color} rounded={rounded}>
+          {children}
+        </Badge>
       </TouchTarget>
     </Headless.Button>
   )
