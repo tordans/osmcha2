@@ -1,6 +1,6 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import type { OsmchaSearch } from '../routing/searchSchemas.ts'
+import { EMPTY_FILTERS, type OsmchaSearch } from '../routing/searchSchemas.ts'
 import { validateFilters } from '../utils/filters.ts'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -90,7 +90,7 @@ export function useFilters() {
   }
 
   return {
-    filters: filters ?? {},
+    filters: filters ?? EMPTY_FILTERS,
     aoiId: aoi ?? null,
     page,
     setFilters,

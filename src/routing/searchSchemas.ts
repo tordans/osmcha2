@@ -18,6 +18,9 @@ export const osmchaSearchSchema = z.object({
 
 export type OsmchaSearch = z.infer<typeof osmchaSearchSchema>
 
+/** Stable empty object for “no filters in the URL” — never allocate `{}` during render. */
+export const EMPTY_FILTERS: NonNullable<OsmchaSearch['filters']> = {}
+
 export const searchParamsRegistry = ['filters', 'aoi', 'page', 'token', 'map'] as const
 
 export type SearchParamKey = (typeof searchParamsRegistry)[number]

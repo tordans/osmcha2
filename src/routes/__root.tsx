@@ -6,7 +6,7 @@ import { useAppHeight } from '../hooks/useAppHeight.ts'
 import { AppShell } from '../layout/AppShell.tsx'
 import { aoiQueryOptions } from '../query/options/aoi.ts'
 import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
-import { osmchaSearchSchema } from '../routing/searchSchemas.ts'
+import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -43,7 +43,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     await context.queryClient.ensureQueryData(
       changesetsPageQueryOptions({
         pageIndex,
-        filters: deps.filters ?? {},
+        filters: deps.filters ?? EMPTY_FILTERS,
         aoiId: deps.aoi ?? null,
       }),
     )
