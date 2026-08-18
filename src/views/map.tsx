@@ -122,7 +122,7 @@ interface CMapProps {
   className: string;
   showElements: Array<string>;
   showActions: Array<string>;
-  mapRef: React.MutableRefObject<{
+  mapRef: React.RefObject<{
     map: maplibre.Map;
     adiffViewer: MapLibreAugmentedDiffViewer;
   } | null>;

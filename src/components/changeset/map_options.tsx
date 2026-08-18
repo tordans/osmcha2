@@ -1,7 +1,6 @@
 import * as Headless from '@headlessui/react'
 import { Square3Stack3DIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
-import { forwardRef } from 'react'
 import { useMapStore } from '../../stores/mapStore.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
@@ -35,12 +34,16 @@ type MapOptionsProps = {
   showActions: Array<string>
   setShowElements: (elements: Array<string>) => void
   setShowActions: (actions: Array<string>) => void
+  ref?: React.Ref<HTMLButtonElement>
 }
 
-export const MapOptions = forwardRef<HTMLButtonElement, MapOptionsProps>(function MapOptions(
-  { showElements, showActions, setShowElements, setShowActions },
+export function MapOptions({
+  showElements,
+  showActions,
+  setShowElements,
+  setShowActions,
   ref,
-) {
+}: MapOptionsProps) {
   const style = useMapStore((state) => state.style)
   const setStyle = useMapStore((state) => state.setStyle)
 
@@ -147,4 +150,4 @@ export const MapOptions = forwardRef<HTMLButtonElement, MapOptionsProps>(functio
       </Headless.PopoverPanel>
     </Headless.Popover>
   )
-})
+}

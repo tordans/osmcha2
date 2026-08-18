@@ -29,7 +29,7 @@ type ChangesetProps = {
   mapRef: React.RefObject<{
     map: maplibre.Map;
     adiffViewer: MapLibreAugmentedDiffViewer;
-  }>;
+  } | null>;
   selected: any;
   setSelected: (selected: any) => void;
   camera?: ReviewCamera | null;

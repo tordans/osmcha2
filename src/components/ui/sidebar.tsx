@@ -1,7 +1,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { LayoutGroup, motion } from 'motion/react'
-import React, { forwardRef, useId } from 'react'
+import { useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
 
@@ -69,18 +69,21 @@ export function SidebarHeading({ className, ...props }: React.ComponentPropsWith
   )
 }
 
-export const SidebarItem = forwardRef(function SidebarItem(
-  {
-    current,
-    className,
-    children,
-    ...props
-  }: { current?: boolean; className?: string; children: React.ReactNode } & (
-    | ({ href?: never } & Omit<Headless.ButtonProps, 'as' | 'className'>)
-    | ({ href: string } & Omit<Headless.ButtonProps<typeof Link>, 'as' | 'className'>)
-  ),
-  ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>,
-) {
+export function SidebarItem({
+  current,
+  className,
+  children,
+  ref,
+  ...props
+}: {
+  current?: boolean
+  className?: string
+  children: React.ReactNode
+  ref?: React.Ref<HTMLAnchorElement | HTMLButtonElement>
+} & (
+  | ({ href?: never } & Omit<Headless.ButtonProps, 'as' | 'className'>)
+  | ({ href: string } & Omit<Headless.ButtonProps<typeof Link>, 'as' | 'className'>)
+)) {
   let classes = clsx(
     // Base
     'flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5',
@@ -128,7 +131,7 @@ export const SidebarItem = forwardRef(function SidebarItem(
       )}
     </span>
   )
-})
+}
 
 export function SidebarLabel({ className, ...props }: React.ComponentPropsWithoutRef<'span'>) {
   return <span {...props} className={clsx(className, 'truncate')} />

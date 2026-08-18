@@ -1,6 +1,5 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import { forwardRef } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
 
@@ -51,19 +50,21 @@ export function Badge({
   )
 }
 
-export const BadgeButton = forwardRef(function BadgeButton(
-  {
-    color = 'zinc',
-    rounded = 'full',
-    className,
-    children,
-    ...props
-  }: BadgeProps & { className?: string; children: React.ReactNode } & (
-      | ({ href?: never } & Omit<Headless.ButtonProps, 'as' | 'className'>)
-      | ({ href: string } & Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>)
-    ),
-  ref: React.ForwardedRef<HTMLElement>,
-) {
+export function BadgeButton({
+  color = 'zinc',
+  rounded = 'full',
+  className,
+  children,
+  ref,
+  ...props
+}: BadgeProps & {
+  className?: string
+  children: React.ReactNode
+  ref?: React.Ref<HTMLElement>
+} & (
+    | ({ href?: never } & Omit<Headless.ButtonProps, 'as' | 'className'>)
+    | ({ href: string } & Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>)
+  )) {
   const classes = clsx(
     className,
     'group relative inline-flex focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
@@ -73,7 +74,7 @@ export const BadgeButton = forwardRef(function BadgeButton(
   )
 
   return typeof props.href === 'string' ? (
-    <Link {...props} className={classes} ref={ref as React.ForwardedRef<HTMLAnchorElement>}>
+    <Link {...props} className={classes} ref={ref as React.Ref<HTMLAnchorElement>}>
       <TouchTarget>
         <Badge color={color} rounded={rounded}>
           {children}
@@ -89,4 +90,4 @@ export const BadgeButton = forwardRef(function BadgeButton(
       </TouchTarget>
     </Headless.Button>
   )
-})
+}

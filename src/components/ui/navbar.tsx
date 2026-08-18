@@ -1,7 +1,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { LayoutGroup, motion } from 'motion/react'
-import { forwardRef, useId } from 'react'
+import { useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
 
@@ -29,18 +29,21 @@ export function NavbarSpacer({ className, ...props }: React.ComponentPropsWithou
   return <div aria-hidden="true" {...props} className={clsx(className, '-ml-4 flex-1')} />
 }
 
-export const NavbarItem = forwardRef(function NavbarItem(
-  {
-    current,
-    className,
-    children,
-    ...props
-  }: { current?: boolean; className?: string; children: React.ReactNode } & (
-    | ({ href?: never } & Omit<Headless.ButtonProps, 'as' | 'className'>)
-    | ({ href: string } & Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>)
-  ),
-  ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>,
-) {
+export function NavbarItem({
+  current,
+  className,
+  children,
+  ref,
+  ...props
+}: {
+  current?: boolean
+  className?: string
+  children: React.ReactNode
+  ref?: React.Ref<HTMLAnchorElement | HTMLButtonElement>
+} & (
+  | ({ href?: never } & Omit<Headless.ButtonProps, 'as' | 'className'>)
+  | ({ href: string } & Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>)
+)) {
   const classes = clsx(
     // Base
     'relative flex min-w-0 items-center gap-3 rounded-lg p-2 text-left text-base/6 font-medium text-zinc-950 sm:text-sm/5',
@@ -69,7 +72,7 @@ export const NavbarItem = forwardRef(function NavbarItem(
           {...props}
           className={classes}
           data-current={current ? 'true' : undefined}
-          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
+          ref={ref as React.Ref<HTMLAnchorElement>}
         >
           <TouchTarget>{children}</TouchTarget>
         </Link>
@@ -85,7 +88,7 @@ export const NavbarItem = forwardRef(function NavbarItem(
       )}
     </span>
   )
-})
+}
 
 export function NavbarLabel({ className, ...props }: React.ComponentPropsWithoutRef<'span'>) {
   return <span {...props} className={clsx(className, 'truncate')} />

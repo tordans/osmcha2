@@ -1,6 +1,5 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import { forwardRef } from 'react'
 
 export function InputGroup({ children }: React.ComponentPropsWithoutRef<'span'>) {
   return (
@@ -21,15 +20,14 @@ export function InputGroup({ children }: React.ComponentPropsWithoutRef<'span'>)
 
 const dateTypes = ['date', 'datetime-local', 'month', 'time', 'week'] as const
 
-export const Input = forwardRef(function Input(
-  {
-    className,
-    ...props
-  }: {
-    className?: string
-  } & Omit<Headless.InputProps, 'as' | 'className'>,
-  ref: React.ForwardedRef<HTMLInputElement>,
-) {
+export function Input({
+  className,
+  ref,
+  ...props
+}: {
+  className?: string
+  ref?: React.Ref<HTMLInputElement>
+} & Omit<Headless.InputProps, 'as' | 'className'>) {
   return (
     <span
       data-slot="control"
@@ -83,4 +81,4 @@ export const Input = forwardRef(function Input(
       />
     </span>
   )
-})
+}

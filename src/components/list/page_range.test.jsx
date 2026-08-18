@@ -1,28 +1,23 @@
-import renderer from 'react-test-renderer'
+import { render, screen } from '@testing-library/react'
 import { PageRange } from './page_range.tsx'
 
 it('renders a previous-page control', () => {
-  const tree = renderer
-    .create(
-      <PageRange
-        page="arrow-left"
-        pageIndex={0}
-        disabled={false}
-        active={false}
-        getChangesetsPage={() => {}}
-      />,
-    )
-    .toJSON()
+  render(
+    <PageRange
+      page="arrow-left"
+      pageIndex={0}
+      disabled={false}
+      active={false}
+      getChangesetsPage={() => {}}
+    />,
+  )
 
-  expect(tree.props['aria-label']).toBe('Previous page')
+  expect(screen.getByRole('button', { name: 'Previous page' })).toBeTruthy()
 })
 
 it('renders the 1-based page number when active', () => {
-  const tree = renderer
-    .create(<PageRange page={4} pageIndex={4} active getChangesetsPage={() => {}} />)
-    .toJSON()
+  render(<PageRange page={4} pageIndex={4} active getChangesetsPage={() => {}} />)
 
-  expect(tree.props['aria-current']).toBe('page')
-  expect(tree.props['aria-label']).toBe('Page 5')
-  expect(tree.children).toContain('5')
+  const button = screen.getByRole('button', { name: 'Page 5', current: 'page' })
+  expect(button.textContent).toContain('5')
 })

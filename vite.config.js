@@ -8,7 +8,14 @@ import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'OSMCHA_')
 
-  const plugins = [tailwindcss(), react()]
+  const plugins = [
+    tailwindcss(),
+    react({
+      babel: {
+        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+      },
+    }),
+  ]
   if (process.env.ANALYZE) {
     plugins.push(visualizer({ open: true }))
   }

@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router } from 'react-router'
 import { Toaster } from 'sonner'
@@ -14,11 +15,13 @@ if (!container) throw new Error('Root element not found')
 
 const root = createRoot(container)
 root.render(
-  <QueryClientProvider client={queryClient}>
-    <Router basename={import.meta.env.BASE_URL}>
-      <App />
-      <Toaster position="top-right" />
-    </Router>
-    <ReactQueryDevtools initialIsOpen={false} />
-  </QueryClientProvider>,
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <Router basename={import.meta.env.BASE_URL}>
+        <App />
+        <Toaster position="top-right" />
+      </Router>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  </StrictMode>,
 )

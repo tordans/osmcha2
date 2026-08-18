@@ -1,18 +1,17 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import { forwardRef } from 'react'
 import { Link as RouterLink } from 'react-router'
 
-type LinkProps = { href: string } & Omit<React.ComponentPropsWithoutRef<'a'>, 'href'>
+type LinkProps = {
+  href: string
+  ref?: React.Ref<HTMLAnchorElement>
+} & Omit<React.ComponentPropsWithoutRef<'a'>, 'href'>
 
 function isExternalHref(href: string) {
   return /^(https?:)?\/\//i.test(href) || href.startsWith('mailto:')
 }
 
-export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
-  { href, className, ...props }: LinkProps,
-  ref: React.ForwardedRef<HTMLAnchorElement>,
-) {
+export function Link({ href, className, ref, ...props }: LinkProps) {
   const classes = clsx('cursor-pointer touch-manipulation select-none', className)
 
   if (isExternalHref(href)) {
@@ -28,4 +27,4 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
       <RouterLink {...props} to={href} ref={ref} className={classes} />
     </Headless.DataInteractive>
   )
-})
+}
