@@ -5,7 +5,7 @@ import clsx from 'clsx'
 const rootRouteApi = getRouteApi('__root__')
 
 const buttonClasses = clsx(
-  'relative isolate inline-flex items-baseline justify-center gap-x-2 rounded-lg border text-base/6 font-semibold',
+  'relative isolate inline-flex items-center justify-center gap-x-2 rounded-lg border text-base/6 font-semibold',
   'px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)] sm:text-sm/6',
   'text-zinc-950 [--btn-bg:white] [--btn-border:var(--color-zinc-950)]/10',
   'border-transparent bg-(--btn-border) before:absolute before:inset-0 before:-z-10 before:rounded-[calc(var(--radius-lg)-1px)] before:bg-(--btn-bg) before:shadow-sm',

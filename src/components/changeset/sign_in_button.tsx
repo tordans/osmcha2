@@ -1,4 +1,3 @@
-import { GlobeAltIcon } from '@heroicons/react/16/solid'
 import { getAuthUrl } from '../../network/auth.ts'
 import { isOsmOAuthHost } from '../../utils/auth.ts'
 import { TokenImport } from '../token_import.tsx'
@@ -22,10 +21,9 @@ function SignInButton({ text }: SignInButtonProps) {
   return (
     <Button
       onClick={handleLoginClick}
-      className="min-h-11 cursor-pointer touch-manipulation select-none"
+      className="w-full max-w-56 text-center leading-snug"
     >
-      <GlobeAltIcon data-slot="icon" />
-      {text}
+      <span className="text-balance">{text}</span>
     </Button>
   )
 }

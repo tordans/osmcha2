@@ -54,13 +54,13 @@ export function ChromeHeader() {
 
   return (
     <>
-      <header className="flex shrink-0 items-center justify-between gap-3 px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] pb-1">
+      <header className="flex shrink-0 items-center justify-between gap-2 px-1 py-1 pt-[max(0.25rem,env(safe-area-inset-top))]">
         <Logo />
         <Button
           plain
           aria-label="Open menu"
           onClick={() => setOpenFor(locationKey)}
-          className="min-h-11 min-w-11 cursor-pointer touch-manipulation select-none"
+          className="h-8 min-h-8 cursor-pointer touch-manipulation items-center px-2 py-0 select-none"
         >
           <Bars3Icon data-slot="icon" className="size-5" />
           Menu

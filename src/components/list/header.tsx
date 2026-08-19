@@ -2,6 +2,7 @@ import { ArrowPathIcon } from '@heroicons/react/16/solid'
 import { getRouteApi, Link, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import filtersConfig from '../../config/filters.json'
+import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
 import numberWithCommas from '../../utils/number_with_commas.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
@@ -35,6 +36,8 @@ export function Header({
   currentPage,
   reloadChangesetsPageData,
 }: HeaderProps) {
+  const { token } = useAuth()
+  const signedIn = Boolean(token)
   const search = rootRouteApi.useSearch()
   const filtersRouteMatch = useMatch({ from: '/filters', shouldThrow: false })
   const { data: aoi } = useAOI(aoiId)
@@ -54,17 +57,23 @@ export function Header({
           <DebugDataHelperDialog data={aoi} title="AOI Object" />
         </div>
       )}
-      <header className="flex min-h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-1.5">
+      <header className="flex h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-1">
         <div
           className="max-w-56 min-w-0 flex-1"
-          title={aoiId ? 'Sort order is determined by the active saved filter' : undefined}
+          title={
+            !signedIn
+              ? 'Sign in to sort the changeset list'
+              : aoiId
+                ? 'Sort order is determined by the active saved filter'
+                : undefined
+          }
         >
           <Listbox<OrderOption | null>
             value={selected}
             onChange={(option) => {
               if (option) handleFilterOrderBy([option])
             }}
-            disabled={!!aoiId}
+            disabled={!signedIn || !!aoiId}
             placeholder="Order by"
             aria-label="Order by"
           >
@@ -75,31 +84,41 @@ export function Header({
             ))}
           </Listbox>
         </div>
-        <Link
-          to={filtersOpen ? '/' : '/filters'}
-          search={search}
-          className={clsx(
-            'relative isolate inline-flex min-h-11 shrink-0 cursor-pointer touch-manipulation items-baseline justify-center gap-x-2 rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
-            'data-hover:bg-zinc-950/2.5',
-          )}
-        >
-          Filters{filterCount > 0 ? ` (${filterCount})` : ''}
-        </Link>
+        {signedIn ? (
+          <Link
+            to={filtersOpen ? '/' : '/filters'}
+            search={search}
+            className={clsx(
+              'relative isolate inline-flex h-9 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
+              'data-hover:bg-zinc-950/2.5',
+            )}
+          >
+            Filters{filterCount > 0 ? ` (${filterCount})` : ''}
+          </Link>
+        ) : (
+          <span
+            aria-disabled="true"
+            title="Sign in to filter changesets"
+            className="relative isolate inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 opacity-50 select-none"
+          >
+            Filters
+          </span>
+        )}
       </header>
       <header
         className={clsx(
-          'flex items-center justify-between border-b border-zinc-200 px-3 py-1.5',
+          'flex h-11 items-center justify-between gap-2 border-b border-zinc-200 px-1',
           diff > 0 ? 'bg-zinc-200' : 'bg-zinc-50',
         )}
       >
-        <span className="text-sm font-semibold text-zinc-600">
+        <span className="px-2 text-sm font-semibold text-zinc-600">
           {numberWithCommas(currentPage?.count ?? 0)} changesets.
         </span>
         <Button
           outline
-          className="min-h-11"
+          className="h-9 min-h-9 items-center"
           onClick={reloadChangesetsPageData}
-          disabled={diffLoading}
+          disabled={!signedIn || diffLoading}
           aria-label="Refresh"
         >
           <ArrowPathIcon data-slot="icon" className={clsx(diffLoading && 'animate-spin')} />

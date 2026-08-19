@@ -43,7 +43,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
       <div className="flex flex-1 flex-col items-center px-4 py-9">
         <GlobeAltIcon className="size-14 text-zinc-400" />
         <div className="mt-9 flex justify-center text-center">
-          <SignInButton text="Sign in with your OpenStreetMap account" />
+          <SignInButton text="Sign in with OpenStreetMap" />
         </div>
       </div>
     )

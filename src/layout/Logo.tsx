@@ -9,7 +9,7 @@ export function Logo() {
     <Link
       to="/"
       search={search}
-      className="cursor-pointer touch-manipulation text-lg font-semibold text-zinc-600 select-none"
+      className="cursor-pointer touch-manipulation px-2 text-base font-semibold text-zinc-600 select-none"
     >
       <span className="text-blue-600">OSM</span>Cha
     </Link>
