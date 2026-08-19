@@ -197,25 +197,23 @@ export function DetailsHeader({
       <Dropdown>
         <DropdownButton
           outline
-          className="w-full cursor-pointer touch-manipulation justify-between! p-0 text-left select-none"
+          className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
         >
-          <span className="flex min-h-11 w-full items-center justify-between gap-2 px-2 py-1">
-            <span className="min-w-0 flex-1 text-left">
-              <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
-              <p className={clsx('-mt-0.5 font-normal text-zinc-500', typeScale.small)}>
-                {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
-                {' | '}
-                <abbr
-                  title={`Editor ${properties.editor ?? 'unknown'}${
-                    properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
-                  }`}
-                >
-                  {editorLabel}
-                </abbr>
-              </p>
-            </span>
-            <ChevronDownIcon data-slot="icon" />
+          <span className="min-w-0 flex-1 text-left">
+            <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
+            <p className={clsx('-mt-0.5 font-normal text-zinc-500', typeScale.small)}>
+              {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+              {' | '}
+              <abbr
+                title={`Editor ${properties.editor ?? 'unknown'}${
+                  properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
+                }`}
+              >
+                {editorLabel}
+              </abbr>
+            </p>
           </span>
+          <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
         </DropdownButton>
         <DropdownMenu anchor="bottom start">
           <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
@@ -256,51 +254,48 @@ export function DetailsHeader({
       <Dropdown>
         <DropdownButton
           outline
-          className="w-full cursor-pointer touch-manipulation justify-between! p-0 text-left select-none"
+          className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
         >
-          <span className="flex min-h-11 w-full items-center gap-2 px-2 py-1">
-            <span className={clsx('min-w-0 flex-1 text-left font-normal text-zinc-500', typeScale.small)}>
-              {osmUser}
-              {isInTrustedlist && (
-                <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
-              )}
-              {isInWatchlist && (
-                <ExclamationTriangleIcon className="ml-1 inline-block size-4 align-text-bottom text-red-500" />
-              )}
-              {accountCreated ? (
-                <>
-                  {' '}
-                  created <RelativeTime datetime={accountCreated} />
-                </>
-              ) : null}
-              {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
-            </span>
-            <span
-              className="isolate inline-flex shrink-0 rounded-md"
-              title="Changesets of this user marked good or bad in OSMCha"
-            >
-              <Badge rounded="left">
-                {checkedGood.toLocaleString()}{' '}
-                <HandThumbUpIcon
-                  className="inline size-4 text-zinc-600"
-                  aria-label="Good changesets"
-                />
-              </Badge>
-              <Badge rounded="right" className="-ml-px">
-                <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
-                  {checkedBad.toLocaleString()}{' '}
-                </span>
-                <HandThumbDownIcon
-                  className={clsx(
-                    'inline size-4',
-                    checkedBad ? 'text-orange-500' : 'text-zinc-600',
-                  )}
-                  aria-label="Harmful changesets"
-                />
-              </Badge>
-            </span>
-            <ChevronDownIcon data-slot="icon" />
+          <span
+            className={clsx('min-w-0 flex-1 text-left font-normal text-zinc-500', typeScale.small)}
+          >
+            {osmUser}
+            {isInTrustedlist && (
+              <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
+            )}
+            {isInWatchlist && (
+              <ExclamationTriangleIcon className="ml-1 inline-block size-4 align-text-bottom text-red-500" />
+            )}
+            {accountCreated ? (
+              <>
+                {' '}
+                created <RelativeTime datetime={accountCreated} />
+              </>
+            ) : null}
+            {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
           </span>
+          <span
+            className="isolate inline-flex shrink-0 rounded-md"
+            title="Changesets of this user marked good or bad in OSMCha"
+          >
+            <Badge rounded="left">
+              {checkedGood.toLocaleString()}{' '}
+              <HandThumbUpIcon
+                className="inline size-4 text-zinc-600"
+                aria-label="Good changesets"
+              />
+            </Badge>
+            <Badge rounded="right" className="-ml-px">
+              <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
+                {checkedBad.toLocaleString()}{' '}
+              </span>
+              <HandThumbDownIcon
+                className={clsx('inline size-4', checkedBad ? 'text-orange-500' : 'text-zinc-600')}
+                aria-label="Harmful changesets"
+              />
+            </Badge>
+          </span>
+          <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
         </DropdownButton>
         <DropdownMenu anchor="bottom start">
           <DropdownSection>
