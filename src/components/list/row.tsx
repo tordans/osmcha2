@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { searchWithoutMap } from '../../routing/mapParam.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
+import { typeScale } from '../ui/typography.ts'
 import { PrimaryLine } from './primary_line.tsx'
 import { SecondaryLine } from './secondary_line.tsx'
 import { Title } from './title.tsx'
@@ -52,7 +53,7 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
           editor={editor}
           commentsCount={properties.comments_count}
         />
-        <div className="flex w-full items-center justify-between gap-1 text-base">
+        <div className={clsx('flex w-full items-center justify-between gap-1', typeScale.body)}>
           <div className="flex w-full flex-col gap-2">
             <PrimaryLine user={properties.user} uid={properties.uid} comment={properties.comment} />
             <SecondaryLine

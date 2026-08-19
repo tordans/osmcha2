@@ -1,5 +1,7 @@
+import clsx from 'clsx'
 import { parse } from 'date-fns'
 import { RelativeTime } from '../relative_time.tsx'
+import { typeScale } from '../ui/typography.ts'
 import { NumberOfComments } from './comments.tsx'
 import { editorShortname } from './editorShortname.ts'
 
@@ -16,7 +18,12 @@ function parseChangesetDate(date: string): Date {
 
 export function Title({ date, editor, commentsCount }: TitleProps) {
   return (
-    <div className="flex w-full items-center justify-between gap-2 pr-1.5 text-xs text-zinc-500">
+    <div
+      className={clsx(
+        'flex w-full items-center justify-between gap-2 pr-1.5 text-zinc-500',
+        typeScale.small,
+      )}
+    >
       <RelativeTime datetime={parseChangesetDate(date)} />
       <div className="flex items-center gap-2">
         {editorShortname(editor)}

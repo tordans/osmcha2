@@ -41,6 +41,7 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
+import { typeScale } from '../ui/typography.ts'
 import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { Tags } from './tags.tsx'
 import { User } from './user.tsx'
@@ -200,8 +201,8 @@ export function DetailsHeader({
         >
           <span className="flex min-h-11 w-full items-center justify-between gap-2 px-2 py-1">
             <span className="min-w-0 flex-1 text-left">
-              <h1 className="text-lg font-bold">Changeset #{changesetId}</h1>
-              <p className="-mt-0.5 text-xs font-normal text-zinc-500">
+              <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
+              <p className={clsx('-mt-0.5 font-normal text-zinc-500', typeScale.small)}>
                 {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
                 {' | '}
                 <abbr
@@ -258,7 +259,7 @@ export function DetailsHeader({
           className="w-full cursor-pointer touch-manipulation justify-between! p-0 text-left select-none"
         >
           <span className="flex min-h-11 w-full items-center gap-2 px-2 py-1">
-            <span className="min-w-0 flex-1 text-left text-xs font-normal text-zinc-500">
+            <span className={clsx('min-w-0 flex-1 text-left font-normal text-zinc-500', typeScale.small)}>
               {osmUser}
               {isInTrustedlist && (
                 <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
@@ -330,7 +331,7 @@ export function DetailsHeader({
           title="User details (3)"
         >
           <span>User details</span>
-          <span className="text-xs font-normal text-zinc-400">3</span>
+          <span className={clsx('font-normal text-zinc-400', typeScale.small)}>3</span>
         </summary>
         <User
           userDetails={{
@@ -343,7 +344,7 @@ export function DetailsHeader({
         />
       </details>
 
-      <div className="mt-2 flex flex-col gap-1 text-base">
+      <div className={clsx('mt-2 flex flex-col gap-1', typeScale.body)}>
         <p className="w-full leading-tight break-words hyphens-auto" lang="en">
           <strong className="font-semibold">{osmUser}:</strong>{' '}
           <Linkify

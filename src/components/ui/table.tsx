@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import type React from 'react'
 import { createContext, useContext, useState } from 'react'
 import { Link } from './link'
+import { typeScale } from './typography'
 
 const TableContext = createContext<{
   bleed: boolean
@@ -41,7 +42,14 @@ export function Table({
           <div
             className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-(--gutter)')}
           >
-            <table className="min-w-full text-left text-sm/6 text-zinc-950">{children}</table>
+            <table
+              className={clsx(
+                'min-w-full text-left text-zinc-950',
+                dense ? typeScale.small : 'text-sm/6',
+              )}
+            >
+              {children}
+            </table>
           </div>
         </div>
       </div>
@@ -92,14 +100,15 @@ export function TableRow({
 }
 
 export function TableHeader({ className, ...props }: React.ComponentPropsWithoutRef<'th'>) {
-  const { bleed, grid } = useContext(TableContext)
+  const { bleed, dense, grid } = useContext(TableContext)
 
   return (
     <th
       {...props}
       className={clsx(
         className,
-        'border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
+        'border-b border-b-zinc-950/10 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
+        dense ? 'px-2 py-1' : 'px-4 py-2',
         grid && 'border-l border-l-zinc-950/5 first:border-l-0',
         !bleed && 'sm:first:pl-1 sm:last:pr-1',
       )}
@@ -118,10 +127,10 @@ export function TableCell({ className, children, ...props }: React.ComponentProp
       {...props}
       className={clsx(
         className,
-        'relative px-4 first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
+        'relative first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
         !striped && 'border-b border-zinc-950/5',
         grid && 'border-l border-l-zinc-950/5 first:border-l-0',
-        dense ? 'py-2.5' : 'py-4',
+        dense ? 'px-2 py-1' : 'px-4 py-4',
         !bleed && 'sm:first:pl-1 sm:last:pr-1',
       )}
     >

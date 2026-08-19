@@ -12,6 +12,7 @@ import { Loading } from '../loading.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table.tsx'
+import { typeScale } from '../ui/typography.ts'
 import {
   buildElementChanges,
   groupChangesByTagMutation,
@@ -70,7 +71,7 @@ export function DetailsChanges({
 
   if (grouped.length === 0) {
     return (
-      <p className="px-3 py-6 text-center text-sm text-zinc-500">
+      <p className={clsx('px-3 py-6 text-center text-zinc-500', typeScale.body)}>
         No element changes in this changeset.
       </p>
     )
@@ -82,7 +83,12 @@ export function DetailsChanges({
         const Icon = ACTION_ICON[actionType]
         return (
           <Fragment key={actionType}>
-            <h2 className="mx-2 mt-3 flex items-center gap-1 rounded-sm border border-zinc-950/10 bg-zinc-50 px-2 py-1 font-semibold">
+            <h2
+              className={clsx(
+                typeScale.heading,
+                'mx-2 mt-3 flex items-center gap-1 rounded-sm border border-zinc-950/10 bg-zinc-50 px-2 py-1',
+              )}
+            >
               <Icon className="size-4 flex-none" /> {ACTION_LABEL[actionType]}
             </h2>
             <ul>
@@ -167,11 +173,11 @@ function TagMutationGroup({
 
 function TagRowsTable({ rows, emptyLabel }: { rows: TagRow[]; emptyLabel: string }) {
   if (rows.length === 0) {
-    return <p className="px-2 py-2 text-xs text-zinc-500">{emptyLabel}</p>
+    return <p className={clsx('px-2 py-2 text-zinc-500', typeScale.small)}>{emptyLabel}</p>
   }
 
   return (
-    <Table dense bleed className="text-xs whitespace-normal">
+    <Table dense bleed className="whitespace-normal">
       <TableHead className="sr-only">
         <TableRow className="w-full">
           <TableHeader>Key</TableHeader>
@@ -308,7 +314,7 @@ function ElementChangeRow({
       onMouseLeave={() => setHighlight(change.type, change.id, false)}
     >
       <div className="flex w-full items-center justify-between gap-1">
-        <h3 className="flex min-w-0 items-center gap-1">
+        <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
           <Icon className="size-4 flex-none" />
           <span className="truncate">
             {change.type}/{change.id}

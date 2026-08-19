@@ -21,6 +21,7 @@ import {
 } from './ui/dropdown.tsx'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.tsx'
 import { TextLink } from './ui/text.tsx'
+import { typeScale } from './ui/typography.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -76,7 +77,7 @@ function ElementInfo({ changeset, changesetId, action, setHighlight }: ElementIn
 
   return (
     <div className="element-info">
-      <h2 className="text-base font-semibold text-zinc-950">
+      <h2 className={typeScale.heading}>
         <TextLink href={`https://www.openstreetmap.org/${elementId}`} target="_blank" rel="noopener noreferrer">
           {elementId}
         </TextLink>{' '}
@@ -181,7 +182,7 @@ function MetadataTable({ changesetId, action }: { changesetId: number; action: a
   const elements = showPrevious ? [action.old, action.new] : [action.new]
 
   return (
-    <Table dense bleed className="mt-3 text-xs whitespace-normal">
+    <Table dense bleed className="mt-3 whitespace-normal">
       <TableHead>
         <TableRow>
           <TableHeader />
@@ -254,11 +255,11 @@ function TagsTable({ action }: { action: any }) {
   allKeys = allKeys.sort()
 
   if (allKeys.length === 0) {
-    return <p className="mt-3 text-sm text-zinc-500">No tags</p>
+    return <p className={clsx('mt-3 text-zinc-500', typeScale.body)}>No tags</p>
   }
 
   return (
-    <Table dense bleed className="mt-3 font-mono text-xs whitespace-normal">
+    <Table dense bleed className="mt-3 font-mono whitespace-normal">
       <TableHead>
         <TableRow>
           <TableHeader>Tag</TableHeader>
@@ -370,7 +371,7 @@ function RelationMembersTable({
   })
 
   return (
-    <Table dense bleed className="mt-3 font-mono text-xs whitespace-normal">
+    <Table dense bleed className="mt-3 font-mono whitespace-normal">
       <TableHead>
         <TableRow>
           <TableHeader>Member</TableHeader>
