@@ -1,3 +1,4 @@
+import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import { Heading } from '../components/ui/heading.tsx'
 import { Link } from '../components/ui/link.tsx'
 import { Text } from '../components/ui/text.tsx'
@@ -8,9 +9,15 @@ const footerLinkClassName =
 
 export function Home() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-[max(1.5rem,env(safe-area-inset-left))] pt-[max(1.5rem,env(safe-area-inset-top))] pr-[max(1.5rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div className="flex h-full min-h-0 flex-1 flex-col px-[max(1.5rem,env(safe-area-inset-left))] pt-[max(1.5rem,env(safe-area-inset-top))] pr-[max(1.5rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
-        <Heading className="text-center">Select a changeset</Heading>
+        <div className="flex items-center gap-3">
+          <ArrowLeftIcon
+            className="hidden size-8 shrink-0 text-zinc-400 min-[56rem]:block"
+            aria-hidden
+          />
+          <Heading className="text-center">Select a changeset</Heading>
+        </div>
       </div>
       <footer className="flex flex-wrap items-center justify-center gap-x-3">
         <Text>

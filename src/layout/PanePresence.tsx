@@ -16,7 +16,7 @@ export function PanePresence({ children }: { children: ReactNode }) {
     <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={pathname}
-        className="h-full min-h-0 min-w-0"
+        className="flex h-full min-h-0 min-w-0 flex-col"
         initial={
           live && !reduceMotion
             ? { opacity: 0, x: from.x, scale: 0.98 }
