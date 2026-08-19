@@ -9,8 +9,12 @@ import {
   CHANGESET_DETAILS_MAP,
 } from '../../config/bindings.ts'
 import { useAuth } from '../../hooks/useAuth.ts'
+import { PaneResizeHandle } from '../../layout/PaneResizeHandle.tsx'
+import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.ts'
+import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
 import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
+import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import ElementInfo from '../element_info.tsx'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
@@ -52,6 +56,8 @@ function Changeset({
   children,
 }: ChangesetProps) {
   const { token } = useAuth()
+  const { available, displayed } = useDisplayedPaneWidths(true)
+  const resetReviewWidth = usePaneLayoutStore((state) => state.resetReviewWidth)
   const { data: osmInfo } = useChangesetMap(changesetId)
   const { userDetails, whosThat } = useChangesetMapper(
     currentChangeset?.properties?.uid,
@@ -122,7 +128,7 @@ function Changeset({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row min-[56rem]:gap-3">
+    <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row">
       <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden min-[56rem]:rounded-lg min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5">
         {children}
         <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-10 flex flex-col-reverse items-end gap-2 min-[56rem]:top-auto min-[56rem]:bottom-[max(0.75rem,env(safe-area-inset-bottom))] min-[56rem]:flex-col">
@@ -154,18 +160,40 @@ function Changeset({
         </div>
       </div>
       {ready && changesetId && (
-        <ReviewColumn
-          changesetId={changesetId}
-          currentChangeset={currentChangeset}
-          userDetails={userDetails}
-          whosThat={whosThat}
-          bindingsState={bindingsState}
-          exclusiveKeyToggle={exclusiveKeyToggle}
-          osmInfo={osmInfo}
-          selected={selected}
-          setHighlight={setHighlight}
-          zoomToAndSelect={zoomToAndSelect}
-        />
+        <>
+          <PaneResizeHandle
+            aria-label="Resize review pane"
+            value={displayed.review}
+            min={REVIEW_MIN}
+            max={REVIEW_MAX}
+            onDragDelta={(delta) => {
+              const { listWidth, reviewWidth, setReviewWidth } = usePaneLayoutStore.getState()
+              setReviewWidth(
+                resizeSidePane({
+                  side: 'review',
+                  delta: -delta,
+                  available,
+                  list: listWidth,
+                  review: reviewWidth,
+                  hasReview: true,
+                }),
+              )
+            }}
+            onReset={resetReviewWidth}
+          />
+          <ReviewColumn
+            changesetId={changesetId}
+            currentChangeset={currentChangeset}
+            userDetails={userDetails}
+            whosThat={whosThat}
+            bindingsState={bindingsState}
+            exclusiveKeyToggle={exclusiveKeyToggle}
+            osmInfo={osmInfo}
+            selected={selected}
+            setHighlight={setHighlight}
+            zoomToAndSelect={zoomToAndSelect}
+          />
+        </>
       )}
       <DebugDataHelper changesetId={changesetId} selected={selected} mapRef={mapRef} />
     </div>

@@ -118,7 +118,7 @@ export function ReviewColumn({
         'z-30 flex min-h-0 flex-col overflow-hidden bg-white',
         'absolute inset-x-0 bottom-0 rounded-t-xl shadow-lg',
         expanded ? 'h-[80%]' : 'h-auto',
-        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-96 min-[56rem]:shrink-0 min-[56rem]:rounded-lg min-[56rem]:shadow-sm min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5',
+        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-(--pane-review-width,24rem) min-[56rem]:shrink-0 min-[56rem]:rounded-lg min-[56rem]:shadow-sm min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5',
       )}
     >
       <button
