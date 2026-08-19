@@ -1,6 +1,7 @@
 import { ArrowLeftIcon } from '@heroicons/react/20/solid'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
+import { RouterLink } from '../routing/RouterLink.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -16,7 +17,7 @@ export function BackToListButton() {
   const search = rootRouteApi.useSearch()
 
   return (
-    <Link
+    <RouterLink
       to="/"
       search={search}
       aria-label="Back to list"
@@ -27,6 +28,6 @@ export function BackToListButton() {
     >
       <ArrowLeftIcon data-slot="icon" className="size-5" />
       List
-    </Link>
+    </RouterLink>
   )
 }

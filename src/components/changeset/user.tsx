@@ -1,7 +1,7 @@
 import { parse } from 'date-fns'
-import { Link } from '@tanstack/react-router'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { RouterLink } from '../../routing/RouterLink.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { Avatar } from '../ui/avatar.tsx'
 import { Button } from '../ui/button.tsx'
@@ -46,7 +46,7 @@ function UserLink({ userDetails, harmful }: UserLinkProps) {
     : `${(userDetails.checked_changesets ?? 0) - (userDetails.harmful_changesets ?? 0)} Good`
 
   return (
-    <Link
+    <RouterLink
       to="/"
       search={{
         filters: {
@@ -58,7 +58,7 @@ function UserLink({ userDetails, harmful }: UserLinkProps) {
       className={linkClassName}
     >
       {label}
-    </Link>
+    </RouterLink>
   )
 }
 
@@ -96,7 +96,7 @@ export function User({ userDetails, whosThat }: UserProps) {
               </>
             )}
             {userDetails.count ? (
-              <Link
+              <RouterLink
                 to="/"
                 search={{
                   filters: {
@@ -107,7 +107,7 @@ export function User({ userDetails, whosThat }: UserProps) {
                 className={linkClassName}
               >
                 {`${userDetails.count} edits`}
-              </Link>
+              </RouterLink>
             ) : (
               `${userDetails.changesets_in_osmcha} edits registered on OSMCha`
             )}
@@ -120,7 +120,7 @@ export function User({ userDetails, whosThat }: UserProps) {
           </Text>
           <TrustWatchUser user={userDetails as { name: string; uid: number }} />
           <div className="mt-1 flex flex-wrap items-center justify-center gap-1">
-            <Link
+            <RouterLink
               to="/"
               search={{
                 filters: {
@@ -131,7 +131,7 @@ export function User({ userDetails, whosThat }: UserProps) {
               className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
             >
               OSMCha
-            </Link>
+            </RouterLink>
             <UserOSMLink userName={userDetails.name}>OSM</UserOSMLink>
             <Button
               outline

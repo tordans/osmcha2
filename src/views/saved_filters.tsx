@@ -1,6 +1,6 @@
 import { RssIcon, TrashIcon } from '@heroicons/react/16/solid'
 import { useForm } from '@tanstack/react-form'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { z } from 'zod'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
@@ -21,6 +21,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import { useAllAOIs } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI } from '../query/hooks/useAOIMutations.ts'
+import { RouterLink } from '../routing/RouterLink.tsx'
 
 type AoiFeature = {
   id: string
@@ -148,13 +149,13 @@ export function SavedFilters() {
                   <TableRow key={aoi.id}>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link
+                        <RouterLink
                           to="/filters"
                           search={{ aoi: aoi.id }}
                           className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-2 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
                         >
                           {aoi.properties?.name}
-                        </Link>
+                        </RouterLink>
                         {aoiId === aoi.id ? <Badge color="zinc">Active</Badge> : null}
                       </div>
                     </TableCell>

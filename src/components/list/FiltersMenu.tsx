@@ -1,10 +1,11 @@
 import * as Headless from '@headlessui/react'
 import { CheckIcon, ChevronDownIcon, PencilSquareIcon, PlusIcon } from '@heroicons/react/16/solid'
-import { getRouteApi, Link, useMatch } from '@tanstack/react-router'
+import { getRouteApi, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
 import { useFilters } from '../../hooks/useFilters.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
+import { RouterLink } from '../../routing/RouterLink.tsx'
 import {
   Dropdown,
   DropdownButton,
@@ -72,14 +73,14 @@ export function FiltersMenu() {
   if (aois.length === 0) {
     return (
       <motion.div whileTap={{ scale: 0.97 }} className="shrink-0">
-        <Link
+        <RouterLink
           to={filtersOpen ? '/' : '/filters'}
           search={search}
           data-panel-origin="filters"
           className={filtersButtonClassName}
         >
           Filters
-        </Link>
+        </RouterLink>
       </motion.div>
     )
   }

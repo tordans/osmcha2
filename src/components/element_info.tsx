@@ -1,8 +1,9 @@
-import { getRouteApi, Link } from '@tanstack/react-router'
 import { ArrowRightIcon, ClockIcon, FlagIcon } from '@heroicons/react/16/solid'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { diffArrays } from 'diff'
 import { useState } from 'react'
+import { RouterLink } from '../routing/RouterLink.tsx'
 import { osmUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { flagFeature, unflagFeature } from '../network/changeset.ts'
@@ -206,14 +207,14 @@ function MetadataTable({ changesetId, action }: { changesetId: number; action: a
           {elements.map((element) => (
             <TableCell key={element.version}>
               {element.changeset !== changesetId ? (
-                <Link
+                <RouterLink
                   to="/changesets/$id"
                   params={{ id: element.changeset }}
                   search={(prev) => searchWithoutMap({ ...prev, ...search })}
                   className={changesetLinkClassName}
                 >
                   {element.changeset}
-                </Link>
+                </RouterLink>
               ) : (
                 element.changeset
               )}

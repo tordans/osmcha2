@@ -1,6 +1,6 @@
 import * as Headless from '@headlessui/react'
-import { Link as RouterLink } from '@tanstack/react-router'
 import clsx from 'clsx'
+import { RouterLink } from '../../routing/RouterLink.tsx'
 
 type LinkProps = {
   href: string

@@ -1,10 +1,11 @@
 import { LinkIcon, RssIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { useForm } from '@tanstack/react-form'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import { useState } from 'react'
 import { z } from 'zod'
 import { API_URL } from '../../config/index.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
+import { RouterLink } from '../../routing/RouterLink.tsx'
 import { Button } from '../ui/button.tsx'
 import { Heading } from '../ui/heading.tsx'
 import { Input } from '../ui/input.tsx'
@@ -150,14 +151,14 @@ export function FiltersHeader({
           Filters
           {aoiId ? ` / ${aoiName}` : ''}
         </Heading>
-        <Link
+        <RouterLink
           to="/"
           search={search}
           aria-label="Close filters"
           className="inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none"
         >
           <XMarkIcon className="size-5" />
-        </Link>
+        </RouterLink>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

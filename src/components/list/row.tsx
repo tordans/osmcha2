@@ -1,7 +1,8 @@
 import { ChevronRightIcon } from '@heroicons/react/20/solid'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { searchWithoutMap } from '../../routing/mapParam.ts'
+import { RouterLink } from '../../routing/RouterLink.tsx'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { PrimaryLine } from './primary_line.tsx'
 import { SecondaryLine } from './secondary_line.tsx'
@@ -36,7 +37,7 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
 
   return (
     <li className="relative" ref={inputRef}>
-      <Link
+      <RouterLink
         to="/changesets/$id"
         params={{ id: changesetId }}
         search={(prev) => searchWithoutMap({ ...prev, ...search })}
@@ -67,7 +68,7 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
             aria-hidden="true"
           />
         </div>
-      </Link>
+      </RouterLink>
       <DebugDataHelperDialog
         data={data ?? { id: changesetId, properties }}
         title="OSMCha Changeset from OSMCha Changeset List"

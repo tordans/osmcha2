@@ -1,9 +1,10 @@
 import { ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/16/solid'
-import { getRouteApi, Link } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
+import { RouterLink } from '../../routing/RouterLink.tsx'
 import numberWithCommas from '../../utils/number_with_commas.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Button } from '../ui/button.tsx'
@@ -52,7 +53,7 @@ export function Header({
       {aoiId && (
         <div className="relative flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-2 py-1.5">
           <p className="min-w-0 truncate px-1 font-semibold">Saved Filter: {aoiName || aoiId}</p>
-          <Link
+          <RouterLink
             to="/filters"
             search={{ ...search, aoi: aoiId, filters: undefined, page: undefined }}
             data-panel-origin="filters"
@@ -61,7 +62,7 @@ export function Header({
           >
             <PencilSquareIcon className="size-4" />
             Edit
-          </Link>
+          </RouterLink>
           <DebugDataHelperDialog data={aoi} title="AOI Object" />
         </div>
       )}

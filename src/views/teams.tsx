@@ -1,5 +1,4 @@
 import { FunnelIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/16/solid'
-import { Link } from '@tanstack/react-router'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import NewTeam from '../components/teams/new_team.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -18,6 +17,7 @@ import {
   useDeleteMappingTeam,
   useMappingTeams,
 } from '../query/hooks/useMappingTeams.ts'
+import { RouterLink } from '../routing/RouterLink.tsx'
 
 type MappingTeam = {
   id: number
@@ -71,7 +71,7 @@ export function MappingTeams() {
                     <TableCell className="font-medium">{team.name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap justify-end gap-2">
-                        <Link
+                        <RouterLink
                           to="/filters"
                           search={{
                             filters: {
@@ -82,15 +82,15 @@ export function MappingTeams() {
                         >
                           <FunnelIcon className="size-4" />
                           Changesets
-                        </Link>
-                        <Link
+                        </RouterLink>
+                        <RouterLink
                           to="/teams/$id"
                           params={{ id: team.id }}
                           className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
                         >
                           <PencilSquareIcon className="size-4" />
                           Edit
-                        </Link>
+                        </RouterLink>
                         <Button
                           plain
                           type="button"

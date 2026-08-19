@@ -1,5 +1,4 @@
 import { TrashIcon } from '@heroicons/react/16/solid'
-import { Link } from '@tanstack/react-router'
 import {
   createColumnHelper,
   createSortedRowModel,
@@ -27,6 +26,7 @@ import {
   useAddToTrustedlist,
   useRemoveFromTrustedlist,
 } from '../query/hooks/useTrustedlistMutations.ts'
+import { RouterLink } from '../routing/RouterLink.tsx'
 
 type TrustedUserRow = {
   username: string
@@ -76,7 +76,7 @@ export function TrustedUsers() {
         const username = row.original.username
         return (
           <div className="flex flex-wrap justify-end gap-2">
-            <Link
+            <RouterLink
               to="/"
               search={{
                 filters: {
@@ -86,7 +86,7 @@ export function TrustedUsers() {
               className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
             >
               Changesets
-            </Link>
+            </RouterLink>
             <Button
               plain
               type="button"

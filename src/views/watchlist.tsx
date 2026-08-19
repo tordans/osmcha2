@@ -1,5 +1,4 @@
 import { FunnelIcon, TrashIcon } from '@heroicons/react/16/solid'
-import { Link } from '@tanstack/react-router'
 import {
   createColumnHelper,
   createSortedRowModel,
@@ -26,6 +25,7 @@ import { SaveUser } from '../components/user/save_user.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useWatchlist } from '../query/hooks/useWatchlist.ts'
 import { useAddToWatchlist, useRemoveFromWatchlist } from '../query/hooks/useWatchlistMutations.ts'
+import { RouterLink } from '../routing/RouterLink.tsx'
 
 type WatchlistUser = {
   username: string
@@ -93,7 +93,7 @@ export function Watchlist() {
         const listed = row.original
         return (
           <div className="flex flex-wrap justify-end gap-2">
-            <Link
+            <RouterLink
               to="/"
               search={{
                 filters: {
@@ -103,7 +103,7 @@ export function Watchlist() {
               className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
             >
               Changesets
-            </Link>
+            </RouterLink>
             <Button
               plain
               type="button"
@@ -181,7 +181,7 @@ export function Watchlist() {
           <SaveUser onCreate={addToWatchList} forWatchlist={true} />
 
           <div>
-            <Link
+            <RouterLink
               to="/"
               search={{
                 filters: {
@@ -192,7 +192,7 @@ export function Watchlist() {
             >
               <FunnelIcon className="size-4" />
               View changesets from users on your watchlist
-            </Link>
+            </RouterLink>
           </div>
         </div>
       ) : null}
