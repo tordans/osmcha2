@@ -54,7 +54,7 @@ export function ChromeHeader() {
 
   return (
     <>
-      <header className="flex shrink-0 items-center justify-between gap-2 px-1 py-1 pt-[max(0.25rem,env(safe-area-inset-top))]">
+      <header className="flex shrink-0 items-center justify-between gap-2 py-1 pt-[max(0.25rem,env(safe-area-inset-top))] pr-0 pl-1">
         <Logo />
         <Button
           plain
