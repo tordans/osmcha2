@@ -15,9 +15,9 @@ export function Listbox<T>({
   autoFocus?: boolean
   'aria-label'?: string
   children?: React.ReactNode
-} & Omit<Headless.ListboxProps<typeof Fragment, T>, 'as' | 'multiple'>) {
+} & Omit<Headless.ListboxProps<'div', T>, 'as' | 'multiple'>) {
   return (
-    <Headless.Listbox {...props} multiple={false}>
+    <Headless.Listbox as="div" {...props} multiple={false}>
       <Headless.ListboxButton
         autoFocus={autoFocus}
         data-slot="control"
@@ -57,6 +57,7 @@ export function Listbox<T>({
           ])}
         >
           <Headless.ListboxSelectedOption
+            as="span"
             options={options}
             placeholder={
               placeholder && <span className="block truncate text-zinc-500">{placeholder}</span>

@@ -37,7 +37,15 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'OSMCHA_')
 
   const plugins = [
-    devtools(),
+    devtools({
+      // Headless UI Listbox/Combobox/Menu often render Fragments; injecting
+      // data-tsd-source onto those nodes throws "Passing props on Fragment".
+      injectSource: {
+        ignore: {
+          components: [/^Headless\./],
+        },
+      },
+    }),
     tanstackRouter({
       target: 'react',
       routesDirectory: './src/routes',
