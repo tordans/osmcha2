@@ -16,6 +16,7 @@ interface RuntimeEnv {
 
 interface ImportMetaEnv extends RuntimeEnv {
   readonly VITE_OSMCHA_ENABLE_DEBUG_PANELS?: string
+  readonly VITE_PLAYWRIGHT_ENABLED?: string
 }
 
 interface ImportMeta {
@@ -24,6 +25,7 @@ interface ImportMeta {
 
 interface Window {
   env: RuntimeEnv
+  __mainMap?: import('maplibre-gl').Map
 }
 
 // Type declarations for importing static assets

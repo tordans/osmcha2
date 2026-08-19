@@ -1,8 +1,9 @@
 import * as Headless from '@headlessui/react'
 import { FunnelIcon, GlobeAltIcon } from '@heroicons/react/20/solid'
-import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
+import { useMap } from 'react-map-gl/maplibre'
+import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStore } from '../../stores/mapStore.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
@@ -151,14 +152,13 @@ function UsedBadge() {
 }
 
 type MapImageryOptionsProps = {
-  mapRef: React.RefObject<{
-    map: maplibre.Map
-    adiffViewer: MapLibreAugmentedDiffViewer
-  } | null>
   imageryUsed?: string | null
 }
 
-function MapImageryOptions({ mapRef, imageryUsed }: MapImageryOptionsProps) {
+function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const map = mapLoaded ? (mainMap?.getMap() ?? null) : null
   const style = useMapStore((state) => state.style)
   const setStyle = useMapStore((state) => state.setStyle)
   const imageryTokens = parseImageryUsed(imageryUsed)
@@ -200,7 +200,7 @@ function MapImageryOptions({ mapRef, imageryUsed }: MapImageryOptionsProps) {
 
             <ViewportEditorLayerList
               enabled={open}
-              map={mapRef.current?.map ?? null}
+              map={map}
               imageryUsed={imageryUsed}
               style={style}
               setStyle={setStyle}
@@ -282,10 +282,6 @@ type MapOptionsProps = {
   showActions: Array<string>
   setShowElements: (elements: Array<string>) => void
   setShowActions: (actions: Array<string>) => void
-  mapRef: React.RefObject<{
-    map: maplibre.Map
-    adiffViewer: MapLibreAugmentedDiffViewer
-  } | null>
   imageryUsed?: string | null
   ref?: React.Ref<HTMLButtonElement>
 }
@@ -295,7 +291,6 @@ export function MapOptions({
   showActions,
   setShowElements,
   setShowActions,
-  mapRef,
   imageryUsed,
   ref,
 }: MapOptionsProps) {
@@ -308,7 +303,7 @@ export function MapOptions({
         setShowElements={setShowElements}
         setShowActions={setShowActions}
       />
-      <MapImageryOptions mapRef={mapRef} imageryUsed={imageryUsed} />
+      <MapImageryOptions imageryUsed={imageryUsed} />
     </Headless.PopoverGroup>
   )
 }

@@ -1,32 +1,26 @@
 import { XMarkIcon } from '@heroicons/react/16/solid'
-import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useEffect, useState } from 'react'
+import { useMap } from 'react-map-gl/maplibre'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useChangeset } from '../../query/hooks/useChangeset.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
+import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { areDebugPanelsEnabled } from './areDebugPanelsEnabled.ts'
 import { JsonDump } from './JsonDump.tsx'
 
 const BASEMAP_SOURCE_HINTS = ['bing', 'esri', 'osm-tiles', 'maptiler', 'openmaptiles']
 
-export type DebugMapHandle = {
-  map: maplibre.Map
-  adiffViewer: MapLibreAugmentedDiffViewer
-}
-
 type Props = {
   changesetId: number | null
   selected: unknown
-  mapRef?: { current: DebugMapHandle | null }
 }
 
-function snapshotMap(handle: DebugMapHandle | null) {
-  if (!handle?.map) return undefined
+function snapshotMap(map: maplibre.Map, adiffActionCount: number | undefined) {
   try {
-    const style = handle.map.getStyle()
+    const style = map.getStyle()
     const sources = Object.entries(style.sources ?? {}).filter(
       ([key]) => !BASEMAP_SOURCE_HINTS.some((hint) => key.includes(hint)),
     )
@@ -35,12 +29,12 @@ function snapshotMap(handle: DebugMapHandle | null) {
       return !BASEMAP_SOURCE_HINTS.some((hint) => source.includes(hint) || layer.id.includes(hint))
     })
     return {
-      zoom: handle.map.getZoom(),
-      center: handle.map.getCenter(),
+      zoom: map.getZoom(),
+      center: map.getCenter(),
       styleName: style.name,
       sources: Object.fromEntries(sources),
       layers,
-      adiffActionCount: handle.adiffViewer?.adiff?.actions?.length,
+      adiffActionCount,
     }
   } catch {
     return undefined
@@ -72,25 +66,27 @@ export function DebugDataHelper(props: Props) {
 
 const rootRouteApi = getRouteApi('__root__')
 
-function DebugDataHelperActive({ changesetId, selected, mapRef }: Props) {
+function DebugDataHelperActive({ changesetId, selected }: Props) {
   const [show, setShow] = useState(false)
   const [mapSnapshot, setMapSnapshot] = useState<unknown>(undefined)
   const changesetQuery = useChangeset(changesetId)
   const mapQuery = useChangesetMap(changesetId)
   const { token, user } = useAuth()
   const { filters, aoi } = rootRouteApi.useSearch()
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const adiffActionCount = mapQuery.data?.adiff?.actions?.length
 
   useEffect(
     function subscribeToMapInspector() {
-      if (!show) return
-
-      const map = mapRef?.current?.map
-      const update = () => {
-        setMapSnapshot(snapshotMap(mapRef?.current ?? null))
-      }
-      update()
+      if (!show || !mapLoaded) return
+      const map = mainMap?.getMap()
       if (!map) return
 
+      const update = () => {
+        setMapSnapshot(snapshotMap(map, adiffActionCount))
+      }
+      update()
       map.on('moveend', update)
       map.on('styledata', update)
       return function unsubscribeFromMapInspector() {
@@ -98,7 +94,7 @@ function DebugDataHelperActive({ changesetId, selected, mapRef }: Props) {
         map.off('styledata', update)
       }
     },
-    [show, mapRef],
+    [show, mapLoaded, mainMap, adiffActionCount],
   )
 
   const filtersDump = filters ?? null

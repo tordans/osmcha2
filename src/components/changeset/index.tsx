@@ -1,8 +1,7 @@
-import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import bbox from '@turf/bbox'
-import type * as maplibre from 'maplibre-gl'
 import React, { useRef, useState } from 'react'
+import { useMap } from 'react-map-gl/maplibre'
 import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
@@ -14,7 +13,14 @@ import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.
 import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
 import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
+import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
+import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
+import {
+  setHighlightedFeatureState,
+  setSelectedFeatureState,
+  type ChangesetGeoJSON,
+} from '../../views/changesetFeatureState.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import ElementInfo from '../element_info.tsx'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
@@ -28,10 +34,7 @@ type ChangesetProps = {
   showActions: Array<string>
   setShowElements: (elements: Array<string>) => any
   setShowActions: (actions: Array<string>) => any
-  mapRef: React.RefObject<{
-    map: maplibre.Map
-    adiffViewer: MapLibreAugmentedDiffViewer
-  } | null>
+  viewer: ChangesetAdiffViewer | null
   selected: any
   setSelected: (selected: any) => void
   children: React.ReactNode
@@ -50,7 +53,7 @@ function Changeset({
   showActions,
   setShowElements,
   setShowActions,
-  mapRef,
+  viewer,
   selected,
   setSelected,
   children,
@@ -65,6 +68,8 @@ function Changeset({
   )
   const ready = Boolean(changesetId && currentChangeset)
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null)
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
 
   const [bindingsState, setBindingsState] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -88,28 +93,29 @@ function Changeset({
   )
 
   function setHighlight(type: string, id: number, isHighlighted: boolean) {
-    if (!mapRef.current) return
-    const { adiffViewer } = mapRef.current
-    if (isHighlighted) {
-      adiffViewer.highlight(type, id)
-    } else {
-      adiffViewer.unhighlight(type, id)
-    }
+    if (!mainMap || !mapLoaded || !viewer) return
+    setHighlightedFeatureState(
+      mainMap.getMap(),
+      viewer.geojson as ChangesetGeoJSON,
+      type,
+      id,
+      isHighlighted,
+    )
   }
 
   function zoomToAndSelect(type: string, id: number) {
-    if (!mapRef.current) return
-    const { map, adiffViewer } = mapRef.current
+    if (!mainMap || !mapLoaded || !viewer) return
+    const map = mainMap.getMap()
 
-    const features = adiffViewer.geojson.features.filter(
-      (feature: any) => feature.properties.type === type && feature.properties.id === id,
+    const features = viewer.geojson.features.filter(
+      (feature) => feature.properties?.type === type && feature.properties?.id === id,
     )
 
     let bounds = bbox({ type: 'FeatureCollection', features })
     if (bounds.length === 6) {
       bounds = [bounds[0], bounds[1], bounds[3], bounds[4]]
     }
-    const nextCamera = map.cameraForBounds(bounds, {
+    const nextCamera = map.cameraForBounds(bounds as [number, number, number, number], {
       padding: 50,
       maxZoom: 18,
     })
@@ -117,12 +123,14 @@ function Changeset({
       map.jumpTo(nextCamera)
     }
 
-    adiffViewer.select(type, id)
+    setSelectedFeatureState(map, viewer.geojson as ChangesetGeoJSON, type, id)
 
-    const action = adiffViewer.adiff.actions.find((item: any) => {
-      const element = item.new ?? item.old
-      return element.type === type && element.id === id
-    })
+    const action = viewer.adiff.actions.find(
+      (item: { new?: { type?: string; id?: number }; old?: { type?: string; id?: number } }) => {
+        const element = item.new ?? item.old
+        return element?.type === type && element?.id === id
+      },
+    )
 
     setSelected(action)
   }
@@ -145,7 +153,6 @@ function Changeset({
           {ready && (
             <MapOptions
               ref={mapOptionsButtonRef}
-              mapRef={mapRef}
               imageryUsed={
                 typeof currentChangeset?.properties?.imagery_used === 'string'
                   ? currentChangeset.properties.imagery_used
@@ -195,7 +202,7 @@ function Changeset({
           />
         </>
       )}
-      <DebugDataHelper changesetId={changesetId} selected={selected} mapRef={mapRef} />
+      <DebugDataHelper changesetId={changesetId} selected={selected} />
     </div>
   )
 }

@@ -1,14 +1,15 @@
-import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import type * as maplibre from 'maplibre-gl'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
+import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/index.tsx'
 import { FILTER_BY_USER } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
+import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
-import { CMap } from '../views/map.tsx'
+import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
+import { CMap } from './map.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -31,6 +32,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const { setFilters } = useFilters()
   const { data: currentChangeset } = useSuspenseQuery(changesetQueryOptions(changesetId))
   const changeset = currentChangeset as ChangesetData | undefined
+  const mapQuery = useChangesetMap(changesetId)
 
   const [selected, setSelected] = useState<unknown>(null)
   const [showElements, setShowElements] = useState<Array<string>>(['node', 'way', 'relation'])
@@ -40,11 +42,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     'delete',
     'noop',
   ])
-
-  const mapRef = useRef<{
-    map: maplibre.Map
-    adiffViewer: MapLibreAugmentedDiffViewer
-  } | null>(null)
+  const viewer = useChangesetAdiffViewer(mapQuery.data?.adiff, showElements, showActions)
 
   function filterChangesetsByUser() {
     if (changeset?.properties) {
@@ -68,31 +66,30 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   )
 
   return (
-    <ChangesetWorkspace
-      changesetId={changesetId}
-      currentChangeset={changeset}
-      showElements={showElements}
-      showActions={showActions}
-      setShowElements={setShowElements}
-      setShowActions={setShowActions}
-      mapRef={mapRef}
-      selected={selected}
-      setSelected={setSelected}
-    >
-      <CMap
+    <MapProvider>
+      <ChangesetWorkspace
         changesetId={changesetId}
-        imageryUsed={
-          typeof changeset?.properties?.imagery_used === 'string'
-            ? changeset.properties.imagery_used
-            : null
-        }
-        mapRef={mapRef}
-        className="h-full w-full"
+        currentChangeset={changeset}
         showElements={showElements}
         showActions={showActions}
+        setShowElements={setShowElements}
+        setShowActions={setShowActions}
+        viewer={viewer}
+        selected={selected}
         setSelected={setSelected}
-      />
-    </ChangesetWorkspace>
+      >
+        <CMap
+          changesetId={changesetId}
+          imageryUsed={
+            typeof changeset?.properties?.imagery_used === 'string'
+              ? changeset.properties.imagery_used
+              : null
+          }
+          viewer={viewer}
+          setSelected={setSelected}
+        />
+      </ChangesetWorkspace>
+    </MapProvider>
   )
 }
 

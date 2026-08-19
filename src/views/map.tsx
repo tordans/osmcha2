@@ -1,9 +1,18 @@
-import { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { useThrottledCallback } from '@tanstack/react-pacer'
-import 'maplibre-gl/dist/maplibre-gl.css'
 import { getRouteApi } from '@tanstack/react-router'
-import * as maplibre from 'maplibre-gl'
-import React, { useEffect, useEffectEvent, useRef, useState } from 'react'
+import type { Map as MaplibreMap, MapLibreEvent, StyleSpecification } from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import {
+  AttributionControl,
+  Map,
+  Source,
+  Layer,
+  useMap,
+  type LayerProps,
+  type MapLayerMouseEvent,
+  type ViewStateChangeEvent,
+} from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
 import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
@@ -12,17 +21,34 @@ import { SignIn } from '../components/sign_in.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
+import { useMapActions, useMapLoaded } from '../stores/map-loaded-store.ts'
 import { useMapStore } from '../stores/mapStore.ts'
+import {
+  CHANGESET_MAP_ID,
+  CHANGESET_SOURCE_ID,
+  changesetInteractiveLayerIds,
+  type ChangesetAdiffViewer,
+} from './changesetAdiffViewer.ts'
 import {
   changesetCameraIntent,
   changesetFitOptions,
   jumpMapToChangesetBounds,
 } from './changesetCamera.ts'
+import {
+  clearSelectedFeatureState,
+  setSelectedFeatureState,
+  type ChangesetGeoJSON,
+} from './changesetFeatureState.ts'
+import { pickChangesetActionFromClick } from './changesetMapClick.ts'
 import { changesetViewBounds } from './changesetViewBounds.ts'
+import {
+  clearMainMapDebugExposure,
+  exposeMainMapForDebugging,
+} from './exposeMainMapForDebugging.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
-function serializeMapCamera(map: maplibre.Map) {
+function serializeMapCamera(map: MaplibreMap) {
   const center = map.getCenter()
   return serializeMapParam({
     zoom: map.getZoom(),
@@ -41,81 +67,34 @@ function waitForMapStoreHydration(): Promise<void> {
   })
 }
 
-function applyBasemapToMap(
-  map: maplibre.Map,
-  spec: maplibre.StyleSpecification,
-  viewer: { refresh: () => void } | null,
-) {
-  const refreshOverlays = () => {
-    viewer?.refresh()
-  }
-  map.setStyle(spec)
-  if (map.isStyleLoaded()) {
-    refreshOverlays()
-  } else {
-    void map.once('style.load', refreshOverlays)
-  }
-}
-
 interface CMapProps {
   changesetId: number | null
   imageryUsed?: string | null
-  className: string
-  showElements: Array<string>
-  showActions: Array<string>
-  mapRef: React.RefObject<{
-    map: maplibre.Map
-    adiffViewer: MapLibreAugmentedDiffViewer
-  } | null>
+  viewer: ChangesetAdiffViewer | null
   setSelected: (action: any) => void
 }
 
-function CMap({
-  changesetId,
-  imageryUsed,
-  showElements,
-  showActions,
-  mapRef: mapHandleRef,
-  setSelected,
-}: CMapProps) {
+function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
   const { token } = useAuth()
   const { map: mapSearch } = changesetRouteApi.useSearch()
   const navigate = changesetRouteApi.useNavigate()
-  const style = useMapStore((state) => state.style)
+  const styleId = useMapStore((state) => state.style)
   const changesetQuery = useChangesetMap(changesetId)
-  const mapRef = useRef<maplibre.Map | null>(null)
-  const adiffViewerRef = useRef<MapLibreAugmentedDiffViewer>(null)
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const { markMapLoaded, resetMapLoaded } = useMapActions()
   const containerRef = useRef<HTMLDivElement>(null)
-  const appliedStyleRef = useRef(style)
   const applyingCameraRef = useRef(false)
   const urlWritesEnabledRef = useRef(false)
-  const [mapReady, setMapReady] = useState(false)
+  const lastClickFeatureIdRef = useRef<string | number | null>(null)
+  const matchedImageryRef = useRef(false)
+  const emptyAdiffWarnedRef = useRef(false)
+  const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [cursor, setCursor] = useState('default')
 
-  const hasAdiff = Boolean(changesetQuery.data)
-
-  const onMapClick = useEffectEvent((event: any, action: any) => {
-    setSelected(action)
-
-    if (action) {
-      const element = action.new ?? action.old
-      adiffViewerRef.current?.select(element.type, element.id)
-    } else {
-      adiffViewerRef.current?.deselect()
-    }
-  })
-
-  const clearSelected = useEffectEvent(() => {
-    setSelected(null)
-  })
-
-  const readAdiff = useEffectEvent(() => changesetQuery.data)
-  const readImageryUsed = useEffectEvent(() => imageryUsed)
-  const readMapSearch = useEffectEvent(() => mapSearch)
-
-  // `?map=` is the user's camera for this visit. Missing `?map=` means fit the changeset.
-  const replaceMapSearch = useEffectEvent((map: maplibre.Map) => {
+  const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
-    const next = serializeMapCamera(map)
     if (next === mapSearch) return
     void navigate({
       search: (prev) => ({ ...prev, map: next }),
@@ -124,237 +103,234 @@ function CMap({
   })
 
   const writeMapToUrl = useThrottledCallback(
-    (map: maplibre.Map) => {
-      replaceMapSearch(map)
+    (next: string) => {
+      replaceMapSearch(next)
     },
     { wait: 250 },
   )
 
-  const applyCameraFromSearch = useEffectEvent(
-    (map: maplibre.Map, viewer: MapLibreAugmentedDiffViewer) => {
+  useEffect(
+    function resetMapLoadedOnUnmount() {
+      return function resetMapLoadedWhenMapUnmounts() {
+        resetMapLoaded()
+        clearMainMapDebugExposure()
+        urlWritesEnabledRef.current = false
+      }
+    },
+    [resetMapLoaded],
+  )
+
+  useEffect(function observeMapContainerSize() {
+    const container = containerRef.current
+    if (!container) return
+
+    const observer = new ResizeObserver(() => {
+      const width = container.clientWidth
+      const height = container.clientHeight
+      setContainerSize((prev) =>
+        prev.width === width && prev.height === height ? prev : { width, height },
+      )
+    })
+    observer.observe(container)
+    setContainerSize({ width: container.clientWidth, height: container.clientHeight })
+    return function disconnectMapContainerObserver() {
+      observer.disconnect()
+    }
+  }, [])
+
+  useEffect(
+    function resolveChangesetBasemap() {
+      let cancelled = false
+
+      async function loadBasemap() {
+        await waitForMapStoreHydration()
+        if (cancelled) return
+
+        if (!matchedImageryRef.current) {
+          matchedImageryRef.current = true
+          const matchedStyleId = matchImageryUsedStyleId(imageryUsed)
+          if (matchedStyleId && matchedStyleId !== useMapStore.getState().style) {
+            useMapStore.getState().setStyle(matchedStyleId)
+            return
+          }
+        }
+
+        const spec = await resolveBasemapStyle(useMapStore.getState().style)
+        if (!cancelled) setMapStyle(spec)
+      }
+
+      void loadBasemap()
+      return function cancelResolveChangesetBasemap() {
+        cancelled = true
+      }
+    },
+    [styleId, imageryUsed],
+  )
+
+  useEffect(
+    function warnEmptyAdiff() {
+      if (!viewer || emptyAdiffWarnedRef.current) return
+      if (viewer.adiff.actions.length === 0) {
+        emptyAdiffWarnedRef.current = true
+        toast.error('Problem loading augmented diff file', {
+          description: 'The augmented diff contains no elements',
+        })
+      }
+    },
+    [viewer],
+  )
+
+  useEffect(
+    function applySearchCamera() {
+      if (!mapLoaded) return
+      const map = mainMap?.getMap()
+      if (!map) return
+
+      const intent = changesetCameraIntent(mapSearch)
+      if (intent.type !== 'restore') return
+      if (serializeMapCamera(map) === mapSearch) return
+
       applyingCameraRef.current = true
       try {
-        const intent = changesetCameraIntent(mapSearch)
-        if (intent.type === 'restore') {
-          if (serializeMapCamera(map) !== mapSearch) {
-            map.jumpTo({
-              center: [intent.camera.lng, intent.camera.lat],
-              zoom: intent.camera.zoom,
-            })
-          }
-          urlWritesEnabledRef.current = true
-          return
-        }
-
-        if (viewer.adiff.actions.length === 0) {
-          toast.error('Problem loading augmented diff file', {
-            description: 'The augmented diff contains no elements',
-          })
-          return
-        }
-
-        const bounds = changesetViewBounds(viewer.geojson.features)
-        if (!bounds) return
-        map.resize()
-        jumpMapToChangesetBounds(map, bounds)
-        urlWritesEnabledRef.current = true
+        map.jumpTo({
+          center: [intent.camera.lng, intent.camera.lat],
+          zoom: intent.camera.zoom,
+        })
       } finally {
         applyingCameraRef.current = false
       }
     },
-  )
-
-  const onMapMoveEnd = useEffectEvent((map: maplibre.Map) => {
-    if (applyingCameraRef.current) return
-    writeMapToUrl(map)
-  })
-
-  // Instance ownership: create MapLibre when this changeset's adiff is available.
-  // Do not depend on the Query object identity — refetches must not remount the map.
-  useEffect(
-    function initializeChangesetMap() {
-      if (!token || !changesetId || !hasAdiff) {
-        return
-      }
-
-      const changeset = readAdiff()
-      const mapContainer = containerRef.current
-      if (!changeset || !mapContainer) {
-        return
-      }
-      const host = mapContainer
-
-      let cancelled = false
-      let map: maplibre.Map | null = null
-
-      async function createChangesetMap() {
-        await waitForMapStoreHydration()
-        if (cancelled || !changeset) return
-
-        const matchedStyleId = matchImageryUsedStyleId(readImageryUsed())
-        const styleId = matchedStyleId ?? useMapStore.getState().style
-        if (matchedStyleId) {
-          useMapStore.getState().setStyle(matchedStyleId)
-        }
-
-        const mapStyle = await resolveBasemapStyle(styleId)
-        if (cancelled) return
-
-        const adiff = {
-          ...changeset.adiff,
-          note: 'Map data from <a href=https://openstreetmap.org/copyright>OpenStreetMap</a>',
-        }
-        const adiffViewer = new MapLibreAugmentedDiffViewer(adiff, {
-          onClick: onMapClick,
-        })
-
-        const parsedCamera = parseMapParam(readMapSearch() ?? '')
-        const viewBounds = changesetViewBounds(adiffViewer.geojson.features)
-        const fitOptions = changesetFitOptions(host.clientWidth, host.clientHeight)
-
-        const createdMap = new maplibre.Map({
-          container: host,
-          style: mapStyle,
-          maxZoom: 22,
-          hash: false,
-          attributionControl: false,
-          ...(parsedCamera
-            ? { center: [parsedCamera.lng, parsedCamera.lat], zoom: parsedCamera.zoom }
-            : viewBounds && fitOptions
-              ? { bounds: viewBounds, fitBoundsOptions: fitOptions }
-              : {}),
-        })
-        map = createdMap
-
-        createdMap.addControl(new maplibre.AttributionControl(), 'bottom-left')
-
-        createdMap.setMaxPitch(0)
-        createdMap.dragRotate.disable()
-        createdMap.touchZoomRotate.disableRotation()
-        createdMap.keyboard.disableRotation()
-
-        createdMap.on('load', () => {
-          clearSelected()
-          adiffViewer.addTo(createdMap)
-          appliedStyleRef.current = styleId
-          setMapReady(true)
-        })
-
-        mapRef.current = createdMap
-        adiffViewerRef.current = adiffViewer
-        mapHandleRef.current = {
-          map: createdMap,
-          adiffViewer,
-        }
-      }
-
-      void createChangesetMap()
-
-      return function teardownChangesetMap() {
-        cancelled = true
-        urlWritesEnabledRef.current = false
-        setMapReady(false)
-        mapHandleRef.current = null
-        map?.remove()
-        mapRef.current = null
-        adiffViewerRef.current = null
-      }
-    },
-    [token, changesetId, hasAdiff, mapHandleRef],
-  )
-
-  // Camera ownership: URL → map when search changes; map → URL on user moveend.
-  useEffect(
-    function applySearchCamera() {
-      if (!mapReady) return
-      const map = mapRef.current
-      const viewer = adiffViewerRef.current
-      if (!map || !viewer) return
-      applyCameraFromSearch(map, viewer)
-    },
-    [mapReady, mapSearch],
+    [mapLoaded, mainMap, mapSearch],
   )
 
   useEffect(
     function refitWhenContainerResizes() {
-      if (!mapReady) return
-      const map = mapRef.current
-      const viewer = adiffViewerRef.current
-      const container = containerRef.current
-      if (!map || !viewer || !container) return
-
-      const observer = new ResizeObserver(() => {
-        map.resize()
-        if (changesetCameraIntent(readMapSearch()).type === 'fit') {
-          applyCameraFromSearch(map, viewer)
-        }
-      })
-      observer.observe(container)
-      return function disconnectResizeObserver() {
-        observer.disconnect()
-      }
-    },
-    [mapReady],
-  )
-
-  useEffect(
-    function subscribeMapMoveEnd() {
-      if (!mapReady) return
-      const map = mapRef.current
+      if (!mapLoaded || !viewer) return
+      const map = mainMap?.getMap()
       if (!map) return
+      if (changesetCameraIntent(mapSearch).type !== 'fit') return
 
-      const handleMoveEnd = () => {
-        onMapMoveEnd(map)
-      }
-      map.on('moveend', handleMoveEnd)
-      return function unsubscribeMapMoveEnd() {
-        map.off('moveend', handleMoveEnd)
-      }
-    },
-    [mapReady],
-  )
+      const bounds = changesetViewBounds(viewer.geojson.features)
+      if (!bounds) return
 
-  // Basemap is Zustand. Init already painted `style`; only setStyle when it changes.
-  useEffect(
-    function applyBasemapStyle() {
-      if (!mapReady || !mapRef.current) return
-      if (appliedStyleRef.current === style) return
-      let cancelled = false
-      void resolveBasemapStyle(style).then((spec) => {
-        if (cancelled || !mapRef.current) return
-        appliedStyleRef.current = style
-        applyBasemapToMap(mapRef.current, spec, adiffViewerRef.current)
-      })
-      return function cancelApplyBasemapStyle() {
-        cancelled = true
+      applyingCameraRef.current = true
+      try {
+        map.resize()
+        jumpMapToChangesetBounds(map, bounds)
+      } finally {
+        applyingCameraRef.current = false
       }
     },
-    [mapReady, style],
-  )
-
-  useEffect(
-    function applyViewerFilters() {
-      if (!mapReady || !adiffViewerRef.current) return
-
-      adiffViewerRef.current.options = {
-        onClick: onMapClick,
-        showElements,
-        showActions,
-      }
-
-      adiffViewerRef.current.refresh()
-    },
-    [mapReady, showElements, showActions],
+    [mapLoaded, mainMap, viewer, mapSearch, containerSize.width, containerSize.height],
   )
 
   if (!token) {
     return <SignIn />
   }
 
+  const parsedCamera = parseMapParam(mapSearch ?? '')
+  const fitOptions = changesetFitOptions(containerSize.width, containerSize.height)
+  const viewBounds = viewer ? changesetViewBounds(viewer.geojson.features) : null
+  const layers = viewer?.layers() ?? []
+  const interactiveLayerIds = changesetInteractiveLayerIds(layers)
+  const initialViewState = parsedCamera
+    ? { longitude: parsedCamera.lng, latitude: parsedCamera.lat, zoom: parsedCamera.zoom }
+    : viewBounds && fitOptions
+      ? { bounds: viewBounds, fitBoundsOptions: fitOptions }
+      : { longitude: 0, latitude: 0, zoom: 1 }
+  const canMountMap = Boolean(mapStyle && viewer && (parsedCamera || fitOptions || !viewBounds))
+  const showLoading = !canMountMap || changesetQuery.isLoading
+
+  function handleLoad(event: MapLibreEvent) {
+    const map = event.target
+    map.touchZoomRotate.disableRotation()
+    map.keyboard.disableRotation()
+    exposeMainMapForDebugging(map)
+    markMapLoaded()
+    urlWritesEnabledRef.current = true
+    setSelected(null)
+  }
+
+  function handleMoveEnd(event: ViewStateChangeEvent) {
+    if (applyingCameraRef.current) return
+    const { latitude, longitude, zoom } = event.viewState
+    writeMapToUrl(serializeMapParam({ zoom, lat: latitude, lng: longitude }))
+  }
+
+  function handleClick(event: MapLayerMouseEvent) {
+    if (!viewer) return
+    const map = event.target
+    const { action, nextFeatureId } = pickChangesetActionFromClick({
+      map,
+      point: event.point,
+      interactiveLayerIds,
+      actions: viewer.adiff.actions,
+      previousFeatureId: lastClickFeatureIdRef.current,
+    })
+
+    lastClickFeatureIdRef.current = nextFeatureId
+    const geojson = viewer.geojson as ChangesetGeoJSON
+
+    if (nextFeatureId == null) {
+      setSelected(null)
+      clearSelectedFeatureState(map, geojson)
+      return
+    }
+
+    if (!action) return
+
+    const element = action.new ?? action.old
+    setSelected(action)
+    if (element?.type && element.id != null) {
+      setSelectedFeatureState(map, geojson, element.type, element.id)
+    }
+  }
+
+  function handleMouseMove({ features }: MapLayerMouseEvent) {
+    setCursor(features?.length ? 'pointer' : 'default')
+  }
+
+  function handleMouseLeave() {
+    setCursor('default')
+  }
+
   return (
-    <React.Fragment>
-      <div ref={containerRef} className="h-full w-full" />
-      {(!mapReady || changesetQuery.isLoading) && (
+    <>
+      <div ref={containerRef} className="h-full w-full">
+        {canMountMap && mapStyle && viewer ? (
+          <Map
+            id={CHANGESET_MAP_ID}
+            initialViewState={initialViewState}
+            mapStyle={mapStyle}
+            attributionControl={false}
+            maxPitch={0}
+            maxZoom={22}
+            dragRotate={false}
+            pitchWithRotate={false}
+            touchPitch={false}
+            interactiveLayerIds={interactiveLayerIds}
+            cursor={cursor}
+            style={{ width: '100%', height: '100%' }}
+            onLoad={handleLoad}
+            onMoveEnd={handleMoveEnd}
+            onClick={handleClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            <Source
+              id={CHANGESET_SOURCE_ID}
+              type="geojson"
+              data={viewer.geojson}
+              attribution={typeof viewer.adiff.note === 'string' ? viewer.adiff.note : undefined}
+            />
+            {layers.map((layer: { id: string }) => (
+              <Layer key={layer.id} {...(layer as LayerProps)} />
+            ))}
+            <AttributionControl compact position="bottom-left" />
+          </Map>
+        ) : null}
+      </div>
+      {showLoading && (
         <div
           className="absolute z-10"
           style={{
@@ -368,7 +344,7 @@ function CMap({
           <Loading height="100%" className="" />
         </div>
       )}
-    </React.Fragment>
+    </>
   )
 }
 
