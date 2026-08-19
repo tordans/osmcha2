@@ -47,12 +47,27 @@ function getDefaultToDate(): any {
   }
 }
 
+/** `{label,value}` entry for last_days. `0` is today. */
+export function lastDaysFilter(days: number) {
+  const n = Math.floor(days)
+  const value = String(n)
+  return [{ label: n === 0 ? 'Today' : `Last ${n} days`, value }]
+}
+
+function lastDaysHasValue(filters: any): boolean {
+  const items = filters?.last_days
+  if (!Array.isArray(items)) return false
+  return items.some((item) => item != null && item.value !== '' && item.value != null)
+}
+
 export function appendDefaultDate(filters: any) {
   // Set From date to 2 days behind if there isn't a date query.
-  // In case of a users or uids query, set the From date to 30 days behind
+  // In case of a users or uids query, set the From date to 30 days behind.
+  // last_days (including 0 / today) is an explicit window — do not inject date__gte.
   let result = { ...filters }
+  const skipFromDefault = lastDaysHasValue(filters)
 
-  if (filters && !('date__gte' in filters) && !('date__lte' in filters)) {
+  if (filters && !('date__gte' in filters) && !('date__lte' in filters) && !skipFromDefault) {
     const filterKeys = Object.keys(filters)
     if (filterKeys.length === 1 && (filterKeys.includes('users') || filterKeys.includes('uids'))) {
       result = { ...result, ...getDefaultFromDate(28) }
@@ -66,6 +81,42 @@ export function appendDefaultDate(filters: any) {
   }
 
   return result
+}
+
+const EMPTY_DATE_GTE = [{ label: '', value: '' }]
+
+/** Apply one filter-field edit. `last_days` and `date__gte` are mutually exclusive. */
+export function applyFilterChange(filters: any, name: string, values?: any) {
+  const next = { ...filters }
+
+  if (name === 'date__gte' && values == null) {
+    delete next.last_days
+    return { ...next, date__gte: EMPTY_DATE_GTE }
+  }
+
+  if (values == null) {
+    delete next[name]
+    return next
+  }
+
+  if (name === 'last_days') {
+    const raw = Array.isArray(values) ? values[0]?.value : values
+    const days = Number(raw)
+    if (!Number.isFinite(days) || days < 0) {
+      delete next.last_days
+      return next
+    }
+    delete next.date__gte
+    next.last_days = lastDaysFilter(days)
+    return next
+  }
+
+  if (name === 'date__gte') {
+    delete next.last_days
+  }
+
+  next[name] = values
+  return next
 }
 
 function getString(input: any): string {

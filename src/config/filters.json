@@ -6,7 +6,7 @@
     "range": true,
     "display": "Date",
     "type": "date",
-    "description": "Set the date range to view changesets created during that duration.",
+    "description": "Filter changesets by when they were created. Last N days is a rolling window (saved filters, AOIs, and RSS stay relative). Date range uses a fixed From and optional To.",
     "placeholder": "YYYY-MM-DD"
   },
   {

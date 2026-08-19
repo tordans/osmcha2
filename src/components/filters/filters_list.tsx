@@ -1,9 +1,8 @@
 import { startOfDay } from 'date-fns'
 import filters from '../../config/filters.json'
-import { getDefaultFromDate } from '../../utils/filters.ts'
 import { Button } from '../ui/button.tsx'
 import { Subheading } from '../ui/heading.tsx'
-import { DateField, parseStoredDate } from './date.tsx'
+import { ChangesetDateFilter, DateField, parseStoredDate } from './date.tsx'
 import type { Filter, FilterOption, Filters } from './index.ts'
 import { LocationSelect } from './location.tsx'
 import { Meta } from './meta.tsx'
@@ -11,8 +10,6 @@ import { MappingTeamMultiSelect, MultiSelect } from './multi_select.tsx'
 import { Radio } from './radio.tsx'
 import { Text } from './text.tsx'
 import { Wrapper } from './wrapper.tsx'
-
-const defaultDate = getDefaultFromDate().date__gte
 
 const filtersData = filters.filter((f) => {
   return !('ignore' in f && f.ignore)
@@ -128,10 +125,26 @@ export function FiltersList({
     }
 
     if (config.range && config.type === 'date') {
-      let gteValue = currentFilters[`${config.name}__gte`]
       if (config.name === 'date') {
-        gteValue = currentFilters[`${config.name}__gte`] || defaultDate
+        return (
+          <Wrapper
+            {...wrapperProps}
+            hasValue={
+              'date__gte' in currentFilters ||
+              'date__lte' in currentFilters ||
+              'last_days' in currentFilters
+            }
+          >
+            <ChangesetDateFilter
+              filters={currentFilters}
+              display={config.display}
+              onChange={handleChange}
+            />
+          </Wrapper>
+        )
       }
+
+      const gteValue = currentFilters[`${config.name}__gte`]
       const lteValue = currentFilters[`${config.name}__lte`]
       const today = startOfDay(new Date())
       const gteDate = parseStoredDate(gteValue?.[0]?.value as string | undefined) ?? undefined

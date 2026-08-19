@@ -7,13 +7,9 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
-import { deserializeFiltersFromObject } from '../utils/filters.ts'
+import { applyFilterChange, deserializeFiltersFromObject } from '../utils/filters.ts'
 
 const NEW_AOI = 'unnamed *'
-
-const noDateGte = {
-  date__gte: [{ label: '', value: '' }],
-}
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -62,18 +58,7 @@ export function Filters() {
   }
 
   const handleChange = (name: string, values?: Filter | null) => {
-    setLocalFilters((prevFilters) => {
-      const newFilters = { ...prevFilters }
-
-      if (name === 'date__gte' && values == null) {
-        return { ...newFilters, ...noDateGte }
-      } else if (values == null) {
-        delete newFilters[name]
-      } else {
-        newFilters[name] = values
-      }
-      return newFilters
-    })
+    setLocalFilters((prevFilters) => applyFilterChange(prevFilters, name, values))
   }
 
   const handleToggleAll = (name: string, values?: Filter | null) => {
