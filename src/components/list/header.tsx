@@ -1,4 +1,5 @@
-import { ArrowPathIcon } from '@heroicons/react/16/solid'
+import { ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/16/solid'
+import { getRouteApi, Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
@@ -8,6 +9,8 @@ import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Button } from '../ui/button.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { FiltersMenu } from './FiltersMenu.tsx'
+
+const rootRouteApi = getRouteApi('__root__')
 
 type OrderOption = { label: string; value: string }
 
@@ -36,6 +39,7 @@ export function Header({
 }: HeaderProps) {
   const { token } = useAuth()
   const signedIn = Boolean(token)
+  const search = rootRouteApi.useSearch()
   const { data: aoi } = useAOI(aoiId)
   const aoiName = aoi?.properties?.name as string | undefined
   const orderByFilter = filtersConfig.find((f) => f.name === 'order_by')
@@ -46,8 +50,18 @@ export function Header({
   return (
     <div>
       {aoiId && (
-        <div className="relative border-b border-zinc-200 bg-zinc-100 px-3 py-2 font-semibold">
-          Saved Filter: {aoiName || aoiId}
+        <div className="relative flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-2 py-1.5">
+          <p className="min-w-0 truncate px-1 font-semibold">Saved Filter: {aoiName || aoiId}</p>
+          <Link
+            to="/filters"
+            search={{ ...search, aoi: aoiId, filters: undefined, page: undefined }}
+            data-panel-origin="filters"
+            aria-label={`Edit saved filter ${aoiName || aoiId}`}
+            className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950"
+          >
+            <PencilSquareIcon className="size-4" />
+            Edit
+          </Link>
           <DebugDataHelperDialog data={aoi} title="AOI Object" />
         </div>
       )}
