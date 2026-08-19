@@ -6,11 +6,11 @@ import {
   StarIcon,
   XMarkIcon,
 } from '@heroicons/react/16/solid'
-import clsx from 'clsx'
+import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
+import clsx from 'clsx'
 import { parse } from 'date-fns'
 import Linkify from 'linkify-react'
-import { useHotkeys } from '@tanstack/react-hotkeys'
 import { toast } from 'sonner'
 import {
   OPEN_IN_ACHAVI,
@@ -41,9 +41,9 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
+import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { Tags } from './tags.tsx'
 import { User } from './user.tsx'
-import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -196,23 +196,25 @@ export function DetailsHeader({
       <Dropdown>
         <DropdownButton
           outline
-          className="flex min-h-11 w-full cursor-pointer items-center justify-between p-0 touch-manipulation select-none"
+          className="w-full cursor-pointer touch-manipulation justify-between! p-0 text-left select-none"
         >
-          <div className="flex flex-col justify-start text-start">
-            <h1 className="text-lg font-bold">Changeset #{changesetId}</h1>
-            <p className="-mt-0.5 text-xs text-zinc-500">
-              {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
-              {' | '}
-              <abbr
-                title={`Editor ${properties.editor ?? 'unknown'}${
-                  properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
-                }`}
-              >
-                {editorLabel}
-              </abbr>
-            </p>
-          </div>
-          <ChevronDownIcon data-slot="icon" />
+          <span className="flex min-h-11 w-full items-center justify-between gap-2 px-2 py-1">
+            <span className="min-w-0 flex-1 text-left">
+              <h1 className="text-lg font-bold">Changeset #{changesetId}</h1>
+              <p className="-mt-0.5 text-xs font-normal text-zinc-500">
+                {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+                {' | '}
+                <abbr
+                  title={`Editor ${properties.editor ?? 'unknown'}${
+                    properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
+                  }`}
+                >
+                  {editorLabel}
+                </abbr>
+              </p>
+            </span>
+            <ChevronDownIcon data-slot="icon" />
+          </span>
         </DropdownButton>
         <DropdownMenu anchor="bottom start">
           <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
@@ -253,10 +255,10 @@ export function DetailsHeader({
       <Dropdown>
         <DropdownButton
           outline
-          className="flex min-h-11 w-full cursor-pointer items-center justify-between p-0 touch-manipulation select-none"
+          className="w-full cursor-pointer touch-manipulation justify-between! p-0 text-left select-none"
         >
-          <div className="flex w-full items-center justify-between text-xs text-zinc-500">
-            <p>
+          <span className="flex min-h-11 w-full items-center gap-2 px-2 py-1">
+            <span className="min-w-0 flex-1 text-left text-xs font-normal text-zinc-500">
               {osmUser}
               {isInTrustedlist && (
                 <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
@@ -271,24 +273,33 @@ export function DetailsHeader({
                 </>
               ) : null}
               {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
-            </p>
-            <div title="Changesets of this user marked good or bad in OSMCha">
+            </span>
+            <span
+              className="isolate inline-flex shrink-0 rounded-md"
+              title="Changesets of this user marked good or bad in OSMCha"
+            >
               <Badge rounded="left">
                 {checkedGood.toLocaleString()}{' '}
-                <HandThumbUpIcon className="inline size-4 text-zinc-600" aria-label="Good changesets" />
+                <HandThumbUpIcon
+                  className="inline size-4 text-zinc-600"
+                  aria-label="Good changesets"
+                />
               </Badge>
-              <Badge rounded="right">
+              <Badge rounded="right" className="-ml-px">
                 <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
                   {checkedBad.toLocaleString()}{' '}
                 </span>
                 <HandThumbDownIcon
-                  className={clsx('inline size-4', checkedBad ? 'text-orange-500' : 'text-zinc-600')}
+                  className={clsx(
+                    'inline size-4',
+                    checkedBad ? 'text-orange-500' : 'text-zinc-600',
+                  )}
                   aria-label="Harmful changesets"
                 />
               </Badge>
-            </div>
-          </div>
-          <ChevronDownIcon data-slot="icon" />
+            </span>
+            <ChevronDownIcon data-slot="icon" />
+          </span>
         </DropdownButton>
         <DropdownMenu anchor="bottom start">
           <DropdownSection>
@@ -315,7 +326,7 @@ export function DetailsHeader({
         }}
       >
         <summary
-          className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg px-1 text-sm/5 font-medium text-zinc-700 touch-manipulation select-none marker:content-none [&::-webkit-details-marker]:hidden active:bg-zinc-950/5"
+          className="flex min-h-11 cursor-pointer touch-manipulation list-none items-center justify-between rounded-lg px-1 text-sm/5 font-medium text-zinc-700 select-none marker:content-none active:bg-zinc-950/5 [&::-webkit-details-marker]:hidden"
           title="User details (3)"
         >
           <span>User details</span>
@@ -374,7 +385,10 @@ export function DetailsHeader({
               <XMarkIcon data-slot="icon" className="size-4" />
             </Button>
             {tags.map((tag) => (
-              <Badge key={tag.id ?? tag.name} color={tag.id === RESOLVED_TAG_ID ? 'green' : undefined}>
+              <Badge
+                key={tag.id ?? tag.name}
+                color={tag.id === RESOLVED_TAG_ID ? 'green' : undefined}
+              >
                 {tag.name}
               </Badge>
             ))}
