@@ -102,7 +102,7 @@ export function FiltersMenu() {
           className="transition duration-200 group-data-open:rotate-180"
         />
       </DropdownButton>
-      <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
+      <DropdownMenu anchor="bottom start" className={chromeDropdownMenuClassName}>
         <Headless.MenuItem>
           <button type="button" onClick={goNew} className={filterMenuItemClassName}>
             <PlusIcon className="size-4 shrink-0" />

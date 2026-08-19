@@ -1,4 +1,9 @@
-import { ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/16/solid'
+import {
+  ArrowPathIcon,
+  BarsArrowDownIcon,
+  CheckIcon,
+  PencilSquareIcon,
+} from '@heroicons/react/16/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import filtersConfig from '../../config/filters.json'
@@ -8,7 +13,13 @@ import { RouterLink } from '../../routing/RouterLink.tsx'
 import numberWithCommas from '../../utils/number_with_commas.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Button } from '../ui/button.tsx'
-import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
+import {
+  chromeDropdownMenuClassName,
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownMenu,
+} from '../ui/dropdown.tsx'
 import { FiltersMenu } from './FiltersMenu.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -67,32 +78,6 @@ export function Header({
         </div>
       )}
       <header className="flex h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-1">
-        <div
-          className="max-w-56 min-w-0 flex-1"
-          title={
-            !signedIn
-              ? 'Sign in to sort the changeset list'
-              : aoiId
-                ? 'Sort order is determined by the active saved filter'
-                : undefined
-          }
-        >
-          <Listbox<OrderOption | null>
-            value={selected}
-            onChange={(option) => {
-              if (option) handleFilterOrderBy([option])
-            }}
-            disabled={!signedIn || !!aoiId}
-            placeholder="Order by"
-            aria-label="Order by"
-          >
-            {options.map((option) => (
-              <ListboxOption key={option.value} value={option}>
-                <ListboxLabel>{option.label}</ListboxLabel>
-              </ListboxOption>
-            ))}
-          </Listbox>
-        </div>
         {signedIn ? (
           <FiltersMenu />
         ) : (
@@ -105,6 +90,19 @@ export function Header({
             Filters
           </span>
         )}
+        <OrderMenu
+          selected={selected}
+          options={options}
+          disabled={!signedIn || !!aoiId}
+          title={
+            !signedIn
+              ? 'Sign in to sort the changeset list'
+              : aoiId
+                ? 'Sort order is determined by the active saved filter'
+                : undefined
+          }
+          onChange={(option) => handleFilterOrderBy([option])}
+        />
       </header>
       <header
         className={clsx(
@@ -127,5 +125,55 @@ export function Header({
         </Button>
       </header>
     </div>
+  )
+}
+
+function OrderMenu({
+  selected,
+  options,
+  disabled,
+  title,
+  onChange,
+}: {
+  selected: OrderOption | null
+  options: OrderOption[]
+  disabled: boolean
+  title?: string
+  onChange: (option: OrderOption) => void
+}) {
+  const iconButtonClassName = 'relative z-[110] h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0'
+  const ariaLabel = selected ? `Order by: ${selected.label}` : 'Order by'
+
+  if (disabled) {
+    return (
+      <span title={title} className="shrink-0">
+        <Button outline disabled aria-label={ariaLabel} className={iconButtonClassName}>
+          <BarsArrowDownIcon data-slot="icon" />
+        </Button>
+      </span>
+    )
+  }
+
+  return (
+    <Dropdown backdrop className="shrink-0">
+      <DropdownButton outline aria-label={ariaLabel} className={iconButtonClassName}>
+        <BarsArrowDownIcon data-slot="icon" />
+      </DropdownButton>
+      <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
+        {options.map((option) => (
+          <DropdownItem
+            key={option.value}
+            onClick={() => onChange(option)}
+            className="cursor-pointer"
+          >
+            <CheckIcon
+              data-slot="icon"
+              className={clsx(selected?.value !== option.value && 'invisible')}
+            />
+            {option.label}
+          </DropdownItem>
+        ))}
+      </DropdownMenu>
+    </Dropdown>
   )
 }
