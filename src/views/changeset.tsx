@@ -81,6 +81,11 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     >
       <CMap
         changesetId={changesetId}
+        imageryUsed={
+          typeof changeset?.properties?.imagery_used === 'string'
+            ? changeset.properties.imagery_used
+            : null
+        }
         mapRef={mapRef}
         className="h-full w-full"
         showElements={showElements}

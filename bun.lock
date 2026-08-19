@@ -8,6 +8,7 @@
         "@fontsource/open-sans": "^5.3.0",
         "@headlessui/react": "^2.2.10",
         "@heroicons/react": "^2.2.0",
+        "@osm-editor-kit/maplibre-editor-layer-index": "^0.1.7",
         "@osmcha/maplibre-adiff-viewer": "^1.3.1",
         "@osmcha/osm-adiff-parser": "^3.0.0",
         "@tailwindcss/vite": "^4.3.3",
@@ -276,6 +277,8 @@
     "@neodrag/core": ["@neodrag/core@3.0.0-next.11", "", {}, "sha512-3WQWxyrbxiaK9zS5JU2wJsW2gpoQlZBXVghduBh61JpqaeE0T0cte8R0qYK2RuJo3J2TYQYqxO19CpG/C1i5eg=="],
 
     "@neodrag/solid": ["@neodrag/solid@3.0.0-next.11", "", { "peerDependencies": { "@neodrag/core": "3.0.0-next.11", "solid-js": "^1.0.0" } }, "sha512-vCBIn/pimjWMQ6vhTS2/O1XNAwzVtc4eUhdbQ91WykbZWWqQ5NocDXt/1OdYrEkeRzJcpCv8wEz5PnMkgKP81Q=="],
+
+    "@osm-editor-kit/maplibre-editor-layer-index": ["@osm-editor-kit/maplibre-editor-layer-index@0.1.7", "", { "dependencies": { "@types/geojson": "^7946.0.16" }, "peerDependencies": { "maplibre-gl": ">=4", "react": ">=18", "react-map-gl": ">=7.1" }, "optionalPeers": ["maplibre-gl", "react", "react-map-gl"] }, "sha512-L5eGXXSNg5yIvRequfBe1rEoPqZit+pPnjx1eQP4uD2p+YmMAB2uTHTU+62GzGFJb4rVtCe0duf0ryBYqwu1Fg=="],
 
     "@osmcha/maplibre-adiff-viewer": ["@osmcha/maplibre-adiff-viewer@1.3.1", "", { "dependencies": { "@turf/area": "^7.2.0", "@turf/bbox": "^7.2.0", "@turf/bbox-polygon": "^7.2.0", "deep-equal": "^2.2.3", "id-area-keys": "^6.5.0" }, "peerDependencies": { "maplibre-gl": ">4.0.0" } }, "sha512-VE67VWJh1DIH6pYlA+8aYxxKkrW1HkaRpV1DyE0Uiot9BSduwBKspnjm0ugKXV9UfbiKRa8/dI//cv/YyEKefw=="],
 

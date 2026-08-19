@@ -5,122 +5,19 @@ import { getRouteApi } from '@tanstack/react-router'
 import * as maplibre from 'maplibre-gl'
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
+import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
 import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { useMapStore } from '../stores/mapStore.ts'
+import { changesetViewBounds } from './changesetViewBounds.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
-const BING_AERIAL_IMAGERY_STYLE: maplibre.StyleSpecification = {
-  version: 8,
-  sources: {
-    bing: {
-      type: 'raster',
-      scheme: 'xyz',
-      tiles: [
-        'https://ecn.t0.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=587&mkt=en-gb&n=z',
-        'https://ecn.t1.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=587&mkt=en-gb&n=z',
-        'https://ecn.t2.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=587&mkt=en-gb&n=z',
-        'https://ecn.t3.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=587&mkt=en-gb&n=z',
-      ],
-      tileSize: 256,
-      maxzoom: 20,
-      attribution: 'Imagery © Microsoft Corporation',
-    },
-  },
-  layers: [
-    {
-      id: 'imagery',
-      type: 'raster',
-      source: 'bing',
-    },
-  ],
-}
-
-const ESRI_WORLD_IMAGERY_STYLE: maplibre.StyleSpecification = {
-  version: 8,
-  sources: {
-    esri: {
-      type: 'raster',
-      scheme: 'xyz',
-      tiles: [
-        'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false',
-        'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false',
-      ],
-      tileSize: 256,
-      maxzoom: 20,
-      attribution: 'Imagery © Esri',
-    },
-  },
-  layers: [
-    {
-      id: 'imagery',
-      type: 'raster',
-      source: 'esri',
-    },
-  ],
-}
-
-const ESRI_WORLD_IMAGERY_CLARITY_STYLE: maplibre.StyleSpecification = {
-  version: 8,
-  sources: {
-    esri: {
-      type: 'raster',
-      scheme: 'xyz',
-      tiles: [
-        'https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?blankTile=false',
-      ],
-      tileSize: 256,
-      maxzoom: 20,
-      attribution: 'Imagery © Esri',
-    },
-  },
-  layers: [
-    {
-      id: 'imagery',
-      type: 'raster',
-      source: 'esri',
-    },
-  ],
-}
-
-const OPENSTREETMAP_CARTO_STYLE: maplibre.StyleSpecification = {
-  version: 8,
-  sources: {
-    'osm-tiles': {
-      type: 'raster',
-      tiles: [
-        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      ],
-      tileSize: 256,
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    },
-  },
-  layers: [
-    {
-      id: 'osm',
-      type: 'raster',
-      source: 'osm-tiles',
-      minzoom: 0,
-      maxzoom: 22,
-    },
-  ],
-}
-
-const BASEMAP_STYLES = {
-  bing: BING_AERIAL_IMAGERY_STYLE,
-  esri: ESRI_WORLD_IMAGERY_STYLE,
-  'esri-clarity': ESRI_WORLD_IMAGERY_CLARITY_STYLE,
-  carto: OPENSTREETMAP_CARTO_STYLE,
-}
-
-const DEFAULT_BASEMAP_STYLE = BING_AERIAL_IMAGERY_STYLE
+const CHANGESET_FIT = { padding: 200, maxZoom: 18 } as const
 
 function serializeMapCamera(map: maplibre.Map) {
   const center = map.getCenter()
@@ -131,8 +28,35 @@ function serializeMapCamera(map: maplibre.Map) {
   })
 }
 
+function waitForMapStoreHydration(): Promise<void> {
+  if (useMapStore.persist.hasHydrated()) return Promise.resolve()
+  return new Promise((resolve) => {
+    const unsub = useMapStore.persist.onFinishHydration(() => {
+      unsub()
+      resolve()
+    })
+  })
+}
+
+function applyBasemapToMap(
+  map: maplibre.Map,
+  spec: maplibre.StyleSpecification,
+  viewer: { refresh: () => void } | null,
+) {
+  const refreshOverlays = () => {
+    viewer?.refresh()
+  }
+  map.setStyle(spec)
+  if (map.isStyleLoaded()) {
+    refreshOverlays()
+  } else {
+    void map.once('style.load', refreshOverlays)
+  }
+}
+
 interface CMapProps {
   changesetId: number | null
+  imageryUsed?: string | null
   className: string
   showElements: Array<string>
   showActions: Array<string>
@@ -145,6 +69,7 @@ interface CMapProps {
 
 function CMap({
   changesetId,
+  imageryUsed,
   showElements,
   showActions,
   mapRef: mapHandleRef,
@@ -157,6 +82,7 @@ function CMap({
   const changesetQuery = useChangesetMap(changesetId)
   const mapRef = useRef<maplibre.Map | null>(null)
   const adiffViewerRef = useRef<MapLibreAugmentedDiffViewer>(null)
+  const appliedStyleRef = useRef(style)
   const [mapReady, setMapReady] = useState(false)
 
   const hasAdiff = Boolean(changesetQuery.data)
@@ -177,6 +103,8 @@ function CMap({
   })
 
   const readAdiff = useEffectEvent(() => changesetQuery.data)
+  const readImageryUsed = useEffectEvent(() => imageryUsed)
+  const readMapSearch = useEffectEvent(() => mapSearch)
 
   // URL `?map=` is the camera. MapLibre is the view. Write only when the view differs.
   const replaceMapSearch = useEffectEvent((map: maplibre.Map) => {
@@ -215,10 +143,10 @@ function CMap({
         return
       }
 
-      const camera = map.cameraForBounds(viewer.bounds(), {
-        padding: 200,
-        maxZoom: 18,
-      })
+      const bounds = changesetViewBounds(viewer.geojson.features)
+      if (!bounds) return
+
+      const camera = map.cameraForBounds(bounds, CHANGESET_FIT)
       if (camera) {
         map.jumpTo(camera)
         replaceMapSearch(map)
@@ -239,54 +167,82 @@ function CMap({
       }
 
       const changeset = readAdiff()
-      const container = document.getElementById('container')
-      if (!changeset || !container) {
+      const mapContainer = document.getElementById('container')
+      if (!changeset || !mapContainer) {
         return
       }
+      const containerEl: HTMLElement = mapContainer
 
-      const currentStyleId = useMapStore.getState().style
-      const mapStyle = BASEMAP_STYLES[currentStyleId] ?? DEFAULT_BASEMAP_STYLE
+      let cancelled = false
+      let map: maplibre.Map | null = null
 
-      const map = new maplibre.Map({
-        container,
-        style: mapStyle,
-        maxZoom: 22,
-        hash: false,
-        attributionControl: false,
-      })
+      async function createChangesetMap() {
+        await waitForMapStoreHydration()
+        if (cancelled || !changeset) return
 
-      map.addControl(new maplibre.AttributionControl(), 'bottom-left')
+        const matchedStyleId = matchImageryUsedStyleId(readImageryUsed())
+        const styleId = matchedStyleId ?? useMapStore.getState().style
+        if (matchedStyleId) {
+          useMapStore.getState().setStyle(matchedStyleId)
+        }
 
-      map.setMaxPitch(0)
-      map.dragRotate.disable()
-      map.touchZoomRotate.disableRotation()
-      map.keyboard.disableRotation()
+        const mapStyle = await resolveBasemapStyle(styleId)
+        if (cancelled) return
 
-      const adiff = {
-        ...changeset.adiff,
-        note: 'Map data from <a href=https://openstreetmap.org/copyright>OpenStreetMap</a>',
+        const adiff = {
+          ...changeset.adiff,
+          note: 'Map data from <a href=https://openstreetmap.org/copyright>OpenStreetMap</a>',
+        }
+        const adiffViewer = new MapLibreAugmentedDiffViewer(adiff, {
+          onClick: onMapClick,
+        })
+
+        const parsedCamera = parseMapParam(readMapSearch() ?? '')
+        const viewBounds = changesetViewBounds(adiffViewer.geojson.features)
+
+        const createdMap = new maplibre.Map({
+          container: containerEl,
+          style: mapStyle,
+          maxZoom: 22,
+          hash: false,
+          attributionControl: false,
+          ...(parsedCamera
+            ? { center: [parsedCamera.lng, parsedCamera.lat], zoom: parsedCamera.zoom }
+            : viewBounds
+              ? { bounds: viewBounds, fitBoundsOptions: CHANGESET_FIT }
+              : {}),
+        })
+        map = createdMap
+
+        createdMap.addControl(new maplibre.AttributionControl(), 'bottom-left')
+
+        createdMap.setMaxPitch(0)
+        createdMap.dragRotate.disable()
+        createdMap.touchZoomRotate.disableRotation()
+        createdMap.keyboard.disableRotation()
+
+        createdMap.on('load', () => {
+          clearSelected()
+          adiffViewer.addTo(createdMap)
+          appliedStyleRef.current = styleId
+          setMapReady(true)
+        })
+
+        mapRef.current = createdMap
+        adiffViewerRef.current = adiffViewer
+        mapHandleRef.current = {
+          map: createdMap,
+          adiffViewer,
+        }
       }
-      const adiffViewer = new MapLibreAugmentedDiffViewer(adiff, {
-        onClick: onMapClick,
-      })
 
-      map.on('load', () => {
-        clearSelected()
-        adiffViewer.addTo(map)
-        setMapReady(true)
-      })
-
-      mapRef.current = map
-      adiffViewerRef.current = adiffViewer
-      mapHandleRef.current = {
-        map,
-        adiffViewer,
-      }
+      void createChangesetMap()
 
       return function teardownChangesetMap() {
+        cancelled = true
         setMapReady(false)
         mapHandleRef.current = null
-        map.remove()
+        map?.remove()
         mapRef.current = null
         adiffViewerRef.current = null
       }
@@ -324,13 +280,19 @@ function CMap({
   )
 
   // Basemap is Zustand. Init already painted `style`; only setStyle when it changes.
-  const appliedStyleRef = useRef(style)
   useEffect(
     function applyBasemapStyle() {
       if (!mapReady || !mapRef.current) return
       if (appliedStyleRef.current === style) return
-      appliedStyleRef.current = style
-      mapRef.current.setStyle(BASEMAP_STYLES[style] ?? DEFAULT_BASEMAP_STYLE)
+      let cancelled = false
+      void resolveBasemapStyle(style).then((spec) => {
+        if (cancelled || !mapRef.current) return
+        appliedStyleRef.current = style
+        applyBasemapToMap(mapRef.current, spec, adiffViewerRef.current)
+      })
+      return function cancelApplyBasemapStyle() {
+        cancelled = true
+      }
     },
     [mapReady, style],
   )

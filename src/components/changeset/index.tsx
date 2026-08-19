@@ -147,6 +147,12 @@ function Changeset({
           {ready && (
             <MapOptions
               ref={mapOptionsButtonRef}
+              mapRef={mapRef}
+              imageryUsed={
+                typeof currentChangeset?.properties?.imagery_used === "string"
+                  ? currentChangeset.properties.imagery_used
+                  : null
+              }
               showElements={showElements}
               showActions={showActions}
               setShowElements={setShowElements}

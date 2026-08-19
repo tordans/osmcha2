@@ -1,6 +1,15 @@
 import * as Headless from '@headlessui/react'
 import { FunnelIcon, GlobeAltIcon } from '@heroicons/react/20/solid'
+import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import clsx from 'clsx'
+import type * as maplibre from 'maplibre-gl'
+import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
+import {
+  isDuplicateOfBuiltinLayer,
+  isImageryUsedMatch,
+  parseImageryUsed,
+} from './matchImageryUsed.ts'
+import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
 import { useMapStore } from '../../stores/mapStore.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
@@ -22,17 +31,18 @@ const toggle = (arr: string[], elem: string): string[] => {
   return arr.indexOf(elem) === -1 ? add(arr, elem) : remove(arr, elem)
 }
 
-const layerOptions = [
-  { label: 'Bing Maps Aerial', value: 'bing' },
-  { label: 'Esri World Imagery', value: 'esri' },
-  { label: 'Esri World Imagery (Clarity) Beta', value: 'esri-clarity' },
-  { label: 'OpenStreetMap Carto', value: 'carto' },
-] as const
-
 const mapControlButtonClassName =
   'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100'
 
-const mapControlPanelClassName = 'z-40 w-72 rounded-xl bg-white p-3 shadow-lg ring-1 ring-zinc-950/10'
+const mapControlPanelClassName =
+  'z-40 w-80 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-xl bg-white p-3 shadow-lg ring-1 ring-zinc-950/10'
+
+function imageryLayerButtonClassName(active: boolean) {
+  return clsx(
+    'flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-left text-base touch-manipulation select-none',
+    active ? 'bg-zinc-950/5 font-medium' : 'active:bg-zinc-950/5',
+  )
+}
 
 type MapFilterOptionsProps = {
   showElements: Array<string>
@@ -132,34 +142,130 @@ function MapFilterOptions({
   )
 }
 
-function MapImageryOptions() {
+function UsedBadge() {
+  return (
+    <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-xs font-medium text-emerald-800">
+      Used
+    </span>
+  )
+}
+
+type MapImageryOptionsProps = {
+  mapRef: React.RefObject<{
+    map: maplibre.Map
+    adiffViewer: MapLibreAugmentedDiffViewer
+  } | null>
+  imageryUsed?: string | null
+}
+
+function MapImageryOptions({ mapRef, imageryUsed }: MapImageryOptionsProps) {
   const style = useMapStore((state) => state.style)
   const setStyle = useMapStore((state) => state.setStyle)
+  const imageryTokens = parseImageryUsed(imageryUsed)
 
   return (
     <Headless.Popover>
-      <Headless.PopoverButton aria-label="Background imagery" className={mapControlButtonClassName}>
-        <GlobeAltIcon className="size-5 text-zinc-700" />
-      </Headless.PopoverButton>
-      <Headless.PopoverPanel anchor="top end" className={mapControlPanelClassName}>
-        <h2 className="mb-2 text-base font-semibold text-zinc-950">Background imagery</h2>
-        <section className="space-y-1">
-          {layerOptions.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setStyle(opt.value)}
-              className={clsx(
-                'flex min-h-11 w-full cursor-pointer items-center rounded-lg px-2 text-left text-base touch-manipulation select-none',
-                style === opt.value ? 'bg-zinc-950/5 font-medium' : 'active:bg-zinc-950/5',
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </section>
-      </Headless.PopoverPanel>
+      {({ open }) => (
+        <>
+          <Headless.PopoverButton
+            aria-label="Background imagery"
+            className={mapControlButtonClassName}
+          >
+            <GlobeAltIcon className="size-5 text-zinc-700" />
+          </Headless.PopoverButton>
+          <Headless.PopoverPanel anchor="top end" className={mapControlPanelClassName}>
+            <h2 className="mb-2 text-base font-semibold text-zinc-950">Background imagery</h2>
+            {imageryTokens.length > 0 && (
+              <p className="mb-2 text-sm text-zinc-500">Changeset used: {imageryTokens.join(', ')}</p>
+            )}
+
+            <section className="space-y-1">
+              {BUILTIN_BASEMAP_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setStyle(opt.id)}
+                  className={imageryLayerButtonClassName(style === opt.id)}
+                >
+                  <span>{opt.label}</span>
+                  {isImageryUsedMatch(imageryUsed, opt.label) || isImageryUsedMatch(imageryUsed, opt.id) ? (
+                    <UsedBadge />
+                  ) : null}
+                </button>
+              ))}
+            </section>
+
+            <ViewportEditorLayerList
+              enabled={open}
+              map={mapRef.current?.map ?? null}
+              imageryUsed={imageryUsed}
+              style={style}
+              setStyle={setStyle}
+            />
+          </Headless.PopoverPanel>
+        </>
+      )}
     </Headless.Popover>
+  )
+}
+
+function ViewportEditorLayerList({
+  enabled,
+  map,
+  imageryUsed,
+  style,
+  setStyle,
+}: {
+  enabled: boolean
+  map: maplibre.Map | null
+  imageryUsed?: string | null
+  style: string
+  setStyle: (style: string) => void
+}) {
+  const { layers, status } = useViewportEditorLayers(map, enabled)
+  const visibleLayers = layers
+    .filter((layer) => !isDuplicateOfBuiltinLayer(layer))
+    .sort((a, b) => {
+      const aUsed = isImageryUsedMatch(imageryUsed, a.name) || isImageryUsedMatch(imageryUsed, a.id)
+      const bUsed = isImageryUsedMatch(imageryUsed, b.name) || isImageryUsedMatch(imageryUsed, b.id)
+      if (aUsed !== bUsed) return aUsed ? -1 : 1
+      if (a.best !== b.best) return a.best ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+
+  return (
+    <>
+      <Divider className="my-3" />
+      <section className="space-y-1">
+        <h3 className="text-base font-medium text-zinc-700">In this view</h3>
+        {status !== 'ready' && visibleLayers.length === 0 ? (
+          <p className="px-2 py-2 text-sm text-zinc-500">
+            {map ? 'Loading imagery for this view…' : 'Map is still loading…'}
+          </p>
+        ) : null}
+        {status === 'ready' && visibleLayers.length === 0 ? (
+          <p className="px-2 py-2 text-sm text-zinc-500">No extra imagery for this view.</p>
+        ) : null}
+        {visibleLayers.map((layer) => {
+          const value = toEliStyleId(layer.id)
+          const used = isImageryUsedMatch(imageryUsed, layer.name) || isImageryUsedMatch(imageryUsed, layer.id)
+          return (
+            <button
+              key={layer.id}
+              type="button"
+              onClick={() => setStyle(value)}
+              className={imageryLayerButtonClassName(style === value)}
+            >
+              <span className="min-w-0">
+                <span className="block truncate">{layer.name}</span>
+                {layer.best ? <span className="block text-xs font-normal text-zinc-500">Best for this area</span> : null}
+              </span>
+              {used ? <UsedBadge /> : null}
+            </button>
+          )
+        })}
+      </section>
+    </>
   )
 }
 
@@ -168,6 +274,11 @@ type MapOptionsProps = {
   showActions: Array<string>
   setShowElements: (elements: Array<string>) => void
   setShowActions: (actions: Array<string>) => void
+  mapRef: React.RefObject<{
+    map: maplibre.Map
+    adiffViewer: MapLibreAugmentedDiffViewer
+  } | null>
+  imageryUsed?: string | null
   ref?: React.Ref<HTMLButtonElement>
 }
 
@@ -176,6 +287,8 @@ export function MapOptions({
   showActions,
   setShowElements,
   setShowActions,
+  mapRef,
+  imageryUsed,
   ref,
 }: MapOptionsProps) {
   return (
@@ -187,7 +300,7 @@ export function MapOptions({
         setShowElements={setShowElements}
         setShowActions={setShowActions}
       />
-      <MapImageryOptions />
+      <MapImageryOptions mapRef={mapRef} imageryUsed={imageryUsed} />
     </Headless.PopoverGroup>
   )
 }

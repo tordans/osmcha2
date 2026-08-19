@@ -12,6 +12,7 @@ minimumReleaseAgeExcludes = [
   "oxfmt",
   "oxlint",
   "oxlint-config-react-hooks-js",
+  "@osm-editor-kit/maplibre-editor-layer-index",
 ]
 
 # Global virtual store — install once, link everywhere (requires isolated linker). Local/dev only.

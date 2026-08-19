@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { DEFAULT_BASEMAP_ID, isBuiltinBasemapId } from "../components/changeset/basemapStyles.ts";
 
 interface MapState {
   style: string;
@@ -9,11 +10,14 @@ interface MapState {
 export const useMapStore = create<MapState>()(
   persist(
     (set) => ({
-      style: "bing",
+      style: DEFAULT_BASEMAP_ID,
       setStyle: (style) => set({ style }),
     }),
     {
       name: "map-controls",
+      partialize: (state) => ({
+        style: isBuiltinBasemapId(state.style) ? state.style : DEFAULT_BASEMAP_ID,
+      }),
     },
   ),
 );
