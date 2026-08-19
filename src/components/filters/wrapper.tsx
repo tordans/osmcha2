@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import { Description, Field, Label } from '../ui/fieldset.tsx'
 
@@ -30,7 +31,21 @@ export function Wrapper({
       <div data-slot="control" className="max-w-xl">
         {children}
       </div>
-      {description ? <Description>{description}</Description> : null}
+      <AnimatePresence>
+        {description ? (
+          <motion.div
+            key="help"
+            data-slot="description"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', duration: 0.35, bounce: 0.08 }}
+            className="overflow-hidden"
+          >
+            <Description>{description}</Description>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </Field>
   )
 }
