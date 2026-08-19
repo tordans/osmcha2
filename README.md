@@ -10,7 +10,7 @@ it is not the production osmcha.org UI.
 1. Install [Bun](https://bun.sh) ≥ 1.3.14 (see [`.tool-versions`](./.tool-versions)).
 2. `bun install`
 3. `bun run dev` — http://127.0.0.1:3000
-4. `bun run check` before a commit; CI runs `bun run check-ci` then `bun run build`
+4. `bun run check` before a commit; CI runs `bun run check-ci` then `bun run build`. Push runs `bun run check-pre-push` via Husky.
 
 OAuth sign-in works on **localhost / 127.0.0.1** against production Django
 (Origin redirect). Other public hosts (including GitHub Pages) use **token
