@@ -2,7 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Toaster } from 'sonner'
+import { AppToaster } from './components/shared/toast/AppToaster.tsx'
 import '@fontsource/open-sans/latin.css'
 import './assets/index.css'
 
@@ -17,7 +17,7 @@ root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-      <Toaster position="top-right" />
+      <AppToaster />
     </QueryClientProvider>
   </StrictMode>,
 )
