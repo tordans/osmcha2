@@ -13,6 +13,7 @@ import {
   DropdownHeading,
   DropdownItem,
   DropdownMenu,
+  DropdownSection,
 } from '../components/ui/dropdown.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
@@ -121,59 +122,65 @@ function NavigationMenu() {
         />
       </DropdownButton>
       <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
-        <DropdownHeading>Changesets</DropdownHeading>
-        <NavItem current={isRecent} onClick={() => goTo('/')}>
-          Recent
-        </NavItem>
-        {token && uid != null && (
-          <NavItem current={isMyChangesets} onClick={goMyChangesets}>
-            My Changesets
+        <DropdownSection>
+          <DropdownHeading>Changesets</DropdownHeading>
+          <NavItem current={isRecent} onClick={() => goTo('/')}>
+            Recent
           </NavItem>
-        )}
-        {token && username && (
-          <NavItem current={isMyReviews} onClick={goMyReviews}>
-            My Reviews
+          {token && uid != null && (
+            <NavItem current={isMyChangesets} onClick={goMyChangesets}>
+              My Changesets
+            </NavItem>
+          )}
+          {token && username && (
+            <NavItem current={isMyReviews} onClick={goMyReviews}>
+              My Reviews
+            </NavItem>
+          )}
+          <NavItem current={pathname === '/saved-filters'} onClick={() => goTo('/saved-filters')}>
+            Saved filters
           </NavItem>
-        )}
-        <NavItem current={pathname === '/saved-filters'} onClick={() => goTo('/saved-filters')}>
-          Saved filters
-        </NavItem>
+        </DropdownSection>
 
         <DropdownDivider />
-        <DropdownHeading>About</DropdownHeading>
-        <NavItem current={pathname === '/about'} onClick={() => goTo('/about')}>
-          About
-        </NavItem>
+        <DropdownSection>
+          <DropdownHeading>About</DropdownHeading>
+          <NavItem current={pathname === '/about'} onClick={() => goTo('/about')}>
+            About
+          </NavItem>
+        </DropdownSection>
 
         <DropdownDivider />
-        <DropdownHeading>Account</DropdownHeading>
-        {token && (
-          <div className="flex items-center gap-3 px-3 py-2">
-            <Avatar src={currentUser?.avatar} initials={initials} alt="" className="size-7" />
-            <span className="text-sm/5 font-medium text-zinc-950">{username || 'Signed in'}</span>
-          </div>
-        )}
-        <NavItem current={pathname === '/user'} onClick={() => goTo('/user')}>
-          Account
-        </NavItem>
-        <NavItem current={pathname.startsWith('/teams')} onClick={() => goTo('/teams')}>
-          Teams
-        </NavItem>
-        <NavItem current={pathname === '/trusted-users'} onClick={() => goTo('/trusted-users')}>
-          Trusted users
-        </NavItem>
-        <NavItem current={pathname === '/watchlist'} onClick={() => goTo('/watchlist')}>
-          Watchlist
-        </NavItem>
-        {token ? (
-          <NavItem onClick={handleLogout}>Sign out</NavItem>
-        ) : isOsmOAuthHost() ? (
-          <NavItem onClick={handleLoginClick}>Sign in</NavItem>
-        ) : (
-          <div className="px-2 py-2">
-            <TokenImport compact />
-          </div>
-        )}
+        <DropdownSection>
+          <DropdownHeading>Account</DropdownHeading>
+          {token && (
+            <div className="flex items-center gap-3 px-3 py-2">
+              <Avatar src={currentUser?.avatar} initials={initials} alt="" className="size-7" />
+              <span className="text-sm/5 font-medium text-zinc-950">{username || 'Signed in'}</span>
+            </div>
+          )}
+          <NavItem current={pathname === '/user'} onClick={() => goTo('/user')}>
+            Account
+          </NavItem>
+          <NavItem current={pathname.startsWith('/teams')} onClick={() => goTo('/teams')}>
+            Teams
+          </NavItem>
+          <NavItem current={pathname === '/trusted-users'} onClick={() => goTo('/trusted-users')}>
+            Trusted users
+          </NavItem>
+          <NavItem current={pathname === '/watchlist'} onClick={() => goTo('/watchlist')}>
+            Watchlist
+          </NavItem>
+          {token ? (
+            <NavItem onClick={handleLogout}>Sign out</NavItem>
+          ) : isOsmOAuthHost() ? (
+            <NavItem onClick={handleLoginClick}>Sign in</NavItem>
+          ) : (
+            <div className="px-2 py-2">
+              <TokenImport compact />
+            </div>
+          )}
+        </DropdownSection>
       </DropdownMenu>
     </Dropdown>
   )
