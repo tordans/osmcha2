@@ -60,6 +60,7 @@ export function ChromeHeader() {
           plain
           aria-label="Open menu"
           onClick={() => setOpenFor(locationKey)}
+          data-panel-origin="menu"
           className="h-8 min-h-8 cursor-pointer touch-manipulation items-center px-2 py-0 select-none"
         >
           <Bars3Icon data-slot="icon" className="size-5" />

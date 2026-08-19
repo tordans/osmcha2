@@ -1,6 +1,7 @@
 import { ArrowPathIcon } from '@heroicons/react/16/solid'
 import { getRouteApi, Link, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
+import { motion } from 'motion/react'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
@@ -85,20 +86,24 @@ export function Header({
           </Listbox>
         </div>
         {signedIn ? (
-          <Link
-            to={filtersOpen ? '/' : '/filters'}
-            search={search}
-            className={clsx(
-              'relative isolate inline-flex h-9 shrink-0 cursor-pointer touch-manipulation items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
-              'data-hover:bg-zinc-950/2.5',
-            )}
-          >
-            Filters{filterCount > 0 ? ` (${filterCount})` : ''}
-          </Link>
+          <motion.div whileTap={{ scale: 0.97 }} className="shrink-0">
+            <Link
+              to={filtersOpen ? '/' : '/filters'}
+              search={search}
+              data-panel-origin="filters"
+              className={clsx(
+                'relative isolate inline-flex h-9 cursor-pointer touch-manipulation items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
+                'data-hover:bg-zinc-950/2.5',
+              )}
+            >
+              Filters{filterCount > 0 ? ` (${filterCount})` : ''}
+            </Link>
+          </motion.div>
         ) : (
           <span
             aria-disabled="true"
             title="Sign in to filter changesets"
+            data-panel-origin="filters"
             className="relative isolate inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 opacity-50 select-none"
           >
             Filters

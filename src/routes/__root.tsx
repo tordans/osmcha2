@@ -1,9 +1,11 @@
 import { HotkeysProvider } from '@tanstack/react-hotkeys'
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet, redirect } from '@tanstack/react-router'
+import { MotionConfig } from 'motion/react'
 import { TanStackAppDevtools } from '../components/shared/devtools/TanStackAppDevtools.tsx'
 import { useAppHeight } from '../hooks/useAppHeight.ts'
 import { AppShell } from '../layout/AppShell.tsx'
+import { PanePresence } from '../layout/PanePresence.tsx'
 import { aoiQueryOptions } from '../query/options/aoi.ts'
 import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
@@ -59,18 +61,22 @@ function RootLayout() {
   useAppHeight()
 
   return (
-    <HotkeysProvider
-      defaultOptions={{
-        hotkey: {
-          ignoreInputs: true,
-          preventDefault: true,
-        },
-      }}
-    >
-      <AppShell>
-        <Outlet />
-        <TanStackAppDevtools />
-      </AppShell>
-    </HotkeysProvider>
+    <MotionConfig reducedMotion="user">
+      <HotkeysProvider
+        defaultOptions={{
+          hotkey: {
+            ignoreInputs: true,
+            preventDefault: true,
+          },
+        }}
+      >
+        <AppShell>
+          <PanePresence>
+            <Outlet />
+          </PanePresence>
+          <TanStackAppDevtools />
+        </AppShell>
+      </HotkeysProvider>
+    </MotionConfig>
   )
 }

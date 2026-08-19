@@ -53,7 +53,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           className={clsx(
             'relative min-h-0 min-w-0 flex-1 flex-col',
             listHome ? 'hidden min-[56rem]:flex' : 'flex',
-            fullBleed ? 'h-full overflow-hidden' : 'min-h-dvh overflow-y-auto min-[56rem]:min-h-0',
+            fullBleed
+              ? 'h-full overflow-hidden'
+              : 'min-h-dvh overflow-x-hidden overflow-y-auto min-[56rem]:min-h-0',
             !changeset && paneCard,
           )}
         >
