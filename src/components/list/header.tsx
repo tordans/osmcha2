@@ -1,11 +1,17 @@
 import {
   ArrowPathIcon,
   BarsArrowDownIcon,
+  CalendarDaysIcon,
+  ChatBubbleLeftIcon,
   CheckIcon,
+  ClipboardDocumentCheckIcon,
   PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
 } from '@heroicons/react/16/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
+import { Fragment, type ComponentType, type SVGProps } from 'react'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
@@ -17,8 +23,12 @@ import {
   chromeDropdownMenuClassName,
   Dropdown,
   DropdownButton,
+  DropdownDivider,
+  DropdownHeading,
   DropdownItem,
+  DropdownLabel,
   DropdownMenu,
+  DropdownSection,
 } from '../ui/dropdown.tsx'
 import { FiltersMenu } from './FiltersMenu.tsx'
 
@@ -160,20 +170,69 @@ function OrderMenu({
         <BarsArrowDownIcon data-slot="icon" />
       </DropdownButton>
       <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
-        {options.map((option) => (
-          <DropdownItem
-            key={option.value}
-            onClick={() => onChange(option)}
-            className="cursor-pointer"
-          >
-            <CheckIcon
-              data-slot="icon"
-              className={clsx(selected?.value !== option.value && 'invisible')}
-            />
-            {option.label}
-          </DropdownItem>
+        {groupOrderOptions(options).map((group, index) => (
+          <Fragment key={group.heading}>
+            {index > 0 ? <DropdownDivider /> : null}
+            <DropdownSection>
+              <DropdownHeading>{group.heading}</DropdownHeading>
+              {group.options.map((option) => {
+                const Icon = orderFieldIcon(option.value)
+                return (
+                  <DropdownItem
+                    key={option.value}
+                    onClick={() => onChange(option)}
+                    className="cursor-pointer"
+                  >
+                    <Icon data-slot="icon" />
+                    <DropdownLabel>{orderItemLabel(option)}</DropdownLabel>
+                    <CheckIcon
+                      className={clsx(
+                        'col-start-5 row-start-1 size-4',
+                        selected?.value !== option.value && 'invisible',
+                      )}
+                    />
+                  </DropdownItem>
+                )
+              })}
+            </DropdownSection>
+          </Fragment>
         ))}
       </DropdownMenu>
     </Dropdown>
   )
+}
+
+type OrderFieldIcon = ComponentType<SVGProps<SVGSVGElement>>
+
+const orderFieldIcons: Record<string, OrderFieldIcon> = {
+  date: CalendarDaysIcon,
+  check_date: ClipboardDocumentCheckIcon,
+  create: PlusIcon,
+  modify: PencilSquareIcon,
+  delete: TrashIcon,
+  comments_count: ChatBubbleLeftIcon,
+}
+
+function orderFieldKey(value: string) {
+  return value.startsWith('-') ? value.slice(1) : value
+}
+
+function orderFieldIcon(value: string): OrderFieldIcon {
+  return orderFieldIcons[orderFieldKey(value)] ?? BarsArrowDownIcon
+}
+
+function orderItemLabel(option: OrderOption) {
+  return option.label
+    .replace(/^(Ascending|Descending)\s+/i, '')
+    .replace(/^object created$/i, 'Objects created')
+    .replace(/^object modified$/i, 'Objects modified')
+    .replace(/^object deleted$/i, 'Objects deleted')
+    .replace(/^number of comments$/i, 'Comments')
+}
+
+function groupOrderOptions(options: OrderOption[]) {
+  return [
+    { heading: 'Ascending', options: options.filter((option) => !option.value.startsWith('-')) },
+    { heading: 'Descending', options: options.filter((option) => option.value.startsWith('-')) },
+  ].filter((group) => group.options.length > 0)
 }
