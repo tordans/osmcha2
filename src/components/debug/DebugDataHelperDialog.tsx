@@ -20,7 +20,7 @@ function DebugDataHelperDialogActive({ title, data }: Props) {
 
   return (
     <>
-      <div className="pointer-events-none absolute right-1 bottom-1 z-10 print:hidden">
+      <div className="pointer-events-none absolute right-1 bottom-1 z-0 print:hidden">
         <div className="rounded-full border border-white/70 bg-pink-300 p-0.5 text-xs shadow-xl">
           <button
             type="button"

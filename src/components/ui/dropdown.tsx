@@ -30,14 +30,14 @@ export function DropdownMenu({
         className,
         // Anchor positioning
         '[--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] data-[anchor~=end]:[--anchor-offset:6px] data-[anchor~=start]:[--anchor-offset:-6px] sm:data-[anchor~=end]:[--anchor-offset:4px] sm:data-[anchor~=start]:[--anchor-offset:-4px]',
-        // Base styles — above the review pane (z-30) so the menu is not hidden behind it
-        'isolate z-50 w-max rounded-xl p-1',
+        // Above review pane (z-30) and list debug chips so the menu is not hidden or see-through
+        'isolate z-[100] w-max rounded-xl p-1',
         // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
         'outline outline-transparent focus:outline-hidden',
         // Handle scrolling when menu won't fit in viewport
         'overflow-y-auto',
-        // Popover background
-        'bg-white/75 backdrop-blur-xl',
+        // Opaque so list debug chips do not show through
+        'bg-white',
         // Shadows
         'shadow-lg ring-1 ring-zinc-950/10',
         // Define grid at the menu level if subgrid is supported
