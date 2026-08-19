@@ -1,0 +1,113 @@
+# FMC Dependabot defaults (tech-stack), tuned for this Vite SPA.
+# Schedule: first Monday of each month, 07:00 Europe/Berlin.
+# See FixMyBerlin/fixmyskills tech-stack/references/dependabot.md
+version: 2
+updates:
+  - package-ecosystem: bun
+    directories:
+      - /
+    schedule:
+      interval: cron
+      cronjob: '0 7 * * MON#1'
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 1
+    exclude-paths:
+      - .cursor/**
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      security-dev-tools:
+        applies-to: security-updates
+        patterns:
+          - 'oxlint*'
+          - 'oxfmt*'
+          - 'vitest*'
+          - '@testing-library/*'
+          - '@types/*'
+          - 'typescript'
+          - '@typescript/typescript-*'
+          - 'eslint*'
+
+      app-dev-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '@vitejs/*'
+          - 'babel-plugin-*'
+          - 'eslint-*'
+          - 'jsdom'
+          - 'oxfmt'
+          - 'oxlint*'
+          - 'vitest'
+          - 'vite'
+          - '@types/*'
+          - 'typescript'
+          - '@typescript/typescript-*'
+          - 'dotenv*'
+          - 'mockdate'
+          - 'rollup-plugin-visualizer'
+        update-types:
+          - minor
+          - patch
+
+      app-framework-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '@tanstack/*'
+          - '@tailwindcss/*'
+          - 'tailwindcss'
+          - 'tailwind-merge'
+          - '@headlessui/*'
+          - '@heroicons/*'
+          - '@fontsource/*'
+          - 'motion'
+          - '@turf/*'
+          - 'react'
+          - 'react-dom'
+          - '@types/react*'
+          - 'maplibre-gl'
+          - '@osmcha/*'
+          - 'terra-draw*'
+          - 'zod'
+          - 'zustand'
+        update-types:
+          - minor
+          - patch
+
+      app-prod-misc-patch:
+        applies-to: version-updates
+        update-types:
+          - patch
+        patterns:
+          - '*'
+        exclude-patterns:
+          - '@tanstack/*'
+          - '@tailwindcss/*'
+          - 'tailwindcss'
+          - '@turf/*'
+          - 'react'
+          - 'react-dom'
+          - 'maplibre-gl'
+          - '@osmcha/*'
+          - 'terra-draw*'
+          - 'zod'
+          - 'zustand'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: cron
+      cronjob: '0 7 * * MON#1'
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 1
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+        patterns:
+          - '*'

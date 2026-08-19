@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="google" value="notranslate" />
-    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="shortcut icon" href="%BASE_URL%favicon.ico" />
     <title>OSMCha</title>
     <meta property="og:site_name" content="OSMCha" />
     <meta property="og:title" content="OSMCha" />
@@ -24,7 +24,7 @@
         .then((env) => {
           window.env = env
         })
-        .then(() => import('/src/index.tsx'))
+        .then(() => import('./src/index.tsx'))
     </script>
   </body>
 </html>

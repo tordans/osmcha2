@@ -1,43 +1,43 @@
-# osmcha-frontend
+# osmcha-frontend-v2
 
-This is the web frontend for [osmcha.org](https://osmcha.org/), a tool for reviewing and analyzing edits to [OpenStreetMap](https://openstreetmap.org/about).
-
-Other relevant repositories that contain parts of the OSMCha application are:
-* [`osmcha-django`](https://github.com/OSMCha/osmcha-django) - the backend Django application
-* [`osmcha` (python library)](https://github.com/OSMCha/osmcha) - used by the backend to analyse OSM changesets
-* [`maplibre-adiff-viewer`](https://github.com/OSMCha/maplibre-adiff-viewer) - used to display the changeset on the main map
+Vite SPA for reviewing OpenStreetMap changesets against the live
+[osmcha.org](https://osmcha.org/) API (`https://osmcha.org/api/v1`). This
+worktree is a restyle of [`osmcha-frontend`](https://github.com/OSMCha/osmcha-frontend);
+it is not the production osmcha.org UI.
 
 ## Development
 
-To set up a local development environment:
+1. Install [Bun](https://bun.sh) ≥ 1.3.14 (see [`.tool-versions`](./.tool-versions)).
+2. `bun install`
+3. `bun run dev` — http://127.0.0.1:3000
+4. `bun run check` before a commit; CI runs `bun run check-ci` then `bun run build`
 
-1. Install Node.js and npm. The recommended Node.js version is listed in [.tool-versions](./.tool-versions). Tool managers like [asdf](https://asdf-vm.com/) or [mise](https://mise.jdx.dev/) can read this file and install the right version for you if you want. 
-2. Run `npm install` to install the required JavaScript dependencies.
-3. Run `npm run start` to start the frontend (it will rebuild automatically when you make changes)
-4. Open [http://127.0.0.1:3000](http://127.0.0.1:3000)
+OAuth sign-in works on **localhost / 127.0.0.1** against production Django
+(Origin redirect). Other public hosts (including GitHub Pages) use **token
+import**: copy the API token from osmcha.org (Account, or `localStorage` key
+`auth`) and paste it here. Guest browsing the list/map needs no token.
 
-If you are running the frontend against the production backend (the default),
-then OAuth login will work automatically. If you are running your own local
-copy of the [`osmcha-django`](https://github.com/OSMCha/osmcha-django) backend,
-you'll need to register your own OAuth app on openstreetmap.org, configure
-the backend to use that secret key, and then point this frontend at your local
-backend by setting the `OSMCHA_API_URL` environment variable. After that, normal
-OAuth login through the frontend UI should work.
+## GitHub Pages
 
-### Testing and quality checks
+Static hosting. The Vite `base` comes from `VITE_BASE` (GitHub Actions sets it
+from `actions/configure-pages`). Deep links work because the production build
+copies `index.html` → `404.html`.
 
-- `npm run typecheck` runs TypeScript to verify that the code does not have any type errors
-- `npm run check` checks that the code is formatted correctly and runs the linter (it also runs typechecking)
-- `npm run format` reformats code to match the expected conventions
-- `npm run test` runs the automated test suite
+To publish later (not done from this sandbox):
 
-## Releasing and Deployment
+1. Create a GitHub repo and push branch `v2` or `main`.
+2. Settings → Pages → Source: **GitHub Actions**.
+3. Push; the [Deploy GitHub Pages](.github/workflows/deploy-pages.yml) workflow
+   builds with `OSMCHA_API_URL=https://osmcha.org/api/v1` and deploys.
 
-Deployment of the [osmcha.org](https://osmcha.org) instance is managed in the [`osmcha-deploy`](https://github.com/OSMCha/osmcha-deploy). Tags pushed to this repo are automatically built into container images. Modifying the code in `osmcha-deploy` to change the pinned image version will automatically redeploy the production website.
+Preview a project-pages build locally:
 
-When tagging a new release, be sure to also update the [CHANGELOG](./CHANGELOG.md) file to describe what's changed.
+```bash
+VITE_BASE=/osmcha-frontend-v2/ bun run build
+bun run preview
+```
 
-## Issues and feature requests
+## Related
 
-If you have any error reports of want to request new features, please
-[read our contribution guide to file an issue](CONTRIBUTING.md).
+- [`osmcha-django`](https://github.com/OSMCha/osmcha-django) — production API
+- [`maplibre-adiff-viewer`](https://github.com/OSMCha/maplibre-adiff-viewer) — changeset map
