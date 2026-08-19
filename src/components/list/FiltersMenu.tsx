@@ -22,7 +22,7 @@ const filtersButtonClassName = clsx(
 )
 
 const filterMenuItemClassName = clsx(
-  'flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-base/6 text-zinc-950 select-none sm:min-h-9 sm:text-sm/6',
+  'flex min-h-11 w-full min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-base/6 text-zinc-950 select-none sm:min-h-9 sm:text-sm/6',
   'focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white',
 )
 
@@ -116,7 +116,7 @@ export function FiltersMenu() {
           const current = aoiId === id
 
           return (
-            <div key={id} className="flex min-w-0 items-stretch">
+            <div key={id} className="flex w-full min-w-0 items-stretch">
               <Headless.MenuItem>
                 <button
                   type="button"
