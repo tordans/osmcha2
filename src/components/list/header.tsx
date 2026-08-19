@@ -1,7 +1,5 @@
 import { ArrowPathIcon } from '@heroicons/react/16/solid'
-import { getRouteApi, Link, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { motion } from 'motion/react'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
@@ -9,8 +7,7 @@ import numberWithCommas from '../../utils/number_with_commas.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { Button } from '../ui/button.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
-
-const rootRouteApi = getRouteApi('__root__')
+import { FiltersMenu } from './FiltersMenu.tsx'
 
 type OrderOption = { label: string; value: string }
 
@@ -39,16 +36,12 @@ export function Header({
 }: HeaderProps) {
   const { token } = useAuth()
   const signedIn = Boolean(token)
-  const search = rootRouteApi.useSearch()
-  const filtersRouteMatch = useMatch({ from: '/filters', shouldThrow: false })
   const { data: aoi } = useAOI(aoiId)
   const aoiName = aoi?.properties?.name as string | undefined
   const orderByFilter = filtersConfig.find((f) => f.name === 'order_by')
   const options = (orderByFilter?.options ?? []) as OrderOption[]
   const effectiveOrderBy = aoiId ? aoiOrderBy : filters?.order_by?.[0]?.value
   const selected = options.find((option) => option.value === effectiveOrderBy) ?? null
-  const filtersOpen = Boolean(filtersRouteMatch)
-  const filterCount = Object.keys(filters || {}).length
 
   return (
     <div>
@@ -86,19 +79,7 @@ export function Header({
           </Listbox>
         </div>
         {signedIn ? (
-          <motion.div whileTap={{ scale: 0.97 }} className="shrink-0">
-            <Link
-              to={filtersOpen ? '/' : '/filters'}
-              search={search}
-              data-panel-origin="filters"
-              className={clsx(
-                'relative isolate inline-flex h-9 cursor-pointer touch-manipulation items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
-                'data-hover:bg-zinc-950/2.5',
-              )}
-            >
-              Filters{filterCount > 0 ? ` (${filterCount})` : ''}
-            </Link>
-          </motion.div>
+          <FiltersMenu />
         ) : (
           <span
             aria-disabled="true"
