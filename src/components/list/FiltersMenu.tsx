@@ -6,7 +6,13 @@ import { motion } from 'motion/react'
 import { useFilters } from '../../hooks/useFilters.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
-import { Dropdown, DropdownButton, DropdownDivider, DropdownMenu } from '../ui/dropdown.tsx'
+import {
+  chromeDropdownMenuClassName,
+  Dropdown,
+  DropdownButton,
+  DropdownDivider,
+  DropdownMenu,
+} from '../ui/dropdown.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -84,12 +90,19 @@ export function FiltersMenu() {
   }
 
   return (
-    <Dropdown className="shrink-0">
-      <DropdownButton outline data-panel-origin="filters" className="h-9 min-h-9">
+    <Dropdown backdrop className="shrink-0">
+      <DropdownButton
+        outline
+        data-panel-origin="filters"
+        className="group relative z-[110] h-9 min-h-9"
+      >
         Filters
-        <ChevronDownIcon data-slot="icon" />
+        <ChevronDownIcon
+          data-slot="icon"
+          className="transition duration-200 group-data-open:rotate-180"
+        />
       </DropdownButton>
-      <DropdownMenu anchor="bottom end" className="max-w-72 min-w-56">
+      <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
         <Headless.MenuItem>
           <button type="button" onClick={goNew} className={filterMenuItemClassName}>
             <PlusIcon className="size-4 shrink-0" />

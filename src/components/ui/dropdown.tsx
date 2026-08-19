@@ -4,8 +4,27 @@ import type React from 'react'
 import { Button } from './button'
 import { Link } from './link'
 
-export function Dropdown(props: Headless.MenuProps) {
-  return <Headless.Menu as="div" {...props} />
+/** Shared width for chrome Menu and list Filters; both open as compact drop panels. */
+export const chromeDropdownMenuClassName =
+  'w-72 max-w-[calc(100vw-1rem)] max-h-[min(32rem,calc(100dvh-5rem))]'
+
+export function Dropdown({
+  backdrop = false,
+  children,
+  ...props
+}: { backdrop?: boolean } & Headless.MenuProps) {
+  return (
+    <Headless.Menu as="div" {...props}>
+      {(bag) => (
+        <>
+          {backdrop && bag.open ? (
+            <div aria-hidden className="fixed inset-0 z-[90] bg-black/20 min-[56rem]:hidden" />
+          ) : null}
+          {typeof children === 'function' ? children(bag) : children}
+        </>
+      )}
+    </Headless.Menu>
+  )
 }
 
 export function DropdownButton<T extends React.ElementType = typeof Button>({
@@ -31,7 +50,7 @@ export function DropdownMenu({
         // Anchor positioning
         '[--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] data-[anchor~=end]:[--anchor-offset:6px] data-[anchor~=start]:[--anchor-offset:-6px] sm:data-[anchor~=end]:[--anchor-offset:4px] sm:data-[anchor~=start]:[--anchor-offset:-4px]',
         // Above review pane (z-30) and list debug chips so the menu is not hidden or see-through
-        'isolate z-[100] w-max rounded-xl p-1',
+        'isolate z-[100] w-max origin-top rounded-xl p-1',
         // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
         'outline outline-transparent focus:outline-hidden',
         // Handle scrolling when menu won't fit in viewport
@@ -42,8 +61,8 @@ export function DropdownMenu({
         'shadow-lg ring-1 ring-zinc-950/10',
         // Define grid at the menu level if subgrid is supported
         'supports-[grid-template-columns:subgrid]:grid supports-[grid-template-columns:subgrid]:grid-cols-[auto_1fr_1.5rem_0.5rem_auto]',
-        // Transitions
-        'transition data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0',
+        // Drop in from the trigger
+        'transition duration-200 ease-out data-closed:-translate-y-2 data-closed:scale-95 data-closed:opacity-0 data-leave:duration-150 data-leave:ease-in',
       )}
     />
   )

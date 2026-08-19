@@ -1,23 +1,22 @@
-import * as Headless from '@headlessui/react'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/20/solid'
+import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
-import { useState } from 'react'
+import clsx from 'clsx'
+import type { ReactNode } from 'react'
 import { TokenImport } from '../components/token_import.tsx'
 import { Avatar } from '../components/ui/avatar.tsx'
-import { Button } from '../components/ui/button.tsx'
 import {
-  Sidebar,
-  SidebarBody,
-  SidebarHeading,
-  SidebarItem,
-  SidebarLabel,
-  SidebarSection,
-} from '../components/ui/sidebar.tsx'
+  chromeDropdownMenuClassName,
+  Dropdown,
+  DropdownButton,
+  DropdownDivider,
+  DropdownHeading,
+  DropdownItem,
+  DropdownMenu,
+} from '../components/ui/dropdown.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import { getAuthUrl } from '../network/auth.ts'
-import { useAllAOIs } from '../query/hooks/useAOI.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
@@ -30,49 +29,16 @@ type UserData = {
   avatar?: string
 }
 
-type AoiFeature = {
-  id: string | number
-  properties?: { name?: string }
-}
-
-function aoiFeatures(data: unknown): AoiFeature[] {
-  if (!data) return []
-  if (Array.isArray(data)) return data as AoiFeature[]
-  if (typeof data === 'object' && data !== null && 'features' in data) {
-    const features = (data as { features: unknown }).features
-    if (Array.isArray(features)) return features as AoiFeature[]
-  }
-  return []
-}
-
 export function ChromeHeader() {
-  const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
-  const search = rootRouteApi.useSearch()
-  const locationKey = `${pathname}?${JSON.stringify(search)}`
-  const [openFor, setOpenFor] = useState<string | null>(null)
-  const open = openFor === locationKey
-
   return (
-    <>
-      <header className="flex shrink-0 items-center justify-between gap-2 py-1 pt-[max(0.25rem,env(safe-area-inset-top))] pr-0 pl-1">
-        <Logo />
-        <Button
-          plain
-          aria-label="Open menu"
-          onClick={() => setOpenFor(locationKey)}
-          data-panel-origin="menu"
-          className="h-8 min-h-8 cursor-pointer touch-manipulation items-center px-2 py-0 select-none"
-        >
-          <Bars3Icon data-slot="icon" className="size-5" />
-          Menu
-        </Button>
-      </header>
-      <NavigationFlyout open={open} onClose={() => setOpenFor(null)} />
-    </>
+    <header className="flex shrink-0 items-center justify-between gap-2 py-1 pt-[max(0.25rem,env(safe-area-inset-top))] pr-0 pl-1">
+      <Logo />
+      <NavigationMenu />
+    </header>
   )
 }
 
-function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NavigationMenu() {
   const { token, user } = useAuth()
   const currentUser = user as UserData | undefined
   const clearAuth = useAuthStore((state) => state.clearAuth)
@@ -81,8 +47,6 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
   const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
   const search = rootRouteApi.useSearch()
   const { filters, aoiId } = useFilters()
-  const aoisQuery = useAllAOIs()
-  const aois = aoiFeatures(aoisQuery.data)
 
   const username = currentUser?.username
   const uid = currentUser?.uid
@@ -97,13 +61,11 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
   const handleLogout = () => {
     clearAuth()
     queryClient.clear()
-    onClose()
     void navigate({ to: '/' })
   }
 
   const goMyChangesets = () => {
     if (uid == null) return
-    onClose()
     void navigate({
       to: '/',
       search: {
@@ -118,7 +80,6 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
 
   const goMyReviews = () => {
     if (!username) return
-    onClose()
     void navigate({
       to: '/',
       search: {
@@ -131,22 +92,9 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
     })
   }
 
-  const goAoi = (id: string | number) => {
-    onClose()
-    void navigate({
-      to: '/',
-      search: {
-        aoi: String(id),
-        filters: undefined,
-        page: undefined,
-      },
-    })
-  }
-
   const goTo = (
     to: '/' | '/about' | '/saved-filters' | '/user' | '/teams' | '/trusted-users' | '/watchlist',
   ) => {
-    onClose()
     void navigate({ to, search })
   }
 
@@ -159,116 +107,93 @@ function NavigationFlyout({ open, onClose }: { open: boolean; onClose: () => voi
   const initials = username?.slice(0, 2).toUpperCase()
 
   return (
-    <Headless.Dialog open={open} onClose={onClose} className="relative z-50">
-      <Headless.DialogBackdrop
-        transition
-        className="fixed inset-0 bg-black/30 transition data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
-      />
-      <Headless.DialogPanel
-        transition
-        className="fixed inset-y-0 left-0 w-full max-w-80 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pl-[max(0.5rem,env(safe-area-inset-left))] transition duration-300 ease-in-out data-closed:-translate-x-full"
+    <Dropdown backdrop className="shrink-0">
+      <DropdownButton
+        outline
+        aria-label="Menu"
+        data-panel-origin="menu"
+        className="group relative z-[110] h-9 min-h-9"
       >
-        <div className="flex h-full flex-col rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/5">
-          <div className="flex items-center justify-between gap-3 px-4 pt-3">
-            <Logo />
-            <Headless.CloseButton
-              as={Button}
-              plain
-              aria-label="Close menu"
-              className="min-h-11 min-w-11 cursor-pointer touch-manipulation select-none"
-            >
-              <XMarkIcon data-slot="icon" className="size-5" />
-            </Headless.CloseButton>
+        Menu
+        <ChevronDownIcon
+          data-slot="icon"
+          className="transition duration-200 group-data-open:rotate-180"
+        />
+      </DropdownButton>
+      <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
+        <DropdownHeading>Changesets</DropdownHeading>
+        <NavItem current={isRecent} onClick={() => goTo('/')}>
+          Recent
+        </NavItem>
+        {token && uid != null && (
+          <NavItem current={isMyChangesets} onClick={goMyChangesets}>
+            My Changesets
+          </NavItem>
+        )}
+        {token && username && (
+          <NavItem current={isMyReviews} onClick={goMyReviews}>
+            My Reviews
+          </NavItem>
+        )}
+        <NavItem current={pathname === '/saved-filters'} onClick={() => goTo('/saved-filters')}>
+          Saved filters
+        </NavItem>
+
+        <DropdownDivider />
+        <DropdownHeading>About</DropdownHeading>
+        <NavItem current={pathname === '/about'} onClick={() => goTo('/about')}>
+          About
+        </NavItem>
+
+        <DropdownDivider />
+        <DropdownHeading>Account</DropdownHeading>
+        {token && (
+          <div className="flex items-center gap-3 px-3 py-2">
+            <Avatar src={currentUser?.avatar} initials={initials} alt="" className="size-7" />
+            <span className="text-sm/5 font-medium text-zinc-950">{username || 'Signed in'}</span>
           </div>
-          <Sidebar className="min-h-0 flex-1">
-            <SidebarBody>
-              <SidebarSection>
-                <SidebarHeading>Changesets</SidebarHeading>
-                <SidebarItem onClick={() => goTo('/')} current={isRecent}>
-                  <SidebarLabel>Recent</SidebarLabel>
-                </SidebarItem>
-                {token && uid != null && (
-                  <SidebarItem onClick={goMyChangesets} current={isMyChangesets}>
-                    <SidebarLabel>My Changesets</SidebarLabel>
-                  </SidebarItem>
-                )}
-                {token && username && (
-                  <SidebarItem onClick={goMyReviews} current={isMyReviews}>
-                    <SidebarLabel>My Reviews</SidebarLabel>
-                  </SidebarItem>
-                )}
-                {aois.map((aoi) => (
-                  <SidebarItem
-                    key={aoi.id}
-                    onClick={() => goAoi(aoi.id)}
-                    current={aoiId === String(aoi.id)}
-                  >
-                    <SidebarLabel>{aoi.properties?.name || `Filter ${aoi.id}`}</SidebarLabel>
-                  </SidebarItem>
-                ))}
-                <SidebarItem
-                  onClick={() => goTo('/saved-filters')}
-                  current={pathname === '/saved-filters'}
-                >
-                  <SidebarLabel>Saved filters</SidebarLabel>
-                </SidebarItem>
-              </SidebarSection>
+        )}
+        <NavItem current={pathname === '/user'} onClick={() => goTo('/user')}>
+          Account
+        </NavItem>
+        <NavItem current={pathname.startsWith('/teams')} onClick={() => goTo('/teams')}>
+          Teams
+        </NavItem>
+        <NavItem current={pathname === '/trusted-users'} onClick={() => goTo('/trusted-users')}>
+          Trusted users
+        </NavItem>
+        <NavItem current={pathname === '/watchlist'} onClick={() => goTo('/watchlist')}>
+          Watchlist
+        </NavItem>
+        {token ? (
+          <NavItem onClick={handleLogout}>Sign out</NavItem>
+        ) : isOsmOAuthHost() ? (
+          <NavItem onClick={handleLoginClick}>Sign in</NavItem>
+        ) : (
+          <div className="px-2 py-2">
+            <TokenImport compact />
+          </div>
+        )}
+      </DropdownMenu>
+    </Dropdown>
+  )
+}
 
-              <SidebarSection>
-                <SidebarHeading>About</SidebarHeading>
-                <SidebarItem onClick={() => goTo('/about')} current={pathname === '/about'}>
-                  <SidebarLabel>About</SidebarLabel>
-                </SidebarItem>
-              </SidebarSection>
-
-              <SidebarSection>
-                <SidebarHeading>Account</SidebarHeading>
-                {token && (
-                  <div className="mb-1 flex items-center gap-3 px-2 py-2">
-                    <Avatar
-                      src={currentUser?.avatar}
-                      initials={initials}
-                      alt=""
-                      className="size-7"
-                    />
-                    <SidebarLabel className="text-sm/5 font-medium text-zinc-950">
-                      {username || 'Signed in'}
-                    </SidebarLabel>
-                  </div>
-                )}
-                <SidebarItem onClick={() => goTo('/user')} current={pathname === '/user'}>
-                  <SidebarLabel>Account</SidebarLabel>
-                </SidebarItem>
-                <SidebarItem onClick={() => goTo('/teams')} current={pathname.startsWith('/teams')}>
-                  <SidebarLabel>Teams</SidebarLabel>
-                </SidebarItem>
-                <SidebarItem
-                  onClick={() => goTo('/trusted-users')}
-                  current={pathname === '/trusted-users'}
-                >
-                  <SidebarLabel>Trusted users</SidebarLabel>
-                </SidebarItem>
-                <SidebarItem onClick={() => goTo('/watchlist')} current={pathname === '/watchlist'}>
-                  <SidebarLabel>Watchlist</SidebarLabel>
-                </SidebarItem>
-                {token ? (
-                  <SidebarItem onClick={handleLogout}>
-                    <SidebarLabel>Sign out</SidebarLabel>
-                  </SidebarItem>
-                ) : isOsmOAuthHost() ? (
-                  <SidebarItem onClick={handleLoginClick}>
-                    <SidebarLabel>Sign in</SidebarLabel>
-                  </SidebarItem>
-                ) : (
-                  <div className="px-2 py-2">
-                    <TokenImport compact />
-                  </div>
-                )}
-              </SidebarSection>
-            </SidebarBody>
-          </Sidebar>
-        </div>
-      </Headless.DialogPanel>
-    </Headless.Dialog>
+function NavItem({
+  current,
+  onClick,
+  children,
+}: {
+  current?: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <DropdownItem
+      onClick={onClick}
+      className={clsx('cursor-pointer', current && 'bg-zinc-950/5 font-medium')}
+    >
+      {children}
+    </DropdownItem>
   )
 }
