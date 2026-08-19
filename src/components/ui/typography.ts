@@ -8,5 +8,5 @@ export const typeScale = {
   /** Default reading text */
   body: 'text-sm/6 text-zinc-950',
   /** Captions, timestamps, OSM tag tables */
-  small: 'text-xs/5',
+  small: 'text-xs/4',
 } as const

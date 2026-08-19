@@ -1,4 +1,4 @@
-import { ArrowRightIcon, ClockIcon, FlagIcon } from '@heroicons/react/16/solid'
+import { ClockIcon, FlagIcon } from '@heroicons/react/16/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { diffArrays } from 'diff'
@@ -10,6 +10,7 @@ import { flagFeature, unflagFeature } from '../network/changeset.ts'
 import { searchWithoutMap } from '../routing/mapParam.ts'
 import { DropdownOpenElement } from './changeset/DropdownOpenElement.tsx'
 import { elementCoord, elementOpenInUrls } from './changeset/elementOpenIn.ts'
+import { TagRows, type TagRowsItem } from './tag_rows.tsx'
 import { TagValue } from './tag_value.tsx'
 import { Badge } from './ui/badge.tsx'
 import { Button } from './ui/button.tsx'
@@ -33,10 +34,6 @@ interface ElementInfoProps {
   changesetId: number
   action: any
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
-}
-
-function includesHttp(value: string) {
-  return value.includes('http')
 }
 
 /*
@@ -258,102 +255,44 @@ function TagsTable({ action }: { action: any }) {
     return <p className={clsx('mt-3 text-zinc-500', typeScale.body)}>No tags</p>
   }
 
-  return (
-    <Table dense bleed className="mt-3 font-mono whitespace-normal">
-      <TableHead>
-        <TableRow>
-          <TableHeader>Tag</TableHeader>
-          <TableHeader>Value</TableHeader>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {allKeys.map((key) => {
-          const oldval = action.old ? action.old.tags[key] : undefined
-          const newval = action.new ? action.new.tags[key] : undefined
-          if (oldval === newval) {
-            return (
-              <TableRow key={key}>
-                <TableCell className="align-top font-medium whitespace-normal" title={key}>
-                  <span dir="auto">{key}</span>
-                </TableCell>
-                <TableCell
-                  className={clsx(
-                    'align-top whitespace-normal text-zinc-500',
-                    includesHttp(newval) ? 'break-all' : 'break-words',
-                  )}
-                >
-                  <span dir="auto">
-                    <TagValue k={key} v={newval} />
-                  </span>
-                </TableCell>
-              </TableRow>
-            )
-          }
-          if (oldval === undefined) {
-            return (
-              <TableRow key={key}>
-                <TableCell className="align-top font-medium whitespace-normal" title={key}>
-                  <span dir="auto">{key}</span>
-                </TableCell>
-                <TableCell
-                  className={clsx(
-                    'align-top whitespace-normal bg-blue-100 text-blue-700',
-                    includesHttp(newval) ? 'break-all' : 'break-words',
-                  )}
-                >
-                  <span dir="auto">
-                    <TagValue k={key} v={newval} />
-                  </span>
-                </TableCell>
-              </TableRow>
-            )
-          }
-          if (newval === undefined) {
-            return (
-              <TableRow key={key}>
-                <TableCell className="align-top font-medium whitespace-normal" title={key}>
-                  <span dir="auto">{key}</span>
-                </TableCell>
-                <TableCell
-                  className={clsx(
-                    'align-top whitespace-normal bg-orange-100 text-orange-500',
-                    includesHttp(oldval) ? 'break-all' : 'break-words',
-                  )}
-                >
-                  <span dir="auto">
-                    <TagValue k={key} v={oldval} />
-                  </span>
-                </TableCell>
-              </TableRow>
-            )
-          }
-          return (
-            <TableRow key={key}>
-              <TableCell className="align-top font-medium whitespace-normal" title={key}>
-                <span dir="auto">{key}</span>
-              </TableCell>
-              <TableCell
-                className={clsx(
-                  'align-top whitespace-normal bg-yellow-100',
-                  includesHttp(oldval) || includesHttp(newval) ? 'break-all' : 'break-words',
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <span className="text-orange-500" dir="auto">
-                    <TagValue k={key} v={oldval} />
-                  </span>
-                  <ArrowRightIcon className="size-3 flex-none" />
-                  <span className="text-green-700" dir="auto">
-                    <TagValue k={key} v={newval} />
-                  </span>
-                </div>
-              </TableCell>
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table>
-  )
+  const rows: TagRowsItem[] = allKeys.map((key) => {
+    const oldval = action.old ? action.old.tags[key] : undefined
+    const newval = action.new ? action.new.tags[key] : undefined
+    if (oldval === newval) {
+      return {
+        kind: 'unchanged',
+        key,
+        value: <TagValue k={key} v={newval} />,
+        rawValue: newval,
+      }
+    }
+    if (oldval === undefined) {
+      return {
+        kind: 'added',
+        key,
+        value: <TagValue k={key} v={newval} />,
+        rawValue: newval,
+      }
+    }
+    if (newval === undefined) {
+      return {
+        kind: 'removed',
+        key,
+        value: <TagValue k={key} v={oldval} />,
+        rawValue: oldval,
+      }
+    }
+    return {
+      kind: 'changed',
+      key,
+      oldValue: <TagValue k={key} v={oldval} />,
+      newValue: <TagValue k={key} v={newval} />,
+      rawOld: oldval,
+      rawNew: newval,
+    }
+  })
+
+  return <TagRows className="mt-3" rows={rows} />
 }
 
 function RelationMembersTable({

@@ -1,5 +1,5 @@
 import * as Headless from '@headlessui/react'
-import { ArrowRightIcon, ChevronDownIcon, EyeIcon } from '@heroicons/react/16/solid'
+import { ChevronDownIcon, EyeIcon } from '@heroicons/react/16/solid'
 import {
   ExclamationTriangleIcon,
   PencilIcon,
@@ -9,9 +9,9 @@ import {
 import clsx from 'clsx'
 import { Fragment } from 'react'
 import { Loading } from '../loading.tsx'
+import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table.tsx'
 import { typeScale } from '../ui/typography.ts'
 import {
   buildElementChanges,
@@ -23,7 +23,6 @@ import {
   type ElementChange,
   type FlaggedFeature,
   type NamedReason,
-  type TagRow,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
 
@@ -47,10 +46,6 @@ type DetailsChangesProps = {
   selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
-}
-
-function includesHttp(value: string) {
-  return value.includes('http')
 }
 
 export function DetailsChanges({
@@ -150,7 +145,7 @@ function TagMutationGroup({
           <Badge>{changes.length}</Badge>
         </Headless.DisclosureButton>
         <div className="mt-1 border-t font-mono">
-          <TagRowsTable rows={mutations} emptyLabel="No tag changes" />
+          <TagRows rows={mutations} emptyLabel="No tag changes" />
         </div>
         <Headless.DisclosurePanel>
           <ul>
@@ -168,115 +163,6 @@ function TagMutationGroup({
         </Headless.DisclosurePanel>
       </Headless.Disclosure>
     </li>
-  )
-}
-
-function TagRowsTable({ rows, emptyLabel }: { rows: TagRow[]; emptyLabel: string }) {
-  if (rows.length === 0) {
-    return <p className={clsx('px-2 py-2 text-zinc-500', typeScale.small)}>{emptyLabel}</p>
-  }
-
-  return (
-    <Table dense bleed className="whitespace-normal">
-      <TableHead className="sr-only">
-        <TableRow className="w-full">
-          <TableHeader>Key</TableHeader>
-          <TableHeader>Value</TableHeader>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((row) => {
-          if (row.kind === 'added') {
-            return (
-              <TableRow key={row.key} className="w-full">
-                <TableCell
-                  className="w-32 max-w-32 truncate align-top whitespace-normal"
-                  title={row.key}
-                >
-                  {row.key}
-                </TableCell>
-                <TableCell
-                  dir="auto"
-                  className={clsx(
-                    'bg-blue-100 align-top whitespace-normal text-blue-700',
-                    includesHttp(row.value) ? 'break-all' : 'break-words',
-                  )}
-                >
-                  {row.value}
-                </TableCell>
-              </TableRow>
-            )
-          }
-          if (row.kind === 'removed') {
-            return (
-              <TableRow key={row.key} className="w-full">
-                <TableCell
-                  className="w-32 max-w-32 truncate align-top whitespace-normal"
-                  title={row.key}
-                >
-                  {row.key}
-                </TableCell>
-                <TableCell
-                  dir="auto"
-                  className={clsx(
-                    'bg-orange-100 align-top whitespace-normal text-orange-500',
-                    includesHttp(row.value) ? 'break-all' : 'break-words',
-                  )}
-                >
-                  {row.value}
-                </TableCell>
-              </TableRow>
-            )
-          }
-          if (row.kind === 'changed') {
-            return (
-              <TableRow key={row.key} className="w-full">
-                <TableCell
-                  className="w-32 max-w-32 truncate align-top whitespace-normal"
-                  title={row.key}
-                >
-                  {row.key}
-                </TableCell>
-                <TableCell
-                  className={clsx(
-                    'bg-yellow-100 align-top whitespace-normal',
-                    includesHttp(row.oldValue) || includesHttp(row.newValue)
-                      ? 'break-all'
-                      : 'break-words',
-                  )}
-                >
-                  <div className="flex items-center gap-1">
-                    <span className="text-orange-500" dir="auto">
-                      {row.oldValue}
-                    </span>{' '}
-                    <ArrowRightIcon className="size-3 flex-none" />{' '}
-                    <span className="text-green-700" dir="auto">
-                      {row.newValue}
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )
-          }
-          return (
-            <TableRow key={row.key} className="w-full">
-              <TableCell className="w-32 max-w-32 truncate whitespace-normal" title={row.key}>
-                {row.key}
-              </TableCell>
-              <TableCell
-                dir="auto"
-                className={clsx(
-                  'align-top whitespace-normal text-zinc-500',
-                  includesHttp(row.value) ? 'break-all' : 'break-words',
-                )}
-              >
-                {row.value}
-              </TableCell>
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table>
   )
 }
 
@@ -376,7 +262,7 @@ function ElementChangeRow({
       </div>
       {showTags ? (
         <div className="w-full border-t font-mono">
-          <TagRowsTable rows={change.tags} emptyLabel="No tags" />
+          <TagRows rows={change.tags} emptyLabel="No tags" />
         </div>
       ) : null}
     </li>
