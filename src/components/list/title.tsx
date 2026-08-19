@@ -20,13 +20,17 @@ export function Title({ date, editor, commentsCount }: TitleProps) {
   return (
     <div
       className={clsx(
-        'flex w-full items-center justify-between gap-2 pr-1.5 text-zinc-500',
+        'flex w-full flex-wrap items-center justify-between gap-x-2 gap-y-0.5 pr-1.5 text-zinc-500',
         typeScale.small,
       )}
     >
-      <RelativeTime datetime={parseChangesetDate(date)} />
-      <div className="flex items-center gap-2">
-        {editorShortname(editor)}
+      <span className="shrink-0 whitespace-nowrap">
+        <RelativeTime datetime={parseChangesetDate(date)} />
+      </span>
+      <div className="flex min-w-[min(100%,10rem)] flex-1 items-start justify-end gap-2">
+        <span className="line-clamp-2 min-w-0 text-right wrap-anywhere">
+          {editorShortname(editor)}
+        </span>
         <NumberOfComments count={commentsCount} />
       </div>
     </div>
