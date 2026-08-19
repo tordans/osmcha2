@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import {
   buildElementChanges,
+  groupChangesByTagMutation,
   groupElementChanges,
   matchFlaggedFeature,
   mergeFlaggedFeatures,
+  tagMutationKey,
   tagRows,
 } from './changesetElements.ts'
 
@@ -111,6 +113,47 @@ describe('buildElementChanges', () => {
       userFlag: undefined,
       reasons: ['Suspicious geometry'],
     })
+  })
+})
+
+describe('groupChangesByTagMutation', () => {
+  test('groups elements that share the same tag value change', () => {
+    const changes = buildElementChanges([
+      {
+        type: 'modify',
+        old: { type: 'way', id: 1, version: 1, tags: { highway: 'residential', name: 'A Street' } },
+        new: { type: 'way', id: 1, version: 2, tags: { highway: 'service', name: 'A Street' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'way', id: 2, version: 1, tags: { highway: 'residential', name: 'B Street' } },
+        new: { type: 'way', id: 2, version: 2, tags: { highway: 'service', name: 'B Street' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'way', id: 3, version: 1, tags: { highway: 'residential' } },
+        new: { type: 'way', id: 3, version: 2, tags: { highway: 'footway' } },
+      },
+    ])
+    expect(tagMutationKey(changes[0].tags)).toBe(tagMutationKey(changes[1].tags))
+    expect(groupChangesByTagMutation(changes).map((group) => group.map((change) => change.id))).toEqual([
+      [1, 2],
+      [3],
+    ])
+  })
+
+  test('does not split a retag when other tags differ', () => {
+    const left = tagRows({
+      type: 'modify',
+      old: { tags: { highway: 'path', name: 'North' } },
+      new: { tags: { highway: 'footway', name: 'North' } },
+    })
+    const right = tagRows({
+      type: 'modify',
+      old: { tags: { highway: 'path', name: 'South' } },
+      new: { tags: { highway: 'footway', name: 'South' } },
+    })
+    expect(tagMutationKey(left)).toBe(tagMutationKey(right))
   })
 })
 

@@ -1,5 +1,11 @@
-import { ArrowRightIcon, EyeIcon } from '@heroicons/react/16/solid'
-import { ExclamationTriangleIcon, PencilIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/solid'
+import * as Headless from '@headlessui/react'
+import { ArrowRightIcon, ChevronDownIcon, EyeIcon } from '@heroicons/react/16/solid'
+import {
+  ExclamationTriangleIcon,
+  PencilIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '@heroicons/react/24/solid'
 import clsx from 'clsx'
 import { Fragment } from 'react'
 import { Loading } from '../loading.tsx'
@@ -8,12 +14,15 @@ import { Button } from '../ui/button.tsx'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table.tsx'
 import {
   buildElementChanges,
+  groupChangesByTagMutation,
   groupElementChanges,
   mergeFlaggedFeatures,
+  tagMutationRows,
   type AdiffAction,
   type ElementChange,
   type FlaggedFeature,
   type NamedReason,
+  type TagRow,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
 
@@ -60,7 +69,11 @@ export function DetailsChanges({
   }
 
   if (grouped.length === 0) {
-    return <p className="px-3 py-6 text-center text-sm text-zinc-500">No element changes in this changeset.</p>
+    return (
+      <p className="px-3 py-6 text-center text-sm text-zinc-500">
+        No element changes in this changeset.
+      </p>
+    )
   }
 
   return (
@@ -73,15 +86,25 @@ export function DetailsChanges({
               <Icon className="size-4 flex-none" /> {ACTION_LABEL[actionType]}
             </h2>
             <ul>
-              {changes.map((change) => (
-                <ElementChangeRow
-                  key={`${change.type}/${change.id}`}
-                  change={change}
-                  selected={selected}
-                  setHighlight={setHighlight}
-                  zoomToAndSelect={zoomToAndSelect}
-                />
-              ))}
+              {groupChangesByTagMutation(changes).map((group) =>
+                group.length === 1 ? (
+                  <ElementChangeRow
+                    key={`${group[0].type}/${group[0].id}`}
+                    change={group[0]}
+                    selected={selected}
+                    setHighlight={setHighlight}
+                    zoomToAndSelect={zoomToAndSelect}
+                  />
+                ) : (
+                  <TagMutationGroup
+                    key={group.map((change) => `${change.type}/${change.id}`).join(',')}
+                    changes={group}
+                    selected={selected}
+                    setHighlight={setHighlight}
+                    zoomToAndSelect={zoomToAndSelect}
+                  />
+                ),
+              )}
             </ul>
           </Fragment>
         )
@@ -95,16 +118,174 @@ function isSelected(change: ElementChange, selected?: AdiffAction | null) {
   return element?.type === change.type && element?.id === change.id
 }
 
+function TagMutationGroup({
+  changes,
+  selected,
+  setHighlight,
+  zoomToAndSelect,
+}: {
+  changes: ElementChange[]
+  selected?: AdiffAction | null
+  setHighlight: (type: string, id: number, isHighlighted: boolean) => void
+  zoomToAndSelect: (type: string, id: number) => void
+}) {
+  const mutations = tagMutationRows(changes[0].tags)
+  const containsSelected = changes.some((change) => isSelected(change, selected))
+
+  return (
+    <li className="px-2 py-2">
+      <Headless.Disclosure defaultOpen={containsSelected}>
+        <Headless.DisclosureButton
+          aria-label={`${changes.length} elements with the same tag changes`}
+          className="group flex min-h-11 w-full cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none hover:bg-zinc-50 active:bg-zinc-950/5"
+        >
+          <ChevronDownIcon className="size-4 flex-none transition group-data-open:rotate-180" />
+          <span>Same tag changes</span>
+          <Badge>{changes.length}</Badge>
+        </Headless.DisclosureButton>
+        <div className="mt-1 border-t font-mono">
+          <TagRowsTable rows={mutations} emptyLabel="No tag changes" />
+        </div>
+        <Headless.DisclosurePanel>
+          <ul>
+            {changes.map((change) => (
+              <ElementChangeRow
+                key={`${change.type}/${change.id}`}
+                change={change}
+                selected={selected}
+                setHighlight={setHighlight}
+                zoomToAndSelect={zoomToAndSelect}
+                showTags={false}
+              />
+            ))}
+          </ul>
+        </Headless.DisclosurePanel>
+      </Headless.Disclosure>
+    </li>
+  )
+}
+
+function TagRowsTable({ rows, emptyLabel }: { rows: TagRow[]; emptyLabel: string }) {
+  if (rows.length === 0) {
+    return <p className="px-2 py-2 text-xs text-zinc-500">{emptyLabel}</p>
+  }
+
+  return (
+    <Table dense bleed className="text-xs whitespace-normal">
+      <TableHead className="sr-only">
+        <TableRow className="w-full">
+          <TableHeader>Key</TableHeader>
+          <TableHeader>Value</TableHeader>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {rows.map((row) => {
+          if (row.kind === 'added') {
+            return (
+              <TableRow key={row.key} className="w-full">
+                <TableCell
+                  className="w-32 max-w-32 truncate align-top whitespace-normal"
+                  title={row.key}
+                >
+                  {row.key}
+                </TableCell>
+                <TableCell
+                  dir="auto"
+                  className={clsx(
+                    'bg-blue-100 align-top whitespace-normal text-blue-700',
+                    includesHttp(row.value) ? 'break-all' : 'break-words',
+                  )}
+                >
+                  {row.value}
+                </TableCell>
+              </TableRow>
+            )
+          }
+          if (row.kind === 'removed') {
+            return (
+              <TableRow key={row.key} className="w-full">
+                <TableCell
+                  className="w-32 max-w-32 truncate align-top whitespace-normal"
+                  title={row.key}
+                >
+                  {row.key}
+                </TableCell>
+                <TableCell
+                  dir="auto"
+                  className={clsx(
+                    'bg-orange-100 align-top whitespace-normal text-orange-500',
+                    includesHttp(row.value) ? 'break-all' : 'break-words',
+                  )}
+                >
+                  {row.value}
+                </TableCell>
+              </TableRow>
+            )
+          }
+          if (row.kind === 'changed') {
+            return (
+              <TableRow key={row.key} className="w-full">
+                <TableCell
+                  className="w-32 max-w-32 truncate align-top whitespace-normal"
+                  title={row.key}
+                >
+                  {row.key}
+                </TableCell>
+                <TableCell
+                  className={clsx(
+                    'bg-yellow-100 align-top whitespace-normal',
+                    includesHttp(row.oldValue) || includesHttp(row.newValue)
+                      ? 'break-all'
+                      : 'break-words',
+                  )}
+                >
+                  <div className="flex items-center gap-1">
+                    <span className="text-orange-500" dir="auto">
+                      {row.oldValue}
+                    </span>{' '}
+                    <ArrowRightIcon className="size-3 flex-none" />{' '}
+                    <span className="text-green-700" dir="auto">
+                      {row.newValue}
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          }
+          return (
+            <TableRow key={row.key} className="w-full">
+              <TableCell className="w-32 max-w-32 truncate whitespace-normal" title={row.key}>
+                {row.key}
+              </TableCell>
+              <TableCell
+                dir="auto"
+                className={clsx(
+                  'align-top whitespace-normal text-zinc-500',
+                  includesHttp(row.value) ? 'break-all' : 'break-words',
+                )}
+              >
+                {row.value}
+              </TableCell>
+            </TableRow>
+          )
+        })}
+      </TableBody>
+    </Table>
+  )
+}
+
 function ElementChangeRow({
   change,
   selected,
   setHighlight,
   zoomToAndSelect,
+  showTags = true,
 }: {
   change: ElementChange
   selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
+  showTags?: boolean
 }) {
   const Icon = ACTION_ICON[change.actionType]
   const currentSelect = isSelected(change, selected)
@@ -119,10 +300,10 @@ function ElementChangeRow({
 
   return (
     <li
-        className={clsx(
-          'relative flex w-full flex-col items-start justify-between gap-1 rounded px-2 py-2',
-          currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
-        )}
+      className={clsx(
+        'relative flex w-full flex-col items-start justify-between gap-1 rounded px-2 py-2',
+        currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
+      )}
       onMouseEnter={() => setHighlight(change.type, change.id, true)}
       onMouseLeave={() => setHighlight(change.type, change.id, false)}
     >
@@ -141,7 +322,7 @@ function ElementChangeRow({
               title={flaggedLabel || 'Flagged feature'}
               aria-label={`Show flagged ${change.type}/${change.id} on map`}
               onClick={() => zoomToAndSelect(change.type, change.id)}
-              className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center touch-manipulation select-none"
+              className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center select-none"
             >
               <Badge color="orange" title={flaggedLabel || 'Flagged feature'}>
                 <ExclamationTriangleIcon className="size-3.5" />
@@ -175,108 +356,23 @@ function ElementChangeRow({
             outline
             aria-label={`Show ${change.type}/${change.id} on map`}
             onClick={() => zoomToAndSelect(change.type, change.id)}
-            className="min-h-11 min-w-11 cursor-pointer p-0 touch-manipulation select-none"
+            className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
           >
             <EyeIcon data-slot="icon" />
           </Button>
-          <DropdownOpenElement type={change.type} id={change.id} lat={change.lat} lon={change.lon} />
+          <DropdownOpenElement
+            type={change.type}
+            id={change.id}
+            lat={change.lat}
+            lon={change.lon}
+          />
         </div>
       </div>
-      <div className="w-full border-t font-mono">
-        {change.tags.length === 0 ? (
-          <p className="px-2 py-2 text-xs text-zinc-500">No tags</p>
-        ) : (
-          <Table dense bleed className="text-xs whitespace-normal">
-            <TableHead className="sr-only">
-              <TableRow className="w-full">
-                <TableHeader>Key</TableHeader>
-                <TableHeader>Value</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {change.tags.map((row) => {
-                if (row.kind === 'added') {
-                  return (
-                    <TableRow key={row.key} className="w-full">
-                      <TableCell className="w-32 max-w-32 truncate align-top whitespace-normal" title={row.key}>
-                        {row.key}
-                      </TableCell>
-                      <TableCell
-                        dir="auto"
-                        className={clsx(
-                          'bg-blue-100 align-top whitespace-normal text-blue-700',
-                          includesHttp(row.value) ? 'break-all' : 'break-words',
-                        )}
-                      >
-                        {row.value}
-                      </TableCell>
-                    </TableRow>
-                  )
-                }
-                if (row.kind === 'removed') {
-                  return (
-                    <TableRow key={row.key} className="w-full">
-                      <TableCell className="w-32 max-w-32 truncate align-top whitespace-normal" title={row.key}>
-                        {row.key}
-                      </TableCell>
-                      <TableCell
-                        dir="auto"
-                        className={clsx(
-                          'bg-orange-100 align-top whitespace-normal text-orange-500',
-                          includesHttp(row.value) ? 'break-all' : 'break-words',
-                        )}
-                      >
-                        {row.value}
-                      </TableCell>
-                    </TableRow>
-                  )
-                }
-                if (row.kind === 'changed') {
-                  return (
-                    <TableRow key={row.key} className="w-full">
-                      <TableCell className="w-32 max-w-32 truncate align-top whitespace-normal" title={row.key}>
-                        {row.key}
-                      </TableCell>
-                      <TableCell
-                        className={clsx(
-                          'bg-yellow-100 align-top whitespace-normal',
-                          includesHttp(row.oldValue) || includesHttp(row.newValue) ? 'break-all' : 'break-words',
-                        )}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className="text-orange-500" dir="auto">
-                            {row.oldValue}
-                          </span>{' '}
-                          <ArrowRightIcon className="size-3 flex-none" />{' '}
-                          <span className="text-green-700" dir="auto">
-                            {row.newValue}
-                          </span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                }
-                return (
-                  <TableRow key={row.key} className="w-full">
-                    <TableCell className="w-32 max-w-32 truncate whitespace-normal" title={row.key}>
-                      {row.key}
-                    </TableCell>
-                    <TableCell
-                      dir="auto"
-                      className={clsx(
-                        'align-top whitespace-normal text-zinc-500',
-                        includesHttp(row.value) ? 'break-all' : 'break-words',
-                      )}
-                    >
-                      {row.value}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+      {showTags ? (
+        <div className="w-full border-t font-mono">
+          <TagRowsTable rows={change.tags} emptyLabel="No tags" />
+        </div>
+      ) : null}
     </li>
   )
 }

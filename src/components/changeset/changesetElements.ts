@@ -297,3 +297,34 @@ export function groupElementChanges(
     return items.length > 0 ? [[actionType, items] as [(typeof ACTION_ORDER)[number], ElementChange[]]] : []
   })
 }
+
+export type TagMutation = Exclude<TagRow, { kind: 'unchanged' }>
+
+export function tagMutationRows(tags: TagRow[]): TagMutation[] {
+  return tags.filter((row): row is TagMutation => row.kind !== 'unchanged')
+}
+
+function mutationTuple(row: TagMutation): [string, string, string, string?] {
+  if (row.kind === 'changed') return ['changed', row.key, row.oldValue, row.newValue]
+  return [row.kind, row.key, row.value]
+}
+
+export function tagMutationKey(tags: TagRow[]): string {
+  return JSON.stringify(
+    tagMutationRows(tags)
+      .map(mutationTuple)
+      .sort((left, right) => left[1].localeCompare(right[1]) || left[0].localeCompare(right[0])),
+  )
+}
+
+/** Group elements that share the same added/removed/changed tags (unchanged tags ignored). */
+export function groupChangesByTagMutation(changes: ElementChange[]): ElementChange[][] {
+  const groups = new Map<string, ElementChange[]>()
+  for (const change of changes) {
+    const key = tagMutationKey(change.tags)
+    const group = groups.get(key)
+    if (group) group.push(change)
+    else groups.set(key, [change])
+  }
+  return [...groups.values()]
+}
