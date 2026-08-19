@@ -15,26 +15,44 @@ export async function fetchAndParseAugmentedDiff(id: number) {
 
 /// Fetch an augmented diff for the given changeset ID. Tries to fetch from the
 /// configured adiff service (if it exists) and falls back to using the configured
-/// Overpass server if that fails.
+/// Overpass server if that fails. A 404 from the adiff service is expected for
+/// very new changesets (generation lags the OSM API).
 async function fetchAugmentedDiff(id: number) {
   try {
     return await fetchAugmentedDiffFromAdiffService(id)
   } catch (err) {
-    console.error(err)
+    if (err instanceof AdiffServiceMissError) {
+      console.warn(err.message)
+    } else {
+      console.error(err)
+    }
     return await fetchAugmentedDiffFromOverpass(id)
+  }
+}
+
+class AdiffServiceMissError extends Error {
+  constructor(id: number, status: number, statusText: string) {
+    super(`GET /changesets/${id}.adiff returned ${status} ${statusText}`.trim())
+    this.name = 'AdiffServiceMissError'
   }
 }
 
 async function fetchAugmentedDiffFromAdiffService(id: number) {
   const res = await fetch(`${adiffServiceUrl}/changesets/${id}.adiff`)
+  if (res.status === 404) {
+    throw new AdiffServiceMissError(id, res.status, res.statusText)
+  }
   if (res.status !== 200) {
-    throw new Error(`GET /changesets/${id}.adiff returned ${res.status} ${res.statusText}`)
+    throw new Error(`GET /changesets/${id}.adiff returned ${res.status} ${res.statusText}`.trim())
   }
   return await res.text()
 }
 
 async function fetchAugmentedDiffFromOverpass(id: number) {
   let res = await fetch(`${apiOSM}/changeset/${id}.json`)
+  if (!res.ok) {
+    throw new Error(`OpenStreetMap changeset ${id} returned ${res.status} ${res.statusText}`.trim())
+  }
   const { changeset } = await res.json()
   const createdAt = parse(changeset.created_at, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
   const closedAt =
@@ -57,6 +75,11 @@ async function fetchAugmentedDiffFromOverpass(id: number) {
   ]
 
   res = await fetch(`${overpassBase}?data=${encodeURIComponent(data)}&bbox=${bbox.join(',')}`)
+  if (!res.ok) {
+    throw new Error(
+      `Overpass adiff for changeset ${id} returned ${res.status} ${res.statusText}`.trim(),
+    )
+  }
   return await res.text()
 }
 

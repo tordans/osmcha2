@@ -3,7 +3,6 @@ import { useRef } from 'react'
 
 export const CHANGESET_MAP_ID = 'mainMap'
 export const CHANGESET_SOURCE_ID = 'changeset'
-
 const CHANGESET_OVERLAY_BG_LAYER_ID = 'changeset-overlay-bg'
 
 const OSM_ADIFF_ATTRIBUTION =
@@ -24,6 +23,19 @@ export type ChangesetAdiffViewer = {
 
 export function changesetInteractiveLayerIds(layers: Array<{ id: string }>): string[] {
   return layers.map((layer) => layer.id).filter((id) => id !== CHANGESET_OVERLAY_BG_LAYER_ID)
+}
+
+/** Background dim has no source; vis.gl injects `source` onto nested Layer children. */
+export function splitChangesetLayers<T extends { id: string }>(
+  layers: T[],
+): {
+  overlayBg: T | undefined
+  featureLayers: T[]
+} {
+  return {
+    overlayBg: layers.find((layer) => layer.id === CHANGESET_OVERLAY_BG_LAYER_ID),
+    featureLayers: layers.filter((layer) => layer.id !== CHANGESET_OVERLAY_BG_LAYER_ID),
+  }
 }
 
 /** Construct the viewer as a GeoJSON + layer-spec factory. Never call addTo/refresh. */

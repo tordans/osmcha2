@@ -27,6 +27,7 @@ import {
   CHANGESET_MAP_ID,
   CHANGESET_SOURCE_ID,
   changesetInteractiveLayerIds,
+  splitChangesetLayers,
   type ChangesetAdiffViewer,
 } from './changesetAdiffViewer.ts'
 import {
@@ -40,6 +41,7 @@ import {
   type ChangesetGeoJSON,
 } from './changesetFeatureState.ts'
 import { pickChangesetActionFromClick } from './changesetMapClick.ts'
+import { ChangesetMapUnavailable } from './ChangesetMapUnavailable.tsx'
 import { changesetViewBounds } from './changesetViewBounds.ts'
 import {
   clearMainMapDebugExposure,
@@ -232,14 +234,19 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
   const fitOptions = changesetFitOptions(containerSize.width, containerSize.height)
   const viewBounds = viewer ? changesetViewBounds(viewer.geojson.features) : null
   const layers = viewer?.layers() ?? []
+  const { overlayBg, featureLayers } = splitChangesetLayers(layers)
   const interactiveLayerIds = changesetInteractiveLayerIds(layers)
   const initialViewState = parsedCamera
     ? { longitude: parsedCamera.lng, latitude: parsedCamera.lat, zoom: parsedCamera.zoom }
     : viewBounds && fitOptions
       ? { bounds: viewBounds, fitBoundsOptions: fitOptions }
-      : { longitude: 0, latitude: 0, zoom: 1 }
-  const canMountMap = Boolean(mapStyle && viewer && (parsedCamera || fitOptions || !viewBounds))
-  const showLoading = !canMountMap || changesetQuery.isLoading
+      : viewBounds
+        ? { bounds: viewBounds, fitBoundsOptions: { padding: 16, maxZoom: 18 } }
+        : { longitude: 0, latitude: 0, zoom: 1 }
+  const canMountMap = Boolean(mapStyle && viewer)
+  const showError = changesetQuery.isError && !changesetQuery.isFetching
+  const showLoading =
+    !showError && (!canMountMap || changesetQuery.isLoading || changesetQuery.isFetching)
 
   function handleLoad(event: MapLibreEvent) {
     const map = event.target
@@ -322,14 +329,31 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
               type="geojson"
               data={viewer.geojson}
               attribution={typeof viewer.adiff.note === 'string' ? viewer.adiff.note : undefined}
-            />
-            {layers.map((layer: { id: string }) => (
-              <Layer key={layer.id} {...(layer as LayerProps)} />
-            ))}
+            >
+              {/* Nested so vis.gl only mounts layers after addSource. Sibling Layers can
+                  no-op when styledata fires before the GeoJSON source exists. */}
+              {featureLayers.map((layer: { id: string }) => (
+                <Layer key={layer.id} {...(layer as LayerProps)} />
+              ))}
+            </Source>
+            {overlayBg && featureLayers[0] ? (
+              <ChangesetOverlayBackground
+                layer={overlayBg as LayerProps}
+                beforeId={featureLayers[0].id}
+              />
+            ) : null}
             <AttributionControl compact position="bottom-left" />
           </Map>
         ) : null}
       </div>
+      {showError && (
+        <ChangesetMapUnavailable
+          error={changesetQuery.error}
+          onRetry={() => {
+            void changesetQuery.refetch()
+          }}
+        />
+      )}
       {showLoading && (
         <div
           className="absolute z-10"
@@ -346,6 +370,36 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
       )}
     </>
   )
+}
+
+/** Dim overlay must sit above the basemap and below changeset features. */
+function ChangesetOverlayBackground({ layer, beforeId }: { layer: LayerProps; beforeId: string }) {
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const [targetReady, setTargetReady] = useState(false)
+
+  useEffect(
+    function subscribeOverlayPlacement() {
+      const map = mainMap?.getMap()
+      if (!mapLoaded || !map) {
+        return
+      }
+
+      const updatePlacement = () => {
+        setTargetReady(Boolean(map.getLayer(beforeId)))
+      }
+      const frame = requestAnimationFrame(updatePlacement)
+      map.on('styledata', updatePlacement)
+      return function unsubscribeOverlayPlacement() {
+        cancelAnimationFrame(frame)
+        map.off('styledata', updatePlacement)
+      }
+    },
+    [mainMap, mapLoaded, beforeId],
+  )
+
+  if (!targetReady) return null
+  return <Layer {...layer} beforeId={beforeId} />
 }
 
 export { CMap }

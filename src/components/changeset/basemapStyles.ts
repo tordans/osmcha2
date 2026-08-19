@@ -175,18 +175,23 @@ export function styleFromEliLayer(layer: EliLayer): maplibre.StyleSpecification 
 
 export async function resolveBasemapStyle(styleId: string): Promise<maplibre.StyleSpecification> {
   if (isBuiltinBasemapId(styleId)) {
-    return BASEMAP_STYLES[styleId]
+    return cloneBasemapStyle(BASEMAP_STYLES[styleId])
   }
 
   const eliId = parseEliStyleId(styleId)
   if (!eliId) {
-    return DEFAULT_BASEMAP_STYLE
+    return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }
 
   const layer = await getLayerHydrated(eliId)
   if (!layer) {
-    return DEFAULT_BASEMAP_STYLE
+    return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }
 
   return styleFromEliLayer(layer)
+}
+
+/** MapLibre mutates the style object; never pass module-level specs through as `mapStyle`. */
+export function cloneBasemapStyle(spec: maplibre.StyleSpecification): maplibre.StyleSpecification {
+  return structuredClone(spec)
 }
