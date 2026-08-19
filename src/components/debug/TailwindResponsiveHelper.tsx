@@ -1,3 +1,4 @@
+import { adminChipClassName } from './adminChip.ts'
 import { areDebugPanelsEnabled } from './areDebugPanelsEnabled.ts'
 
 export function TailwindResponsiveHelper() {
@@ -5,7 +6,7 @@ export function TailwindResponsiveHelper() {
 
   return (
     <a
-      className="fixed bottom-1 left-1/2 z-30 flex h-5 -translate-x-1/2 flex-row items-center space-x-1 rounded border border-white/70 bg-pink-300 px-1 text-xs shadow-xl hover:underline print:hidden"
+      className={`fixed bottom-1 left-1/2 z-30 -translate-x-1/2 space-x-1 hover:underline ${adminChipClassName}`}
       href="https://tailwindcss.com/docs/responsive-design"
       target="_blank"
       rel="noreferrer"

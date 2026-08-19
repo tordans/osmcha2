@@ -4,6 +4,7 @@ import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 import { hotkeysDevtoolsPlugin } from '@tanstack/react-hotkeys-devtools'
 import { ClientOnly } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { adminChipClassName } from '../../debug/adminChip.ts'
 
 /**
  * TanStack devtools panel (Query, Router).
@@ -23,6 +24,11 @@ export function TanStackAppDevtools() {
           hideUntilHover: false,
           position: 'bottom-left',
           panelLocation: 'bottom',
+          customTrigger: (
+            <span className={adminChipClassName} aria-hidden="true">
+              TanStack
+            </span>
+          ),
         }}
         eventBusConfig={{
           connectToServerBus: false,
