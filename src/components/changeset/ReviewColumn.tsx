@@ -1,7 +1,7 @@
 import * as Headless from '@headlessui/react'
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
-import clsx from 'clsx'
 import { useHotkeys } from '@tanstack/react-hotkeys'
+import clsx from 'clsx'
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import {
   bindingKey,
@@ -10,10 +10,10 @@ import {
   CHANGESET_DETAILS_USER,
 } from '../../config/bindings.ts'
 import { Badge } from '../ui/badge.tsx'
+import type { AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
-import type { AdiffAction } from './changesetElements.ts'
 
 const COLUMN_TABS = [
   {
@@ -129,7 +129,7 @@ export function ReviewColumn({
         onPointerMove={onHandlePointerMove}
         onPointerUp={onHandlePointerUp}
         onClick={onHandleClick}
-        className="flex min-h-11 w-full cursor-pointer items-center justify-center touch-manipulation select-none min-[56rem]:hidden"
+        className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-center select-none min-[56rem]:hidden"
       >
         <span className="h-1 w-10 rounded-full bg-zinc-300" />
       </button>
@@ -150,29 +150,41 @@ export function ReviewColumn({
           'min-[56rem]:flex',
         )}
       >
-        <nav aria-label="Review panels" className="flex shrink-0 gap-1 border-b border-zinc-950/10 px-2 py-1">
-          <ReviewTab
-            current={changesActive}
-            title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
-            onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
-          >
-            Changes {changesetCount > 0 ? <Badge>{changesetCount}</Badge> : null}
-          </ReviewTab>
-          <ReviewTab
-            current={discussionActive}
-            title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
-            onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
-          >
-            Discussion{' '}
-            {discussions.length > 0 ? (
-              <Badge aria-label={`${discussions.length} comments`} className="flex flex-none items-center gap-1">
-                <ChatBubbleLeftIcon className="size-4" /> {discussions.length}
-              </Badge>
-            ) : (
-              <ChatBubbleLeftIcon className="size-4 text-zinc-300" aria-label="No comments" />
-            )}
-          </ReviewTab>
-        </nav>
+        <div className="shrink-0 border-b border-zinc-200">
+          <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-3">
+            <ReviewTab
+              current={changesActive}
+              title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
+              onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
+            >
+              Changes{' '}
+              {changesetCount > 0 ? (
+                <Badge color={changesActive ? 'blue' : 'zinc'}>{changesetCount}</Badge>
+              ) : null}
+            </ReviewTab>
+            <ReviewTab
+              current={discussionActive}
+              title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
+              onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
+            >
+              Discussion{' '}
+              {discussions.length > 0 ? (
+                <Badge
+                  color={discussionActive ? 'blue' : 'zinc'}
+                  aria-label={`${discussions.length} comments`}
+                  className="flex flex-none items-center gap-1"
+                >
+                  <ChatBubbleLeftIcon className="size-4" /> {discussions.length}
+                </Badge>
+              ) : (
+                <ChatBubbleLeftIcon
+                  className={clsx('size-4', discussionActive ? 'text-blue-500' : 'text-zinc-300')}
+                  aria-label="No comments"
+                />
+              )}
+            </ReviewTab>
+          </nav>
+        </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {changesActive && (
@@ -215,18 +227,17 @@ function ReviewTab({
     <Headless.Button
       type="button"
       title={title}
-      aria-pressed={current}
-      data-current={current ? 'true' : undefined}
+      aria-current={current ? 'page' : undefined}
       onClick={onClick}
       className={clsx(
-        'relative flex min-h-11 cursor-pointer items-center gap-2 rounded-lg p-2 text-left text-sm/5 font-medium text-zinc-950 touch-manipulation select-none',
+        'relative flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 border-b-2 px-1 text-sm font-medium whitespace-nowrap select-none',
         'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
-        'active:bg-zinc-950/5',
-        current && 'bg-zinc-950/5',
+        current
+          ? 'border-blue-500 bg-blue-50 text-blue-700'
+          : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700',
       )}
     >
       {children}
-      {current ? <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-zinc-950" /> : null}
     </Headless.Button>
   )
 }
