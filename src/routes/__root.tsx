@@ -67,6 +67,7 @@ function RootLayout() {
           hotkey: {
             ignoreInputs: true,
             preventDefault: true,
+            conflictBehavior: 'replace',
           },
         }}
       >
