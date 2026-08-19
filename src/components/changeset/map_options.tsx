@@ -1,5 +1,5 @@
 import * as Headless from '@headlessui/react'
-import { Square3Stack3DIcon } from '@heroicons/react/20/solid'
+import { FunnelIcon, GlobeAltIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import { useMapStore } from '../../stores/mapStore.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
@@ -29,7 +29,12 @@ const layerOptions = [
   { label: 'OpenStreetMap Carto', value: 'carto' },
 ] as const
 
-type MapOptionsProps = {
+const mapControlButtonClassName =
+  'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100'
+
+const mapControlPanelClassName = 'z-40 w-72 rounded-xl bg-white p-3 shadow-lg ring-1 ring-zinc-950/10'
+
+type MapFilterOptionsProps = {
   showElements: Array<string>
   showActions: Array<string>
   setShowElements: (elements: Array<string>) => void
@@ -37,30 +42,24 @@ type MapOptionsProps = {
   ref?: React.Ref<HTMLButtonElement>
 }
 
-export function MapOptions({
+function MapFilterOptions({
   showElements,
   showActions,
   setShowElements,
   setShowActions,
   ref,
-}: MapOptionsProps) {
-  const style = useMapStore((state) => state.style)
-  const setStyle = useMapStore((state) => state.setStyle)
-
+}: MapFilterOptionsProps) {
   return (
     <Headless.Popover>
       <Headless.PopoverButton
         ref={ref}
-        aria-label="Map options"
-        className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100"
+        aria-label="Filter map"
+        className={mapControlButtonClassName}
       >
-        <Square3Stack3DIcon className="size-5 text-zinc-700" />
+        <FunnelIcon className="size-5 text-zinc-700" />
       </Headless.PopoverButton>
-      <Headless.PopoverPanel
-        anchor="top end"
-        className="z-40 w-72 rounded-xl bg-white p-3 shadow-lg ring-1 ring-zinc-950/10"
-      >
-        <h2 className="mb-2 text-base font-semibold text-zinc-950">Map controls</h2>
+      <Headless.PopoverPanel anchor="top end" className={mapControlPanelClassName}>
+        <h2 className="mb-2 text-base font-semibold text-zinc-950">Filter map</h2>
 
         <section className="space-y-2">
           <h3 className="text-base font-medium text-zinc-700">Filter by actions</h3>
@@ -128,11 +127,23 @@ export function MapOptions({
             </CheckboxField>
           </div>
         </section>
+      </Headless.PopoverPanel>
+    </Headless.Popover>
+  )
+}
 
-        <Divider className="my-3" />
+function MapImageryOptions() {
+  const style = useMapStore((state) => state.style)
+  const setStyle = useMapStore((state) => state.setStyle)
 
+  return (
+    <Headless.Popover>
+      <Headless.PopoverButton aria-label="Background imagery" className={mapControlButtonClassName}>
+        <GlobeAltIcon className="size-5 text-zinc-700" />
+      </Headless.PopoverButton>
+      <Headless.PopoverPanel anchor="top end" className={mapControlPanelClassName}>
+        <h2 className="mb-2 text-base font-semibold text-zinc-950">Background imagery</h2>
         <section className="space-y-1">
-          <h3 className="text-base font-medium text-zinc-700">Map style</h3>
           {layerOptions.map((opt) => (
             <button
               key={opt.value}
@@ -149,5 +160,34 @@ export function MapOptions({
         </section>
       </Headless.PopoverPanel>
     </Headless.Popover>
+  )
+}
+
+type MapOptionsProps = {
+  showElements: Array<string>
+  showActions: Array<string>
+  setShowElements: (elements: Array<string>) => void
+  setShowActions: (actions: Array<string>) => void
+  ref?: React.Ref<HTMLButtonElement>
+}
+
+export function MapOptions({
+  showElements,
+  showActions,
+  setShowElements,
+  setShowActions,
+  ref,
+}: MapOptionsProps) {
+  return (
+    <Headless.PopoverGroup className="flex flex-col gap-2">
+      <MapFilterOptions
+        ref={ref}
+        showElements={showElements}
+        showActions={showActions}
+        setShowElements={setShowElements}
+        setShowActions={setShowActions}
+      />
+      <MapImageryOptions />
+    </Headless.PopoverGroup>
   )
 }
