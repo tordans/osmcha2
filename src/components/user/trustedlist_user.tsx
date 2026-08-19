@@ -30,7 +30,7 @@ export function TrustedListUser({ onSave }: { onSave: (username: string) => void
       <form.Field name="username">
         {(field) => (
           <Input
-            className="min-h-11 min-w-40 flex-1"
+            className="min-w-40 flex-1"
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={(event) => field.handleChange(event.target.value)}

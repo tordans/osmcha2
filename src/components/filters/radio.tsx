@@ -43,7 +43,7 @@ export function Radio({ name, options, placeholder, value, onChange }: RadioProp
           plain
           type="button"
           aria-label="Clear"
-          className="min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation p-0 select-none"
+          className="size-11 shrink-0 p-0 sm:size-9"
           onClick={() => onChange(name)}
         >
           <XMarkIcon data-slot="icon" />

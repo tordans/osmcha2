@@ -65,8 +65,9 @@ export function Input({
             ],
           // Basic layout
           'relative block w-full appearance-none rounded-lg px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
+          'min-h-11 sm:min-h-9',
           // Typography — text-base/6 keeps 16px on mobile to prevent iOS zoom
-          'text-base/6 text-zinc-950 placeholder:text-zinc-500',
+          'text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6',
           // Border
           'border border-zinc-950/10 data-hover:border-zinc-950/20',
           // Background color

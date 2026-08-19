@@ -78,9 +78,9 @@ export function SearchCombobox({
           displayValue={(option: SearchOption | null) => option?.label ?? ''}
           placeholder={placeholder}
           className={clsx(
-            'relative block w-full appearance-none rounded-lg py-[calc(--spacing(2.5)-1px)]',
-            'pr-[calc(--spacing(10)-1px)] pl-[calc(--spacing(3.5)-1px)]',
-            'text-base/6 text-zinc-950 placeholder:text-zinc-500',
+            'relative block w-full appearance-none rounded-lg py-[calc(--spacing(2.5)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
+            'min-h-11 pr-[calc(--spacing(10)-1px)] pl-[calc(--spacing(3.5)-1px)] sm:min-h-9 sm:pr-[calc(--spacing(9)-1px)] sm:pl-[calc(--spacing(3)-1px)]',
+            'text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6',
             'border border-zinc-950/10 bg-transparent focus:outline-hidden',
             'data-hover:border-zinc-950/20',
           )}
@@ -92,7 +92,7 @@ export function SearchCombobox({
         />
         <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex cursor-pointer touch-manipulation items-center px-2 select-none">
           <svg
-            className="size-5 stroke-zinc-500 group-data-hover:stroke-zinc-700"
+            className="size-5 stroke-zinc-500 group-data-hover:stroke-zinc-700 sm:size-4"
             viewBox="0 0 16 16"
             aria-hidden="true"
             fill="none"
@@ -144,8 +144,8 @@ function SearchOptionItem({ option, label }: { option: SearchOption; label: stri
     <Headless.ComboboxOption
       value={option}
       className={clsx(
-        'group/option cursor-pointer touch-manipulation rounded-lg py-2.5 pr-2 pl-3.5 select-none',
-        'text-base/6 text-zinc-950',
+        'group/option cursor-pointer touch-manipulation rounded-lg py-2.5 pr-2 pl-3.5 select-none sm:py-1.5 sm:pr-2 sm:pl-3',
+        'text-base/6 text-zinc-950 sm:text-sm/6',
         'outline-hidden data-focus:bg-blue-500 data-focus:text-white',
       )}
     >

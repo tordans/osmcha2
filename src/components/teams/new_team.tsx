@@ -99,7 +99,6 @@ export default function NewTeam(props: NewTeamProps) {
                 Name <span className="text-red-600">*</span>
               </Label>
               <Input
-                className="min-h-11"
                 required
                 placeholder="New team name"
                 value={field.state.value}
@@ -131,7 +130,6 @@ export default function NewTeam(props: NewTeamProps) {
                             Username <span className="text-red-600">*</span>
                           </Label>
                           <Input
-                            className="min-h-11"
                             type="text"
                             required
                             placeholder="Username"
@@ -153,7 +151,6 @@ export default function NewTeam(props: NewTeamProps) {
                         <Field>
                           <Label>UID</Label>
                           <Input
-                            className="min-h-11"
                             type="text"
                             placeholder="User UID"
                             value={field.state.value ?? ''}
@@ -169,7 +166,6 @@ export default function NewTeam(props: NewTeamProps) {
                         <Field>
                           <Label>Joined the team</Label>
                           <Input
-                            className="min-h-11"
                             type="date"
                             value={field.state.value ?? ''}
                             onBlur={field.handleBlur}
@@ -186,7 +182,6 @@ export default function NewTeam(props: NewTeamProps) {
                         <Field>
                           <Label>Left the team</Label>
                           <Input
-                            className="min-h-11"
                             type="date"
                             value={field.state.value ?? ''}
                             onBlur={field.handleBlur}

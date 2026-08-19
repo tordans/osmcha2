@@ -20,15 +20,16 @@ export function Wrapper({
 }: WrapperProps) {
   return (
     <Field onFocus={() => handleFocus(name)} onClick={() => handleFocus(name)}>
-      <div className="flex items-center gap-2">
-        {hasValue ? (
-          <span className="size-2.5 shrink-0 rounded-full bg-blue-600" aria-hidden="true" />
-        ) : (
-          <span className="size-2.5 shrink-0" aria-hidden="true" />
-        )}
-        <Label className="cursor-pointer select-none">{display}</Label>
+      <Label className="flex cursor-pointer items-center gap-2 select-none">
+        <span
+          className={hasValue ? 'size-2.5 shrink-0 rounded-full bg-blue-600' : 'size-2.5 shrink-0'}
+          aria-hidden="true"
+        />
+        {display}
+      </Label>
+      <div data-slot="control" className="max-w-xl">
+        {children}
       </div>
-      <div className="max-w-xl">{children}</div>
       {description ? <Description>{description}</Description> : null}
     </Field>
   )

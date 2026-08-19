@@ -73,7 +73,7 @@ function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
       <form.Field name="name">
         {(field) => (
           <Input
-            className="min-h-11 min-w-40 flex-1"
+            className="min-w-40 flex-1"
             placeholder="Filter name"
             value={field.state.value}
             onBlur={field.handleBlur}

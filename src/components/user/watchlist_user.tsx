@@ -98,7 +98,7 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
       >
         {(field) => (
           <Input
-            className="min-h-11 min-w-40 flex-1"
+            className="min-w-40 flex-1"
             value={field.state.value}
             invalid={lookupError === 'username'}
             onBlur={field.handleBlur}
@@ -120,7 +120,7 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
       >
         {(field) => (
           <Input
-            className="min-h-11 min-w-40 flex-1"
+            className="min-w-40 flex-1"
             value={field.state.value}
             invalid={lookupError === 'uid'}
             onBlur={field.handleBlur}

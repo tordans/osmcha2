@@ -99,10 +99,7 @@ export function MultiSelect({
           <Button
             type="button"
             outline
-            className={clsx(
-              'min-h-11 cursor-pointer touch-manipulation select-none',
-              !allToggle && 'bg-zinc-200',
-            )}
+            className={clsx(!allToggle && 'bg-zinc-200')}
             onClick={() => {
               if (allToggle) handleToggle()
             }}
@@ -112,10 +109,7 @@ export function MultiSelect({
           <Button
             type="button"
             outline
-            className={clsx(
-              'min-h-11 cursor-pointer touch-manipulation select-none',
-              allToggle && 'bg-zinc-200',
-            )}
+            className={clsx(allToggle && 'bg-zinc-200')}
             onClick={() => {
               if (!allToggle) handleToggle()
             }}
@@ -172,12 +166,7 @@ export function MultiSelect({
               }
             }}
           />
-          <Button
-            type="button"
-            outline
-            className="min-h-11 shrink-0 cursor-pointer touch-manipulation select-none"
-            onClick={addFreeform}
-          >
+          <Button type="button" outline className="shrink-0" onClick={addFreeform}>
             Add
           </Button>
         </div>
