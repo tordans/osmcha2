@@ -14,7 +14,13 @@ export const UserOSMLink = ({ userName, linkClasses, children }: UserOSMLinkProp
 
   if (linkClasses) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" title="Open in OSM" className={linkClasses}>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open in OSM"
+        className={linkClasses}
+      >
         {children}
       </a>
     )

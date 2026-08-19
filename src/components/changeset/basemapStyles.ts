@@ -167,7 +167,9 @@ export function styleFromEliLayer(layer: EliLayer): maplibre.StyleSpecification 
     sources: {
       [sourceId]: getRasterSourceSpec(layer),
     },
-    layers: [getRasterLayerSpec(layer, { id: 'imagery', source: sourceId })] as maplibre.StyleSpecification['layers'],
+    layers: [
+      getRasterLayerSpec(layer, { id: 'imagery', source: sourceId }),
+    ] as maplibre.StyleSpecification['layers'],
   }
 }
 

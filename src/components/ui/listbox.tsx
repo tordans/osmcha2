@@ -17,7 +17,7 @@ export function Listbox<T>({
   children?: React.ReactNode
 } & Omit<Headless.ListboxProps<'div', T>, 'as' | 'multiple'>) {
   return (
-    <Headless.Listbox as="div" {...props} multiple={false}>
+    <Headless.Listbox as={'div' as const} {...props} multiple={false}>
       <Headless.ListboxButton
         autoFocus={autoFocus}
         data-slot="control"
@@ -57,7 +57,7 @@ export function Listbox<T>({
           ])}
         >
           <Headless.ListboxSelectedOption
-            as="span"
+            as={'span' as const}
             options={options}
             placeholder={
               placeholder && <span className="block truncate text-zinc-500">{placeholder}</span>

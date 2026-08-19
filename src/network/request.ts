@@ -1,87 +1,82 @@
-import { API_URL } from "../config/index.ts";
-import { useAuthStore } from "../stores/authStore.ts";
+import { API_URL } from '../config/index.ts'
+import { useAuthStore } from '../stores/authStore.ts'
 
-export function makeApiRequest(
-  endpoint: string,
-  options: RequestInit = {},
-): Request {
-  const token = useAuthStore.getState().token;
+export function makeApiRequest(endpoint: string, options: RequestInit = {}): Request {
+  const token = useAuthStore.getState().token
+  const headers = new Headers(options.headers)
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+  if (token) headers.set('Authorization', `Token ${token}`)
 
   return new Request(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Token ${token}` }),
-      ...options.headers,
-    },
-  });
+    headers,
+  })
 }
 
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     // Try to extract error message from server response
-    let errorMessage = response.statusText;
+    let errorMessage = response.statusText
 
     try {
-      const data = await response.json();
+      const data = await response.json()
       if (data.detail) {
-        errorMessage = data.detail;
-      } else if (typeof data === "string") {
-        errorMessage = data;
+        errorMessage = data.detail
+      } else if (typeof data === 'string') {
+        errorMessage = data
       } else if (data.message) {
-        errorMessage = data.message;
+        errorMessage = data.message
       }
     } catch {
       // If JSON parsing fails, use statusText
     }
 
-    throw new Error(errorMessage || "Request failed");
+    throw new Error(errorMessage || 'Request failed')
   }
 
   // Handle 204 No Content
   if (response.status === 204) {
-    return undefined as T;
+    return undefined as T
   }
 
-  return response.json();
+  return response.json()
 }
 
 // Convenience wrapper for common case
-export async function apiFetch<T>(
-  endpoint: string,
-  options?: RequestInit,
-): Promise<T> {
-  const req = makeApiRequest(endpoint, options);
-  const res = await fetch(req);
-  return handleResponse<T>(res);
+export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const req = makeApiRequest(endpoint, options)
+  const res = await fetch(req)
+  return handleResponse<T>(res)
 }
 
 // Convenience methods
 export const api = {
   get: <T>(endpoint: string, options?: RequestInit) =>
-    apiFetch<T>(endpoint, { ...options, method: "GET" }),
+    apiFetch<T>(endpoint, { ...options, method: 'GET' }),
 
   post: <T>(endpoint: string, body?: any, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
-      method: "POST",
+      method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
   put: <T>(endpoint: string, body?: any, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
-      method: "PUT",
+      method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
   patch: <T>(endpoint: string, body?: any, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
-      method: "PATCH",
+      method: 'PATCH',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
   delete: <T>(endpoint: string, options?: RequestInit) =>
-    apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
-};
+    apiFetch<T>(endpoint, { ...options, method: 'DELETE' }),
+}

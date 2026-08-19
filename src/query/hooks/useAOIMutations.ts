@@ -10,10 +10,9 @@ export function useCreateAOI() {
   const navigate = rootRouteApi.useNavigate()
 
   return useMutation({
-    mutationFn: ({ name, filters }: { name: string; filters: any }) =>
-      createAOI(name, filters),
+    mutationFn: ({ name, filters }: { name: string; filters: any }) => createAOI(name, filters),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['aois'] })
+      void queryClient.invalidateQueries({ queryKey: ['aois'] })
       toast.success('AOI created successfully')
       void navigate({
         to: '/',
@@ -32,18 +31,11 @@ export function useUpdateAOI() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      aoiId,
-      name,
-      filters,
-    }: {
-      aoiId: string
-      name: string
-      filters: any
-    }) => updateAOI(aoiId, name, filters),
+    mutationFn: ({ aoiId, name, filters }: { aoiId: string; name: string; filters: any }) =>
+      updateAOI(aoiId, name, filters),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['aoi', variables.aoiId] })
-      queryClient.invalidateQueries({ queryKey: ['aois'] })
+      void queryClient.invalidateQueries({ queryKey: ['aoi', variables.aoiId] })
+      void queryClient.invalidateQueries({ queryKey: ['aois'] })
       toast.success('AOI updated successfully')
     },
     onError: (error: Error) => {
@@ -59,8 +51,8 @@ export function useDeleteAOI() {
   return useMutation({
     mutationFn: (aoiId: string) => deleteAOI(aoiId),
     onSuccess: (_data, aoiId) => {
-      queryClient.invalidateQueries({ queryKey: ['aoi', aoiId] })
-      queryClient.invalidateQueries({ queryKey: ['aois'] })
+      void queryClient.invalidateQueries({ queryKey: ['aoi', aoiId] })
+      void queryClient.invalidateQueries({ queryKey: ['aois'] })
       toast.success('AOI deleted successfully')
     },
     onError: (error: Error) => {

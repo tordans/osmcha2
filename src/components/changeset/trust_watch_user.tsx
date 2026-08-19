@@ -1,8 +1,19 @@
-import { ChevronDownIcon, ExclamationTriangleIcon, StarIcon, XMarkIcon } from '@heroicons/react/16/solid'
+import {
+  ChevronDownIcon,
+  ExclamationTriangleIcon,
+  StarIcon,
+  XMarkIcon,
+} from '@heroicons/react/16/solid'
 import { useTrustedlist } from '../../query/hooks/useTrustedlist.ts'
-import { useAddToTrustedlist, useRemoveFromTrustedlist } from '../../query/hooks/useTrustedlistMutations.ts'
+import {
+  useAddToTrustedlist,
+  useRemoveFromTrustedlist,
+} from '../../query/hooks/useTrustedlistMutations.ts'
 import { useWatchlist } from '../../query/hooks/useWatchlist.ts'
-import { useAddToWatchlist, useRemoveFromWatchlist } from '../../query/hooks/useWatchlistMutations.ts'
+import {
+  useAddToWatchlist,
+  useRemoveFromWatchlist,
+} from '../../query/hooks/useWatchlistMutations.ts'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '../ui/dropdown.tsx'
@@ -15,7 +26,7 @@ interface TrustWatchUserProps {
 }
 
 function TrustWatchUser({ user }: TrustWatchUserProps) {
-  const { data: trustedlist = [] } = useTrustedlist()
+  const { data: trustedlist } = useTrustedlist()
   const { data: watchlist = [] } = useWatchlist()
   const addToTrustedlistMutation = useAddToTrustedlist()
   const removeFromTrustedlistMutation = useRemoveFromTrustedlist()

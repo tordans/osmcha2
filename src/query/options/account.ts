@@ -1,9 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { fetchUserDetails } from '../../network/auth.ts'
-import {
-  fetchMappingTeam,
-  fetchUserMappingTeams,
-} from '../../network/mapping_team.ts'
+import { fetchMappingTeam, fetchUserMappingTeams } from '../../network/mapping_team.ts'
 import { fetchWatchList } from '../../network/osmcha_watchlist.ts'
 
 export function userDetailsQueryOptions() {

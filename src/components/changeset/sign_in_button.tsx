@@ -13,16 +13,13 @@ function SignInButton({ text }: SignInButtonProps) {
   }
 
   const handleLoginClick = () => {
-    getAuthUrl().then((res) => {
+    void getAuthUrl().then((res) => {
       window.location.assign(res.auth_url)
     })
   }
 
   return (
-    <Button
-      onClick={handleLoginClick}
-      className="w-full max-w-56 text-center leading-snug"
-    >
+    <Button onClick={handleLoginClick} className="w-full max-w-56 text-center leading-snug">
       <span className="text-balance">{text}</span>
     </Button>
   )

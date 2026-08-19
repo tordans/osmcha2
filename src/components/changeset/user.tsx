@@ -76,9 +76,7 @@ export function User({ userDetails, whosThat }: UserProps) {
 
   return (
     <div className="px-3 py-2">
-      <Subheading>
-        User {userDetails.uid ? `/ ${userDetails.uid}` : null}
-      </Subheading>
+      <Subheading>User {userDetails.uid ? `/ ${userDetails.uid}` : null}</Subheading>
       {userDetails.name ? (
         <div className="mt-2 flex flex-col items-center gap-2">
           <Avatar
@@ -172,12 +170,7 @@ export function User({ userDetails, whosThat }: UserProps) {
         </div>
       ) : (
         <div className="mt-2 flex flex-col items-center gap-3">
-          <Avatar
-            src={avatarSrc(userDetails.img)}
-            initials={initials}
-            alt=""
-            className="size-24"
-          />
+          <Avatar src={avatarSrc(userDetails.img)} initials={initials} alt="" className="size-24" />
           <SignInButton text="Sign in to see the user details" />
         </div>
       )}

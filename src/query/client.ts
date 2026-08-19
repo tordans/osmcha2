@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from '@tanstack/react-query'
 
 // Note: In React 18 development mode, you may see duplicate requests in DevTools.
 // This is expected behavior - React intentionally double-mounts components to help
@@ -17,4 +17,4 @@ export const queryClient = new QueryClient({
       retry: false,
     },
   },
-});
+})

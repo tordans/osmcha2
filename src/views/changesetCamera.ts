@@ -2,9 +2,7 @@ import type { Map } from 'maplibre-gl'
 import { parseMapParam, type MapParam } from '../routing/mapParam.ts'
 import type { LngLatBoundsTuple } from './changesetViewBounds.ts'
 
-export type ChangesetCameraIntent =
-  | { type: 'restore'; camera: MapParam }
-  | { type: 'fit' }
+export type ChangesetCameraIntent = { type: 'restore'; camera: MapParam } | { type: 'fit' }
 
 const MIN_PADDING_PX = 16
 const MAX_PADDING_PX = 80
@@ -27,7 +25,10 @@ export function changesetFitPadding(width: number, height: number): number | nul
   return Math.min(padding, maxPad)
 }
 
-export function changesetFitOptions(width: number, height: number): { padding: number; maxZoom: number } | null {
+export function changesetFitOptions(
+  width: number,
+  height: number,
+): { padding: number; maxZoom: number } | null {
   const padding = changesetFitPadding(width, height)
   if (padding == null) return null
   return { padding, maxZoom: MAX_FIT_ZOOM }

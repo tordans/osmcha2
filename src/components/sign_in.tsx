@@ -14,9 +14,7 @@ export function SignIn() {
           ? 'Sign in with your OpenStreetMap account to use OSMCha.'
           : 'Paste your OSMCha API token to use OSMCha.'}
       </p>
-      <div className="mt-6">
-        {localOAuth ? <SignInButton text="Sign in" /> : <TokenImport />}
-      </div>
+      <div className="mt-6">{localOAuth ? <SignInButton text="Sign in" /> : <TokenImport />}</div>
     </div>
   )
 }

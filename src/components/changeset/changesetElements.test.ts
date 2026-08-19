@@ -43,7 +43,10 @@ describe('buildElementChanges', () => {
         old: { type: 'node', id: 2, version: 4, tags: { name: 'A' } },
         new: { type: 'node', id: 2, version: 5, tags: { name: 'B' } },
       },
-      { type: 'delete', old: { type: 'node', id: 3, version: 2, tags: { amenity: 'waste_basket' } } },
+      {
+        type: 'delete',
+        old: { type: 'node', id: 3, version: 2, tags: { amenity: 'waste_basket' } },
+      },
       {
         type: 'modify',
         old: { type: 'node', id: 4, version: 1, tags: { name: 'Same' } },
@@ -67,7 +70,13 @@ describe('buildElementChanges', () => {
     const changes = buildElementChanges([
       {
         type: 'modify',
-        old: { type: 'way', id: 10, version: 1, nodes: [{ ref: 1 }, { ref: 2 }], tags: { highway: 'path' } },
+        old: {
+          type: 'way',
+          id: 10,
+          version: 1,
+          nodes: [{ ref: 1 }, { ref: 2 }],
+          tags: { highway: 'path' },
+        },
         new: {
           type: 'way',
           id: 10,
@@ -136,10 +145,9 @@ describe('groupChangesByTagMutation', () => {
       },
     ])
     expect(tagMutationKey(changes[0].tags)).toBe(tagMutationKey(changes[1].tags))
-    expect(groupChangesByTagMutation(changes).map((group) => group.map((change) => change.id))).toEqual([
-      [1, 2],
-      [3],
-    ])
+    expect(
+      groupChangesByTagMutation(changes).map((group) => group.map((change) => change.id)),
+    ).toEqual([[1, 2], [3]])
   })
 
   test('does not split a retag when other tags differ', () => {
@@ -160,10 +168,13 @@ describe('groupChangesByTagMutation', () => {
 describe('flagged feature matching', () => {
   test('matches url, type/id, and reviewed-feature flags', () => {
     expect(matchFlaggedFeature('way', 5, [{ url: 'way-5', name: 'Park' }])?.name).toBe('Park')
-    const merged = mergeFlaggedFeatures([{ url: 'node-1', osm_id: 1, type: 'node' }], [
-      { id: 'node-1', user: 'alice' },
-      { id: 'way-2', user: 'bob' },
-    ])
+    const merged = mergeFlaggedFeatures(
+      [{ url: 'node-1', osm_id: 1, type: 'node' }],
+      [
+        { id: 'node-1', user: 'alice' },
+        { id: 'way-2', user: 'bob' },
+      ],
+    )
     expect(merged.find((feature) => feature.url === 'node-1')?.user_flag).toBe('Flagged by alice')
     expect(merged.find((feature) => feature.url === 'way-2')?.user_flag).toBe('Flagged by bob')
   })

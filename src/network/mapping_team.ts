@@ -1,23 +1,21 @@
-import { api } from "./request.ts";
+import { api } from './request.ts'
 
 export function createMappingTeam(name: string, users: object) {
-  return api.post("/mapping-team/", { name, users });
+  return api.post('/mapping-team/', { name, users })
 }
 
 export function fetchMappingTeam(id: number) {
-  return api.get(`/mapping-team/${id}/`);
+  return api.get(`/mapping-team/${id}/`)
 }
 
 export function deleteMappingTeam(id: number) {
-  return api.delete(`/mapping-team/${id}/`);
+  return api.delete(`/mapping-team/${id}/`)
 }
 
 export function fetchUserMappingTeams(owner: string) {
-  return api
-    .get<{ results: any[] }>(`/mapping-team/?owner=${owner}`)
-    .then((res) => res.results);
+  return api.get<{ results: any[] }>(`/mapping-team/?owner=${owner}`).then((res) => res.results)
 }
 
 export function updateMappingTeam(id: number, name: string, users: object) {
-  return api.put(`/mapping-team/${id}`, { name, users });
+  return api.put(`/mapping-team/${id}`, { name, users })
 }

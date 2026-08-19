@@ -1,162 +1,150 @@
-import { startOfDay, sub } from "date-fns";
-import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from "../config/constants.ts";
+import { startOfDay, sub } from 'date-fns'
+import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from '../config/constants.ts'
 
 export function validateFilters(filters: any): boolean {
-  if (!filters || typeof filters !== "object") {
-    throw new Error("The filters that you applied were not correct.");
+  if (!filters || typeof filters !== 'object') {
+    throw new Error('The filters that you applied were not correct.')
   }
 
-  let valid = true;
+  let valid = true
   for (const key of Object.keys(filters)) {
-    const value = filters[key];
+    const value = filters[key]
 
     // Each filter value should be an array
     if (!Array.isArray(value)) {
-      valid = false;
-      return false;
+      valid = false
+      return false
     }
 
     // Each item in the array should have label and value
     for (const item of value) {
-      if (
-        !item ||
-        typeof item !== "object" ||
-        !("label" in item) ||
-        !("value" in item)
-      ) {
-        valid = false;
+      if (!item || typeof item !== 'object' || !('label' in item) || !('value' in item)) {
+        valid = false
       }
     }
   }
 
   if (!valid) {
-    console.log(filters);
-    throw new Error("The filters that you applied were not correct.");
+    console.log(filters)
+    throw new Error('The filters that you applied were not correct.')
   }
 
-  return true;
+  return true
 }
 
 export function getDefaultFromDate(extraDays = 0): any {
-  const localMidnight = startOfDay(
-    sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }),
-  );
-  const value = localMidnight.toISOString();
+  const localMidnight = startOfDay(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
+  const value = localMidnight.toISOString()
   return {
     date__gte: [{ label: value, value }],
-  };
+  }
 }
 
 function getDefaultToDate(): any {
-  const value = sub(new Date(), { minutes: DEFAULT_TO_DATE }).toISOString();
+  const value = sub(new Date(), { minutes: DEFAULT_TO_DATE }).toISOString()
   return {
-    date__lte: [{ label: "", value }],
-  };
+    date__lte: [{ label: '', value }],
+  }
 }
 
 export function appendDefaultDate(filters: any) {
   // Set From date to 2 days behind if there isn't a date query.
   // In case of a users or uids query, set the From date to 30 days behind
-  let result = { ...filters };
+  let result = { ...filters }
 
-  if (filters && !("date__gte" in filters) && !("date__lte" in filters)) {
-    const filterKeys = Object.keys(filters);
-    if (
-      filterKeys.length === 1 &&
-      (filterKeys.includes("users") || filterKeys.includes("uids"))
-    ) {
-      result = { ...result, ...getDefaultFromDate(28) };
+  if (filters && !('date__gte' in filters) && !('date__lte' in filters)) {
+    const filterKeys = Object.keys(filters)
+    if (filterKeys.length === 1 && (filterKeys.includes('users') || filterKeys.includes('uids'))) {
+      result = { ...result, ...getDefaultFromDate(28) }
     } else {
-      result = { ...result, ...getDefaultFromDate() };
+      result = { ...result, ...getDefaultFromDate() }
     }
   }
 
-  if (filters && !("date__lte" in filters)) {
-    result = { ...result, ...getDefaultToDate() };
+  if (filters && !('date__lte' in filters)) {
+    result = { ...result, ...getDefaultToDate() }
   }
 
-  return result;
+  return result
 }
 
 function getString(input: any): string {
-  if (typeof input === "object") {
-    return JSON.stringify(input);
+  if (typeof input === 'object') {
+    return JSON.stringify(input)
   }
-  return String(input);
+  return String(input)
 }
 
-export function deserializeFiltersFromObject(
-  apiFilters: Record<string, string>,
-): any {
-  const result: any = {};
+export function deserializeFiltersFromObject(apiFilters: Record<string, string>): any {
+  const result: any = {}
 
   for (const k of Object.keys(apiFilters)) {
-    const v = apiFilters[k];
-    if (typeof v !== "string" || !k) continue;
+    const v = apiFilters[k]
+    if (typeof v !== 'string' || !k) continue
 
     // Empty string should be converted to empty array with one empty item
-    if (v === "") {
-      result[k] = [{ label: "", value: "" }];
-      continue;
+    if (v === '') {
+      result[k] = [{ label: '', value: '' }]
+      continue
     }
 
     // If the value is a JSON object/array (e.g. geometry), keep it as-is.
     // Otherwise split comma-separated string values.
-    let parsed: any;
+    let parsed: any
     try {
-      parsed = JSON.parse(v);
+      parsed = JSON.parse(v)
     } catch {
-      parsed = undefined;
+      parsed = undefined
     }
 
-    if (parsed !== undefined && typeof parsed === "object") {
-      result[k] = [{ label: parsed, value: parsed }];
+    if (parsed !== undefined && typeof parsed === 'object') {
+      result[k] = [{ label: parsed, value: parsed }]
     } else {
-      result[k] = v.split(",").map((val) => ({
+      result[k] = v.split(',').map((val) => ({
         label: val.trim(),
         value: val.trim(),
-      }));
+      }))
     }
   }
 
-  return result;
+  return result
 }
 
 export function serializeFiltersToObject(filters: any): Record<string, string> {
-  const result: Record<string, string> = {};
+  const result: Record<string, string> = {}
 
   for (const k of Object.keys(filters)) {
-    const v = filters[k];
-    if (!Array.isArray(v) || !k) continue;
+    const v = filters[k]
+    if (!Array.isArray(v) || !k) continue
 
     const serialized = v
-      .filter((x) => !!x && typeof x === "object" && x.value !== "")
+      .filter((x) => !!x && typeof x === 'object' && x.value !== '')
       .map((x) => getString(x.value))
-      .join(",");
+      .join(',')
 
     if (serialized) {
-      result[k] = serialized;
+      result[k] = serialized
     }
   }
 
-  return result;
+  return result
 }
 
 export function serializeFiltersToQuery(filters: any): string {
-  let query = "";
+  let query = ''
 
   for (const k of Object.keys(filters)) {
-    const v = filters[k];
-    if (!Array.isArray(v) || !k) continue;
+    const v = filters[k]
+    if (!Array.isArray(v) || !k) continue
 
     const filterJoined = v
-      .filter((x) => !!x && typeof x === "object" && x.value !== "")
+      .filter((x) => !!x && typeof x === 'object' && x.value !== '')
       .map((x) => getString(x.value))
-      .join(",");
+      .join(',')
 
-    if (filterJoined === "") continue;
-    query += `&${k}=${encodeURIComponent(filterJoined)}`;
+    if (filterJoined === '') continue
+    query += `&${k}=${encodeURIComponent(filterJoined)}`
   }
 
-  return query;
+  return query
 }

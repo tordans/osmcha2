@@ -7,11 +7,7 @@ export interface ChangesetsPageParams {
   aoiId: string | null
 }
 
-export function changesetsPageQueryOptions({
-  pageIndex,
-  filters,
-  aoiId,
-}: ChangesetsPageParams) {
+export function changesetsPageQueryOptions({ pageIndex, filters, aoiId }: ChangesetsPageParams) {
   return queryOptions({
     queryKey: ['changesets', 'page', pageIndex, filters, aoiId],
     queryFn: () => fetchChangesetsPage(pageIndex, filters, aoiId, false),

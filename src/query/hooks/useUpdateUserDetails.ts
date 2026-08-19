@@ -1,9 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { updateUserDetails } from "../../network/auth.ts";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { updateUserDetails } from '../../network/auth.ts'
 
 export function useUpdateUserDetails() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({
@@ -11,18 +11,18 @@ export function useUpdateUserDetails() {
       messageBad,
       commentFeature,
     }: {
-      messageGood: string;
-      messageBad: string;
-      commentFeature: boolean;
+      messageGood: string
+      messageBad: string
+      commentFeature: boolean
     }) => updateUserDetails(messageGood, messageBad, commentFeature),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userDetails"] });
-      toast.success("Preferences saved successfully");
+      void queryClient.invalidateQueries({ queryKey: ['userDetails'] })
+      toast.success('Preferences saved successfully')
     },
     onError: (error: Error) => {
-      toast.error("Failed to save preferences", {
+      toast.error('Failed to save preferences', {
         description: error.message,
-      });
+      })
     },
-  });
+  })
 }

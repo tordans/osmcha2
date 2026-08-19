@@ -1,3 +1,3 @@
 export const isMobile = (): boolean => {
-  return window.innerWidth <= 800;
-};
+  return window.innerWidth <= 800
+}

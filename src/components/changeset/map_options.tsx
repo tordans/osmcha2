@@ -3,6 +3,10 @@ import { FunnelIcon, GlobeAltIcon } from '@heroicons/react/20/solid'
 import type { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
+import { useMapStore } from '../../stores/mapStore.ts'
+import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
+import { Divider } from '../ui/divider.tsx'
+import { Label } from '../ui/fieldset.tsx'
 import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
 import {
   isDuplicateOfBuiltinLayer,
@@ -10,10 +14,6 @@ import {
   parseImageryUsed,
 } from './matchImageryUsed.ts'
 import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
-import { useMapStore } from '../../stores/mapStore.ts'
-import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
-import { Divider } from '../ui/divider.tsx'
-import { Label } from '../ui/fieldset.tsx'
 
 const add = (arr: string[], elem: string): string[] => {
   const set = new Set(arr)
@@ -39,7 +39,7 @@ const mapControlPanelClassName =
 
 function imageryLayerButtonClassName(active: boolean) {
   return clsx(
-    'flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2 text-left text-base touch-manipulation select-none',
+    'flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-2 text-left text-base select-none',
     active ? 'bg-zinc-950/5 font-medium' : 'active:bg-zinc-950/5',
   )
 }
@@ -176,7 +176,9 @@ function MapImageryOptions({ mapRef, imageryUsed }: MapImageryOptionsProps) {
           <Headless.PopoverPanel anchor="top end" className={mapControlPanelClassName}>
             <h2 className="mb-2 text-base font-semibold text-zinc-950">Background imagery</h2>
             {imageryTokens.length > 0 && (
-              <p className="mb-2 text-sm text-zinc-500">Changeset used: {imageryTokens.join(', ')}</p>
+              <p className="mb-2 text-sm text-zinc-500">
+                Changeset used: {imageryTokens.join(', ')}
+              </p>
             )}
 
             <section className="space-y-1">
@@ -188,7 +190,8 @@ function MapImageryOptions({ mapRef, imageryUsed }: MapImageryOptionsProps) {
                   className={imageryLayerButtonClassName(style === opt.id)}
                 >
                   <span>{opt.label}</span>
-                  {isImageryUsedMatch(imageryUsed, opt.label) || isImageryUsedMatch(imageryUsed, opt.id) ? (
+                  {isImageryUsedMatch(imageryUsed, opt.label) ||
+                  isImageryUsedMatch(imageryUsed, opt.id) ? (
                     <UsedBadge />
                   ) : null}
                 </button>
@@ -248,7 +251,8 @@ function ViewportEditorLayerList({
         ) : null}
         {visibleLayers.map((layer) => {
           const value = toEliStyleId(layer.id)
-          const used = isImageryUsedMatch(imageryUsed, layer.name) || isImageryUsedMatch(imageryUsed, layer.id)
+          const used =
+            isImageryUsedMatch(imageryUsed, layer.name) || isImageryUsedMatch(imageryUsed, layer.id)
           return (
             <button
               key={layer.id}
@@ -258,7 +262,11 @@ function ViewportEditorLayerList({
             >
               <span className="min-w-0">
                 <span className="block truncate">{layer.name}</span>
-                {layer.best ? <span className="block text-xs font-normal text-zinc-500">Best for this area</span> : null}
+                {layer.best ? (
+                  <span className="block text-xs font-normal text-zinc-500">
+                    Best for this area
+                  </span>
+                ) : null}
               </span>
               {used ? <UsedBadge /> : null}
             </button>

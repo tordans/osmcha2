@@ -1,20 +1,27 @@
 /** @type {import('knip').KnipConfig} */
-// Vite SPA — trace from the HTML/TSX boot and Vite config.
-// Verify scripts (@see .cursor/rules/package-json-scripts.md):
-//   "knip": "KNIP_STRICT=1 knip --config knip.config.mjs"
-//   "knip-warn": "knip --config knip.config.mjs || true"
+// Vite SPA. The Vite plugin traces index.html / vite.config.js.
+// Catalyst UI kit is copied wholesale; unused kit files/exports are ignored until wired up.
 const strict = process.env.KNIP_STRICT === '1'
 
 export default {
-  entry: [
-    'index.html',
-    'src/index.tsx',
-    'src/**/*.test.ts',
-    'src/**/*.test.tsx',
-    'vite.config.js',
+  entry: ['src/**/*.test.ts'],
+  ignore: ['src/components/ui/**'],
+  ignoreBinaries: ['jq'],
+  ignoreFiles: [
+    'src/components/loading_enhancer.tsx',
+    'src/components/user/block_markup.tsx',
+    'src/utils/isMobile.ts',
+    'src/utils/toast.ts',
   ],
-  ignore: ['.agents/**', 'src/routeTree.gen.ts'],
-  ignoreBinaries: ['code', 'gh', 'rg', 'jq'],
+  ignoreIssues: {
+    'src/components/filters/index.ts': ['exports'],
+    'src/components/changeset/**': ['exports', 'types'],
+    'src/network/**': ['exports'],
+    'src/routing/searchSchemas.ts': ['exports', 'types'],
+    'src/query/hooks/useNominatimSearch.ts': ['types'],
+    'src/components/debug/DebugDataHelper.tsx': ['types'],
+  },
+  ignoreDependencies: ['tailwind-merge'],
   rules: {
     files: 'error',
     dependencies: 'error',

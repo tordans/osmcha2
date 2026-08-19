@@ -26,7 +26,7 @@ export function DropdownOpenElement({ type, id, lat, lon }: DropdownOpenElementP
       <DropdownButton
         outline
         aria-label={`Open ${elementId} in`}
-        className="min-h-11 min-w-11 cursor-pointer p-0 touch-manipulation select-none"
+        className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
       >
         <ArrowTopRightOnSquareIcon data-slot="icon" className="size-4" />
         <ChevronDownIcon data-slot="icon" className="size-4" />

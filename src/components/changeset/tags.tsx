@@ -1,7 +1,7 @@
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/16/solid'
 import { toast } from 'sonner'
-import { useSetTag } from '../../query/hooks/useSetTag.ts'
 import { useChangesetTagOptions } from '../../query/hooks/useChangesetTagOptions.ts'
+import { useSetTag } from '../../query/hooks/useSetTag.ts'
 import { useAuthStore } from '../../stores/authStore.ts'
 import {
   Dropdown,

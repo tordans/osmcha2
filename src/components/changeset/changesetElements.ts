@@ -1,7 +1,7 @@
 export type OsmElementType = 'node' | 'way' | 'relation'
 
 export type AdiffElement = {
-  type?: OsmElementType | string
+  type?: string
   id?: number
   version?: number
   lat?: number
@@ -67,9 +67,7 @@ function tagsOf(element?: AdiffElement): Record<string, string> {
 }
 
 function hasOwnTags(action: AdiffAction): boolean {
-  return (
-    Object.keys(tagsOf(action.old)).length > 0 || Object.keys(tagsOf(action.new)).length > 0
-  )
+  return Object.keys(tagsOf(action.old)).length > 0 || Object.keys(tagsOf(action.new)).length > 0
 }
 
 export function currentElement(action: AdiffAction): AdiffElement | undefined {
@@ -161,10 +159,7 @@ export function matchFlaggedFeature(
   })
 }
 
-function reasonNames(
-  feature: FlaggedFeature,
-  changesetReasons: NamedReason[],
-): string[] {
+function reasonNames(feature: FlaggedFeature, changesetReasons: NamedReason[]): string[] {
   const names: string[] = []
   if (!feature.reasons?.length) return names
   if (typeof feature.reasons[0] === 'number') {
@@ -239,11 +234,7 @@ function shouldListAction(action: AdiffAction, wayMemberNodes: Set<number>): boo
   if (isNoopAction(action) || !ACTION_TYPES.has(action.type ?? '')) return false
   const element = currentElement(action)
   if (!element?.type || element.id == null) return false
-  if (
-    element.type === 'node' &&
-    wayMemberNodes.has(element.id) &&
-    !hasOwnTags(action)
-  ) {
+  if (element.type === 'node' && wayMemberNodes.has(element.id) && !hasOwnTags(action)) {
     return false
   }
   return true
@@ -294,7 +285,9 @@ export function groupElementChanges(
 ): Array<[(typeof ACTION_ORDER)[number], ElementChange[]]> {
   return ACTION_ORDER.flatMap((actionType) => {
     const items = changes.filter((change) => change.actionType === actionType)
-    return items.length > 0 ? [[actionType, items] as [(typeof ACTION_ORDER)[number], ElementChange[]]] : []
+    return items.length > 0
+      ? [[actionType, items] as [(typeof ACTION_ORDER)[number], ElementChange[]]]
+      : []
   })
 }
 

@@ -1,28 +1,28 @@
-import { toast } from "sonner";
+import { toast } from 'sonner'
 
 interface ShowToastOptions {
-  kind?: "error" | "success" | "warning" | "info";
-  error?: Error;
-  title?: string;
-  description?: string;
-  onRetry?: () => void;
-  retryLabel?: string;
+  kind?: 'error' | 'success' | 'warning' | 'info'
+  error?: Error
+  title?: string
+  description?: string
+  onRetry?: () => void
+  retryLabel?: string
 }
 
 export function showToast({
-  kind = "error",
+  kind = 'error',
   error,
   title,
   description,
   onRetry,
-  retryLabel = "Retry",
+  retryLabel = 'Retry',
 }: ShowToastOptions) {
-  let finalTitle = title;
-  let finalDescription = description;
+  let finalTitle = title
+  let finalDescription = description
 
   if (error) {
-    if (error.name) finalTitle = error.name;
-    if (error.message) finalDescription = error.message;
+    if (error.name) finalTitle = error.name
+    if (error.message) finalDescription = error.message
   }
 
   const options = onRetry
@@ -32,30 +32,33 @@ export function showToast({
           onClick: onRetry,
         },
       }
-    : undefined;
+    : undefined
 
   switch (kind) {
-    case "error":
-      toast.error(finalTitle || "Error", {
+    case 'error':
+      toast.error(finalTitle || 'Error', {
         description: finalDescription,
         ...options,
-      });
-      break;
-    case "success":
-      toast.success(finalTitle || "Success", {
+      })
+      break
+    case 'success':
+      toast.success(finalTitle || 'Success', {
         description: finalDescription,
-      });
-      break;
-    case "warning":
-      toast.warning(finalTitle || "Warning", {
+      })
+      break
+    case 'warning':
+      toast.warning(finalTitle || 'Warning', {
         description: finalDescription,
         ...options,
-      });
-      break;
+      })
+      break
+    case 'info': {
+      throw new Error('Not implemented yet: "info" case')
+    }
     default:
-      toast.info(finalTitle || "Info", {
+      toast.info(finalTitle || 'Info', {
         description: finalDescription,
         ...options,
-      });
+      })
   }
 }

@@ -39,7 +39,9 @@ describe('matchImageryUsedStyleId', () => {
     expect(matchImageryUsedStyleId('Maxar Premium Imagery (Maxar 2024)', eliLayers)).toBe(
       'eli:Maxar-Premium',
     )
-    expect(matchImageryUsedStyleId('Berlin Geoportal Aerial', eliLayers)).toBe('eli:Berlin-Geoportal')
+    expect(matchImageryUsedStyleId('Berlin Geoportal Aerial', eliLayers)).toBe(
+      'eli:Berlin-Geoportal',
+    )
   })
 
   it('skips overlay sources and returns null when nothing matches', () => {
@@ -57,11 +59,19 @@ describe('isImageryUsedMatch', () => {
 
 describe('isDuplicateOfBuiltinLayer', () => {
   it('hides ELI rows already offered as defaults', () => {
-    expect(isDuplicateOfBuiltinLayer({ id: 'EsriWorldImagery', name: 'Esri World Imagery', overlay: false })).toBe(
-      true,
-    )
-    expect(isDuplicateOfBuiltinLayer({ id: 'Maxar-Premium', name: 'Maxar Premium Imagery', overlay: false })).toBe(
-      false,
-    )
+    expect(
+      isDuplicateOfBuiltinLayer({
+        id: 'EsriWorldImagery',
+        name: 'Esri World Imagery',
+        overlay: false,
+      }),
+    ).toBe(true)
+    expect(
+      isDuplicateOfBuiltinLayer({
+        id: 'Maxar-Premium',
+        name: 'Maxar Premium Imagery',
+        overlay: false,
+      }),
+    ).toBe(false)
   })
 })

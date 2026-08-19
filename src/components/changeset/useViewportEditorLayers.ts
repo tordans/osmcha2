@@ -1,7 +1,4 @@
-import {
-  loadLayersInViewport,
-  type EliLayer,
-} from '@osm-editor-kit/maplibre-editor-layer-index'
+import { loadLayersInViewport, type EliLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
 import type * as maplibre from 'maplibre-gl'
 import { useEffect, useState } from 'react'
 

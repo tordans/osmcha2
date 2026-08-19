@@ -1,16 +1,16 @@
-import { api } from "./request.ts";
+import { api } from './request.ts'
 
 export function fetchWatchList(): Promise<any[]> {
-  return api.get<any[]>("/blacklisted-users/");
+  return api.get<any[]>('/blacklisted-users/')
 }
 
 export function deleteFromWatchList(uid: string): Promise<any> {
-  return api.delete(`/blacklisted-users/${uid}/`);
+  return api.delete(`/blacklisted-users/${uid}/`)
 }
 
 export function postUserToWatchList(data: any): Promise<any> {
-  return api.post("/blacklisted-users/", {
+  return api.post('/blacklisted-users/', {
     username: data.watchlist_user.username,
     uid: data.watchlist_user.uid,
-  });
+  })
 }

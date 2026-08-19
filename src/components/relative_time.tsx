@@ -1,17 +1,14 @@
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from 'date-fns'
 
 interface RelativeTimeProps {
-  datetime: Date;
-  addSuffix?: boolean;
+  datetime: Date
+  addSuffix?: boolean
 }
 
-export function RelativeTime({
-  datetime,
-  addSuffix = true,
-}: RelativeTimeProps) {
+export function RelativeTime({ datetime, addSuffix = true }: RelativeTimeProps) {
   return (
     <time dateTime={datetime.toISOString()} title={datetime.toString()}>
       {formatDistanceToNow(datetime, { addSuffix })}
     </time>
-  );
+  )
 }

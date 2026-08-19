@@ -6,7 +6,14 @@ import { typeScale } from './ui/typography.ts'
 export type TagRowsItem =
   | { kind: 'added'; key: string; value: ReactNode; rawValue?: string }
   | { kind: 'removed'; key: string; value: ReactNode; rawValue?: string }
-  | { kind: 'changed'; key: string; oldValue: ReactNode; newValue: ReactNode; rawOld?: string; rawNew?: string }
+  | {
+      kind: 'changed'
+      key: string
+      oldValue: ReactNode
+      newValue: ReactNode
+      rawOld?: string
+      rawNew?: string
+    }
   | { kind: 'unchanged'; key: string; value: ReactNode; rawValue?: string }
 
 function textOf(value: ReactNode, raw?: string) {
@@ -40,9 +47,7 @@ function TagChange({
       <span className={clsx('min-w-0 text-orange-500', wrapClass(oldValue, rawOld))} dir="auto">
         {oldValue}
       </span>
-      <ArrowRightIcon
-        className="size-3 flex-none rotate-90 text-zinc-400 @min-[36rem]:rotate-0"
-      />
+      <ArrowRightIcon className="size-3 flex-none rotate-90 text-zinc-400 @min-[36rem]:rotate-0" />
       <span className={clsx('min-w-0 text-green-700', wrapClass(newValue, rawNew))} dir="auto">
         {newValue}
       </span>
@@ -123,4 +128,3 @@ export function TagRows({
     </dl>
   )
 }
-

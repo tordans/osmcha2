@@ -1,6 +1,6 @@
 name: Bug report
 description: Let us know if you've found a bug in OSMCha
-labels: ["bug"]
+labels: ['bug']
 body:
   - type: textarea
     id: describe-bug
@@ -15,7 +15,7 @@ body:
     attributes:
       label: Changeset URL
       description: If this bug happens when viewing a particular changeset, please paste the link to that changeset here
-    
+
   - type: input
     id: environment
     attributes:

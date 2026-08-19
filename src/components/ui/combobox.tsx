@@ -38,7 +38,7 @@ export function Combobox<T>({
 
   return (
     <Headless.Combobox
-      as="div"
+      as={'div' as const}
       {...props}
       multiple={false}
       virtual={{ options: filteredOptions }}

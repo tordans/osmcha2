@@ -3,23 +3,18 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { diffArrays } from 'diff'
 import { useState } from 'react'
-import { RouterLink } from '../routing/RouterLink.tsx'
 import { osmUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { flagFeature, unflagFeature } from '../network/changeset.ts'
 import { searchWithoutMap } from '../routing/mapParam.ts'
+import { RouterLink } from '../routing/RouterLink.tsx'
 import { DropdownOpenElement } from './changeset/DropdownOpenElement.tsx'
 import { elementCoord, elementOpenInUrls } from './changeset/elementOpenIn.ts'
 import { TagRows, type TagRowsItem } from './tag_rows.tsx'
 import { TagValue } from './tag_value.tsx'
 import { Badge } from './ui/badge.tsx'
 import { Button } from './ui/button.tsx'
-import {
-  Dropdown,
-  DropdownButton,
-  DropdownItem,
-  DropdownMenu,
-} from './ui/dropdown.tsx'
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from './ui/dropdown.tsx'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table.tsx'
 import { TextLink } from './ui/text.tsx'
 import { typeScale } from './ui/typography.ts'
@@ -75,7 +70,11 @@ function ElementInfo({ changeset, changesetId, action, setHighlight }: ElementIn
   return (
     <div className="element-info">
       <h2 className={typeScale.heading}>
-        <TextLink href={`https://www.openstreetmap.org/${elementId}`} target="_blank" rel="noopener noreferrer">
+        <TextLink
+          href={`https://www.openstreetmap.org/${elementId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {elementId}
         </TextLink>{' '}
         was <Badge color={actionColor}>{actionPhrase}</Badge>
@@ -153,9 +152,9 @@ function FlagButton({
     const next = !flagged
     setOptimisticFlagged(next)
     if (flagged) {
-      unflagFeature(changesetId, featureId)
+      void unflagFeature(changesetId, featureId)
     } else {
-      flagFeature(changesetId, featureId)
+      void flagFeature(changesetId, featureId)
     }
   }
 
@@ -174,7 +173,8 @@ function FlagButton({
 function MetadataTable({ changesetId, action }: { changesetId: number; action: any }) {
   const search = rootRouteApi.useSearch()
   const showPrevious =
-    action.type === 'delete' || (action.type === 'modify' && action.old.version !== action.new.version)
+    action.type === 'delete' ||
+    (action.type === 'modify' && action.old.version !== action.new.version)
 
   const elements = showPrevious ? [action.old, action.new] : [action.new]
 
@@ -229,7 +229,11 @@ function MetadataTable({ changesetId, action }: { changesetId: number; action: a
           <TableCell className="font-medium">username</TableCell>
           {elements.map((element) => (
             <TableCell key={element.version}>
-              <TextLink href={`${osmUrl}/user/${element.user}`} target="_blank" rel="noopener noreferrer">
+              <TextLink
+                href={`${osmUrl}/user/${element.user}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {element.user}
               </TextLink>
             </TableCell>
@@ -331,7 +335,12 @@ function RelationMembersTable({
 
           if (oldrole === newrole) {
             return (
-              <TableRow key={id} className="cursor-pointer" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+              <TableRow
+                key={id}
+                className="cursor-pointer"
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
+              >
                 <TableCell>{id}</TableCell>
                 <TableCell>
                   <span dir="auto">{newrole}</span>
