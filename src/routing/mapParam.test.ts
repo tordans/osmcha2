@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { parseMapParam, roundPositionForURL, serializeMapParam } from './mapParam.ts'
+import {
+  parseMapParam,
+  roundPositionForURL,
+  searchWithoutMap,
+  serializeMapParam,
+} from './mapParam.ts'
 import { routerSearch } from './routerSearch.ts'
 
 describe('mapParam', () => {
@@ -35,5 +40,12 @@ describe('mapParam', () => {
     expect(serializeMapParam({ zoom: 18, lat: 52.123456789, lng: 13.987654321 })).toBe(
       '18/52.12346/13.98765',
     )
+  })
+
+  test('omits map when opening a different changeset', () => {
+    expect(searchWithoutMap({ filters: { users: ['a'] }, page: 2, map: '12/52.5/13.4' })).toEqual({
+      filters: { users: ['a'] },
+      page: 2,
+    })
   })
 })

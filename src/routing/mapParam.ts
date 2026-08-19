@@ -41,7 +41,7 @@ export const serializeMapParam = ({ zoom, lat, lng }: MapParam) => {
 }
 
 /** Drop review map viewport when navigating to a different changeset id. */
-export function searchWithoutMap<T extends { map?: string }>(search: T): Omit<T, 'map'> {
-  const { map: _map, ...rest } = search
-  return rest
+export function searchWithoutMap<T extends object>(search: T): Omit<T, 'map'> {
+  const { map: _map, ...rest } = search as T & { map?: string }
+  return rest as Omit<T, 'map'>
 }

@@ -13,6 +13,7 @@ import {
 import { useFilters } from '../hooks/useFilters.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useChangesetsPage } from '../query/hooks/useChangesetsPage.ts'
+import { searchWithoutMap } from '../routing/mapParam.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -56,10 +57,7 @@ function ChangesetsList() {
       void navigate({
         to: '/changesets/$id',
         params: { id: nextFeature.id },
-        search: (_prev) => ({
-          ...search,
-          map: undefined,
-        }),
+        search: (prev) => searchWithoutMap({ ...prev, ...search }),
       })
     }
   }

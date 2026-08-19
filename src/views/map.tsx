@@ -13,11 +13,14 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { useMapStore } from '../stores/mapStore.ts'
+import {
+  changesetCameraIntent,
+  changesetFitOptions,
+  jumpMapToChangesetBounds,
+} from './changesetCamera.ts'
 import { changesetViewBounds } from './changesetViewBounds.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
-
-const CHANGESET_FIT = { padding: 200, maxZoom: 18 } as const
 
 function serializeMapCamera(map: maplibre.Map) {
   const center = map.getCenter()
@@ -82,7 +85,10 @@ function CMap({
   const changesetQuery = useChangesetMap(changesetId)
   const mapRef = useRef<maplibre.Map | null>(null)
   const adiffViewerRef = useRef<MapLibreAugmentedDiffViewer>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const appliedStyleRef = useRef(style)
+  const applyingCameraRef = useRef(false)
+  const urlWritesEnabledRef = useRef(false)
   const [mapReady, setMapReady] = useState(false)
 
   const hasAdiff = Boolean(changesetQuery.data)
@@ -106,8 +112,9 @@ function CMap({
   const readImageryUsed = useEffectEvent(() => imageryUsed)
   const readMapSearch = useEffectEvent(() => mapSearch)
 
-  // URL `?map=` is the camera. MapLibre is the view. Write only when the view differs.
+  // `?map=` is the user's camera for this visit. Missing `?map=` means fit the changeset.
   const replaceMapSearch = useEffectEvent((map: maplibre.Map) => {
+    if (!urlWritesEnabledRef.current) return
     const next = serializeMapCamera(map)
     if (next === mapSearch) return
     void navigate({
@@ -125,36 +132,40 @@ function CMap({
 
   const applyCameraFromSearch = useEffectEvent(
     (map: maplibre.Map, viewer: MapLibreAugmentedDiffViewer) => {
-      const parsed = parseMapParam(mapSearch ?? '')
-      if (parsed) {
-        if (serializeMapCamera(map) !== mapSearch) {
-          map.jumpTo({
-            center: [parsed.lng, parsed.lat],
-            zoom: parsed.zoom,
-          })
+      applyingCameraRef.current = true
+      try {
+        const intent = changesetCameraIntent(mapSearch)
+        if (intent.type === 'restore') {
+          if (serializeMapCamera(map) !== mapSearch) {
+            map.jumpTo({
+              center: [intent.camera.lng, intent.camera.lat],
+              zoom: intent.camera.zoom,
+            })
+          }
+          urlWritesEnabledRef.current = true
+          return
         }
-        return
-      }
 
-      if (viewer.adiff.actions.length === 0) {
-        toast.error('Problem loading augmented diff file', {
-          description: 'The augmented diff contains no elements',
-        })
-        return
-      }
+        if (viewer.adiff.actions.length === 0) {
+          toast.error('Problem loading augmented diff file', {
+            description: 'The augmented diff contains no elements',
+          })
+          return
+        }
 
-      const bounds = changesetViewBounds(viewer.geojson.features)
-      if (!bounds) return
-
-      const camera = map.cameraForBounds(bounds, CHANGESET_FIT)
-      if (camera) {
-        map.jumpTo(camera)
-        replaceMapSearch(map)
+        const bounds = changesetViewBounds(viewer.geojson.features)
+        if (!bounds) return
+        map.resize()
+        jumpMapToChangesetBounds(map, bounds)
+        urlWritesEnabledRef.current = true
+      } finally {
+        applyingCameraRef.current = false
       }
     },
   )
 
   const onMapMoveEnd = useEffectEvent((map: maplibre.Map) => {
+    if (applyingCameraRef.current) return
     writeMapToUrl(map)
   })
 
@@ -167,11 +178,11 @@ function CMap({
       }
 
       const changeset = readAdiff()
-      const mapContainer = document.getElementById('container')
+      const mapContainer = containerRef.current
       if (!changeset || !mapContainer) {
         return
       }
-      const containerEl: HTMLElement = mapContainer
+      const host = mapContainer
 
       let cancelled = false
       let map: maplibre.Map | null = null
@@ -199,17 +210,18 @@ function CMap({
 
         const parsedCamera = parseMapParam(readMapSearch() ?? '')
         const viewBounds = changesetViewBounds(adiffViewer.geojson.features)
+        const fitOptions = changesetFitOptions(host.clientWidth, host.clientHeight)
 
         const createdMap = new maplibre.Map({
-          container: containerEl,
+          container: host,
           style: mapStyle,
           maxZoom: 22,
           hash: false,
           attributionControl: false,
           ...(parsedCamera
             ? { center: [parsedCamera.lng, parsedCamera.lat], zoom: parsedCamera.zoom }
-            : viewBounds
-              ? { bounds: viewBounds, fitBoundsOptions: CHANGESET_FIT }
+            : viewBounds && fitOptions
+              ? { bounds: viewBounds, fitBoundsOptions: fitOptions }
               : {}),
         })
         map = createdMap
@@ -240,6 +252,7 @@ function CMap({
 
       return function teardownChangesetMap() {
         cancelled = true
+        urlWritesEnabledRef.current = false
         setMapReady(false)
         mapHandleRef.current = null
         map?.remove()
@@ -260,6 +273,28 @@ function CMap({
       applyCameraFromSearch(map, viewer)
     },
     [mapReady, mapSearch],
+  )
+
+  useEffect(
+    function refitWhenContainerResizes() {
+      if (!mapReady) return
+      const map = mapRef.current
+      const viewer = adiffViewerRef.current
+      const container = containerRef.current
+      if (!map || !viewer || !container) return
+
+      const observer = new ResizeObserver(() => {
+        map.resize()
+        if (changesetCameraIntent(readMapSearch()).type === 'fit') {
+          applyCameraFromSearch(map, viewer)
+        }
+      })
+      observer.observe(container)
+      return function disconnectResizeObserver() {
+        observer.disconnect()
+      }
+    },
+    [mapReady],
   )
 
   useEffect(
@@ -318,7 +353,7 @@ function CMap({
 
   return (
     <React.Fragment>
-      <div id="container" className="h-full w-full" />
+      <div ref={containerRef} className="h-full w-full" />
       {(!mapReady || changesetQuery.isLoading) && (
         <div
           className="absolute z-10"
