@@ -15,9 +15,12 @@ import {
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { useNominatimSearch } from '../../query/hooks/useNominatimSearch.ts'
 import { Button } from '../ui/button.tsx'
+import { Description, Label } from '../ui/fieldset.tsx'
+import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
-import type { Filter } from './index.ts'
+import { areaLtBoundPolygon, parseAreaLt } from './areaLtBound.ts'
+import { filterOptionLabel, type Filter } from './index.ts'
 import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
 type QueryTypeOption = { value: string; label: string }
@@ -30,10 +33,19 @@ const queryTypeOptions: QueryTypeOption[] = [
   { value: 'country', label: 'Country' },
 ]
 
+const emptyFeatureCollection: GeoJSON.FeatureCollection = {
+  type: 'FeatureCollection',
+  features: [],
+}
+
 type LocationSelectProps = {
   name: string
   value?: Filter
   placeholder?: string
+  areaLt?: Filter
+  areaLtDisplay: string
+  areaLtDescription: string
+  areaLtPlaceholder?: string
   onChange: (name: string, value?: Filter | null) => void
 }
 
@@ -56,7 +68,62 @@ function geometryFromValue(value?: Filter) {
   return null
 }
 
-export function LocationSelect({ name, value, placeholder, onChange }: LocationSelectProps) {
+function ensureLocationLayers(map: maplibre.Map) {
+  if (!map.getSource('feature')) {
+    map.addSource('feature', { type: 'geojson', data: emptyFeatureCollection })
+  }
+  if (!map.getSource('area-lt-bound')) {
+    map.addSource('area-lt-bound', { type: 'geojson', data: emptyFeatureCollection })
+  }
+
+  if (map.getLayer('area-lt-fill') === undefined) {
+    map.addLayer({
+      id: 'area-lt-fill',
+      type: 'fill',
+      source: 'area-lt-bound',
+      paint: {
+        'fill-color': '#d97706',
+        'fill-opacity': 0.08,
+      },
+    })
+  }
+
+  if (map.getLayer('area-lt-line') === undefined) {
+    map.addLayer({
+      id: 'area-lt-line',
+      type: 'line',
+      source: 'area-lt-bound',
+      paint: {
+        'line-color': '#d97706',
+        'line-width': 2,
+        'line-dasharray': [2, 2],
+      },
+    })
+  }
+
+  if (map.getLayer('geometry') === undefined) {
+    map.addLayer({
+      id: 'geometry',
+      type: 'fill',
+      source: 'feature',
+      paint: {
+        'fill-color': '#088',
+        'fill-opacity': 0.3,
+      },
+    })
+  }
+}
+
+export function LocationSelect({
+  name,
+  value,
+  placeholder,
+  areaLt,
+  areaLtDisplay,
+  areaLtDescription,
+  areaLtPlaceholder,
+  onChange,
+}: LocationSelectProps) {
   const [queryType, setQueryType] = useState('q')
   const [placeQuery, setPlaceQuery] = useState('')
   const [debouncedPlaceQuery, setDebouncedPlaceQuery] = useState('')
@@ -65,6 +132,12 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
   const mapRef = useRef<maplibre.Map | null>(null)
   const drawRef = useRef<TerraDraw | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const locationGeometry = geometryFromValue(value)
+  const hasLocation = locationGeometry != null
+  const areaLtNumber = parseAreaLt(areaLt?.[0]?.value)
+  const areaLtInputValue =
+    areaLt?.[0]?.value == null || areaLt[0].value === '' ? '' : filterOptionLabel(areaLt[0].value)
 
   const selectedQueryType =
     queryTypeOptions.find((option) => option.value === queryType) ?? queryTypeOptions[0]
@@ -80,35 +153,47 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
       }))
     : []
 
-  function updateMap(data: GeoJSON.Geometry) {
+  function setSourceData(sourceId: string, data: GeoJSON.GeoJSON) {
+    const map = mapRef.current
+    if (!map) return
+    ensureLocationLayers(map)
+    ;(map.getSource(sourceId) as maplibre.GeoJSONSource).setData(data)
+  }
+
+  function updateMap(data: GeoJSON.Geometry | null, nextAreaLt: number | null = areaLtNumber) {
     const map = mapRef.current
     if (!map) return
 
-    if (map.getSource('feature')) {
-      ;(map.getSource('feature') as maplibre.GeoJSONSource).setData(
-        data as unknown as GeoJSON.GeoJSON,
-      )
+    ensureLocationLayers(map)
+
+    if (data) {
+      setSourceData('feature', data as unknown as GeoJSON.GeoJSON)
     } else {
-      map.addSource('feature', { type: 'geojson', data: data as unknown as GeoJSON.GeoJSON })
+      setSourceData('feature', emptyFeatureCollection)
     }
 
-    if (map.getLayer('geometry') === undefined) {
-      map.addLayer({
-        id: 'geometry',
-        type: 'fill',
-        source: 'feature',
-        paint: {
-          'fill-color': '#088',
-          'fill-opacity': 0.3,
-        },
-      })
+    const bound =
+      data && nextAreaLt != null ? areaLtBoundPolygon(data as GeoJSON.Geometry, nextAreaLt) : null
+
+    if (bound) {
+      setSourceData('area-lt-bound', bound)
+      const bounds = bbox(bound)
+      map.fitBounds(
+        [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
+        { padding: 28 },
+      )
+      return
     }
 
-    const bounds = bbox(data as unknown as GeoJSON.Feature)
-    map.fitBounds(
-      [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
-      { padding: 20 },
-    )
+    setSourceData('area-lt-bound', emptyFeatureCollection)
+
+    if (data) {
+      const bounds = bbox(data as unknown as GeoJSON.Feature)
+      map.fitBounds(
+        [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
+        { padding: 20 },
+      )
+    }
   }
 
   const onDrawFinished = useEffectEvent((id: string | number) => {
@@ -136,8 +221,7 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
   })
 
   const onMapStyleReady = useEffectEvent(() => {
-    const geometry = geometryFromValue(value)
-    if (geometry) updateMap(geometry as GeoJSON.Geometry)
+    updateMap(locationGeometry as GeoJSON.Geometry | null, areaLtNumber)
   })
 
   useEffect(
@@ -198,10 +282,9 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
 
   useEffect(
     function synchronizeLocationGeometryToMap() {
-      const geometry = geometryFromValue(value)
-      if (geometry) updateMap(geometry as GeoJSON.Geometry)
+      updateMap(locationGeometry as GeoJSON.Geometry | null, areaLtNumber)
     },
-    [value],
+    [value, areaLt, areaLtNumber, locationGeometry],
   )
 
   const handlePlaceSelect = (option: SearchOption) => {
@@ -230,18 +313,22 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
 
   const handleClear = () => {
     const draw = drawRef.current
-    const map = mapRef.current
     draw?.clear()
     draw?.setMode('render')
     setActiveMode('render')
-    if (map?.getSource('feature')) {
-      ;(map.getSource('feature') as maplibre.GeoJSONSource).setData({
-        type: 'Feature',
-        geometry: null,
-      } as unknown as GeoJSON.GeoJSON)
-    }
+    updateMap(null, null)
     onChange('geometry', null)
     onChange('in_bbox', null)
+  }
+
+  const handleAreaLtChange = (next: string) => {
+    if (!next) {
+      onChange('area_lt')
+      updateMap(locationGeometry as GeoJSON.Geometry | null, null)
+      return
+    }
+    onChange('area_lt', [{ label: next, value: next }])
+    updateMap(locationGeometry as GeoJSON.Geometry | null, parseAreaLt(next))
   }
 
   return (
@@ -307,7 +394,23 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
         </Button>
       </div>
 
-      <div id="geometry-map" ref={containerRef} className="h-[300px] w-full touch-manipulation" />
+      <div className="relative">
+        <div id="geometry-map" ref={containerRef} className="h-[300px] w-full touch-manipulation" />
+        {hasLocation ? (
+          <div className="pointer-events-none absolute top-2 right-2 rounded-md bg-white/90 px-2 py-1.5 text-xs text-zinc-700 shadow-sm ring-1 ring-zinc-950/10">
+            <div className="flex items-center gap-2">
+              <span className="inline-block size-2.5 rounded-sm bg-[#088]" />
+              Your location
+            </div>
+            {areaLtNumber != null ? (
+              <div className="mt-1 flex items-center gap-2">
+                <span className="inline-block size-2.5 rounded-sm border border-dashed border-amber-600 bg-amber-500/20" />
+                Largest allowed changeset bbox
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {activeMode === 'rectangle' ? <Text>Click two corners to draw a bounding box.</Text> : null}
       {activeMode === 'polygon' ? (
@@ -315,6 +418,30 @@ export function LocationSelect({ name, value, placeholder, onChange }: LocationS
           Click a series of points to draw a polygon; click back on the first point to finish.
         </Text>
       ) : null}
+
+      <div className="space-y-2 border-t border-zinc-950/10 pt-3">
+        <Label className="block">{areaLtDisplay}</Label>
+        <div className="flex max-w-sm items-center gap-2">
+          <Input
+            name="area_lt"
+            type="number"
+            min={1}
+            max={100}
+            value={areaLtInputValue}
+            placeholder={areaLtPlaceholder || areaLtDisplay}
+            onChange={(event) => handleAreaLtChange(event.target.value)}
+          />
+          <span className="shrink-0 text-sm text-zinc-600">× your location area</span>
+        </div>
+        {!hasLocation ? (
+          <Description>
+            Draw or search for a location first. Without a location filter, maximum changeset size
+            has no effect.
+          </Description>
+        ) : (
+          <Description>{areaLtDescription}</Description>
+        )}
+      </div>
     </div>
   )
 }

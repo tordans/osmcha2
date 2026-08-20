@@ -15,6 +15,8 @@ const filtersData = filters.filter((f) => {
   return !('ignore' in f && f.ignore)
 })
 
+const areaLtConfig = filtersData.find((f) => f.name === 'area_lt')!
+
 type FilterConfig = (typeof filtersData)[number] & {
   range?: boolean
   type?: string
@@ -264,11 +266,15 @@ export function FiltersList({
         <Wrapper
           name="location"
           display="Location"
-          hasValue={'geometry' in currentFilters || 'in_bbox' in currentFilters}
+          hasValue={
+            'geometry' in currentFilters ||
+            'in_bbox' in currentFilters ||
+            'area_lt' in currentFilters
+          }
           handleFocus={() => handleFocus('location')}
           description={
             active === 'location'
-              ? 'Filter changesets whose bounding box intersects a chosen area'
+              ? 'Filter changesets whose bounding box intersects a chosen area. Optionally limit how large those changesets may be.'
               : undefined
           }
         >
@@ -276,12 +282,13 @@ export function FiltersList({
             name="location"
             value={currentFilters.geometry || currentFilters.in_bbox}
             placeholder="Type a place name"
+            areaLt={currentFilters.area_lt}
+            areaLtDisplay={areaLtConfig.display}
+            areaLtDescription={areaLtConfig.description}
+            areaLtPlaceholder={areaLtConfig.placeholder}
             onChange={handleChange}
           />
         </Wrapper>
-        {filtersData
-          .slice(2, 3)
-          .map((config, index) => renderFilter(config as FilterConfig, index))}
       </FilterSection>
 
       <FilterSection title="OSM Features">

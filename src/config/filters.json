@@ -24,10 +24,10 @@
     "icontains": false,
     "range": false,
     "all": false,
-    "display": "Changeset size bound",
+    "display": "Maximum changeset size",
     "type": "number",
-    "description": "Filter changesets that have an area lower than X times the area of your BBox or geometry filter. For example, if the geometry you defined in your filter has an area of 1 degree and you set the 'Changeset size bound' to 2, it will filter the changesets whose area is lower than 2 degrees.",
-    "placeholder": "Upper bound of changeset area"
+    "description": "Hides changesets whose own bounding box is larger than N times your location area. This is an area cap on the changeset bbox — not a buffer around your region. A large edit that only grazes your location (for example a worldwide import that touches Berlin) is still hidden, even if most of its changes are inside. Requires a location filter.",
+    "placeholder": "e.g. 2"
   },
   {
     "name": "tag_changes",
