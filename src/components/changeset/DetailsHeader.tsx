@@ -217,250 +217,258 @@ export function DetailsHeader({
 
   return (
     <header className="flex flex-col gap-2.5 bg-zinc-50 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] min-[56rem]:pb-2.5">
-      <Dropdown>
-        <DropdownButton
-          outline
-          className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
-        >
-          <span className="min-w-0 flex-1 text-left">
-            <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
-            <p className={clsx('-mt-0.5 font-normal text-zinc-500', typeScale.small)}>
-              {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
-              {' | '}
-              <abbr
-                title={`Editor ${properties.editor ?? 'unknown'}${
-                  properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
-                }`}
-              >
-                {editorLabel}
-              </abbr>
-            </p>
-          </span>
-          <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
-        </DropdownButton>
-        <DropdownMenu
-          anchor="bottom start"
-          className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
-        >
-          <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
-            OSM Website
-          </DropdownItem>
-          <DropdownDivider />
-          <DropdownSection>
-            <DropdownHeading>Tools</DropdownHeading>
-            <DropdownItem href={urls.achavi} target="_blank" rel="noopener noreferrer">
-              Achavi
-            </DropdownItem>
-            <DropdownItem href={urls.osmRevert} target="_blank" rel="noopener noreferrer">
-              osm-revert
-            </DropdownItem>
-            <DropdownItem href={urls.resultMaps} target="_blank" rel="noopener noreferrer">
-              ResultMaps
-            </DropdownItem>
-          </DropdownSection>
-          <DropdownDivider />
-          <DropdownSection>
-            <DropdownHeading>Editor</DropdownHeading>
-            <DropdownItem href={urls.id} target="_blank" rel="noopener noreferrer">
-              iD
-            </DropdownItem>
-            <DropdownItem href={urls.josm} target="_blank" rel="noopener noreferrer">
-              JOSM
-            </DropdownItem>
-            <DropdownItem href={urls.level0} target="_blank" rel="noopener noreferrer">
-              Level0
-            </DropdownItem>
-            <DropdownItem href={urls.rapid} target="_blank" rel="noopener noreferrer">
-              Rapid
-            </DropdownItem>
-          </DropdownSection>
-          {visibleMetadata.length > 0 ? (
-            <>
-              <DropdownDivider />
-              <DropdownSection>
-                <DropdownHeading>Changeset tags</DropdownHeading>
-                <table
-                  className={clsx(
-                    'col-span-full mx-2 mb-1 w-[calc(100%-1rem)] table-fixed',
-                    'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
-                  )}
-                >
-                  <tbody>
-                    {visibleMetadata.map(([key, val]) => (
-                      <tr key={key} className="align-top">
-                        <th className="w-[38%] pr-2 pb-0.5 text-left font-medium text-zinc-500">
-                          {key}
-                        </th>
-                        <td className="pb-0.5 break-all">{String(val)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </DropdownSection>
-            </>
-          ) : null}
-        </DropdownMenu>
-      </Dropdown>
-
-      <Dropdown>
-        <DropdownButton
-          outline
-          className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
-        >
-          <span
-            className={clsx('min-w-0 flex-1 text-left font-normal text-zinc-500', typeScale.small)}
+      <div className="flex flex-col gap-2">
+        <Dropdown>
+          <DropdownButton
+            outline
+            className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
           >
-            {osmUser}
-            {isInTrustedlist && (
-              <StarIcon
-                variant="fill"
-                className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
-              />
-            )}
-            {isInWatchlist && (
-              <ExclamationTriangleIcon
-                variant="fill"
-                className="ml-1 inline-block size-4 align-text-bottom text-red-500"
-              />
-            )}
-            {accountCreated ? (
+            <span className="min-w-0 flex-1 text-left">
+              <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
+              <div className={clsx('-mt-0.5 font-normal text-zinc-500', typeScale.small)}>
+                {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+                {' | '}
+                <abbr
+                  title={`Editor ${properties.editor ?? 'unknown'}${
+                    properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
+                  }`}
+                >
+                  {editorLabel}
+                </abbr>
+              </div>
+            </span>
+            <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+          </DropdownButton>
+          <DropdownMenu
+            anchor="bottom start"
+            className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
+          >
+            <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
+              OSM Website
+            </DropdownItem>
+            <DropdownDivider />
+            <DropdownSection>
+              <DropdownHeading>Tools</DropdownHeading>
+              <DropdownItem href={urls.achavi} target="_blank" rel="noopener noreferrer">
+                Achavi
+              </DropdownItem>
+              <DropdownItem href={urls.osmRevert} target="_blank" rel="noopener noreferrer">
+                osm-revert
+              </DropdownItem>
+              <DropdownItem href={urls.resultMaps} target="_blank" rel="noopener noreferrer">
+                ResultMaps
+              </DropdownItem>
+            </DropdownSection>
+            <DropdownDivider />
+            <DropdownSection>
+              <DropdownHeading>Editor</DropdownHeading>
+              <DropdownItem href={urls.id} target="_blank" rel="noopener noreferrer">
+                iD
+              </DropdownItem>
+              <DropdownItem href={urls.josm} target="_blank" rel="noopener noreferrer">
+                JOSM
+              </DropdownItem>
+              <DropdownItem href={urls.level0} target="_blank" rel="noopener noreferrer">
+                Level0
+              </DropdownItem>
+              <DropdownItem href={urls.rapid} target="_blank" rel="noopener noreferrer">
+                Rapid
+              </DropdownItem>
+            </DropdownSection>
+            {visibleMetadata.length > 0 ? (
               <>
-                {' '}
-                created <RelativeTime datetime={accountCreated} />
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>Changeset tags</DropdownHeading>
+                  <table
+                    className={clsx(
+                      'col-span-full mx-2 mb-1 w-[calc(100%-1rem)] table-fixed',
+                      'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
+                    )}
+                  >
+                    <tbody>
+                      {visibleMetadata.map(([key, val]) => (
+                        <tr key={key} className="align-top">
+                          <th className="w-[38%] pr-2 pb-0.5 text-left font-medium text-zinc-500">
+                            {key}
+                          </th>
+                          <td className="pb-0.5 break-all">{String(val)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </DropdownSection>
               </>
             ) : null}
-            {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
-          </span>
-          <span
-            className="isolate inline-flex shrink-0 rounded-md"
-            title="Changesets of this user marked good or bad in OSMCha"
+          </DropdownMenu>
+        </Dropdown>
+
+        <Dropdown>
+          <DropdownButton
+            outline
+            className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
           >
-            <Badge rounded="left">
-              {checkedGood.toLocaleString()}{' '}
-              <HandThumbUpIcon
-                variant="fill"
-                className="inline size-4 text-zinc-600"
-                aria-label="Good changesets"
-              />
-            </Badge>
-            <Badge rounded="right" className="-ml-px">
-              <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
-                {checkedBad.toLocaleString()}{' '}
-              </span>
-              <HandThumbDownIcon
-                variant="fill"
-                className={clsx('inline size-4', checkedBad ? 'text-orange-500' : 'text-zinc-600')}
-                aria-label="Harmful changesets"
-              />
-            </Badge>
-          </span>
-          <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
-        </DropdownButton>
-        <DropdownMenu
-          anchor="bottom start"
-          className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
-        >
-          <DropdownSection>
-            <DropdownHeading>
-              User {osmUser}
-              {uid ? ` / ${uid}` : ''}
-            </DropdownHeading>
-            <DropdownItem
-              href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <span
+              className={clsx(
+                'min-w-0 flex-1 text-left font-normal text-zinc-500',
+                typeScale.small,
+              )}
             >
-              OSM profile
-            </DropdownItem>
-            <DropdownItem href={hdycUrl(osmUser)} target="_blank" rel="noopener noreferrer">
-              HDYC
-            </DropdownItem>
-            {properties.user || userDetails?.name ? (
+              {osmUser}
+              {isInTrustedlist && (
+                <StarIcon
+                  variant="fill"
+                  className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
+                />
+              )}
+              {isInWatchlist && (
+                <ExclamationTriangleIcon
+                  variant="fill"
+                  className="ml-1 inline-block size-4 align-text-bottom text-red-500"
+                />
+              )}
+              {accountCreated ? (
+                <>
+                  {' '}
+                  created <RelativeTime datetime={accountCreated} />
+                </>
+              ) : null}
+              {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
+            </span>
+            <span
+              className="isolate inline-flex shrink-0 rounded-md"
+              title="Changesets of this user marked good or bad in OSMCha"
+            >
+              <Badge rounded="left">
+                {checkedGood.toLocaleString()}{' '}
+                <HandThumbUpIcon
+                  variant="fill"
+                  className="inline size-4 text-zinc-600"
+                  aria-label="Good changesets"
+                />
+              </Badge>
+              <Badge rounded="right" className="-ml-px">
+                <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
+                  {checkedBad.toLocaleString()}{' '}
+                </span>
+                <HandThumbDownIcon
+                  variant="fill"
+                  className={clsx(
+                    'inline size-4',
+                    checkedBad ? 'text-orange-500' : 'text-zinc-600',
+                  )}
+                  aria-label="Harmful changesets"
+                />
+              </Badge>
+            </span>
+            <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+          </DropdownButton>
+          <DropdownMenu
+            anchor="bottom start"
+            className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
+          >
+            <DropdownSection>
+              <DropdownHeading>
+                User {osmUser}
+                {uid ? ` / ${uid}` : ''}
+              </DropdownHeading>
               <DropdownItem
-                href={missingMapsUrl(osmUser)}
+                href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Missing Maps
+                OSM profile
               </DropdownItem>
-            ) : null}
-          </DropdownSection>
-          {uid ? (
-            <>
-              <DropdownDivider />
-              <DropdownSection>
-                <DropdownHeading>OSMCha</DropdownHeading>
-                <DropdownItem onClick={filterOsmchaByUser}>
-                  {editCount > 0
-                    ? `${editCount.toLocaleString()} changesets by this user`
-                    : 'Changesets by this user'}
-                </DropdownItem>
-              </DropdownSection>
-            </>
-          ) : null}
-          {token && uid ? (
-            <>
-              <DropdownDivider />
-              <DropdownSection>
-                <DropdownHeading>Lists</DropdownHeading>
-                {isInWatchlist ? (
-                  <DropdownItem onClick={() => removeFromWatchlistMutation.mutate(String(uid))}>
-                    Remove from watchlist
-                  </DropdownItem>
-                ) : isInTrustedlist ? (
-                  <DropdownItem onClick={() => removeFromTrustedlistMutation.mutate(osmUser)}>
-                    Remove from trusted users
-                  </DropdownItem>
-                ) : (
-                  <>
-                    <DropdownItem
-                      onClick={() =>
-                        addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
-                      }
-                    >
-                      Add to watchlist
-                    </DropdownItem>
-                    <DropdownItem onClick={() => addToTrustedlistMutation.mutate(osmUser)}>
-                      Add to trusted users
-                    </DropdownItem>
-                  </>
-                )}
-              </DropdownSection>
-            </>
-          ) : null}
-          {pastNames.length > 0 || description ? (
-            <>
-              <DropdownDivider />
-              {pastNames.length > 0 ? (
-                <DropdownSection>
-                  <DropdownHeading>Past usernames</DropdownHeading>
-                  <ul className="col-span-full list-disc px-3.5 pb-1 pl-7 text-xs/4 text-zinc-600 sm:px-3">
-                    {pastNames.map((name) => (
-                      <li key={name}>{name}</li>
-                    ))}
-                  </ul>
-                </DropdownSection>
-              ) : null}
-              {description ? (
-                <blockquote
-                  className={clsx(
-                    'col-span-full mx-2 mb-1 border-l-2 border-zinc-200 py-0.5 pl-2.5',
-                    'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
-                    '[&_a]:text-blue-700 [&_a]:underline',
-                    '[&_p]:my-1 [&_p]:first:mt-0 [&_p]:last:mb-0',
-                    '[&_h1]:my-1 [&_h1]:text-xs/4 [&_h1]:font-semibold',
-                    '[&_h2]:my-1 [&_h2]:text-xs/4 [&_h2]:font-semibold',
-                    '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4',
-                    '[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4',
-                  )}
+              <DropdownItem href={hdycUrl(osmUser)} target="_blank" rel="noopener noreferrer">
+                HDYC
+              </DropdownItem>
+              {properties.user || userDetails?.name ? (
+                <DropdownItem
+                  href={missingMapsUrl(osmUser)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <Markdown remarkPlugins={[remarkGfm]}>{description}</Markdown>
-                </blockquote>
+                  Missing Maps
+                </DropdownItem>
               ) : null}
-            </>
-          ) : null}
-        </DropdownMenu>
-      </Dropdown>
+            </DropdownSection>
+            {uid ? (
+              <>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>OSMCha</DropdownHeading>
+                  <DropdownItem onClick={filterOsmchaByUser}>
+                    {editCount > 0
+                      ? `${editCount.toLocaleString()} changesets by this user`
+                      : 'Changesets by this user'}
+                  </DropdownItem>
+                </DropdownSection>
+              </>
+            ) : null}
+            {token && uid ? (
+              <>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>Lists</DropdownHeading>
+                  {isInWatchlist ? (
+                    <DropdownItem onClick={() => removeFromWatchlistMutation.mutate(String(uid))}>
+                      Remove from watchlist
+                    </DropdownItem>
+                  ) : isInTrustedlist ? (
+                    <DropdownItem onClick={() => removeFromTrustedlistMutation.mutate(osmUser)}>
+                      Remove from trusted users
+                    </DropdownItem>
+                  ) : (
+                    <>
+                      <DropdownItem
+                        onClick={() =>
+                          addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
+                        }
+                      >
+                        Add to watchlist
+                      </DropdownItem>
+                      <DropdownItem onClick={() => addToTrustedlistMutation.mutate(osmUser)}>
+                        Add to trusted users
+                      </DropdownItem>
+                    </>
+                  )}
+                </DropdownSection>
+              </>
+            ) : null}
+            {pastNames.length > 0 || description ? (
+              <>
+                <DropdownDivider />
+                {pastNames.length > 0 ? (
+                  <DropdownSection>
+                    <DropdownHeading>Past usernames</DropdownHeading>
+                    <ul className="col-span-full list-disc px-3.5 pb-1 pl-7 text-xs/4 text-zinc-600 sm:px-3">
+                      {pastNames.map((name) => (
+                        <li key={name}>{name}</li>
+                      ))}
+                    </ul>
+                  </DropdownSection>
+                ) : null}
+                {description ? (
+                  <blockquote
+                    className={clsx(
+                      'col-span-full mx-2 mb-1 border-l-2 border-zinc-200 py-0.5 pl-2.5',
+                      'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
+                      '[&_a]:text-blue-700 [&_a]:underline',
+                      '[&_p]:my-1 [&_p]:first:mt-0 [&_p]:last:mb-0',
+                      '[&_h1]:my-1 [&_h1]:text-xs/4 [&_h1]:font-semibold',
+                      '[&_h2]:my-1 [&_h2]:text-xs/4 [&_h2]:font-semibold',
+                      '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4',
+                      '[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4',
+                    )}
+                  >
+                    <Markdown remarkPlugins={[remarkGfm]}>{description}</Markdown>
+                  </blockquote>
+                ) : null}
+              </>
+            ) : null}
+          </DropdownMenu>
+        </Dropdown>
+      </div>
 
       <div className={clsx('flex flex-col gap-1', typeScale.body)}>
         <p className="w-full leading-tight break-words hyphens-auto" lang="en">
