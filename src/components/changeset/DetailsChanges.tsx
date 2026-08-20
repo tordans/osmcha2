@@ -12,6 +12,7 @@ import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
 import {
   buildElementChanges,
@@ -209,29 +210,28 @@ function ElementChangeRow({
         </h3>
         <div className="flex shrink-0 items-center justify-end gap-1">
           {change.flagged ? (
-            <button
-              type="button"
-              title={flaggedLabel || 'Flagged feature'}
+            <Tooltip
+              content={flaggedLabel || 'Flagged feature'}
               aria-label={`Show flagged ${change.type}/${change.id} on map`}
               onClick={() => zoomToAndSelect(change.type, change.id)}
-              className="inline-flex min-h-11 min-w-11 cursor-pointer touch-manipulation items-center justify-center select-none"
+              className="min-h-11 min-w-11 justify-center"
             >
-              <Badge color="orange" title={flaggedLabel || 'Flagged feature'}>
+              <Badge color="orange">
                 <ExclamationTriangleIcon className="size-3.5" />
                 {change.flagged.reasons[0] ?? change.flagged.name ?? 'Flagged'}
               </Badge>
-            </button>
+            </Tooltip>
           ) : null}
           {change.geometry === 'moved' ? <Badge color="yellow">Moved</Badge> : null}
           {change.geometry === 'rewritten' ? <Badge color="yellow">Rewritten</Badge> : null}
           {change.nodeStats ? (
-            <span
-              className="cursor-help text-xs"
-              title={
+            <Tooltip
+              content={
                 Object.values(change.nodeStats).every((value) => value === 0)
                   ? 'Only tagging was changed; no changes to the geometry were made.'
                   : `Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`
               }
+              className="min-h-11"
             >
               <Badge color="blue" rounded="left">
                 {change.nodeStats.added}
@@ -242,7 +242,7 @@ function ElementChangeRow({
               <Badge color="red" rounded="right">
                 {change.nodeStats.deleted}
               </Badge>
-            </span>
+            </Tooltip>
           ) : null}
           <Button
             outline
