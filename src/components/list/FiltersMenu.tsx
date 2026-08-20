@@ -15,7 +15,7 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
-import { CheckIcon, ChevronDownIcon, PlusIcon } from '../ui/icons.ts'
+import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon } from '../ui/icons.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -68,7 +68,7 @@ function selectedFilterLabel({
   return 'Select filter'
 }
 
-export function FiltersMenu() {
+export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   const { token, user } = useAuth()
   const signedIn = Boolean(token)
   const currentUser = user as UserData | undefined
@@ -157,15 +157,20 @@ export function FiltersMenu() {
       <DropdownButton
         outline
         data-panel-origin="filters"
-        aria-label={triggerLabel}
+        aria-busy={pending}
+        aria-label={pending ? `${triggerLabel}, loading` : triggerLabel}
         title={triggerLabel}
         className="group relative h-9 min-h-9 w-full min-w-0 justify-start data-open:z-[110]"
       >
         <span className="min-w-0 truncate">{triggerLabel}</span>
-        <ChevronDownIcon
-          data-slot="icon"
-          className="shrink-0 transition duration-200 group-data-open:rotate-180"
-        />
+        {pending ? (
+          <LoaderCircleIcon data-slot="icon" className="shrink-0 animate-spin" />
+        ) : (
+          <ChevronDownIcon
+            data-slot="icon"
+            className="shrink-0 transition duration-200 group-data-open:rotate-180"
+          />
+        )}
       </DropdownButton>
       <DropdownMenu anchor="bottom start" className={chromeDropdownMenuClassName}>
         <DropdownSection>

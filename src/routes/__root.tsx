@@ -49,21 +49,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       })
     }
   },
-  loader: async ({ context, deps }) => {
+  loader: ({ context, deps }) => {
     const token = useAuthStore.getState().token
     if (!token) return
 
     const pageIndex = deps.page - 1
-    await context.queryClient.ensureQueryData(
-      changesetsPageQueryOptions({
-        pageIndex,
-        filters: deps.filters ?? EMPTY_FILTERS,
-        aoiId: deps.aoi ?? null,
-      }),
-    )
+    // Do not await: blocking kept the filter menu on the previous selection until
+    // the list request finished. Prefetch still warms the query cache.
+    void context.queryClient
+      .ensureQueryData(
+        changesetsPageQueryOptions({
+          pageIndex,
+          filters: deps.filters ?? EMPTY_FILTERS,
+          aoiId: deps.aoi ?? null,
+        }),
+      )
+      .catch(() => {
+        // useChangesetsPage surfaces the error; avoid an unhandled rejection.
+      })
 
     if (deps.aoi) {
-      await context.queryClient.ensureQueryData(aoiQueryOptions(deps.aoi))
+      void context.queryClient.ensureQueryData(aoiQueryOptions(deps.aoi)).catch(() => {
+        // useAOI surfaces the error; avoid an unhandled rejection.
+      })
     }
   },
   component: RootLayout,

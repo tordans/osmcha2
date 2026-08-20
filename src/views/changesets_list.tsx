@@ -127,6 +127,7 @@ function ChangesetsList() {
         aoiOrderBy={aoiOrderBy}
         handleFilterOrderBy={handleFilterOrderBy}
         currentPage={changesetsPage}
+        pending={isLoading}
         diff={0}
         diffLoading={false}
         reloadChangesetsPageData={reloadChangesetsPageData}
@@ -141,7 +142,7 @@ function ChangesetsList() {
       <Footer
         pageIndex={pageIndex}
         getChangesetsPage={handleChangePage}
-        count={changesetsPage?.count}
+        count={isLoading ? undefined : changesetsPage?.count}
       />
     </div>
   )

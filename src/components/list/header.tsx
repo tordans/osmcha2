@@ -26,6 +26,7 @@ import {
   ChatBubbleLeftIcon,
   CheckIcon,
   ClipboardDocumentCheckIcon,
+  LoaderCircleIcon,
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
@@ -41,6 +42,7 @@ interface HeaderProps {
   aoiId: string | null
   aoiOrderBy: string | null
   handleFilterOrderBy: (value: OrderOption[]) => void
+  pending: boolean
   diffLoading: boolean
   diff: number
   currentPage?: {
@@ -54,6 +56,7 @@ export function Header({
   aoiId,
   aoiOrderBy,
   handleFilterOrderBy,
+  pending,
   diffLoading,
   diff,
   currentPage,
@@ -75,7 +78,7 @@ export function Header({
     <div>
       <div className="relative flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-2 py-1.5">
         <div className="min-w-0 flex-1">
-          <FiltersMenu />
+          <FiltersMenu pending={pending} />
         </div>
         {aoiId ? (
           <RouterLink
@@ -98,11 +101,16 @@ export function Header({
         )}
       >
         <span
-          aria-label={`${changesetCount} changesets`}
-          className="@container min-w-0 flex-1 truncate px-2 text-sm font-semibold text-zinc-600"
+          aria-busy={pending}
+          aria-label={pending ? 'Loading changesets' : `${changesetCount} changesets`}
+          className="@container flex min-w-0 flex-1 items-center gap-1.5 truncate px-2 text-sm font-semibold text-zinc-600"
         >
-          {changesetCount}
-          <span className="hidden @[10rem]:inline"> changesets</span>
+          {pending ? (
+            <LoaderCircleIcon className="size-4 shrink-0 animate-spin text-zinc-400" />
+          ) : (
+            changesetCount
+          )}
+          <span className="hidden @[10rem]:inline">changesets</span>
         </span>
         <div className="flex shrink-0 items-center gap-1">
           <Button

@@ -20,6 +20,7 @@ import {
   Globe,
   Languages,
   Link,
+  LoaderCircle,
   MessageCircle,
   Pencil,
   Plus,
@@ -59,6 +60,7 @@ export const HandThumbDownIcon = appIcon(ThumbsDown)
 export const HandThumbUpIcon = appIcon(ThumbsUp)
 export const LanguageIcon = appIcon(Languages)
 export const LinkIcon = appIcon(Link)
+export const LoaderCircleIcon = appIcon(LoaderCircle)
 export const ExclamationTriangleIcon = appIcon(TriangleAlert)
 export const PencilIcon = appIcon(Pencil)
 export const PencilSquareIcon = appIcon(SquarePen)
