@@ -1,7 +1,7 @@
-import { BugAntIcon } from '@heroicons/react/16/solid'
 import { useState } from 'react'
 import { Button } from '../ui/button.tsx'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '../ui/dialog.tsx'
+import { BugAntIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { areDebugPanelsEnabled } from './areDebugPanelsEnabled.ts'
 import { JsonDump } from './JsonDump.tsx'
@@ -32,7 +32,7 @@ function DebugDataHelperDialogActive({ title, data }: Props) {
             setIsOpen(true)
           }}
         >
-          <BugAntIcon className="size-2.5" />
+          <BugAntIcon variant="fill" className="size-2.5" />
         </Tooltip>
       </div>
       <Dialog open={isOpen} onClose={() => setIsOpen(false)} size="4xl">

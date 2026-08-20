@@ -1,5 +1,5 @@
-import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { Badge } from '../ui/badge.tsx'
+import { HandThumbDownIcon, HandThumbUpIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 
 type NamedTag = { id?: number; name: string }
@@ -37,9 +37,9 @@ export function ReviewStatusBadge({
     <Tooltip content={label} as="span" className="flex-none @[22rem]/list:pointer-events-none">
       <Badge color={reviewBadgeColor({ resolved, harmful })} className="h-6" aria-label={label}>
         {harmful ? (
-          <HandThumbDownIcon className="size-4" />
+          <HandThumbDownIcon variant="fill" className="size-4" />
         ) : (
-          <HandThumbUpIcon className="size-4" />
+          <HandThumbUpIcon variant="fill" className="size-4" />
         )}
         <span className="hidden @[22rem]/list:inline">by {checkUser || <i>Unknown user</i>}</span>
       </Badge>

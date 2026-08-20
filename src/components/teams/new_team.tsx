@@ -1,10 +1,10 @@
-import { PlusIcon, TrashIcon } from '@heroicons/react/16/solid'
 import { useForm } from '@tanstack/react-form'
 import { useState } from 'react'
 import { z } from 'zod'
 import { Button } from '../ui/button.tsx'
 import { ErrorMessage, Field, FieldGroup, Label } from '../ui/fieldset.tsx'
 import { Heading } from '../ui/heading.tsx'
+import { PlusIcon, TrashIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Text } from '../ui/text.tsx'
 

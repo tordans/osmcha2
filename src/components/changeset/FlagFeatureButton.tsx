@@ -1,4 +1,3 @@
-import { FlagIcon } from '@heroicons/react/16/solid'
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { useState } from 'react'
@@ -6,6 +5,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { flagFeature, unflagFeature } from '../../network/changeset.ts'
 import { Button } from '../ui/button.tsx'
+import { FlagIcon } from '../ui/icons.ts'
 
 type FlagFeatureButtonProps = {
   changesetId: number

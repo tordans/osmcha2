@@ -1,4 +1,3 @@
-import { TrashIcon } from '@heroicons/react/16/solid'
 import {
   createColumnHelper,
   createSortedRowModel,
@@ -10,6 +9,7 @@ import {
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { SortHeader } from '../components/sort_header.tsx'
 import { Button } from '../components/ui/button.tsx'
+import { TrashIcon } from '../components/ui/icons.ts'
 import {
   Table,
   TableBody,

@@ -1,4 +1,3 @@
-import { LinkIcon, RssIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { useForm } from '@tanstack/react-form'
 import { getRouteApi } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -9,6 +8,7 @@ import { stripFilterSearch } from '../../routing/filterSearch.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import { Button } from '../ui/button.tsx'
 import { Heading } from '../ui/heading.tsx'
+import { LinkIcon, RssIcon, XMarkIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 

@@ -1,6 +1,6 @@
-import { ArrowLeftIcon } from '@heroicons/react/20/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
+import { ArrowLeftIcon } from '../components/ui/icons.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 
 const rootRouteApi = getRouteApi('__root__')

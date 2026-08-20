@@ -1,6 +1,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { Fragment } from 'react'
+import { CheckIcon, ChevronsUpDownIcon } from './icons.ts'
 
 export function Listbox<T>({
   className,
@@ -65,25 +66,10 @@ export function Listbox<T>({
           />
         </span>
         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-          <svg
-            className="size-5 stroke-zinc-500 group-data-disabled:stroke-zinc-600 sm:size-4 forced-colors:stroke-[CanvasText]"
-            viewBox="0 0 16 16"
+          <ChevronsUpDownIcon
+            className="size-5 text-zinc-500 group-data-disabled:text-zinc-600 sm:size-4 forced-colors:text-[CanvasText]"
             aria-hidden="true"
-            fill="none"
-          >
-            <path
-              d="M5.75 10.75L8 13L10.25 10.75"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10.25 5.25L8 3L5.75 5.25"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          />
         </span>
       </Headless.ListboxButton>
       <Headless.ListboxOptions
@@ -153,19 +139,10 @@ export function ListboxOption<T>({
               'data-disabled:opacity-50',
             )}
           >
-            <svg
-              className="relative hidden size-5 self-center stroke-current group-data-selected/option:inline sm:size-4"
-              viewBox="0 0 16 16"
-              fill="none"
+            <CheckIcon
+              className="relative hidden size-5 self-center group-data-selected/option:inline sm:size-4"
               aria-hidden="true"
-            >
-              <path
-                d="M4 8.5l3 3L12 4"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
             <span className={clsx(className, sharedClasses, 'col-start-2')}>{children}</span>
           </div>
         )

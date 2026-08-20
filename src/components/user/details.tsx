@@ -1,10 +1,10 @@
-import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useUpdateUserDetails } from '../../query/hooks/useUpdateUserDetails.ts'
 import { Button } from '../ui/button.tsx'
 import { Field, FieldGroup, Label } from '../ui/fieldset.tsx'
+import { HandThumbDownIcon, HandThumbUpIcon } from '../ui/icons.ts'
 import { Text } from '../ui/text.tsx'
 import { Textarea } from '../ui/textarea.tsx'
 
@@ -56,7 +56,7 @@ export function EditUserDetails() {
             <Field>
               <Label className="flex items-center gap-2">
                 Default comment for changesets reviewed as GOOD
-                <HandThumbUpIcon className="size-4 text-green-700" />
+                <HandThumbUpIcon variant="fill" className="size-4 text-green-700" />
               </Label>
               <Textarea
                 rows={4}
@@ -73,7 +73,7 @@ export function EditUserDetails() {
             <Field>
               <Label className="flex items-center gap-2">
                 Default comment for changesets reviewed as BAD
-                <HandThumbDownIcon className="size-4 text-red-700" />
+                <HandThumbDownIcon variant="fill" className="size-4 text-red-700" />
               </Label>
               <Textarea
                 rows={4}

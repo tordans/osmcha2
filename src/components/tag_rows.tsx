@@ -1,6 +1,6 @@
-import { ArrowRightIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
+import { ArrowRightIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
 
 export type TagRowsItem =

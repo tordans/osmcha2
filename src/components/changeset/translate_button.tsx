@@ -1,4 +1,4 @@
-import { LanguageIcon } from '@heroicons/react/16/solid'
+import { LanguageIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 
 export default function TranslateButton({ text }: { text: string }) {

@@ -1,6 +1,6 @@
-import { ExclamationTriangleIcon, StarIcon } from '@heroicons/react/16/solid'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useIsUserListed } from '../../hooks/useIsUserListed.ts'
+import { ExclamationTriangleIcon, StarIcon } from '../ui/icons.ts'
 
 interface PrimaryLineProps {
   user?: string
@@ -17,10 +17,16 @@ export function PrimaryLine({ user, uid, comment }: PrimaryLineProps) {
       <strong className="font-semibold">
         {user || <i>OSM User</i>}
         {isInTrustedlist && (
-          <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
+          <StarIcon
+            variant="fill"
+            className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
+          />
         )}
         {isInWatchlist && (
-          <ExclamationTriangleIcon className="ml-1 inline-block size-4 align-text-bottom text-red-500" />
+          <ExclamationTriangleIcon
+            variant="fill"
+            className="ml-1 inline-block size-4 align-text-bottom text-red-500"
+          />
         )}
         :
       </strong>{' '}

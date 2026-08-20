@@ -1,4 +1,3 @@
-import { XMarkIcon } from '@heroicons/react/16/solid'
 import { useState } from 'react'
 import {
   CHANGESET_METADATA_KEYS,
@@ -21,6 +20,7 @@ import {
   type MetadataRow,
 } from '../../utils/metadataFilter.ts'
 import { Button } from '../ui/button.tsx'
+import { XMarkIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text, TextLink } from '../ui/text.tsx'

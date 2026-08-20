@@ -1,5 +1,5 @@
-import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import { Heading } from '../components/ui/heading.tsx'
+import { ArrowLeftIcon } from '../components/ui/icons.ts'
 import { Link } from '../components/ui/link.tsx'
 import { Text } from '../components/ui/text.tsx'
 import { appVersion, isLocal } from '../config/index.ts'

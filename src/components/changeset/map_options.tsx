@@ -1,5 +1,4 @@
 import * as Headless from '@headlessui/react'
-import { FunnelIcon, GlobeAltIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useMap } from 'react-map-gl/maplibre'
@@ -8,6 +7,7 @@ import { useMapStore } from '../../stores/mapStore.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
+import { FunnelIcon, GlobeAltIcon } from '../ui/icons.ts'
 import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
 import {
   isDuplicateOfBuiltinLayer,

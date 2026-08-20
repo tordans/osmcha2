@@ -1,4 +1,3 @@
-import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -15,6 +14,7 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../components/ui/dropdown.tsx'
+import { ChevronDownIcon } from '../components/ui/icons.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
@@ -32,7 +32,7 @@ type UserData = {
 
 export function ChromeHeader() {
   return (
-    <header className="flex shrink-0 items-center justify-between gap-2 py-1 pt-[max(0.25rem,env(safe-area-inset-top))] pr-0 pl-1">
+    <header className="relative z-10 flex shrink-0 items-center justify-between gap-2 py-1 pt-[max(0.25rem,env(safe-area-inset-top))] pr-0 pl-1 min-[56rem]:pb-0">
       <Logo />
       <NavigationMenu />
     </header>
@@ -77,7 +77,13 @@ function NavigationMenu() {
         outline
         aria-label="Menu"
         data-panel-origin="menu"
-        className="group relative h-9 min-h-9 data-open:z-[110]"
+        className={clsx(
+          'group relative isolate z-10 h-9 min-h-9 bg-zinc-100',
+          'transition-shadow duration-200',
+          'data-hover:bg-zinc-100! data-open:z-[110] data-open:bg-zinc-100!',
+          'data-hover:shadow-[0_0_16px_rgb(24_24_27_/_0.16),0_4px_12px_rgb(24_24_27_/_0.08)]',
+          'data-open:shadow-[0_0_16px_rgb(24_24_27_/_0.16),0_4px_12px_rgb(24_24_27_/_0.08)]',
+        )}
       >
         Menu
         <ChevronDownIcon

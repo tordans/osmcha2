@@ -1,5 +1,4 @@
 import * as Headless from '@headlessui/react'
-import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
@@ -9,8 +8,9 @@ import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
-import { paneCardClassName } from '../../layout/paneCard.ts'
+import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import { Badge } from '../ui/badge.tsx'
+import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import type { AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
@@ -111,111 +111,114 @@ export function ReviewColumn({
         'z-30 flex min-h-0 flex-col overflow-hidden bg-white',
         'absolute inset-x-0 bottom-0 rounded-t-xl shadow-lg',
         expanded ? 'h-[80%]' : 'h-auto',
-        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-(--pane-review-width,24rem) min-[56rem]:shrink-0',
+        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-(--pane-review-width,24rem) min-[56rem]:shrink-0 min-[56rem]:overflow-visible',
         paneCardClassName,
       )}
     >
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-label={expanded ? 'Collapse review' : 'Expand review'}
-        onPointerDown={onHandlePointerDown}
-        onPointerMove={onHandlePointerMove}
-        onPointerUp={onHandlePointerUp}
-        onClick={onHandleClick}
-        className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-center select-none min-[56rem]:hidden"
-      >
-        <span className="h-1 w-10 rounded-full bg-zinc-300" />
-      </button>
+      <div className={clsx('flex min-h-0 flex-1 flex-col', paneCardClipClassName)}>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Collapse review' : 'Expand review'}
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+          onClick={onHandleClick}
+          className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-center select-none min-[56rem]:hidden"
+        >
+          <span className="h-1 w-10 rounded-full bg-zinc-300" />
+        </button>
 
-      <DetailsHeader
-        changesetId={changesetId}
-        currentChangeset={currentChangeset}
-        userDetails={userDetails}
-        whosThat={whosThat}
-      />
+        <DetailsHeader
+          changesetId={changesetId}
+          currentChangeset={currentChangeset}
+          userDetails={userDetails}
+          whosThat={whosThat}
+        />
 
-      <div
-        className={clsx(
-          'min-h-0 flex-1 flex-col overflow-hidden',
-          expanded ? 'flex' : 'hidden',
-          'min-[56rem]:flex',
-        )}
-      >
-        <div className="shrink-0 border-b border-zinc-200">
-          <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-3">
-            <ReviewTab
-              current={changesActive}
-              title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
-              onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
-            >
-              Changes{' '}
-              {changesetCount > 0 ? (
-                <Badge color={changesActive ? 'blue' : 'zinc'}>{changesetCount}</Badge>
-              ) : null}
-            </ReviewTab>
-            <ReviewTab
-              current={discussionActive}
-              title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
-              onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
-            >
-              Discussion{' '}
-              {discussions.length > 0 ? (
-                <Badge
-                  color={discussionActive ? 'blue' : 'zinc'}
-                  aria-label={`${discussions.length} comments`}
-                  className="flex flex-none items-center gap-1"
+        <div
+          className={clsx(
+            'min-h-0 flex-1 flex-col overflow-hidden',
+            expanded ? 'flex' : 'hidden',
+            'min-[56rem]:flex',
+          )}
+        >
+          <div className="shrink-0 border-b border-zinc-200">
+            <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-2.5">
+              <ReviewTab
+                current={changesActive}
+                title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
+                onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
+              >
+                Changes{' '}
+                {changesetCount > 0 ? (
+                  <Badge color={changesActive ? 'blue' : 'zinc'}>{changesetCount}</Badge>
+                ) : null}
+              </ReviewTab>
+              <ReviewTab
+                current={discussionActive}
+                title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
+                onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
+              >
+                Discussion{' '}
+                {discussions.length > 0 ? (
+                  <Badge
+                    color={discussionActive ? 'blue' : 'zinc'}
+                    aria-label={`${discussions.length} comments`}
+                    className="flex flex-none items-center gap-1"
+                  >
+                    <ChatBubbleLeftIcon variant="fill" className="size-4" /> {discussions.length}
+                  </Badge>
+                ) : (
+                  <ChatBubbleLeftIcon
+                    variant="fill"
+                    className={clsx('size-4', discussionActive ? 'text-blue-500' : 'text-zinc-300')}
+                    aria-label="No comments"
+                  />
+                )}
+              </ReviewTab>
+            </nav>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait" initial={false}>
+              {changesActive ? (
+                <motion.div
+                  key="changes"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <ChatBubbleLeftIcon className="size-4" /> {discussions.length}
-                </Badge>
-              ) : (
-                <ChatBubbleLeftIcon
-                  className={clsx('size-4', discussionActive ? 'text-blue-500' : 'text-zinc-300')}
-                  aria-label="No comments"
-                />
-              )}
-            </ReviewTab>
-          </nav>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait" initial={false}>
-            {changesActive ? (
-              <motion.div
-                key="changes"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <DetailsChanges
-                  changesetId={changesetId}
-                  adiff={osmInfo?.adiff}
-                  features={properties.features ?? []}
-                  reviewedFeatures={properties.reviewed_features ?? []}
-                  reasons={properties.reasons ?? []}
-                  selected={selected}
-                  setHighlight={setHighlight}
-                  zoomToAndSelect={zoomToAndSelect}
-                />
-              </motion.div>
-            ) : discussionActive ? (
-              <motion.div
-                key="discussion"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Discussions
-                  changesetAuthor={properties.user ?? ''}
-                  discussions={discussions}
-                  changesetIsHarmful={Boolean(properties.harmful)}
-                  changesetId={changesetId}
-                />
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+                  <DetailsChanges
+                    changesetId={changesetId}
+                    adiff={osmInfo?.adiff}
+                    features={properties.features ?? []}
+                    reviewedFeatures={properties.reviewed_features ?? []}
+                    reasons={properties.reasons ?? []}
+                    selected={selected}
+                    setHighlight={setHighlight}
+                    zoomToAndSelect={zoomToAndSelect}
+                  />
+                </motion.div>
+              ) : discussionActive ? (
+                <motion.div
+                  key="discussion"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <Discussions
+                    changesetAuthor={properties.user ?? ''}
+                    discussions={discussions}
+                    changesetIsHarmful={Boolean(properties.harmful)}
+                    changesetId={changesetId}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>

@@ -1,4 +1,3 @@
-import { XMarkIcon } from '@heroicons/react/16/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
@@ -9,6 +8,7 @@ import { useChangeset } from '../../query/hooks/useChangeset.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
 import { filtersFromSearch } from '../../routing/filterSearch.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
+import { XMarkIcon } from '../ui/icons.ts'
 import { areDebugPanelsEnabled } from './areDebugPanelsEnabled.ts'
 import { JsonDump } from './JsonDump.tsx'
 

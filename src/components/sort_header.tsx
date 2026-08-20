@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/16/solid'
+import { ChevronDownIcon, ChevronUpIcon } from './ui/icons.ts'
 import { TableHeader } from './ui/table.tsx'
 
 type SortHeaderProps = {

@@ -1,5 +1,5 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/16/solid'
 import { Button } from '../ui/button.tsx'
+import { ChevronLeftIcon, ChevronRightIcon } from '../ui/icons.ts'
 
 interface PageRangeProps {
   page: string | number

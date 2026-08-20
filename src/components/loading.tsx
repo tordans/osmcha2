@@ -1,5 +1,5 @@
-import { ArrowPathIcon } from '@heroicons/react/16/solid'
 import clsx from 'clsx'
+import { ArrowPathIcon } from './ui/icons.ts'
 
 interface LoadingProps {
   height?: string

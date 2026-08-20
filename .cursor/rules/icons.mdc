@@ -1,0 +1,19 @@
+---
+description: Lucide icons — thin outline on controls, fill on status/info
+globs: src/**/*.tsx
+alwaysApply: false
+---
+
+# Icons
+
+Import from `src/components/ui/icons.ts` (not `lucide-react`, not `@heroicons`). Wrappers set `data-slot="icon"` and stroke `1.5`.
+
+```tsx
+<TrashIcon />
+<StarIcon variant="fill" className="size-4 text-yellow-500" />
+```
+
+- **outline** (default): buttons, dropdown items, tabs, clear/close, chevrons, sort, filter, back, copy
+- **fill**: badges, empty-state glyphs, trusted/watchlist markers, review verdicts in text, OSM action glyphs (create/modify/delete), debug inspect
+
+Same icon can be both: thumbs on Mark good/bad are outline; thumbs in a review badge are `variant="fill"`.

@@ -1,4 +1,3 @@
-import { CheckIcon, ChevronDownIcon } from '@heroicons/react/16/solid'
 import { toast } from 'sonner'
 import { useChangesetTagOptions } from '../../query/hooks/useChangesetTagOptions.ts'
 import { useSetTag } from '../../query/hooks/useSetTag.ts'
@@ -11,6 +10,7 @@ import {
   DropdownLabel,
   DropdownMenu,
 } from '../ui/dropdown.tsx'
+import { CheckIcon, ChevronDownIcon } from '../ui/icons.ts'
 
 interface TagsProps {
   changesetId: number

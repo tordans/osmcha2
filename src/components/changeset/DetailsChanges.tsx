@@ -1,11 +1,4 @@
 import * as Headless from '@headlessui/react'
-import { ChevronRightIcon, EyeIcon } from '@heroicons/react/16/solid'
-import {
-  ExclamationTriangleIcon,
-  PencilIcon,
-  PlusCircleIcon,
-  TrashIcon,
-} from '@heroicons/react/24/solid'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
 import { Fragment } from 'react'
@@ -13,6 +6,14 @@ import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
+import {
+  ChevronRightIcon,
+  ExclamationTriangleIcon,
+  EyeIcon,
+  PencilIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
 import {
@@ -80,14 +81,14 @@ export function DetailsChanges({
 
   if (grouped.length === 0) {
     return (
-      <p className={clsx('px-3 py-6 text-center text-zinc-500', typeScale.body)}>
+      <p className={clsx('px-2.5 py-6 text-center text-zinc-500', typeScale.body)}>
         No element changes in this changeset.
       </p>
     )
   }
 
   return (
-    <section className="my-2">
+    <section className="flex flex-col gap-2.5 p-2.5">
       {grouped.map(([actionType, changes]) => {
         const Icon = ACTION_ICON[actionType]
         return (
@@ -95,10 +96,10 @@ export function DetailsChanges({
             <h2
               className={clsx(
                 typeScale.heading,
-                'mx-2 mt-3 flex items-center gap-1 rounded-sm border border-zinc-950/10 bg-zinc-50 px-2 py-1',
+                'flex items-center gap-1 rounded-sm border border-zinc-950/10 bg-zinc-50 px-2 py-1',
               )}
             >
-              <Icon className="size-4 flex-none" /> {ACTION_LABEL[actionType]}
+              <Icon variant="fill" className="size-4 flex-none" /> {ACTION_LABEL[actionType]}
             </h2>
             <ul>
               {groupChangesByTagMutation(changes).map((group) =>
@@ -248,7 +249,7 @@ function ElementChangeRow({
     >
       <div className="flex w-full items-center justify-between gap-1">
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
-          <Icon className="size-4 flex-none" />
+          <Icon variant="fill" className="size-4 flex-none" />
           <span className="truncate">
             {change.type}/{change.id}
           </span>
@@ -263,7 +264,7 @@ function ElementChangeRow({
               className="min-h-11 min-w-11 justify-center"
             >
               <Badge color="orange">
-                <ExclamationTriangleIcon className="size-3.5" />
+                <ExclamationTriangleIcon variant="fill" className="size-3.5" />
                 {change.flagged.reasons[0] ?? change.flagged.name ?? 'Flagged'}
               </Badge>
             </Tooltip>

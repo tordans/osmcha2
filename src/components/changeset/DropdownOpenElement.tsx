@@ -1,4 +1,3 @@
-import { ArrowTopRightOnSquareIcon, ChevronDownIcon } from '@heroicons/react/16/solid'
 import {
   Dropdown,
   DropdownButton,
@@ -8,6 +7,7 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
+import { ArrowTopRightOnSquareIcon, ChevronDownIcon } from '../ui/icons.ts'
 import { elementOpenInUrls } from './elementOpenIn.ts'
 
 type DropdownOpenElementProps = {

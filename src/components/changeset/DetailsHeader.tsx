@@ -1,11 +1,3 @@
-import {
-  ChevronDownIcon,
-  ExclamationTriangleIcon,
-  HandThumbDownIcon,
-  HandThumbUpIcon,
-  StarIcon,
-  XMarkIcon,
-} from '@heroicons/react/16/solid'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -52,6 +44,14 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
+import {
+  ChevronDownIcon,
+  ExclamationTriangleIcon,
+  HandThumbDownIcon,
+  HandThumbUpIcon,
+  StarIcon,
+  XMarkIcon,
+} from '../ui/icons.ts'
 import { typeScale } from '../ui/typography.ts'
 import { changesetTagsForDisplay } from './changesetTags.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
@@ -216,7 +216,7 @@ export function DetailsHeader({
   ])
 
   return (
-    <header className="flex flex-col gap-1 bg-zinc-50 px-3 pt-3 pb-1">
+    <header className="flex flex-col gap-2.5 bg-zinc-50 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] min-[56rem]:pb-2.5">
       <Dropdown>
         <DropdownButton
           outline
@@ -312,10 +312,16 @@ export function DetailsHeader({
           >
             {osmUser}
             {isInTrustedlist && (
-              <StarIcon className="ml-1 inline-block size-4 align-text-bottom text-yellow-500" />
+              <StarIcon
+                variant="fill"
+                className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
+              />
             )}
             {isInWatchlist && (
-              <ExclamationTriangleIcon className="ml-1 inline-block size-4 align-text-bottom text-red-500" />
+              <ExclamationTriangleIcon
+                variant="fill"
+                className="ml-1 inline-block size-4 align-text-bottom text-red-500"
+              />
             )}
             {accountCreated ? (
               <>
@@ -332,6 +338,7 @@ export function DetailsHeader({
             <Badge rounded="left">
               {checkedGood.toLocaleString()}{' '}
               <HandThumbUpIcon
+                variant="fill"
                 className="inline size-4 text-zinc-600"
                 aria-label="Good changesets"
               />
@@ -341,6 +348,7 @@ export function DetailsHeader({
                 {checkedBad.toLocaleString()}{' '}
               </span>
               <HandThumbDownIcon
+                variant="fill"
                 className={clsx('inline size-4', checkedBad ? 'text-orange-500' : 'text-zinc-600')}
                 aria-label="Harmful changesets"
               />
@@ -454,7 +462,7 @@ export function DetailsHeader({
         </DropdownMenu>
       </Dropdown>
 
-      <div className={clsx('mt-2 flex flex-col gap-1', typeScale.body)}>
+      <div className={clsx('flex flex-col gap-1', typeScale.body)}>
         <p className="w-full leading-tight break-words hyphens-auto" lang="en">
           <strong className="font-semibold">{osmUser}:</strong>{' '}
           <LinkifyText text={properties.comment || 'NO COMMENT'} />
@@ -468,7 +476,7 @@ export function DetailsHeader({
         )}
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 pb-[env(safe-area-inset-bottom)] min-[56rem]:pb-1">
+      <div className="flex flex-wrap items-center gap-2">
         {checked ? (
           <div
             className={clsx(
@@ -478,9 +486,9 @@ export function DetailsHeader({
           >
             <Badge color={reviewColor} rounded="none" className="h-full rounded-none">
               {harmful ? (
-                <HandThumbDownIcon className="size-4" />
+                <HandThumbDownIcon variant="fill" className="size-4" />
               ) : (
-                <HandThumbUpIcon className="size-4" />
+                <HandThumbUpIcon variant="fill" className="size-4" />
               )}{' '}
               by {properties.check_user || <i>Unknown user</i>}
             </Badge>

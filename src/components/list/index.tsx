@@ -1,9 +1,9 @@
-import { GlobeAltIcon } from '@heroicons/react/24/solid'
 import { useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { elementInViewport } from '../../utils/element_in_view.ts'
 import { SignInButton } from '../changeset/sign_in_button.tsx'
 import { Loading } from '../loading.tsx'
+import { GlobeAltIcon } from '../ui/icons.ts'
 import { Row } from './row.tsx'
 
 type CurrentPage = {
@@ -41,7 +41,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
   if (!token && location && ['/about', '/filters', '/user', '/'].includes(location)) {
     return (
       <div className="flex flex-1 flex-col items-center px-4 py-9">
-        <GlobeAltIcon className="size-14 text-zinc-400" />
+        <GlobeAltIcon variant="fill" className="size-14 text-zinc-400" />
         <div className="mt-9 flex justify-center text-center">
           <SignInButton text="Sign in with OpenStreetMap" />
         </div>

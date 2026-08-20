@@ -1,4 +1,3 @@
-import { RssIcon, TrashIcon } from '@heroicons/react/16/solid'
 import { useForm } from '@tanstack/react-form'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -6,6 +5,7 @@ import { z } from 'zod'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { Badge } from '../components/ui/badge.tsx'
 import { Button } from '../components/ui/button.tsx'
+import { RssIcon, TrashIcon } from '../components/ui/icons.ts'
 import { Input } from '../components/ui/input.tsx'
 import {
   Table,

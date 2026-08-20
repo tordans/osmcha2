@@ -1,7 +1,7 @@
-import { FunnelIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/16/solid'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import NewTeam from '../components/teams/new_team.tsx'
 import { Button } from '../components/ui/button.tsx'
+import { FunnelIcon, PencilSquareIcon, TrashIcon } from '../components/ui/icons.ts'
 import {
   Table,
   TableBody,

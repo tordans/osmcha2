@@ -1,4 +1,3 @@
-import { FunnelIcon, TrashIcon } from '@heroicons/react/16/solid'
 import {
   createColumnHelper,
   createSortedRowModel,
@@ -12,6 +11,7 @@ import { RelativeTime } from '../components/relative_time.tsx'
 import { AccountPage, SecondaryPagesHeader } from '../components/secondary_pages_header.tsx'
 import { SortHeader } from '../components/sort_header.tsx'
 import { Button } from '../components/ui/button.tsx'
+import { FunnelIcon, TrashIcon } from '../components/ui/icons.ts'
 import {
   Table,
   TableBody,

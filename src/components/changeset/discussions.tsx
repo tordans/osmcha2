@@ -1,9 +1,9 @@
-import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { parseOsmDate } from '../../utils/datetime.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
+import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { CommentForm } from './comment.tsx'
 import { SignInButton } from './sign_in_button.tsx'
 import TranslateButton from './translate_button.tsx'
@@ -32,7 +32,7 @@ function Discussions({
   const userDetails = user as UserDetails | undefined
 
   return (
-    <section className="mt-4 px-3">
+    <section className="p-2.5">
       {discussions.length === 0 ? (
         <p className="w-full p-5 text-center text-zinc-500">No comments, yet</p>
       ) : (
@@ -48,7 +48,7 @@ function Discussions({
                 <TranslateButton text={comment.text} />
               </div>
               <h4 className="flex items-center gap-1 pr-11 font-semibold text-zinc-700">
-                <ChatBubbleLeftIcon className="size-4 flex-none" />
+                <ChatBubbleLeftIcon variant="fill" className="size-4 flex-none" />
                 <span>
                   Comment by{' '}
                   <UserOSMLink userName={comment.user} linkClasses="text-blue-700 underline">

@@ -1,4 +1,3 @@
-import { CheckIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/16/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useAuth } from '../../hooks/useAuth.ts'
@@ -16,6 +15,7 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
+import { CheckIcon, ChevronDownIcon, PlusIcon } from '../ui/icons.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 

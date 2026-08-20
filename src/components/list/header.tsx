@@ -1,17 +1,6 @@
-import {
-  ArrowPathIcon,
-  BarsArrowDownIcon,
-  CalendarDaysIcon,
-  ChatBubbleLeftIcon,
-  CheckIcon,
-  ClipboardDocumentCheckIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@heroicons/react/16/solid'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { Fragment, type ComponentType, type SVGProps } from 'react'
+import { Fragment } from 'react'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
@@ -30,6 +19,17 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
+import {
+  ArrowDownWideNarrowIcon,
+  ArrowPathIcon,
+  CalendarDaysIcon,
+  ChatBubbleLeftIcon,
+  CheckIcon,
+  ClipboardDocumentCheckIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../ui/icons.ts'
 import { FiltersMenu } from './FiltersMenu.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -154,7 +154,7 @@ function OrderMenu({
     return (
       <span title={title} className="shrink-0">
         <Button outline disabled aria-label={ariaLabel} className={iconButtonClassName}>
-          <BarsArrowDownIcon data-slot="icon" />
+          <ArrowDownWideNarrowIcon data-slot="icon" />
         </Button>
       </span>
     )
@@ -163,7 +163,7 @@ function OrderMenu({
   return (
     <Dropdown backdrop className="shrink-0">
       <DropdownButton outline aria-label={ariaLabel} className={iconButtonClassName}>
-        <BarsArrowDownIcon data-slot="icon" />
+        <ArrowDownWideNarrowIcon data-slot="icon" />
       </DropdownButton>
       <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
         {groupOrderOptions(options).map((group, index) => {
@@ -197,7 +197,7 @@ function OrderMenu({
   )
 }
 
-type OrderFieldIcon = ComponentType<SVGProps<SVGSVGElement>>
+type OrderFieldIcon = typeof CheckIcon
 
 const orderFieldIcons: Record<string, OrderFieldIcon> = {
   date: CalendarDaysIcon,
@@ -222,7 +222,7 @@ function orderFieldKey(value: string) {
 }
 
 function orderFieldIcon(value: string): OrderFieldIcon {
-  return orderFieldIcons[orderFieldKey(value)] ?? BarsArrowDownIcon
+  return orderFieldIcons[orderFieldKey(value)] ?? ArrowDownWideNarrowIcon
 }
 
 function orderFieldHeading(value: string) {

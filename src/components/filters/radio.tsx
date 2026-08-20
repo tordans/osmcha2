@@ -1,5 +1,5 @@
-import { XMarkIcon } from '@heroicons/react/16/solid'
 import { Button } from '../ui/button.tsx'
+import { XMarkIcon } from '../ui/icons.ts'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { filterOptionKey, filterOptionLabel, type Filter, type FilterOption } from './index.ts'
 

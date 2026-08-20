@@ -1,4 +1,3 @@
-import { CheckIcon, ClipboardIcon } from '@heroicons/react/16/solid'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -12,6 +11,7 @@ import {
 } from '../components/ui/description-list.tsx'
 import { Divider } from '../components/ui/divider.tsx'
 import { Heading, Subheading } from '../components/ui/heading.tsx'
+import { CheckIcon, ClipboardIcon } from '../components/ui/icons.ts'
 import { Code } from '../components/ui/text.tsx'
 import { EditUserDetails } from '../components/user/details.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
