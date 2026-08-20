@@ -68,6 +68,12 @@ export function useSetTag() {
       return { previous, changesetId }
     },
 
+    onSuccess: (_data, { tag, remove }) => {
+      toast.success(remove ? 'Tag removed' : 'Tag added', {
+        description: tag.label,
+      })
+    },
+
     onError: (error: Error, variables, context) => {
       // Rollback on error
       if (context?.previous) {

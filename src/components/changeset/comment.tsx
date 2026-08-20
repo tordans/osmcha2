@@ -1,5 +1,6 @@
 import { useForm } from '@tanstack/react-form'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { postComment } from '../../network/changeset.ts'
 import { cancelablePromise } from '../../utils/promise.ts'
 import { Button } from '../ui/button.tsx'
@@ -37,8 +38,6 @@ export function CommentForm({
   discussions,
 }: CommentFormProps) {
   const template = commentTemplate({ changesetIsHarmful, discussions, userDetails })
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState(false)
   const pendingRef = useRef<{ cancel: () => void } | null>(null)
 
   const form = useForm({
@@ -52,15 +51,16 @@ export function CommentForm({
       pendingRef.current = pending
       pending.promise
         .then(() => {
-          setSuccess(true)
-          setError(false)
+          toast.success('Comment posted', {
+            description: 'It will appear on OSMCha after some minutes.',
+          })
           formApi.reset({ comment: '' })
         })
-        .catch((e) => {
-          if (e?.isCanceled) return
-          console.log(e)
-          setError(true)
-          setSuccess(false)
+        .catch((error) => {
+          if (error?.isCanceled) return
+          toast.error('Could not post comment', {
+            description: error instanceof Error ? error.message : undefined,
+          })
         })
     },
   })
@@ -75,29 +75,13 @@ export function CommentForm({
 
   return (
     <div className="flex flex-col gap-2">
-      {success && (
-        <p className="rounded-lg bg-green-50 px-3 py-2 text-center text-sm text-green-800">
-          <strong className="font-semibold">Comment successfully posted.</strong>
-          <br />
-          It will appear on OSMCha after some minutes.
-        </p>
-      )}
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-800">
-          <strong className="font-semibold">It was not possible to post your comment.</strong>
-        </p>
-      )}
       <form.Field name="comment">
         {(field) => (
           <Textarea
             placeholder="Provide constructive feedback to the mapper with a changeset comment."
             value={field.state.value}
             onBlur={field.handleBlur}
-            onChange={(event) => {
-              field.handleChange(event.target.value)
-              if (error) setError(false)
-              if (success) setSuccess(false)
-            }}
+            onChange={(event) => field.handleChange(event.target.value)}
             rows={4}
           />
         )}

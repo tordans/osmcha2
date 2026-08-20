@@ -1,5 +1,6 @@
 import { useForm } from '@tanstack/react-form'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { z } from 'zod'
 import { handleResponse } from '../../network/request.ts'
 import { Button } from '../ui/button.tsx'
@@ -70,9 +71,12 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
         const user = await lookup
         onSave(user.username, user.uid)
         formApi.reset()
-      } catch {
+      } catch (error) {
         const byUid = value.uid.length > 0
         setLookupError(byUid ? 'uid' : 'username')
+        toast.error('Could not find user', {
+          description: error instanceof Error ? error.message : undefined,
+        })
       } finally {
         setPending(false)
       }

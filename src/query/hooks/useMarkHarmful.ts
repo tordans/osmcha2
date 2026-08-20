@@ -58,6 +58,16 @@ export function useMarkHarmful() {
       return { previous, changesetId }
     },
 
+    onSuccess: (_data, { harmful }) => {
+      if (harmful === -1) {
+        toast.success('Review cleared')
+      } else if (harmful) {
+        toast.success('Changeset marked as harmful')
+      } else {
+        toast.success('Changeset marked as good')
+      }
+    },
+
     onError: (error: Error, variables, context) => {
       // Rollback on error
       if (context?.previous) {

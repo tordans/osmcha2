@@ -36,10 +36,13 @@ export function FlagFeatureButton({
       } else {
         await flagFeature(changesetId, featureId)
       }
+      toast.success(next ? 'Feature flagged' : 'Flag removed')
       void queryClient.invalidateQueries({ queryKey: ['changeset', changesetId] })
-    } catch {
+    } catch (error) {
       setOptimisticFlagged(null)
-      toast.error('Could not update flagged feature')
+      toast.error('Could not update flagged feature', {
+        description: error instanceof Error ? error.message : undefined,
+      })
     }
   }
 
