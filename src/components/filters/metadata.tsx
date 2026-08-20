@@ -126,11 +126,9 @@ export function MetadataFilter({ name, value, onChange }: MetadataFilterProps) {
   return (
     <div className="flex flex-col gap-3">
       <Text>
-        Tags the editor attached to the changeset (not OSM feature tags). Combine conditions; all
-        must match.{' '}
-        <TextLink href="https://wiki.openstreetmap.org/wiki/Changeset#Tags_on_changesets">
-          OSM Wiki
-        </TextLink>
+        Tags the editor attached to the changeset (not map-feature tags). You can see them on the
+        OSM.org changeset page and under Changeset tags on a changeset. Combine several conditions;
+        all must match.
       </Text>
 
       {rawMode ? null : (
@@ -155,6 +153,25 @@ export function MetadataFilter({ name, value, onChange }: MetadataFilterProps) {
           </Button>
         </>
       )}
+
+      <details className="rounded-lg">
+        <summary className="flex min-h-11 cursor-pointer touch-manipulation list-none items-center rounded-lg px-1 text-sm/5 font-medium text-zinc-700 select-none marker:content-none active:bg-zinc-950/5 [&::-webkit-details-marker]:hidden">
+          More about these tags
+        </summary>
+        <div className="px-1 pb-2">
+          <Text>
+            Editors such as iD attach key/value tags to each changeset (also listed on OSM.org).
+            JOSM often omits tags like changesets_count or locale. “Contains” matches a substring;
+            “Equals exactly” uses <code className="text-zinc-950">key__exact=value</code>; “Exists”
+            matches any value with <code className="text-zinc-950">key=*</code>. Min/max apply to
+            numeric tags. Conditions are combined with AND; negation and OR are not supported.
+            Values cannot contain commas; hashtags in OSM use semicolons between tags.{' '}
+            <TextLink href="https://wiki.openstreetmap.org/wiki/Changeset#Tags_on_changesets">
+              OSM Wiki: tags on changesets
+            </TextLink>
+          </Text>
+        </div>
+      </details>
 
       <details className="rounded-lg" open={rawMode || undefined}>
         <summary className="flex min-h-11 cursor-pointer touch-manipulation list-none items-center rounded-lg px-1 text-sm/5 font-medium text-zinc-700 select-none marker:content-none active:bg-zinc-950/5 [&::-webkit-details-marker]:hidden">

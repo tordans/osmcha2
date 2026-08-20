@@ -1,6 +1,6 @@
 import type { MetadataOperator } from '../utils/metadataFilter.ts'
 
-export type MetadataValueKind = 'text' | 'number'
+type MetadataValueKind = 'text' | 'number'
 
 export type ChangesetMetadataKey = {
   key: string
