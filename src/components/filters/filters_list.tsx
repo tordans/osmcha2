@@ -6,6 +6,7 @@ import { ChangesetDateFilter, DateField, parseStoredDate } from './date.tsx'
 import type { Filter, FilterOption, Filters } from './index.ts'
 import { LocationSelect } from './location.tsx'
 import { Meta } from './meta.tsx'
+import { MetadataFilter } from './metadata.tsx'
 import { MappingTeamMultiSelect, MultiSelect } from './multi_select.tsx'
 import { Radio } from './radio.tsx'
 import { Text } from './text.tsx'
@@ -177,6 +178,18 @@ export function FiltersList({
               max={today}
             />
           </div>
+        </Wrapper>
+      )
+    }
+
+    if (config.name === 'metadata') {
+      return (
+        <Wrapper {...wrapperProps} description={undefined}>
+          <MetadataFilter
+            name={config.name}
+            value={currentFilters[config.name]}
+            onChange={handleChange}
+          />
         </Wrapper>
       )
     }

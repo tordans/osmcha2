@@ -251,17 +251,21 @@ These include:
   - Ex: iD editor changesets that have deleted a lot of features
   - Ex: Mass additions of data by new mappers
 
-**Filtering by other metadata**
+**Filtering by changeset tags**
 
-![image](https://user-images.githubusercontent.com/666291/91881632-275e7380-ec58-11ea-834c-6fec8224c930.png)
+Since August 2020, OSMCha registers arbitrary tags that editors attach to changesets (the same key/value tags shown on the OSM.org changeset page). Use the **Changeset tags** filter at the bottom of the filters page to build conditions with a key, match type, and value. The API parameter is still `metadata`.
 
-Since August 2020, OSMCha is registering all arbitrary tags added to the changesets and it is possible to filter using that information. Scroll to the bottom of the filters page to see the "Other metadata field". For example, you can filter changesets by the hashtags information with `hashtags=value`.
+Examples:
 
-It is also possible to filter numeric values by setting a minimum or a maximum threshold. For example, with `changesets_count__max=50`, you will get the changesets created by users that had created less than 50 changesets (that information is available only to changesets created by iD editor). Add `__max` or `__min` after any tag name that the value can be a number.
+- Hashtags containing `#hotosm-project`: key `hashtags`, match **Contains**, value `#hotosm-project`
+- Mapper had created at most 50 changesets (iD): key `changesets_count`, match **At most (≤)**, value `50` — sent as `changesets_count__max=50`
+- Tag present with any value: match **Exists (any value)** — sent as `locale=*`
 
-If you want to filter by the presence of a tag use `key=*`, for example `locale=*` to find changesets with a `locale` tag and any value.
+Numeric tags also support **At least (≥)** (`key__min=n`). Exact text matches use **Equals exactly** (`key__exact=value`). Multiple conditions are combined with AND (comma-separated in the API). Values cannot contain commas. Negation and OR are not supported.
 
-It's possible to combine multiple metadata filters by separating the `key=value` statements with a comma.
+Tags such as `comment`, `source`, `imagery_used`, and `created_by` have dedicated OSMCha filters. `review_requested` is not stored in metadata — use **Reasons for Flagging → Review requested** instead.
+
+See changeset tags on any changeset under **Changeset tags** in the details header, or on [OSM.org](https://www.openstreetmap.org/changeset). More: [OSM Wiki — tags on changesets](https://wiki.openstreetmap.org/wiki/Changeset#Tags_on_changesets).
 
 ### Saving and sharing custom filters
 

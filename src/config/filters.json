@@ -347,9 +347,9 @@
     "icontains": false,
     "all": false,
     "range": false,
-    "display": "Other metadata",
+    "display": "Changeset tags",
     "type": "text",
-    "description": "Filter changesets by any other metadata that is not present on the fields above. You can combine more than one filter, separated by commas.",
+    "description": "Tags the editor attached to the changeset (not map-feature tags). You can see them on the OSM.org changeset page. Combine several conditions; all must match.",
     "placeholder": "eg. changesets_count__max=50,hashtags=#hotosm-project"
   },
   {

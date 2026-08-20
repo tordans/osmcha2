@@ -31,6 +31,7 @@ import { editorShortname } from '../list/editorShortname.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
+import { DescriptionDetails, DescriptionList, DescriptionTerm } from '../ui/description-list.tsx'
 import { Divider } from '../ui/divider.tsx'
 import {
   Dropdown,
@@ -41,11 +42,7 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
-import {
-  DescriptionDetails,
-  DescriptionList,
-  DescriptionTerm,
-} from '../ui/description-list.tsx'
+import { typeScale } from '../ui/typography.ts'
 import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { Tags } from './tags.tsx'
 import { User } from './user.tsx'
@@ -136,6 +133,10 @@ export function DetailsHeader({
     (userDetails?.checked_changesets ?? 0) - (userDetails?.harmful_changesets ?? 0),
   )
   const checkedBad = userDetails?.harmful_changesets ?? 0
+  const visibleMetadata = Object.entries(properties.metadata ?? {}).filter(
+    ([key]) =>
+      !key.startsWith('ideditor') && !key.startsWith('warnings:') && !key.startsWith('resolved'),
+  )
 
   function handleMarkHarmful(value: boolean | -1) {
     if (!token) {
@@ -345,6 +346,28 @@ export function DetailsHeader({
           changesetUsername
         />
       </details>
+
+      {visibleMetadata.length > 0 ? (
+        <details className="rounded-lg">
+          <summary
+            className="flex min-h-11 cursor-pointer touch-manipulation list-none items-center justify-between rounded-lg px-1 text-sm/5 font-medium text-zinc-700 select-none marker:content-none active:bg-zinc-950/5 [&::-webkit-details-marker]:hidden"
+            title={`Changeset tags (${visibleMetadata.length})`}
+          >
+            <span>Changeset tags</span>
+            <span className={clsx('font-normal text-zinc-400', typeScale.small)}>
+              {visibleMetadata.length}
+            </span>
+          </summary>
+          <DescriptionList className="px-1 pb-2">
+            {visibleMetadata.map(([key, val]) => (
+              <div key={key} className="contents">
+                <DescriptionTerm>{key}</DescriptionTerm>
+                <DescriptionDetails className="break-all">{String(val)}</DescriptionDetails>
+              </div>
+            ))}
+          </DescriptionList>
+        </details>
+      ) : null}
 
       <div className={clsx('mt-2 flex flex-col gap-1', typeScale.body)}>
         <p className="w-full leading-tight break-words hyphens-auto" lang="en">
