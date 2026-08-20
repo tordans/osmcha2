@@ -4,23 +4,25 @@ import clsx from 'clsx'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useFilters } from '../../hooks/useFilters.ts'
 import { useAOI, useAllAOIs } from '../../query/hooks/useAOI.ts'
-import { RouterLink } from '../../routing/RouterLink.tsx'
+import { stripFilterSearch, withFilters } from '../../routing/filterSearch.ts'
 import {
   chromeDropdownMenuClassName,
   Dropdown,
   DropdownButton,
   DropdownDivider,
+  DropdownHeading,
   DropdownItem,
   DropdownLabel,
   DropdownMenu,
+  DropdownSection,
 } from '../ui/dropdown.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
 
-const compactActionClassName = clsx(
-  'relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-semibold text-zinc-950 select-none',
-  'hover:bg-zinc-950/5',
-)
+type UserData = {
+  username?: string
+  uid?: string | number
+}
 
 type AoiFeature = {
   id: string | number
@@ -41,101 +43,193 @@ function filterName(aoi: AoiFeature) {
   return aoi.properties?.name || `Filter ${aoi.id}`
 }
 
-function FilterLabel({ children }: { children: string }) {
-  return (
-    <p className="min-w-0 truncate px-1 font-semibold" title={children}>
-      {children}
-    </p>
-  )
+function filterValue(filters: Record<string, unknown>, key: string) {
+  const items = filters[key]
+  if (!Array.isArray(items) || items[0] == null || typeof items[0] !== 'object') return undefined
+  if (!('value' in items[0])) return undefined
+  return items[0].value
+}
+
+function selectedFilterLabel({
+  savedName,
+  isMyChangesets,
+  isMyReviews,
+  isRecent,
+}: {
+  savedName: string | undefined
+  isMyChangesets: boolean
+  isMyReviews: boolean
+  isRecent: boolean
+}) {
+  if (savedName) return savedName
+  if (isMyChangesets) return 'My Changesets'
+  if (isMyReviews) return 'My Reviews'
+  if (isRecent) return 'Recent'
+  return 'Select filter'
 }
 
 export function FiltersMenu() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const signedIn = Boolean(token)
+  const currentUser = user as UserData | undefined
+  const username = currentUser?.username
+  const uid = currentUser?.uid
   const search = rootRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
-  const { aoiId } = useFilters()
+  const { filters, aoiId } = useFilters()
   const { data: aoi } = useAOI(aoiId)
-  const { data, isPending } = useAllAOIs()
+  const { data } = useAllAOIs()
   const aois = aoiList(data)
   const selected = aois.find((item) => String(item.id) === aoiId)
   const selectedName = selected
     ? filterName(selected)
     : ((aoi?.properties?.name as string | undefined) ?? aoiId)
-  const triggerLabel = aoiId && selectedName ? `Filter: ${selectedName}` : 'Select filter'
+
+  const isSaved = Boolean(aoiId)
+  const isMyChangesets =
+    !isSaved && uid != null && String(filterValue(filters, 'uids')) === String(uid)
+  const isMyReviews =
+    !isSaved && Boolean(username) && filterValue(filters, 'checked_by') === username
+  const isRecent = !isSaved && !filters.uids && !filters.checked_by
+  const triggerLabel = selectedFilterLabel({
+    savedName: isSaved ? (selectedName ?? undefined) : undefined,
+    isMyChangesets,
+    isMyReviews,
+    isRecent,
+  })
+
+  const savedAois =
+    aoiId && !selected
+      ? [{ id: aoiId, properties: { name: selectedName || undefined } }, ...aois]
+      : aois
+
+  const goRecent = () => {
+    void navigate({
+      to: '/',
+      search: stripFilterSearch({ ...search, aoi: undefined, page: undefined }),
+    })
+  }
+
+  const goMyChangesets = () => {
+    if (uid == null) return
+    void navigate({
+      to: '/',
+      search: withFilters(
+        { ...search, aoi: undefined, page: undefined },
+        {
+          uids: [{ label: String(uid), value: String(uid) }],
+          date__gte: [{ label: '', value: '' }],
+        },
+      ),
+    })
+  }
+
+  const goMyReviews = () => {
+    if (!username) return
+    void navigate({
+      to: '/',
+      search: withFilters(
+        { ...search, aoi: undefined, page: undefined },
+        {
+          checked_by: [{ label: username, value: username }],
+          date__gte: [{ label: '', value: '' }],
+        },
+      ),
+    })
+  }
 
   const goNew = () => {
     void navigate({
       to: '/filters',
-      search: { ...search, aoi: undefined, filters: undefined, page: undefined },
+      search: stripFilterSearch({ ...search, aoi: undefined, page: undefined }),
     })
   }
 
   const goSelect = (id: string) => {
     void navigate({
       to: '/',
-      search: { ...search, aoi: id, filters: undefined, page: undefined },
+      search: stripFilterSearch({ ...search, aoi: id, page: undefined }),
     })
   }
 
-  if (signedIn && aois.length > 0) {
-    return (
-      <Dropdown backdrop className="min-w-0 flex-1">
-        <DropdownButton
-          outline
-          data-panel-origin="filters"
-          aria-label={triggerLabel}
-          title={triggerLabel}
-          className="group relative h-9 min-h-9 w-full min-w-0 justify-start data-open:z-[110]"
-        >
-          <span className="min-w-0 truncate">{triggerLabel}</span>
-          <ChevronDownIcon
-            data-slot="icon"
-            className="shrink-0 transition duration-200 group-data-open:rotate-180"
-          />
-        </DropdownButton>
-        <DropdownMenu anchor="bottom start" className={chromeDropdownMenuClassName}>
-          <DropdownItem onClick={goNew} className="cursor-pointer">
-            <PlusIcon data-slot="icon" />
-            <DropdownLabel>New filter</DropdownLabel>
-          </DropdownItem>
-          <DropdownDivider />
-          {aois.map((item) => {
-            const id = String(item.id)
-            const name = filterName(item)
-            const current = aoiId === id
-
-            return (
-              <DropdownItem key={id} onClick={() => goSelect(id)} className="cursor-pointer">
-                <CheckIcon data-slot="icon" className={clsx(!current && 'invisible')} />
-                <DropdownLabel>{name}</DropdownLabel>
-              </DropdownItem>
-            )
-          })}
-        </DropdownMenu>
-      </Dropdown>
-    )
-  }
-
-  if (aoiId && selectedName) {
-    return <FilterLabel>{`Filter: ${selectedName}`}</FilterLabel>
-  }
-
-  if (!signedIn) return null
-
-  if (isPending) {
-    return <FilterLabel>Select filter</FilterLabel>
-  }
-
   return (
-    <RouterLink
-      to="/filters"
-      search={{ ...search, aoi: undefined, filters: undefined, page: undefined }}
-      data-panel-origin="filters"
-      className={compactActionClassName}
-    >
-      <PlusIcon className="size-4" />
-      Create Filter
-    </RouterLink>
+    <Dropdown backdrop className="min-w-0 flex-1">
+      <DropdownButton
+        outline
+        data-panel-origin="filters"
+        aria-label={triggerLabel}
+        title={triggerLabel}
+        className="group relative h-9 min-h-9 w-full min-w-0 justify-start data-open:z-[110]"
+      >
+        <span className="min-w-0 truncate">{triggerLabel}</span>
+        <ChevronDownIcon
+          data-slot="icon"
+          className="shrink-0 transition duration-200 group-data-open:rotate-180"
+        />
+      </DropdownButton>
+      <DropdownMenu anchor="bottom start" className={chromeDropdownMenuClassName}>
+        <DropdownSection>
+          <DropdownHeading>Default</DropdownHeading>
+          <FilterItem current={isRecent} onClick={goRecent}>
+            Recent
+          </FilterItem>
+          {signedIn && uid != null && (
+            <FilterItem current={isMyChangesets} onClick={goMyChangesets}>
+              My Changesets
+            </FilterItem>
+          )}
+          {signedIn && username && (
+            <FilterItem current={isMyReviews} onClick={goMyReviews}>
+              My Reviews
+            </FilterItem>
+          )}
+        </DropdownSection>
+        {savedAois.length > 0 ? (
+          <>
+            <DropdownDivider />
+            <DropdownSection>
+              <DropdownHeading>Saved filters</DropdownHeading>
+              {savedAois.map((item) => {
+                const id = String(item.id)
+                const name = filterName(item)
+                const current = aoiId === id
+
+                return (
+                  <FilterItem key={id} current={current} onClick={() => goSelect(id)}>
+                    {name}
+                  </FilterItem>
+                )
+              })}
+            </DropdownSection>
+          </>
+        ) : null}
+        {signedIn ? (
+          <>
+            <DropdownDivider />
+            <DropdownItem onClick={goNew} className="cursor-pointer">
+              <PlusIcon data-slot="icon" />
+              <DropdownLabel>New filter</DropdownLabel>
+            </DropdownItem>
+          </>
+        ) : null}
+      </DropdownMenu>
+    </Dropdown>
+  )
+}
+
+function FilterItem({
+  current,
+  onClick,
+  children,
+}: {
+  current: boolean
+  onClick: () => void
+  children: string
+}) {
+  return (
+    <DropdownItem onClick={onClick} className="cursor-pointer">
+      <CheckIcon data-slot="icon" className={clsx(!current && 'invisible')} />
+      <DropdownLabel>{children}</DropdownLabel>
+    </DropdownItem>
   )
 }

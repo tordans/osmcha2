@@ -15,6 +15,7 @@ import { Fragment, type ComponentType, type SVGProps } from 'react'
 import filtersConfig from '../../config/filters.json'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useAOI } from '../../query/hooks/useAOI.ts'
+import { stripFilterSearch } from '../../routing/filterSearch.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import numberWithCommas from '../../utils/number_with_commas.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
@@ -69,30 +70,27 @@ export function Header({
   const selected = options.find((option) => option.value === effectiveOrderBy) ?? null
 
   const changesetCount = numberWithCommas(currentPage?.count ?? 0)
-  const showFilterBar = signedIn || Boolean(aoiId)
 
   return (
     <div>
-      {showFilterBar ? (
-        <div className="relative flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-2 py-1.5">
-          <div className="min-w-0 flex-1">
-            <FiltersMenu />
-          </div>
-          {aoiId ? (
-            <RouterLink
-              to="/filters"
-              search={{ ...search, aoi: aoiId, filters: undefined, page: undefined }}
-              data-panel-origin="filters"
-              aria-label={`Edit saved filter ${aoiName || aoiId}`}
-              className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950"
-            >
-              <PencilSquareIcon className="size-4" />
-              Edit
-            </RouterLink>
-          ) : null}
-          <DebugDataHelperDialog data={aoi} title="AOI Object" />
+      <div className="relative flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-2 py-1.5">
+        <div className="min-w-0 flex-1">
+          <FiltersMenu />
         </div>
-      ) : null}
+        {aoiId ? (
+          <RouterLink
+            to="/filters"
+            search={stripFilterSearch({ ...search, aoi: aoiId, page: undefined })}
+            data-panel-origin="filters"
+            aria-label={`Edit saved filter ${aoiName || aoiId}`}
+            className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950"
+          >
+            <PencilSquareIcon className="size-4" />
+            Edit
+          </RouterLink>
+        ) : null}
+        <DebugDataHelperDialog data={aoi} title="saved filter (AOI) for this list" />
+      </div>
       <header
         className={clsx(
           'flex h-11 items-center justify-between gap-2 border-b border-zinc-200 px-1',

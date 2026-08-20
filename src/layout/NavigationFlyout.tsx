@@ -16,8 +16,8 @@ import {
   DropdownSection,
 } from '../components/ui/dropdown.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
-import { useFilters } from '../hooks/useFilters.ts'
 import { getAuthUrl } from '../network/auth.ts'
+import { isAccountPath } from '../routing/filterSearch.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
@@ -47,10 +47,8 @@ function NavigationMenu() {
   const navigate = rootRouteApi.useNavigate()
   const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
   const search = rootRouteApi.useSearch()
-  const { filters, aoiId } = useFilters()
 
   const username = currentUser?.username
-  const uid = currentUser?.uid
 
   const handleLoginClick = () => {
     if (!isOsmOAuthHost()) return
@@ -65,45 +63,11 @@ function NavigationMenu() {
     void navigate({ to: '/' })
   }
 
-  const goMyChangesets = () => {
-    if (uid == null) return
-    void navigate({
-      to: '/',
-      search: {
-        filters: {
-          uids: [{ label: String(uid), value: String(uid) }],
-          date__gte: [{ label: '', value: '' }],
-        },
-        page: undefined,
-      },
-    })
-  }
-
-  const goMyReviews = () => {
-    if (!username) return
-    void navigate({
-      to: '/',
-      search: {
-        filters: {
-          checked_by: [{ label: username, value: username }],
-          date__gte: [{ label: '', value: '' }],
-        },
-        page: undefined,
-      },
-    })
-  }
-
   const goTo = (
     to: '/' | '/about' | '/saved-filters' | '/user' | '/teams' | '/trusted-users' | '/watchlist',
   ) => {
-    void navigate({ to, search })
+    void navigate({ to, search: isAccountPath(to) ? {} : search })
   }
-
-  const isRecent = pathname === '/' && !aoiId && !filters?.uids && !filters?.checked_by
-  const isMyChangesets =
-    pathname === '/' && uid != null && String(filters?.uids?.[0]?.value) === String(uid)
-  const isMyReviews =
-    pathname === '/' && Boolean(username) && filters?.checked_by?.[0]?.value === username
 
   const initials = username?.slice(0, 2).toUpperCase()
 
@@ -124,19 +88,6 @@ function NavigationMenu() {
       <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
         <DropdownSection>
           <DropdownHeading>Changesets</DropdownHeading>
-          <NavItem current={isRecent} onClick={() => goTo('/')}>
-            Recent
-          </NavItem>
-          {token && uid != null && (
-            <NavItem current={isMyChangesets} onClick={goMyChangesets}>
-              My Changesets
-            </NavItem>
-          )}
-          {token && username && (
-            <NavItem current={isMyReviews} onClick={goMyReviews}>
-              My Reviews
-            </NavItem>
-          )}
           <NavItem current={pathname === '/saved-filters'} onClick={() => goTo('/saved-filters')}>
             Saved filters
           </NavItem>
