@@ -7,7 +7,6 @@
 # Vite
 /dist
 /build
-public/env.json
 
 # misc
 .DS_Store

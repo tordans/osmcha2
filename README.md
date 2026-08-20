@@ -17,6 +17,8 @@ OAuth sign-in works on **localhost / 127.0.0.1** against production Django
 import**: copy the API token from osmcha.org (Account, or `localStorage` key
 `auth`) and paste it here. Guest browsing the list/map needs no token.
 
+API hosts, page size, and date defaults live in [`src/config/constants.ts`](./src/config/constants.ts). There is no `.env` file.
+
 ## GitHub Pages
 
 Static hosting. The Vite `base` comes from `VITE_BASE` (GitHub Actions sets it
@@ -28,7 +30,8 @@ To publish later (not done from this sandbox):
 1. Create a GitHub repo and push branch `v2` or `main`.
 2. Settings → Pages → Source: **GitHub Actions**.
 3. Push; the [Deploy GitHub Pages](.github/workflows/deploy-pages.yml) workflow
-   builds with `OSMCHA_API_URL=https://osmcha.org/api/v1` and deploys.
+   builds and deploys. The app talks to `https://osmcha.org/api/v1` (see
+   `src/config/constants.ts`).
 
 Preview a project-pages build locally:
 

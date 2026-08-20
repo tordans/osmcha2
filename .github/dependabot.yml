@@ -49,7 +49,6 @@ updates:
           - '@types/*'
           - 'typescript'
           - '@typescript/typescript-*'
-          - 'dotenv*'
           - 'mockdate'
           - 'rollup-plugin-visualizer'
         update-types:

@@ -5,26 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="google" value="notranslate" />
     <link rel="shortcut icon" href="%BASE_URL%favicon.ico" />
-    <title>OSMCha</title>
-    <meta property="og:site_name" content="OSMCha" />
-    <meta property="og:title" content="OSMCha" />
+    <title>OSMCha2</title>
+    <meta property="og:site_name" content="OSMCha2" />
+    <meta property="og:title" content="OSMCha2" />
     <meta property="og:description" content="Validation tool for OpenStreetMap" />
     <meta
       name="keywords"
       content="OpenStreetMap, OSM, validation, changeset, open data, quality assurance"
     />
-    <link rel="preload" href="%BASE_URL%env.json" as="fetch" type="application/json" />
   </head>
 
   <body>
     <div id="root"></div>
-    <script type="module">
-      fetch(`${import.meta.env.BASE_URL}env.json`)
-        .then((res) => res.json())
-        .then((env) => {
-          window.env = env
-        })
-        .then(() => import('./src/index.tsx'))
-    </script>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>

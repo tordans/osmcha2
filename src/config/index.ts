@@ -1,6 +1,6 @@
 import pkg from '../../package.json'
 
-export const isLocal = import.meta.env.MODE === 'development'
+export const isLocal = import.meta.env.DEV
 export const appVersion = pkg.version
 
-export const API_URL = window.env.OSMCHA_API_URL || 'https://osmcha.org/api/v1'
+export { API_URL } from './constants.ts'
