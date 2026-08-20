@@ -38,16 +38,11 @@ function TagChange({
   rawNew?: string
 }) {
   return (
-    <div
-      className={clsx(
-        'flex flex-col items-start gap-0.5',
-        '@min-[36rem]:flex-row @min-[36rem]:flex-wrap @min-[36rem]:items-center @min-[36rem]:gap-x-1 @min-[36rem]:gap-y-0.5',
-      )}
-    >
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
       <span className={clsx('min-w-0 text-orange-500', wrapClass(oldValue, rawOld))} dir="auto">
         {oldValue}
       </span>
-      <ArrowRightIcon className="size-3 flex-none rotate-90 text-zinc-400 @min-[36rem]:rotate-0" />
+      <ArrowRightIcon className="size-3 flex-none text-zinc-400" />
       <span className={clsx('min-w-0 text-green-700', wrapClass(newValue, rawNew))} dir="auto">
         {newValue}
       </span>
@@ -108,19 +103,19 @@ export function TagRows({
   }
 
   return (
-    <dl className={clsx('@container w-full font-mono', typeScale.small, className)}>
+    <dl className={clsx('w-full font-mono', typeScale.small, className)}>
       {rows.map((row) => (
         <div
           key={row.key}
-          className={clsx(
-            'grid grid-cols-1 items-start gap-y-0.5 border-b border-zinc-950/5 py-1',
-            '@min-[36rem]:grid-cols-[minmax(0,9.5rem)_minmax(0,1fr)] @min-[36rem]:gap-x-2 @min-[36rem]:gap-y-0',
-          )}
+          className="flex flex-wrap items-start gap-x-2 gap-y-0.5 border-b border-zinc-950/5 py-1"
         >
-          <dt className="min-w-0 font-medium break-all text-zinc-800" title={row.key}>
+          <dt
+            className="max-w-full shrink-0 pt-0.5 font-medium break-all text-zinc-800"
+            title={row.key}
+          >
             {row.key}
           </dt>
-          <dd className="min-w-0">
+          <dd className="min-w-0 flex-[1_1_6rem]">
             <TagRowValue row={row} />
           </dd>
         </div>
