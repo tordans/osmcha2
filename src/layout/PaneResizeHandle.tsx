@@ -77,7 +77,7 @@ export function PaneResizeHandle({
       onDoubleClick={onReset}
       onKeyDown={onKeyDown}
       className={clsx(
-        'group hidden w-3 shrink-0 cursor-col-resize touch-none items-stretch justify-center select-none min-[56rem]:flex',
+        'group hidden w-2.5 shrink-0 cursor-col-resize touch-none items-stretch justify-center select-none min-[56rem]:flex',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
       )}
     >

@@ -9,7 +9,8 @@ export const REVIEW_MAX = 640
 export const MAP_MIN = 280
 const MAIN_MIN = 320
 
-export const HANDLE_WIDTH = 12
+/** Matches shell `p-2.5` and resize-handle `w-2.5` (~10px). */
+export const HANDLE_WIDTH = 10
 export const PANE_NUDGE_PX = 16
 
 export type PaneSide = 'list' | 'review'

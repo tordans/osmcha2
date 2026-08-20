@@ -9,7 +9,7 @@ import {
   CHANGESET_DETAILS_MAP,
 } from '../../config/bindings.ts'
 import { useAuth } from '../../hooks/useAuth.ts'
-import { paneCardClassName } from '../../layout/paneCard.ts'
+import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import { PaneResizeHandle } from '../../layout/PaneResizeHandle.tsx'
 import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.ts'
 import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
@@ -138,8 +138,8 @@ function Changeset({
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row">
-      <div className={clsx('relative min-h-0 min-w-0 flex-1 overflow-hidden', paneCardClassName)}>
-        {children}
+      <div className={clsx('relative min-h-0 min-w-0 flex-1', paneCardClassName)}>
+        <div className={clsx('h-full', paneCardClipClassName)}>{children}</div>
         <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-10 flex flex-col-reverse items-end gap-2 min-[56rem]:top-auto min-[56rem]:bottom-[max(0.75rem,env(safe-area-inset-bottom))] min-[56rem]:flex-col">
           {ready && (
             <MapOptions

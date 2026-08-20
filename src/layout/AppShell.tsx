@@ -6,7 +6,7 @@ import { usePaneLayoutStore } from '../stores/paneLayoutStore.ts'
 import { ChangesetsList } from '../views/changesets_list.tsx'
 import { BackToListButton } from './BackToListButton.tsx'
 import { ChromeHeader } from './NavigationFlyout.tsx'
-import { paneCardClassName } from './paneCard.ts'
+import { paneCardClassName, paneCardClipClassName } from './paneCard.ts'
 import { PaneResizeHandle } from './PaneResizeHandle.tsx'
 import { LIST_MAX, LIST_MIN, resizeSidePane } from './paneWidths.ts'
 import { useFullBleedLock } from './useFullBleedLock.ts'
@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       className={clsx(
         'flex min-w-0 flex-col font-sans',
         fullBleed ? 'h-[var(--app-height,100dvh)] overflow-hidden overscroll-none' : 'min-h-dvh',
-        'min-[56rem]:bg-zinc-100 min-[56rem]:p-2',
+        'min-[56rem]:bg-zinc-100 min-[56rem]:p-2.5',
       )}
       style={paneVars}
     >
@@ -46,17 +46,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             className={clsx(
               '@container/list min-h-0 min-w-0 flex-col',
               listHome ? 'flex h-full' : 'hidden',
-              'min-[56rem]:flex min-[56rem]:w-(--pane-list-width,18rem) min-[56rem]:shrink-0',
+              'min-[56rem]:flex min-[56rem]:w-(--pane-list-width,18rem) min-[56rem]:shrink-0 min-[56rem]:gap-2.5',
               fullBleed
                 ? 'min-[56rem]:h-full'
-                : 'min-[56rem]:sticky min-[56rem]:top-2 min-[56rem]:h-[calc(var(--app-height,100dvh)-1rem)]',
+                : 'min-[56rem]:sticky min-[56rem]:top-2.5 min-[56rem]:h-[calc(var(--app-height,100dvh)-1.25rem)]',
             )}
           >
             <ChromeHeader />
-            <div
-              className={clsx('flex min-h-0 flex-1 flex-col overflow-hidden', paneCardClassName)}
-            >
-              <ChangesetsList />
+            <div className={clsx('relative z-0 flex min-h-0 flex-1 flex-col', paneCardClassName)}>
+              <div className={clsx('flex min-h-0 flex-1 flex-col', paneCardClipClassName)}>
+                <ChangesetsList />
+              </div>
             </div>
           </aside>
 
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               'relative min-h-0 min-w-0 flex-1 flex-col',
               listHome ? 'hidden min-[56rem]:flex' : 'flex',
               fullBleed
-                ? 'h-full overflow-hidden'
+                ? 'h-full overflow-hidden min-[56rem]:overflow-visible'
                 : 'min-h-dvh overflow-x-hidden overflow-y-auto min-[56rem]:min-h-0',
               !changeset && paneCardClassName,
             )}
@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className={clsx(
                 'min-h-0 min-w-0 flex-1',
                 fullBleed &&
-                  'flex h-full min-h-0 flex-col overflow-hidden [&>*]:h-full [&>*]:min-h-0',
+                  'flex h-full min-h-0 flex-col overflow-hidden min-[56rem]:overflow-visible [&>*]:h-full [&>*]:min-h-0',
               )}
             >
               {children}
