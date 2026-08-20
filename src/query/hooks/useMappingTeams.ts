@@ -34,8 +34,8 @@ export function useCreateMappingTeam() {
       createMappingTeam(name, users),
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['mappingTeams'] })
-      toast.success('Team Created', {
-        description: `The team ${variables.name} was created successfully!`,
+      toast.success('Team created', {
+        description: variables.name,
       })
     },
     onError: (error: Error) => {
@@ -57,8 +57,8 @@ export function useUpdateMappingTeam() {
         queryKey: ['mappingTeam', variables.teamId],
       })
       void queryClient.invalidateQueries({ queryKey: ['mappingTeams'] })
-      toast.success('Team Updated', {
-        description: `The team ${variables.name} was updated successfully!`,
+      toast.success('Team updated', {
+        description: variables.name,
       })
     },
     onError: (error: Error) => {
@@ -76,8 +76,8 @@ export function useDeleteMappingTeam() {
     mutationFn: (teamId: number) => deleteMappingTeam(teamId),
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['mappingTeams'] })
-      toast.success('Team Deleted', {
-        description: `The team with id ${variables} was deleted`,
+      toast.success('Team deleted', {
+        description: String(variables),
       })
     },
     onError: (error: Error) => {

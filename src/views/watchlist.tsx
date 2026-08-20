@@ -58,7 +58,7 @@ export function Watchlist() {
     if (!username || !uid) return
     if (watchlist.some((listed) => listed.uid === uid)) {
       toast.error('Already on watchlist', {
-        description: `User ${username} (${uid}) is already on your watchlist.`,
+        description: `${username} (${uid})`,
       })
       return
     }

@@ -17,7 +17,7 @@ export function useUpdateUserDetails() {
     }) => updateUserDetails(messageGood, messageBad, commentFeature),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['userDetails'] })
-      toast.success('Preferences saved successfully')
+      toast.success('Preferences saved')
     },
     onError: (error: Error) => {
       toast.error('Failed to save preferences', {

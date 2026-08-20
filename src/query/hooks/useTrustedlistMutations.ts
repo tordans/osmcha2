@@ -26,8 +26,8 @@ export function useAddToTrustedlist() {
       toast.error('Failed to add user', { description: error.message })
     },
     onSuccess: (_data, username) => {
-      toast.success('Success', {
-        description: `User ${username} added to your Trusted Users list.`,
+      toast.success('Added to trusted users', {
+        description: username,
       })
     },
     onSettled: () => {
@@ -60,8 +60,8 @@ export function useRemoveFromTrustedlist() {
       toast.error('Failed to remove user', { description: error.message })
     },
     onSuccess: (_data, username) => {
-      toast.success('Success', {
-        description: `User ${username} removed from your Trusted Users list.`,
+      toast.success('Removed from trusted users', {
+        description: username,
       })
     },
     onSettled: () => {

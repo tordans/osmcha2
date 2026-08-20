@@ -45,7 +45,7 @@ export function useFilters() {
         const filtersString = JSON.stringify(newFilters)
         if (filtersString.length > 7000) {
           toast.error('Filter too large', {
-            description: 'Your filter is too big. Please save it as an AOI instead.',
+            description: 'Save it as an AOI instead',
           })
           return
         }

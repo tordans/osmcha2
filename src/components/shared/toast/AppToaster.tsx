@@ -24,6 +24,9 @@ export function AppToaster() {
       toastOptions={{
         classNames: {
           toast: 'font-sans shadow-lg',
+          content: '!flex-row !flex-wrap !items-baseline !gap-x-1.5 !gap-y-0',
+          title: '!font-semibold shrink-0',
+          description: '!font-normal !opacity-80',
         },
       }}
     />

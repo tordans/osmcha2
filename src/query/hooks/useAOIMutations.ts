@@ -13,7 +13,7 @@ export function useCreateAOI() {
     mutationFn: ({ name, filters }: { name: string; filters: any }) => createAOI(name, filters),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ['aois'] })
-      toast.success('AOI created successfully')
+      toast.success('AOI created')
       void navigate({
         to: '/',
         search: { aoi: String(data.id), filters: undefined, page: undefined },
@@ -36,7 +36,7 @@ export function useUpdateAOI() {
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['aoi', variables.aoiId] })
       void queryClient.invalidateQueries({ queryKey: ['aois'] })
-      toast.success('AOI updated successfully')
+      toast.success('AOI updated')
     },
     onError: (error: Error) => {
       console.error('Failed to update AOI:', error)
@@ -53,7 +53,7 @@ export function useDeleteAOI() {
     onSuccess: (_data, aoiId) => {
       void queryClient.invalidateQueries({ queryKey: ['aoi', aoiId] })
       void queryClient.invalidateQueries({ queryKey: ['aois'] })
-      toast.success('AOI deleted successfully')
+      toast.success('AOI deleted')
     },
     onError: (error: Error) => {
       console.error('Failed to delete AOI:', error)

@@ -52,7 +52,7 @@ export function CommentForm({
       pending.promise
         .then(() => {
           toast.success('Comment posted', {
-            description: 'It will appear on OSMCha after some minutes.',
+            description: 'Appears on OSMCha in a few minutes',
           })
           formApi.reset({ comment: '' })
         })

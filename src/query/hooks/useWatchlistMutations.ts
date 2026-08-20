@@ -32,8 +32,8 @@ export function useAddToWatchlist() {
       toast.error('Failed to add user', { description: error.message })
     },
     onSuccess: (_data, { username, uid }) => {
-      toast.success('Success', {
-        description: `User ${username} (${uid}) added to your watchlist.`,
+      toast.success('Added to watchlist', {
+        description: `${username} (${uid})`,
       })
     },
     onSettled: () => {
@@ -64,9 +64,7 @@ export function useRemoveFromWatchlist() {
       toast.error('Failed to remove user', { description: error.message })
     },
     onSuccess: (_data) => {
-      toast.success('Success', {
-        description: `User removed from your watchlist.`,
-      })
+      toast.success('Removed from watchlist')
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['watchlist'] })

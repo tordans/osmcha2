@@ -57,10 +57,7 @@ export function takeAuthTokenFromSearch(
  */
 export async function completeOAuthLogin(code: string) {
   try {
-    toast.warning('Login in progress', {
-      description: 'Please wait. We are logging you in.',
-      duration: 1000,
-    })
+    toast.warning('Logging in…', { duration: 1000 })
 
     const { token } = (await postFinalTokensOSMCha(code)) as { token: string }
 
@@ -71,7 +68,7 @@ export async function completeOAuthLogin(code: string) {
     // Save to Zustand store (persists to localStorage under "auth" key)
     useAuthStore.getState().setToken(token)
 
-    toast.success('Login Successful')
+    toast.success('Login successful')
 
     return token
   } catch (error) {

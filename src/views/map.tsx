@@ -174,8 +174,8 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
       if (!viewer || emptyAdiffWarnedRef.current) return
       if (viewer.adiff.actions.length === 0) {
         emptyAdiffWarnedRef.current = true
-        toast.error('Problem loading augmented diff file', {
-          description: 'The augmented diff contains no elements',
+        toast.error('Augmented diff is empty', {
+          description: 'No elements to show',
         })
       }
     },
