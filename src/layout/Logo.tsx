@@ -12,7 +12,7 @@ export function Logo() {
       search={search}
       className="cursor-pointer touch-manipulation px-2 text-base font-semibold text-zinc-600 select-none"
     >
-      <span className="text-blue-600">OSM</span>Cha
+      <span className="text-blue-600">OSM</span>Cha2
     </RouterLink>
   )
 }
