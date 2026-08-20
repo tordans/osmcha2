@@ -31,6 +31,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@date-fns/tz": "^1.5.0",
     "@fontsource/open-sans": "^5.3.0",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
@@ -51,9 +52,10 @@
     "@turf/simplify": "^7.1.0",
     "@turf/truncate": "^7.1.0",
     "clsx": "^2.1.1",
-    "date-fns": "^2.22.1",
-    "linkify-react": "^4.3.2",
-    "linkifyjs": "^4.3.2",
+    "date-fns": "^4",
+    "linkify-plugin-mention": "^4.3.3",
+    "linkify-react": "^4.3.3",
+    "linkifyjs": "^4.3.3",
     "maplibre-gl": "^5.1.0",
     "motion": "^13.1.0",
     "react": "^19",

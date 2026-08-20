@@ -1,6 +1,7 @@
 import adiffParser from '@osmcha/osm-adiff-parser'
-import { parse, subSeconds } from 'date-fns'
+import { subSeconds } from 'date-fns'
 import { adiffServiceUrl, apiOSM, overpassBase } from '../config/constants.ts'
+import { parseOsmDate } from '../utils/datetime.ts'
 import { api } from './request.ts'
 
 export function fetchChangeset(id: number) {
@@ -54,9 +55,8 @@ async function fetchAugmentedDiffFromOverpass(id: number) {
     throw new Error(`OpenStreetMap changeset ${id} returned ${res.status} ${res.statusText}`.trim())
   }
   const { changeset } = await res.json()
-  const createdAt = parse(changeset.created_at, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
-  const closedAt =
-    changeset.closed_at && parse(changeset.closed_at, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
+  const createdAt = parseOsmDate(changeset.created_at)
+  const closedAt = changeset.closed_at && parseOsmDate(changeset.closed_at)
 
   const adiffArgs = [subSeconds(createdAt, 1), closedAt]
     .filter(Boolean)

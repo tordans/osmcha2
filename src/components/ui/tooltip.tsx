@@ -12,8 +12,13 @@ type TooltipProps = {
   content: string
   children: ReactNode
   className?: string
-  onClick?: MouseEventHandler<HTMLButtonElement>
+  onClick?: MouseEventHandler<HTMLElement>
+  href?: string
+  target?: string
+  rel?: string
   'aria-label'?: string
+  /** `span` for non-interactive labels (valid inside links/buttons). */
+  as?: 'button' | 'span'
 }
 
 const nativeInterestInvokers =
@@ -29,7 +34,11 @@ export function Tooltip({
   children,
   className,
   onClick,
+  href,
+  target,
+  rel,
   'aria-label': ariaLabel,
+  as = 'button',
 }: TooltipProps) {
   const reactId = useId()
   const id = `tooltip-${reactId.replaceAll(':', '')}`
@@ -53,42 +62,78 @@ export function Tooltip({
   const fallback = nativeInterestInvokers
     ? undefined
     : {
-        onPointerEnter: (event: PointerEvent<HTMLButtonElement>) => {
+        onPointerEnter: (event: PointerEvent<HTMLElement>) => {
           if (event.pointerType === 'mouse') showTooltip()
         },
-        onPointerLeave: (event: PointerEvent<HTMLButtonElement>) => {
+        onPointerLeave: (event: PointerEvent<HTMLElement>) => {
           if (event.pointerType === 'mouse') hideTooltip()
         },
         onFocus: showTooltip,
         onBlur: hideTooltip,
       }
 
+  const triggerClassName = clsx(
+    'inline-flex touch-manipulation items-center select-none',
+    href || onClick ? 'cursor-pointer' : 'cursor-help',
+    '[interest-delay:0.2s_0.1s]',
+    className,
+  )
+  const triggerAriaLabel = as === 'span' ? ariaLabel : (ariaLabel ?? content)
+
+  const trigger = href ? (
+    <a
+      href={href}
+      target={target}
+      rel={rel}
+      {...{ interestfor: id }}
+      {...fallback}
+      onClick={(event) => {
+        hideTooltip()
+        onClick?.(event)
+      }}
+      aria-label={triggerAriaLabel}
+      aria-describedby={id}
+      className={triggerClassName}
+      style={triggerStyle}
+    >
+      {children}
+    </a>
+  ) : as === 'span' ? (
+    <span
+      {...{ interestfor: id }}
+      {...fallback}
+      aria-label={triggerAriaLabel}
+      aria-describedby={id}
+      className={triggerClassName}
+      style={triggerStyle}
+    >
+      {children}
+    </span>
+  ) : (
+    <button
+      type="button"
+      {...{ interestfor: id }}
+      {...fallback}
+      onClick={(event) => {
+        if (!nativeInterestInvokers) {
+          const panel = panelRef.current
+          if (panel?.matches(':popover-open')) hideTooltip()
+          else showTooltip()
+        }
+        onClick?.(event)
+      }}
+      aria-label={triggerAriaLabel}
+      aria-describedby={id}
+      className={triggerClassName}
+      style={triggerStyle}
+    >
+      {children}
+    </button>
+  )
+
   return (
     <>
-      <button
-        type="button"
-        {...{ interestfor: id }}
-        {...fallback}
-        onClick={(event) => {
-          if (!nativeInterestInvokers) {
-            const panel = panelRef.current
-            if (panel?.matches(':popover-open')) hideTooltip()
-            else showTooltip()
-          }
-          onClick?.(event)
-        }}
-        aria-label={ariaLabel ?? content}
-        aria-describedby={id}
-        className={clsx(
-          'inline-flex touch-manipulation items-center select-none',
-          onClick ? 'cursor-pointer' : 'cursor-help',
-          '[interest-delay:0.2s_0.1s]',
-          className,
-        )}
-        style={triggerStyle}
-      >
-        {children}
-      </button>
+      {trigger}
       <div
         ref={panelRef}
         id={id}

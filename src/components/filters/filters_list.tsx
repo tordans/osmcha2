@@ -1,5 +1,5 @@
-import { startOfDay } from 'date-fns'
 import filters from '../../config/filters.json'
+import { startOfLocalDay } from '../../utils/datetime.ts'
 import { Button } from '../ui/button.tsx'
 import { Subheading } from '../ui/heading.tsx'
 import { ChangesetDateFilter, DateField, parseStoredDate } from './date.tsx'
@@ -149,7 +149,7 @@ export function FiltersList({
 
       const gteValue = currentFilters[`${config.name}__gte`]
       const lteValue = currentFilters[`${config.name}__lte`]
-      const today = startOfDay(new Date())
+      const today = startOfLocalDay()
       const gteDate = parseStoredDate(gteValue?.[0]?.value as string | undefined) ?? undefined
       const lteDate = parseStoredDate(lteValue?.[0]?.value as string | undefined) ?? undefined
       return (

@@ -26,6 +26,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useWatchlist } from '../query/hooks/useWatchlist.ts'
 import { useAddToWatchlist, useRemoveFromWatchlist } from '../query/hooks/useWatchlistMutations.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
+import { parseOsmDate } from '../utils/datetime.ts'
 
 type WatchlistUser = {
   username: string
@@ -83,7 +84,7 @@ export function Watchlist() {
         String(rowA.getValue(columnId)).localeCompare(String(rowB.getValue(columnId))),
       cell: ({ row }) => {
         const date = row.original.date
-        return date ? <RelativeTime datetime={new Date(date)} /> : '—'
+        return date ? <RelativeTime datetime={parseOsmDate(date)} /> : '—'
       },
     }),
     columnHelper.display({

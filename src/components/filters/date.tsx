@@ -1,5 +1,6 @@
 import * as Headless from '@headlessui/react'
-import { startOfDay } from 'date-fns'
+import { isValid, parseISO } from 'date-fns'
+import { formatLocalDate, localDateFromIsoDate, startOfLocalDay } from '../../utils/datetime.ts'
 import { getDefaultFromDate, lastDaysFilter } from '../../utils/filters.ts'
 import { Button } from '../ui/button.tsx'
 import { Label } from '../ui/fieldset.tsx'
@@ -36,15 +37,8 @@ export function parseStoredDate(value?: string): Date | null {
     // Has time but no timezone indicator — treat as UTC (old format).
     s += 'Z'
   }
-  const d = new Date(s)
-  return Number.isNaN(d.getTime()) ? null : d
-}
-
-function formatDateInput(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  const d = parseISO(s)
+  return isValid(d) ? d : null
 }
 
 export function DateField({
@@ -65,18 +59,18 @@ export function DateField({
       type="date"
       name={name}
       className={className}
-      value={selected ? formatDateInput(selected) : ''}
+      value={selected ? formatLocalDate(selected) : ''}
       placeholder={placeholder || display}
-      min={min ? formatDateInput(min) : undefined}
-      max={max ? formatDateInput(max) : undefined}
+      min={min ? formatLocalDate(min) : undefined}
+      max={max ? formatLocalDate(max) : undefined}
       onChange={(event) => {
         const raw = event.target.value
         if (!raw) {
           onChange(name)
           return
         }
-        const date = new Date(`${raw}T00:00:00`)
-        if (Number.isNaN(date.getTime())) {
+        const date = localDateFromIsoDate(raw)
+        if (!date) {
           onChange(name)
           return
         }
@@ -110,7 +104,7 @@ export function ChangesetDateFilter({ filters, display, onChange }: ChangesetDat
   const defaultDate = getDefaultFromDate().date__gte
   const gteValue = filters.date__gte || defaultDate
   const lteValue = filters.date__lte
-  const today = startOfDay(new Date())
+  const today = startOfLocalDay()
   const gteDate = parseStoredDate(gteValue?.[0]?.value as string | undefined) ?? undefined
   const lteDate = parseStoredDate(lteValue?.[0]?.value as string | undefined) ?? undefined
 

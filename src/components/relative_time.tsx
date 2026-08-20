@@ -1,4 +1,6 @@
 import { formatDistanceToNow } from 'date-fns'
+import { formatLocalDateTime } from '../utils/datetime.ts'
+import { Tooltip } from './ui/tooltip.tsx'
 
 interface RelativeTimeProps {
   datetime: Date
@@ -6,9 +8,10 @@ interface RelativeTimeProps {
 }
 
 export function RelativeTime({ datetime, addSuffix = true }: RelativeTimeProps) {
+  const local = formatLocalDateTime(datetime)
   return (
-    <time dateTime={datetime.toISOString()} title={datetime.toString()}>
-      {formatDistanceToNow(datetime, { addSuffix })}
-    </time>
+    <Tooltip content={local} as="span">
+      <time dateTime={datetime.toISOString()}>{formatDistanceToNow(datetime, { addSuffix })}</time>
+    </Tooltip>
   )
 }

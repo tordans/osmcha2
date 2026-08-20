@@ -1,5 +1,6 @@
-import { startOfDay, sub } from 'date-fns'
+import { sub } from 'date-fns'
 import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from '../config/constants.ts'
+import { startOfLocalDay } from './datetime.ts'
 
 export function validateFilters(filters: any): boolean {
   if (!filters || typeof filters !== 'object') {
@@ -33,7 +34,7 @@ export function validateFilters(filters: any): boolean {
 }
 
 export function getDefaultFromDate(extraDays = 0): any {
-  const localMidnight = startOfDay(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
+  const localMidnight = startOfLocalDay(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
   const value = localMidnight.toISOString()
   return {
     date__gte: [{ label: value, value }],
