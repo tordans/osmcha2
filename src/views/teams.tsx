@@ -17,6 +17,7 @@ import {
   useDeleteMappingTeam,
   useMappingTeams,
 } from '../query/hooks/useMappingTeams.ts'
+import { listSearchFromFilters } from '../routing/filterSearch.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 
 type MappingTeam = {
@@ -73,11 +74,9 @@ export function MappingTeams() {
                       <div className="flex flex-wrap justify-end gap-2">
                         <RouterLink
                           to="/filters"
-                          search={{
-                            filters: {
-                              mapping_teams: [{ label: team.name, value: team.name }],
-                            },
-                          }}
+                          search={listSearchFromFilters({
+                            mapping_teams: [{ label: team.name, value: team.name }],
+                          })}
                           className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
                         >
                           <FunnelIcon className="size-4" />

@@ -25,6 +25,7 @@ import { SaveUser } from '../components/user/save_user.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useWatchlist } from '../query/hooks/useWatchlist.ts'
 import { useAddToWatchlist, useRemoveFromWatchlist } from '../query/hooks/useWatchlistMutations.ts'
+import { listSearchFromFilters } from '../routing/filterSearch.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 import { parseOsmDate } from '../utils/datetime.ts'
 
@@ -96,11 +97,9 @@ export function Watchlist() {
           <div className="flex flex-wrap justify-end gap-2">
             <RouterLink
               to="/"
-              search={{
-                filters: {
-                  users: [{ label: listed.username, value: listed.username }],
-                },
-              }}
+              search={listSearchFromFilters({
+                users: [{ label: listed.username, value: listed.username }],
+              })}
               className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
             >
               Changesets
@@ -184,11 +183,9 @@ export function Watchlist() {
           <div>
             <RouterLink
               to="/"
-              search={{
-                filters: {
-                  blacklist: [{ label: 'Yes', value: 'True' }],
-                },
-              }}
+              search={listSearchFromFilters({
+                blacklist: [{ label: 'Yes', value: 'True' }],
+              })}
               className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
             >
               <FunnelIcon className="size-4" />

@@ -7,6 +7,7 @@ import { useMap } from 'react-map-gl/maplibre'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useChangeset } from '../../query/hooks/useChangeset.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
+import { filtersFromSearch } from '../../routing/filterSearch.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { areDebugPanelsEnabled } from './areDebugPanelsEnabled.ts'
 import { JsonDump } from './JsonDump.tsx'
@@ -72,7 +73,8 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
   const changesetQuery = useChangeset(changesetId)
   const mapQuery = useChangesetMap(changesetId)
   const { token, user } = useAuth()
-  const { filters, aoi } = rootRouteApi.useSearch()
+  const search = rootRouteApi.useSearch()
+  const { aoi } = search
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
   const adiffActionCount = mapQuery.data?.adiff?.actions?.length
@@ -97,7 +99,7 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
     [show, mapLoaded, mainMap, adiffActionCount],
   )
 
-  const filtersDump = filters ?? null
+  const filtersDump = filtersFromSearch(search)
   const aoiDump = aoi ?? null
   const authDump = {
     token: token ? '[redacted]' : null,
@@ -133,7 +135,7 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
                 : undefined
             }
           />
-          <JsonDetails title="URL filters (?filters=)" data={filtersDump} />
+          <JsonDetails title="URL filters" data={filtersDump} />
           <JsonDetails title="URL AOI (?aoi=)" data={aoiDump} />
           <JsonDetails title="Selected map feature" data={selected} />
           <JsonDetails title="Auth user" data={authDump} />

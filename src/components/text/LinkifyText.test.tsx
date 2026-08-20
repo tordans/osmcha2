@@ -72,7 +72,8 @@ describe('LinkifyText', () => {
 
     const link = screen.getByRole('link', { name: '#hotosm-project-2999' })
     const href = decodeURIComponent(link.getAttribute('href') ?? '')
-    expect(href).toContain('filters')
+    expect(href).toContain('comment=')
     expect(href).toContain('#hotosm-project-2999')
+    expect(href).not.toContain('filters=')
   })
 })

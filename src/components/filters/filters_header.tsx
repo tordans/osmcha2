@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { API_URL } from '../../config/index.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
+import { stripFilterSearch } from '../../routing/filterSearch.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import { Button } from '../ui/button.tsx'
 import { Heading } from '../ui/heading.tsx'
@@ -172,7 +173,7 @@ export function FiltersHeader({
                 if (!option) return
                 void navigate({
                   to: '/filters',
-                  search: (prev) => ({ ...prev, aoi: option.value, filters: undefined }),
+                  search: (prev) => ({ ...stripFilterSearch(prev), aoi: option.value }),
                 })
               }}
             >

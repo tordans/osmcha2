@@ -16,7 +16,7 @@ export function useCreateAOI() {
       toast.success('AOI created')
       void navigate({
         to: '/',
-        search: { aoi: String(data.id), filters: undefined, page: undefined },
+        search: { aoi: String(data.id) },
         replace: true,
       })
     },

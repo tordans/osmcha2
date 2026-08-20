@@ -26,6 +26,7 @@ import {
   useAddToTrustedlist,
   useRemoveFromTrustedlist,
 } from '../query/hooks/useTrustedlistMutations.ts'
+import { listSearchFromFilters } from '../routing/filterSearch.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 
 type TrustedUserRow = {
@@ -78,11 +79,9 @@ export function TrustedUsers() {
           <div className="flex flex-wrap justify-end gap-2">
             <RouterLink
               to="/"
-              search={{
-                filters: {
-                  users: [{ label: username, value: username }],
-                },
-              }}
+              search={listSearchFromFilters({
+                users: [{ label: username, value: username }],
+              })}
               className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
             >
               Changesets

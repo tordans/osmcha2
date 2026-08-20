@@ -8,13 +8,15 @@ import { AppShell } from '../layout/AppShell.tsx'
 import { PanePresence } from '../layout/PanePresence.tsx'
 import { aoiQueryOptions } from '../query/options/aoi.ts'
 import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
+import { filtersFromSearch, migrateLegacyFilterSearch } from '../routing/filterSearch.ts'
+import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   validateSearch: osmchaSearchSchema,
   loaderDeps: ({ search }) => ({
-    filters: search.filters,
+    filters: filtersFromSearch(search),
     aoi: search.aoi,
     page: search.page,
   }),
@@ -33,6 +35,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       useAuthStore.getState().setToken(token)
       throw redirect({
         search: (prev) => ({ ...prev, token: undefined }),
+        replace: true,
+      })
+    }
+
+    const migrated = migrateLegacyFilterSearch(pathname, search)
+    if (migrated) {
+      const qs = routerSearch.stringify(migrated.search)
+      const nextSearch = qs === '' || qs.startsWith('?') ? qs : `?${qs}`
+      throw redirect({
+        href: `${migrated.pathname}${nextSearch}${hash ? (hash.startsWith('#') ? hash : `#${hash}`) : ''}`,
         replace: true,
       })
     }

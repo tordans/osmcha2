@@ -34,6 +34,7 @@ import {
   useAddToWatchlist,
   useRemoveFromWatchlist,
 } from '../../query/hooks/useWatchlistMutations.ts'
+import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { parseOsmDate } from '../../utils/datetime.ts'
 import { editorShortname } from '../list/editorShortname.ts'
@@ -164,14 +165,10 @@ export function DetailsHeader({
     if (!uid) return
     void navigate({
       to: '/',
-      search: {
-        filters: {
-          uids: [{ label: String(uid), value: String(uid) }],
-          date__gte: [{ label: '', value: '' }],
-        },
-        page: undefined,
-        aoi: undefined,
-      },
+      search: listSearchFromFilters({
+        uids: [{ label: String(uid), value: String(uid) }],
+        date__gte: [{ label: '', value: '' }],
+      }),
     })
   }
 

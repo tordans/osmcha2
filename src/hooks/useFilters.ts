@@ -1,5 +1,12 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import type { Filters } from '../components/filters/index.ts'
+import {
+  filtersFromSearch,
+  serializeFiltersToSearch,
+  stripFilterSearch,
+  withFilters,
+} from '../routing/filterSearch.ts'
 import { EMPTY_FILTERS, type OsmchaSearch } from '../routing/searchSchemas.ts'
 import { validateFilters } from '../utils/filters.ts'
 
@@ -10,8 +17,9 @@ type NavigateOptions = {
 }
 
 export function useFilters() {
-  const { filters, aoi, page } = rootRouteApi.useSearch()
+  const search = rootRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
+  const filters = filtersFromSearch(search)
 
   const updateSearch = (
     partial: Partial<OsmchaSearch> | ((prev: OsmchaSearch) => Partial<OsmchaSearch>),
@@ -19,13 +27,11 @@ export function useFilters() {
   ) => {
     void navigate({
       search: (prev) => {
-        const updates = typeof partial === 'function' ? partial(prev) : partial
-        const next: Record<string, unknown> = { ...prev }
+        const candidate = typeof partial === 'function' ? partial(prev) : { ...prev, ...partial }
+        const next: Record<string, unknown> = {}
 
-        for (const [key, value] of Object.entries(updates)) {
-          if (value === undefined) {
-            delete next[key]
-          } else {
+        for (const [key, value] of Object.entries(candidate)) {
+          if (value !== undefined) {
             next[key] = value
           }
         }
@@ -42,7 +48,7 @@ export function useFilters() {
 
       const hasFilters = newFilters && Object.keys(newFilters).length > 0
       if (hasFilters) {
-        const filtersString = JSON.stringify(newFilters)
+        const filtersString = JSON.stringify(serializeFiltersToSearch(newFilters as Filters))
         if (filtersString.length > 7000) {
           toast.error('Filter too large', {
             description: 'Save it as an AOI instead',
@@ -52,7 +58,7 @@ export function useFilters() {
       }
 
       updateSearch((prev) => ({
-        filters: hasFilters ? newFilters : undefined,
+        ...withFilters(prev, hasFilters ? (newFilters as Filters) : undefined),
         page: 1,
         aoi: hasFilters ? prev.aoi : undefined,
       }))
@@ -61,28 +67,28 @@ export function useFilters() {
       toast.error('Invalid filters', {
         description: error instanceof Error ? error.message : 'Failed to apply filters',
       })
-      updateSearch({
-        filters: undefined,
+      updateSearch((prev) => ({
+        ...stripFilterSearch(prev),
         aoi: undefined,
         page: undefined,
-      })
+      }))
     }
   }
 
   function setAoiId(nextAoiId: string | null) {
-    updateSearch({
+    updateSearch((prev) => ({
+      ...stripFilterSearch(prev),
       aoi: nextAoiId ?? undefined,
-      filters: undefined,
       page: 1,
-    })
+    }))
   }
 
   function clearFilters() {
-    updateSearch({
-      filters: undefined,
+    updateSearch((prev) => ({
+      ...stripFilterSearch(prev),
       aoi: undefined,
       page: undefined,
-    })
+    }))
   }
 
   function setPage(nextPage: number) {
@@ -90,9 +96,9 @@ export function useFilters() {
   }
 
   return {
-    filters: filters ?? EMPTY_FILTERS,
-    aoiId: aoi ?? null,
-    page,
+    filters: Object.keys(filters).length > 0 ? filters : EMPTY_FILTERS,
+    aoiId: search.aoi ?? null,
+    page: search.page,
     setFilters,
     setAoiId,
     clearFilters,

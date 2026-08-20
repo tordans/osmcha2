@@ -1,3 +1,5 @@
+import { listSearchFromFilters } from '../../routing/filterSearch.ts'
+
 /** Linkify mention plugin href is `/username` (no `@`). */
 export function osmUserHrefFromMention(href: string) {
   const username = href.replace(/^\/+/, '')
@@ -5,9 +7,7 @@ export function osmUserHrefFromMention(href: string) {
 }
 
 export function hashtagCommentSearch(hashtag: string) {
-  return {
-    filters: {
-      comment: [{ label: hashtag, value: hashtag }],
-    },
-  }
+  return listSearchFromFilters({
+    comment: [{ label: hashtag, value: hashtag }],
+  })
 }

@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
+import { withFilters } from '../routing/filterSearch.ts'
 import { applyFilterChange, deserializeFiltersFromObject } from '../utils/filters.ts'
 
 const NEW_AOI = 'unnamed *'
@@ -49,11 +50,7 @@ export function Filters() {
     const hasFilters = localFilters && Object.keys(localFilters).length > 0
     void navigate({
       to: '/',
-      search: {
-        filters: hasFilters ? localFilters : undefined,
-        aoi: aoiId ?? undefined,
-        page: undefined,
-      },
+      search: withFilters({ aoi: aoiId ?? undefined }, hasFilters ? localFilters : undefined),
     })
   }
 

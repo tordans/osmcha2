@@ -12,9 +12,7 @@ describe('osmUserHrefFromMention', () => {
 describe('hashtagCommentSearch', () => {
   test('filters the changeset list by the hashtag comment text', () => {
     expect(hashtagCommentSearch('#hotosm-project-2999')).toEqual({
-      filters: {
-        comment: [{ label: '#hotosm-project-2999', value: '#hotosm-project-2999' }],
-      },
+      comment: '#hotosm-project-2999',
     })
   })
 })

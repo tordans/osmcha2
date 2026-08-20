@@ -1,26 +1,22 @@
 import { z } from 'zod'
+import type { Filters } from '../components/filters/index.ts'
 
-const filtersSchema = z
-  .record(z.string(), z.unknown())
-  .optional()
-  .transform((value) => {
-    if (!value || Object.keys(value).length === 0) return undefined
-    return value
+export const osmchaSearchSchema = z
+  .object({
+    aoi: z.string().optional(),
+    page: z.coerce.number().int().positive().default(1).catch(1),
+    token: z.string().optional(),
+    map: z.string().optional(),
+    /** Legacy blob `?filters={…}` — redirected to top-level filter params. */
+    filters: z.unknown().optional(),
   })
-  .catch(undefined)
-
-export const osmchaSearchSchema = z.object({
-  filters: filtersSchema,
-  aoi: z.string().optional(),
-  token: z.string().optional(),
-  page: z.coerce.number().int().positive().default(1).catch(1),
-})
+  .catchall(z.unknown())
 
 export type OsmchaSearch = z.infer<typeof osmchaSearchSchema>
 
 /** Stable empty object for “no filters in the URL” — never allocate `{}` during render. */
-export const EMPTY_FILTERS: NonNullable<OsmchaSearch['filters']> = {}
+export const EMPTY_FILTERS: Filters = {}
 
-export const searchParamsRegistry = ['filters', 'aoi', 'page', 'token', 'map'] as const
+export const searchParamsRegistry = ['aoi', 'page', 'token', 'map'] as const
 
 export type SearchParamKey = (typeof searchParamsRegistry)[number]
