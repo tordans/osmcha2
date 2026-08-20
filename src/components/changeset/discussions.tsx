@@ -63,7 +63,7 @@ function Discussions({
               <p className="mt-1 border-l-2 border-l-zinc-200 py-1 pl-2 break-words">
                 <LinkifyText text={comment.text} nl2br />
               </p>
-              <DebugDataHelperDialog data={comment} title="Comment" />
+              <DebugDataHelperDialog data={comment} title="this comment" />
             </div>
           )
         })

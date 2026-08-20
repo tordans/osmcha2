@@ -74,7 +74,7 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
       </RouterLink>
       <DebugDataHelperDialog
         data={data ?? { id: changesetId, properties }}
-        title="OSMCha Changeset from OSMCha Changeset List"
+        title="this changeset from the list"
       />
     </li>
   )

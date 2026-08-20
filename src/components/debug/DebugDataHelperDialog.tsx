@@ -1,7 +1,8 @@
-import { MagnifyingGlassIcon } from '@heroicons/react/16/solid'
+import { BugAntIcon } from '@heroicons/react/16/solid'
 import { useState } from 'react'
 import { Button } from '../ui/button.tsx'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '../ui/dialog.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { areDebugPanelsEnabled } from './areDebugPanelsEnabled.ts'
 import { JsonDump } from './JsonDump.tsx'
 
@@ -17,24 +18,22 @@ export function DebugDataHelperDialog(props: Props) {
 
 function DebugDataHelperDialogActive({ title, data }: Props) {
   const [isOpen, setIsOpen] = useState(false)
+  const inspectLabel = `Inspect ${title}`
 
   return (
     <>
-      <div className="pointer-events-none absolute right-1 bottom-1 z-0 print:hidden">
-        <div className="rounded-full border border-white/70 bg-pink-300 p-0.5 text-xs shadow-xl">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault()
-              event.stopPropagation()
-              setIsOpen(true)
-            }}
-            className="pointer-events-auto relative flex size-5 items-center justify-center rounded-full bg-white/50 hover:bg-white"
-            aria-label={`Inspect ${title}`}
-          >
-            <MagnifyingGlassIcon className="size-3" />
-          </button>
-        </div>
+      <div className="pointer-events-none absolute right-0.5 bottom-0.5 z-0 print:hidden">
+        <Tooltip
+          content={inspectLabel}
+          className="pointer-events-auto size-4 justify-center rounded-full bg-pink-300 text-pink-950 shadow-sm hover:bg-pink-200"
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setIsOpen(true)
+          }}
+        >
+          <BugAntIcon className="size-2.5" />
+        </Tooltip>
       </div>
       <Dialog open={isOpen} onClose={() => setIsOpen(false)} size="4xl">
         <DialogTitle>{title}</DialogTitle>
