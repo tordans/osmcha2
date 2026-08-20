@@ -4,7 +4,7 @@ import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
-import react from '@vitejs/plugin-react'
+import viteReact from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
 
@@ -74,11 +74,7 @@ export default defineConfig(({ mode }) => {
       generatedRouteTree: './src/routeTree.gen.ts',
     }),
     tailwindcss(),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
-      },
-    }),
+    viteReact({ compiler: true }),
     githubPagesSpaFallback(),
     rejectMissingHashedFonts(),
   ]
@@ -124,10 +120,12 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@osmcha/osm-adiff-parser'],
-      esbuildOptions: {
-        alias: {
-          stream: emptyNodeStream,
-          'node:stream': emptyNodeStream,
+      rolldownOptions: {
+        resolve: {
+          alias: {
+            stream: emptyNodeStream,
+            'node:stream': emptyNodeStream,
+          },
         },
       },
     },

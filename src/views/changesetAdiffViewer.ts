@@ -1,5 +1,5 @@
 import { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
-import { useRef } from 'react'
+import { useMemo } from 'react'
 
 export const CHANGESET_MAP_ID = 'mainMap'
 export const CHANGESET_SOURCE_ID = 'changeset'
@@ -44,28 +44,11 @@ export function useChangesetAdiffViewer(
   showElements: string[],
   showActions: string[],
 ): ChangesetAdiffViewer | null {
-  const viewerRef = useRef<ChangesetAdiffViewer | null>(null)
-  const adiffRef = useRef<object | null | undefined>(undefined)
-
-  if (!adiff) {
-    viewerRef.current = null
-    adiffRef.current = undefined
-    return null
-  }
-
-  if (viewerRef.current == null || adiffRef.current !== adiff) {
-    adiffRef.current = adiff
-    viewerRef.current = new MapLibreAugmentedDiffViewer(
+  return useMemo(() => {
+    if (!adiff) return null
+    return new MapLibreAugmentedDiffViewer(
       { ...adiff, note: OSM_ADIFF_ATTRIBUTION },
       { showElements, showActions },
     ) as ChangesetAdiffViewer
-  } else {
-    viewerRef.current.options = {
-      ...viewerRef.current.options,
-      showElements,
-      showActions,
-    }
-  }
-
-  return viewerRef.current
+  }, [adiff, showElements, showActions])
 }

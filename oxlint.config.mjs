@@ -1,7 +1,7 @@
 import { defineConfig } from 'oxlint'
-import reactHooksJs from 'oxlint-config-react-hooks-js/configs/recommended-latest.json' with { type: 'json' }
 
-// FMC default — shared tilda-geo / trassenscout base.
+// FMC default — shared tilda-geo / trassenscout base (no app-specific jsPlugins).
+// React Compiler: native `react` plugin (correctness on by default) + unsupported-syntax.
 // ignorePatterns: keep in sync with oxfmt.config.mjs.
 export default defineConfig({
   plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'react'],
@@ -19,6 +19,18 @@ export default defineConfig({
   ],
   rules: {
     'typescript/switch-exhaustiveness-check': 'error',
+    // Restriction category — keep ESLint recommended coverage (off by default in oxlint)
+    'react/unsupported-syntax': 'error',
+    // Allow bare `_` (oxlint default ignores `_foo` but not `_`); object config clears defaults
+    'eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      },
+    ],
     // Type-aware rules that are noisy in FMC apps — keep off unless you tighten deliberately.
     // 'typescript/no-floating-promises': 'off',
     // 'typescript/no-duplicate-type-constituents': 'off',
@@ -39,14 +51,6 @@ export default defineConfig({
       rules: {
         'typescript/no-non-null-assertion': 'off',
         'react/rules-of-hooks': 'off',
-      },
-    },
-    {
-      files: ['**/*.tsx'],
-      jsPlugins: [{ name: 'react-hooks-js', specifier: 'eslint-plugin-react-hooks' }],
-      rules: {
-        ...reactHooksJs.rules,
-        'react/react-compiler': 'error',
       },
     },
   ],
