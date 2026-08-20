@@ -5,7 +5,7 @@ export function NumberOfComments({ count }: { count?: number }) {
   if (!count) return null
 
   return (
-    <Badge aria-label={`${count} comments`} className="flex flex-none items-center gap-1">
+    <Badge aria-label={`${count} comments`} className="h-6 flex-none">
       <ChatBubbleLeftIcon className="size-4" /> {count}
     </Badge>
   )

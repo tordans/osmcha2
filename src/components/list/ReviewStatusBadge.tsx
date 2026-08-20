@@ -1,5 +1,6 @@
 import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/16/solid'
 import { Badge } from '../ui/badge.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 type NamedTag = { id?: number; name: string }
 
@@ -30,16 +31,18 @@ export function ReviewStatusBadge({
 
   const reviewer = checkUser || 'Unknown user'
   const verdict = harmful ? 'harmful' : 'good'
+  const label = `Reviewed as ${verdict} by ${reviewer}`
 
   return (
-    <Badge
-      color={reviewBadgeColor({ resolved, harmful })}
-      className="flex-none"
-      title={`Reviewed as ${verdict} by ${reviewer}`}
-      aria-label={`Reviewed as ${verdict} by ${reviewer}`}
-    >
-      {harmful ? <HandThumbDownIcon className="size-4" /> : <HandThumbUpIcon className="size-4" />}
-      <span className="hidden @[22rem]/list:inline">by {checkUser || <i>Unknown user</i>}</span>
-    </Badge>
+    <Tooltip content={label} as="span" className="flex-none @[22rem]/list:pointer-events-none">
+      <Badge color={reviewBadgeColor({ resolved, harmful })} className="h-6" aria-label={label}>
+        {harmful ? (
+          <HandThumbDownIcon className="size-4" />
+        ) : (
+          <HandThumbUpIcon className="size-4" />
+        )}
+        <span className="hidden @[22rem]/list:inline">by {checkUser || <i>Unknown user</i>}</span>
+      </Badge>
+    </Tooltip>
   )
 }
