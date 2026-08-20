@@ -68,70 +68,69 @@ export function Header({
   const effectiveOrderBy = aoiId ? aoiOrderBy : filters?.order_by?.[0]?.value
   const selected = options.find((option) => option.value === effectiveOrderBy) ?? null
 
+  const changesetCount = numberWithCommas(currentPage?.count ?? 0)
+  const showFilterBar = signedIn || Boolean(aoiId)
+
   return (
     <div>
-      {aoiId && (
+      {showFilterBar ? (
         <div className="relative flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-2 py-1.5">
-          <p className="min-w-0 truncate px-1 font-semibold">Saved Filter: {aoiName || aoiId}</p>
-          <RouterLink
-            to="/filters"
-            search={{ ...search, aoi: aoiId, filters: undefined, page: undefined }}
-            data-panel-origin="filters"
-            aria-label={`Edit saved filter ${aoiName || aoiId}`}
-            className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950"
-          >
-            <PencilSquareIcon className="size-4" />
-            Edit
-          </RouterLink>
+          <div className="min-w-0 flex-1">
+            <FiltersMenu />
+          </div>
+          {aoiId ? (
+            <RouterLink
+              to="/filters"
+              search={{ ...search, aoi: aoiId, filters: undefined, page: undefined }}
+              data-panel-origin="filters"
+              aria-label={`Edit saved filter ${aoiName || aoiId}`}
+              className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950"
+            >
+              <PencilSquareIcon className="size-4" />
+              Edit
+            </RouterLink>
+          ) : null}
           <DebugDataHelperDialog data={aoi} title="AOI Object" />
         </div>
-      )}
-      <header className="flex h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-1">
-        {signedIn ? (
-          <FiltersMenu />
-        ) : (
-          <span
-            aria-disabled="true"
-            title="Sign in to filter changesets"
-            data-panel-origin="filters"
-            className="relative isolate inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 opacity-50 select-none"
-          >
-            Filters
-          </span>
-        )}
-        <OrderMenu
-          selected={selected}
-          options={options}
-          disabled={!signedIn || !!aoiId}
-          title={
-            !signedIn
-              ? 'Sign in to sort the changeset list'
-              : aoiId
-                ? 'Sort order is determined by the active saved filter'
-                : undefined
-          }
-          onChange={(option) => handleFilterOrderBy([option])}
-        />
-      </header>
+      ) : null}
       <header
         className={clsx(
           'flex h-11 items-center justify-between gap-2 border-b border-zinc-200 px-1',
           diff > 0 ? 'bg-zinc-200' : 'bg-zinc-50',
         )}
       >
-        <span className="px-2 text-sm font-semibold text-zinc-600">
-          {numberWithCommas(currentPage?.count ?? 0)} changesets.
-        </span>
-        <Button
-          outline
-          className="h-9 min-h-9 items-center"
-          onClick={reloadChangesetsPageData}
-          disabled={!signedIn || diffLoading}
-          aria-label="Refresh"
+        <span
+          aria-label={`${changesetCount} changesets`}
+          className="@container min-w-0 flex-1 truncate px-2 text-sm font-semibold text-zinc-600"
         >
-          <ArrowPathIcon data-slot="icon" className={clsx(diffLoading && 'animate-spin')} />
-          {diff > 0 ? `${diff} new` : null}
-        </Button>
+          {changesetCount}
+          <span className="hidden @[10rem]:inline"> changesets</span>
+        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            outline
+            className={clsx('h-9 min-h-9 items-center', diff <= 0 && 'w-9 min-w-9 px-0 sm:px-0')}
+            onClick={reloadChangesetsPageData}
+            disabled={!signedIn || diffLoading}
+            aria-label="Refresh"
+          >
+            <ArrowPathIcon data-slot="icon" className={clsx(diffLoading && 'animate-spin')} />
+            {diff > 0 ? `${diff} new` : null}
+          </Button>
+          <OrderMenu
+            selected={selected}
+            options={options}
+            disabled={!signedIn || !!aoiId}
+            title={
+              !signedIn
+                ? 'Sign in to sort the changeset list'
+                : aoiId
+                  ? 'Sort order is determined by the active saved filter'
+                  : undefined
+            }
+            onChange={(option) => handleFilterOrderBy([option])}
+          />
+        </div>
       </header>
     </div>
   )

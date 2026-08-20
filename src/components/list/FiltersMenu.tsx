@@ -1,29 +1,25 @@
-import * as Headless from '@headlessui/react'
-import { CheckIcon, ChevronDownIcon, PencilSquareIcon, PlusIcon } from '@heroicons/react/16/solid'
-import { getRouteApi, useMatch } from '@tanstack/react-router'
+import { CheckIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/16/solid'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { motion } from 'motion/react'
+import { useAuth } from '../../hooks/useAuth.ts'
 import { useFilters } from '../../hooks/useFilters.ts'
-import { useAllAOIs } from '../../query/hooks/useAOI.ts'
+import { useAOI, useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import {
   chromeDropdownMenuClassName,
   Dropdown,
   DropdownButton,
   DropdownDivider,
+  DropdownItem,
+  DropdownLabel,
   DropdownMenu,
 } from '../ui/dropdown.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
 
-const filtersButtonClassName = clsx(
-  'relative isolate inline-flex h-9 cursor-pointer touch-manipulation items-center justify-center rounded-lg border border-zinc-950/10 px-[calc(--spacing(3)-1px)] text-sm/6 font-semibold text-zinc-950 select-none',
-  'data-hover:bg-zinc-950/2.5',
-)
-
-const filterMenuItemClassName = clsx(
-  'flex min-h-11 w-full min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-base/6 text-zinc-950 select-none sm:min-h-9 sm:text-sm/6',
-  'focus:outline-hidden data-focus:bg-blue-500 data-focus:text-white',
+const compactActionClassName = clsx(
+  'relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-semibold text-zinc-950 select-none',
+  'hover:bg-zinc-950/5',
 )
 
 type AoiFeature = {
@@ -45,13 +41,28 @@ function filterName(aoi: AoiFeature) {
   return aoi.properties?.name || `Filter ${aoi.id}`
 }
 
+function FilterLabel({ children }: { children: string }) {
+  return (
+    <p className="min-w-0 truncate px-1 font-semibold" title={children}>
+      {children}
+    </p>
+  )
+}
+
 export function FiltersMenu() {
+  const { token } = useAuth()
+  const signedIn = Boolean(token)
   const search = rootRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
-  const filtersOpen = Boolean(useMatch({ from: '/filters', shouldThrow: false }))
   const { aoiId } = useFilters()
-  const { data } = useAllAOIs()
+  const { data: aoi } = useAOI(aoiId)
+  const { data, isPending } = useAllAOIs()
   const aois = aoiList(data)
+  const selected = aois.find((item) => String(item.id) === aoiId)
+  const selectedName = selected
+    ? filterName(selected)
+    : ((aoi?.properties?.name as string | undefined) ?? aoiId)
+  const triggerLabel = aoiId && selectedName ? `Filter: ${selectedName}` : 'Select filter'
 
   const goNew = () => {
     void navigate({
@@ -67,83 +78,64 @@ export function FiltersMenu() {
     })
   }
 
-  const goEdit = (id: string) => {
-    void navigate({
-      to: '/filters',
-      search: { ...search, aoi: id, filters: undefined, page: undefined },
-    })
-  }
-
-  if (aois.length === 0) {
+  if (signedIn && aois.length > 0) {
     return (
-      <motion.div whileTap={{ scale: 0.97 }} className="shrink-0">
-        <RouterLink
-          to={filtersOpen ? '/' : '/filters'}
-          search={search}
+      <Dropdown backdrop className="min-w-0 flex-1">
+        <DropdownButton
+          plain
           data-panel-origin="filters"
-          className={filtersButtonClassName}
+          aria-label={triggerLabel}
+          title={triggerLabel}
+          className="group relative h-8 min-h-8 w-full min-w-0 justify-start px-1 font-semibold data-open:z-110 sm:min-h-8"
         >
-          Filters
-        </RouterLink>
-      </motion.div>
+          <span className="min-w-0 truncate">{triggerLabel}</span>
+          <ChevronDownIcon
+            data-slot="icon"
+            className="shrink-0 transition duration-200 group-data-open:rotate-180"
+          />
+        </DropdownButton>
+        <DropdownMenu anchor="bottom start" className={chromeDropdownMenuClassName}>
+          <DropdownItem onClick={goNew} className="cursor-pointer">
+            <PlusIcon data-slot="icon" />
+            <DropdownLabel>New filter</DropdownLabel>
+          </DropdownItem>
+          <DropdownDivider />
+          {aois.map((item) => {
+            const id = String(item.id)
+            const name = filterName(item)
+            const current = aoiId === id
+
+            return (
+              <DropdownItem key={id} onClick={() => goSelect(id)} className="cursor-pointer">
+                <CheckIcon data-slot="icon" className={clsx(!current && 'invisible')} />
+                <DropdownLabel>{name}</DropdownLabel>
+              </DropdownItem>
+            )
+          })}
+        </DropdownMenu>
+      </Dropdown>
     )
   }
 
-  return (
-    <Dropdown backdrop className="shrink-0">
-      <DropdownButton
-        outline
-        data-panel-origin="filters"
-        className="group relative h-9 min-h-9 data-open:z-[110]"
-      >
-        Filters
-        <ChevronDownIcon
-          data-slot="icon"
-          className="transition duration-200 group-data-open:rotate-180"
-        />
-      </DropdownButton>
-      <DropdownMenu anchor="bottom start" className={chromeDropdownMenuClassName}>
-        <Headless.MenuItem>
-          <button type="button" onClick={goNew} className={filterMenuItemClassName}>
-            <PlusIcon className="size-4 shrink-0" />
-            New filter
-          </button>
-        </Headless.MenuItem>
-        <DropdownDivider />
-        {aois.map((aoi) => {
-          const id = String(aoi.id)
-          const name = filterName(aoi)
-          const current = aoiId === id
+  if (aoiId && selectedName) {
+    return <FilterLabel>{`Filter: ${selectedName}`}</FilterLabel>
+  }
 
-          return (
-            <div key={id} className="flex w-full min-w-0 items-stretch">
-              <Headless.MenuItem>
-                <button
-                  type="button"
-                  onClick={() => goSelect(id)}
-                  className={clsx(filterMenuItemClassName, 'rounded-r-none')}
-                >
-                  <CheckIcon className={clsx('size-4 shrink-0', !current && 'invisible')} />
-                  <span className="min-w-0 truncate">{name}</span>
-                </button>
-              </Headless.MenuItem>
-              <Headless.MenuItem>
-                <button
-                  type="button"
-                  aria-label={`Edit ${name}`}
-                  onClick={() => goEdit(id)}
-                  className={clsx(
-                    'relative z-0 -ml-px flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-r-lg border-l border-zinc-950/10 text-zinc-500 sm:size-9',
-                    'focus:outline-hidden data-focus:z-10 data-focus:border-blue-500 data-focus:bg-blue-500 data-focus:text-white',
-                  )}
-                >
-                  <PencilSquareIcon className="size-5 sm:size-4" />
-                </button>
-              </Headless.MenuItem>
-            </div>
-          )
-        })}
-      </DropdownMenu>
-    </Dropdown>
+  if (!signedIn) return null
+
+  if (isPending) {
+    return <FilterLabel>Select filter</FilterLabel>
+  }
+
+  return (
+    <RouterLink
+      to="/filters"
+      search={{ ...search, aoi: undefined, filters: undefined, page: undefined }}
+      data-panel-origin="filters"
+      className={compactActionClassName}
+    >
+      <PlusIcon className="size-4" />
+      Create Filter
+    </RouterLink>
   )
 }
