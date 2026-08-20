@@ -24,7 +24,6 @@ import {
   Dropdown,
   DropdownButton,
   DropdownDivider,
-  DropdownHeading,
   DropdownItem,
   DropdownLabel,
   DropdownMenu,
@@ -151,8 +150,8 @@ function OrderMenu({
   title?: string
   onChange: (option: OrderOption) => void
 }) {
-  const iconButtonClassName = 'relative z-[110] h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0'
-  const ariaLabel = selected ? `Order by: ${selected.label}` : 'Order by'
+  const iconButtonClassName = 'relative h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0 data-open:z-[110]'
+  const ariaLabel = selected ? `Order by: ${orderItemLabel(selected.value)}` : 'Order by'
 
   if (disabled) {
     return (
@@ -170,21 +169,20 @@ function OrderMenu({
         <BarsArrowDownIcon data-slot="icon" />
       </DropdownButton>
       <DropdownMenu anchor="bottom end" className={chromeDropdownMenuClassName}>
-        {groupOrderOptions(options).map((group, index) => (
-          <Fragment key={group.heading}>
-            {index > 0 ? <DropdownDivider /> : null}
-            <DropdownSection>
-              <DropdownHeading>{group.heading}</DropdownHeading>
-              {group.options.map((option) => {
-                const Icon = orderFieldIcon(option.value)
-                return (
+        {groupOrderOptions(options).map((group, index) => {
+          const Icon = orderFieldIcon(group.field)
+          return (
+            <Fragment key={group.field}>
+              {index > 0 ? <DropdownDivider /> : null}
+              <DropdownSection>
+                {group.options.map((option) => (
                   <DropdownItem
                     key={option.value}
                     onClick={() => onChange(option)}
                     className="cursor-pointer"
                   >
                     <Icon data-slot="icon" />
-                    <DropdownLabel>{orderItemLabel(option)}</DropdownLabel>
+                    <DropdownLabel>{orderItemLabel(option.value)}</DropdownLabel>
                     <CheckIcon
                       className={clsx(
                         'col-start-5 row-start-1 size-4',
@@ -192,11 +190,11 @@ function OrderMenu({
                       )}
                     />
                   </DropdownItem>
-                )
-              })}
-            </DropdownSection>
-          </Fragment>
-        ))}
+                ))}
+              </DropdownSection>
+            </Fragment>
+          )
+        })}
       </DropdownMenu>
     </Dropdown>
   )
@@ -213,6 +211,15 @@ const orderFieldIcons: Record<string, OrderFieldIcon> = {
   comments_count: ChatBubbleLeftIcon,
 }
 
+const orderFieldHeadings: Record<string, string> = {
+  date: 'Date',
+  check_date: 'Check date',
+  create: 'Objects created',
+  modify: 'Objects modified',
+  delete: 'Objects deleted',
+  comments_count: 'Comments',
+}
+
 function orderFieldKey(value: string) {
   return value.startsWith('-') ? value.slice(1) : value
 }
@@ -221,18 +228,38 @@ function orderFieldIcon(value: string): OrderFieldIcon {
   return orderFieldIcons[orderFieldKey(value)] ?? BarsArrowDownIcon
 }
 
-function orderItemLabel(option: OrderOption) {
-  return option.label
-    .replace(/^(Ascending|Descending)\s+/i, '')
-    .replace(/^object created$/i, 'Objects created')
-    .replace(/^object modified$/i, 'Objects modified')
-    .replace(/^object deleted$/i, 'Objects deleted')
-    .replace(/^number of comments$/i, 'Comments')
+function orderFieldHeading(value: string) {
+  const field = orderFieldKey(value)
+  return orderFieldHeadings[field] ?? field
+}
+
+function orderDirectionLabel(value: string) {
+  const newestOrMostFirst = value.startsWith('-')
+  const field = orderFieldKey(value)
+  if (field === 'date' || field === 'check_date') {
+    return newestOrMostFirst ? 'Newest first' : 'Oldest first'
+  }
+  return newestOrMostFirst ? 'Most first' : 'Fewest first'
+}
+
+function orderItemLabel(value: string) {
+  return `${orderFieldHeading(value)}: ${orderDirectionLabel(value)}`
 }
 
 function groupOrderOptions(options: OrderOption[]) {
-  return [
-    { heading: 'Ascending', options: options.filter((option) => !option.value.startsWith('-')) },
-    { heading: 'Descending', options: options.filter((option) => option.value.startsWith('-')) },
-  ].filter((group) => group.options.length > 0)
+  const byValue = new Map(options.map((option) => [option.value, option]))
+  const fields: string[] = []
+
+  for (const option of options) {
+    const field = orderFieldKey(option.value)
+    if (!fields.includes(field)) fields.push(field)
+  }
+
+  return fields.flatMap((field) => {
+    const groupOptions = [byValue.get(`-${field}`), byValue.get(field)].filter(
+      (option): option is OrderOption => option != null,
+    )
+    if (groupOptions.length === 0) return []
+    return [{ field, options: groupOptions }]
+  })
 }

@@ -113,7 +113,7 @@ function NavigationMenu() {
         outline
         aria-label="Menu"
         data-panel-origin="menu"
-        className="group relative z-[110] h-9 min-h-9"
+        className="group relative h-9 min-h-9 data-open:z-[110]"
       >
         Menu
         <ChevronDownIcon

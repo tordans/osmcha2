@@ -94,7 +94,7 @@ export function FiltersMenu() {
       <DropdownButton
         outline
         data-panel-origin="filters"
-        className="group relative z-[110] h-9 min-h-9"
+        className="group relative h-9 min-h-9 data-open:z-[110]"
       >
         Filters
         <ChevronDownIcon

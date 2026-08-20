@@ -48,7 +48,7 @@ export function DropdownMenu({
       className={clsx(
         // Anchor positioning
         '[--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] data-[anchor~=end]:[--anchor-offset:6px] data-[anchor~=start]:[--anchor-offset:-6px] sm:data-[anchor~=end]:[--anchor-offset:4px] sm:data-[anchor~=start]:[--anchor-offset:-4px]',
-        // Above review pane (z-30) and list debug chips so the menu is not hidden or see-through
+        // Above review pane (z-30) / debug chips; below open chrome triggers (data-open:z-[110])
         'isolate z-[100] origin-top rounded-xl p-1',
         className ?? 'w-max',
         // Invisible border that is only visible in `forced-colors` mode for accessibility purposes

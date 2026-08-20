@@ -27,7 +27,7 @@ export function Title({ date, editor, commentsCount }: TitleProps) {
       <span className="shrink-0 whitespace-nowrap">
         <RelativeTime datetime={parseChangesetDate(date)} />
       </span>
-      <div className="flex min-w-[min(100%,10rem)] flex-1 items-start justify-end gap-2">
+      <div className="flex min-w-0 flex-1 items-start justify-end gap-2">
         <span className="line-clamp-2 min-w-0 text-right wrap-anywhere">
           {editorShortname(editor)}
         </span>
