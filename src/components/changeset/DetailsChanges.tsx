@@ -1,5 +1,5 @@
 import * as Headless from '@headlessui/react'
-import { ChevronDownIcon, EyeIcon } from '@heroicons/react/16/solid'
+import { ChevronRightIcon, EyeIcon } from '@heroicons/react/16/solid'
 import {
   ExclamationTriangleIcon,
   PencilIcon,
@@ -7,6 +7,7 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/solid'
 import clsx from 'clsx'
+import { motion } from 'motion/react'
 import { Fragment } from 'react'
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
@@ -39,6 +40,8 @@ const ACTION_ICON = {
   modify: PencilIcon,
   delete: TrashIcon,
 } as const
+
+const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 
 type ReviewedFeature = { id?: string; user?: string }
 
@@ -155,33 +158,52 @@ function TagMutationGroup({
   return (
     <li className="px-2 py-2">
       <Headless.Disclosure defaultOpen={containsSelected}>
-        <Headless.DisclosureButton
-          aria-label={`${changes.length} elements with the same tag changes`}
-          className="group flex min-h-11 w-full cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none hover:bg-zinc-50 active:bg-zinc-950/5"
-        >
-          <ChevronDownIcon className="size-4 flex-none transition group-data-open:rotate-180" />
-          <span>Same tag changes</span>
-          <Badge>{changes.length}</Badge>
-        </Headless.DisclosureButton>
-        <div className="mt-1 border-t font-mono">
-          <TagRows rows={mutations} emptyLabel="No tag changes" />
-        </div>
-        <Headless.DisclosurePanel>
-          <ul>
-            {changes.map((change) => (
-              <ElementChangeRow
-                key={`${change.type}/${change.id}`}
-                change={change}
-                changesetId={changesetId}
-                reviewedFeatures={reviewedFeatures}
-                selected={selected}
-                setHighlight={setHighlight}
-                zoomToAndSelect={zoomToAndSelect}
-                showTags={false}
-              />
-            ))}
-          </ul>
-        </Headless.DisclosurePanel>
+        {({ open }) => (
+          <>
+            <Headless.DisclosureButton
+              aria-label={`${changes.length} elements with the same tag changes`}
+              className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none hover:bg-zinc-50 active:bg-zinc-950/5"
+            >
+              <motion.span
+                className="inline-flex origin-center"
+                initial={false}
+                animate={{ rotate: open ? 90 : 0 }}
+                transition={disclosureTransition}
+              >
+                <ChevronRightIcon className="size-4 flex-none" />
+              </motion.span>
+              <span>Same tag changes</span>
+              <Badge>{changes.length}</Badge>
+            </Headless.DisclosureButton>
+            <div className="mt-1 border-t font-mono">
+              <TagRows rows={mutations} emptyLabel="No tag changes" />
+            </div>
+            <Headless.DisclosurePanel static>
+              <motion.div
+                initial={false}
+                animate={open ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
+                transition={disclosureTransition}
+                className="overflow-hidden"
+                inert={!open}
+              >
+                <ul>
+                  {changes.map((change) => (
+                    <ElementChangeRow
+                      key={`${change.type}/${change.id}`}
+                      change={change}
+                      changesetId={changesetId}
+                      reviewedFeatures={reviewedFeatures}
+                      selected={selected}
+                      setHighlight={setHighlight}
+                      zoomToAndSelect={zoomToAndSelect}
+                      showTags={false}
+                    />
+                  ))}
+                </ul>
+              </motion.div>
+            </Headless.DisclosurePanel>
+          </>
+        )}
       </Headless.Disclosure>
     </li>
   )

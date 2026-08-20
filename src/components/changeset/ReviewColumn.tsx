@@ -2,12 +2,14 @@ import * as Headless from '@headlessui/react'
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
+import { AnimatePresence, motion } from 'motion/react'
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import {
   bindingKey,
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
+import { paneCardClassName } from '../../layout/paneCard.ts'
 import { Badge } from '../ui/badge.tsx'
 import type { AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
@@ -109,7 +111,8 @@ export function ReviewColumn({
         'z-30 flex min-h-0 flex-col overflow-hidden bg-white',
         'absolute inset-x-0 bottom-0 rounded-t-xl shadow-lg',
         expanded ? 'h-[80%]' : 'h-auto',
-        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-(--pane-review-width,24rem) min-[56rem]:shrink-0 min-[56rem]:rounded-lg min-[56rem]:shadow-sm min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5',
+        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-(--pane-review-width,24rem) min-[56rem]:shrink-0',
+        paneCardClassName,
       )}
     >
       <button
@@ -176,26 +179,43 @@ export function ReviewColumn({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {changesActive && (
-            <DetailsChanges
-              changesetId={changesetId}
-              adiff={osmInfo?.adiff}
-              features={properties.features ?? []}
-              reviewedFeatures={properties.reviewed_features ?? []}
-              reasons={properties.reasons ?? []}
-              selected={selected}
-              setHighlight={setHighlight}
-              zoomToAndSelect={zoomToAndSelect}
-            />
-          )}
-          {discussionActive && (
-            <Discussions
-              changesetAuthor={properties.user ?? ''}
-              discussions={discussions}
-              changesetIsHarmful={Boolean(properties.harmful)}
-              changesetId={changesetId}
-            />
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            {changesActive ? (
+              <motion.div
+                key="changes"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <DetailsChanges
+                  changesetId={changesetId}
+                  adiff={osmInfo?.adiff}
+                  features={properties.features ?? []}
+                  reviewedFeatures={properties.reviewed_features ?? []}
+                  reasons={properties.reasons ?? []}
+                  selected={selected}
+                  setHighlight={setHighlight}
+                  zoomToAndSelect={zoomToAndSelect}
+                />
+              </motion.div>
+            ) : discussionActive ? (
+              <motion.div
+                key="discussion"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Discussions
+                  changesetAuthor={properties.user ?? ''}
+                  discussions={discussions}
+                  changesetIsHarmful={Boolean(properties.harmful)}
+                  changesetId={changesetId}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       </div>
     </section>
