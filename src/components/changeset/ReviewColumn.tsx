@@ -7,7 +7,6 @@ import {
   bindingKey,
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
-  CHANGESET_DETAILS_USER,
 } from '../../config/bindings.ts'
 import { Badge } from '../ui/badge.tsx'
 import type { AdiffAction } from './changesetElements.ts'
@@ -54,7 +53,6 @@ export function ReviewColumn({
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const [expanded, setExpanded] = useState(false)
-  const [userOpen, setUserOpen] = useState(false)
   const dragStartY = useRef<number | null>(null)
   const dragged = useRef(false)
   const properties: Record<string, any> = currentChangeset.properties ?? {}
@@ -70,21 +68,14 @@ export function ReviewColumn({
     if (turningOn) setExpanded(true)
   }
 
-  useHotkeys([
-    ...COLUMN_TABS.flatMap((tab) =>
+  useHotkeys(
+    COLUMN_TABS.flatMap((tab) =>
       tab.hotkeys.map((hotkey) => ({
         hotkey,
         callback: () => selectPanel(tab.key),
       })),
     ),
-    ...CHANGESET_DETAILS_USER.hotkeys.map((hotkey) => ({
-      hotkey,
-      callback: () => {
-        setUserOpen((open) => !open)
-        setExpanded(true)
-      },
-    })),
-  ])
+  )
 
   function onHandlePointerDown(event: PointerEvent<HTMLButtonElement>) {
     dragStartY.current = event.clientY
@@ -139,8 +130,6 @@ export function ReviewColumn({
         currentChangeset={currentChangeset}
         userDetails={userDetails}
         whosThat={whosThat}
-        userOpen={userOpen}
-        onUserOpenChange={setUserOpen}
       />
 
       <div

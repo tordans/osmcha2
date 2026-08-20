@@ -361,7 +361,6 @@ Yes. Keyboard shortcuts on OSMCha help the reviewer to go through a list of chan
 | **Changeset panels**                             |            |
 | Toggle Changes tab                               | `1`        |
 | Toggle Discussion tab                            | `2`        |
-| Toggle User details                              | `3`        |
 | Toggle Map controls                              | `8`        |
 | **Other**                                        |            |
 | Toggle Filters page                              | `\`        |

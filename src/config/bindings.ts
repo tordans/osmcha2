@@ -45,11 +45,6 @@ export const CHANGESET_DETAILS_DISCUSSIONS: HotkeyBinding = {
   hotkeys: ['2'],
 }
 
-export const CHANGESET_DETAILS_USER: HotkeyBinding = {
-  label: 'CHANGESET_DETAILS_USER',
-  hotkeys: ['3'],
-}
-
 export const CHANGESET_DETAILS_MAP: HotkeyBinding = {
   label: 'CHANGESET_DETAILS_MAP',
   hotkeys: ['8'],

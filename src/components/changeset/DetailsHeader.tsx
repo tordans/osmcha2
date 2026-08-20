@@ -11,6 +11,8 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { parse } from 'date-fns'
 import Linkify from 'linkify-react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
 import {
   OPEN_IN_ACHAVI,
@@ -26,6 +28,14 @@ import {
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useIsUserListed } from '../../hooks/useIsUserListed.ts'
 import { useMarkHarmful } from '../../query/hooks/useMarkHarmful.ts'
+import {
+  useAddToTrustedlist,
+  useRemoveFromTrustedlist,
+} from '../../query/hooks/useTrustedlistMutations.ts'
+import {
+  useAddToWatchlist,
+  useRemoveFromWatchlist,
+} from '../../query/hooks/useWatchlistMutations.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { editorShortname } from '../list/editorShortname.ts'
 import { RelativeTime } from '../relative_time.tsx'
@@ -43,11 +53,11 @@ import {
   DropdownSection,
 } from '../ui/dropdown.tsx'
 import { typeScale } from '../ui/typography.ts'
-import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
+import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { Tags } from './tags.tsx'
-import { User } from './user.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
+const rootRouteApi = getRouteApi('__root__')
 
 const RESOLVED_TAG_ID = 9
 
@@ -96,8 +106,6 @@ type DetailsHeaderProps = {
   currentChangeset: ReviewChangeset
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
-  userOpen?: boolean
-  onUserOpenChange?: (open: boolean) => void
 }
 
 export function DetailsHeader({
@@ -105,10 +113,9 @@ export function DetailsHeader({
   currentChangeset,
   userDetails,
   whosThat = [],
-  userOpen = false,
-  onUserOpenChange,
 }: DetailsHeaderProps) {
   const { map } = changesetRouteApi.useSearch()
+  const navigate = rootRouteApi.useNavigate()
   const { token, user } = useAuth()
   const username = (user as { username?: string } | undefined)?.username
   const markHarmfulMutation = useMarkHarmful()
@@ -116,6 +123,10 @@ export function DetailsHeader({
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
   const [isInTrustedlist, isInWatchlist] = useIsUserListed(osmUser, uid, token)
+  const addToWatchlistMutation = useAddToWatchlist()
+  const removeFromWatchlistMutation = useRemoveFromWatchlist()
+  const addToTrustedlistMutation = useAddToTrustedlist()
+  const removeFromTrustedlistMutation = useRemoveFromTrustedlist()
   const urls = openInUrls(changesetId, parseMapParam(map ?? ''))
   const tags = properties.tags ?? []
   const reasons = properties.reasons ?? []
@@ -137,6 +148,8 @@ export function DetailsHeader({
     ([key]) =>
       !key.startsWith('ideditor') && !key.startsWith('warnings:') && !key.startsWith('resolved'),
   )
+  const pastNames = whosThat.length > 1 ? whosThat.slice(0, -1) : []
+  const description = userDetails?.description?.trim() ?? ''
 
   function handleMarkHarmful(value: boolean | -1) {
     if (!token) {
@@ -151,6 +164,21 @@ export function DetailsHeader({
       changesetId,
       harmful: value,
       username,
+    })
+  }
+
+  function filterOsmchaByUser() {
+    if (!uid) return
+    void navigate({
+      to: '/',
+      search: {
+        filters: {
+          uids: [{ label: String(uid), value: String(uid) }],
+          date__gte: [{ label: '', value: '' }],
+        },
+        page: undefined,
+        aoi: undefined,
+      },
     })
   }
 
@@ -302,7 +330,10 @@ export function DetailsHeader({
           </span>
           <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
         </DropdownButton>
-        <DropdownMenu anchor="bottom start">
+        <DropdownMenu
+          anchor="bottom start"
+          className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
+        >
           <DropdownSection>
             <DropdownHeading>
               User {osmUser}
@@ -318,34 +349,92 @@ export function DetailsHeader({
             <DropdownItem href={hdycUrl(osmUser)} target="_blank" rel="noopener noreferrer">
               HDYC
             </DropdownItem>
+            {properties.user || userDetails?.name ? (
+              <DropdownItem
+                href={missingMapsUrl(osmUser)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Missing Maps
+              </DropdownItem>
+            ) : null}
           </DropdownSection>
+          {uid ? (
+            <>
+              <DropdownDivider />
+              <DropdownSection>
+                <DropdownHeading>OSMCha</DropdownHeading>
+                <DropdownItem onClick={filterOsmchaByUser}>
+                  {editCount > 0
+                    ? `${editCount.toLocaleString()} changesets by this user`
+                    : 'Changesets by this user'}
+                </DropdownItem>
+              </DropdownSection>
+            </>
+          ) : null}
+          {token && uid ? (
+            <>
+              <DropdownDivider />
+              <DropdownSection>
+                <DropdownHeading>Lists</DropdownHeading>
+                {isInWatchlist ? (
+                  <DropdownItem onClick={() => removeFromWatchlistMutation.mutate(String(uid))}>
+                    Remove from watchlist
+                  </DropdownItem>
+                ) : isInTrustedlist ? (
+                  <DropdownItem onClick={() => removeFromTrustedlistMutation.mutate(osmUser)}>
+                    Remove from trusted users
+                  </DropdownItem>
+                ) : (
+                  <>
+                    <DropdownItem
+                      onClick={() =>
+                        addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
+                      }
+                    >
+                      Add to watchlist
+                    </DropdownItem>
+                    <DropdownItem onClick={() => addToTrustedlistMutation.mutate(osmUser)}>
+                      Add to trusted users
+                    </DropdownItem>
+                  </>
+                )}
+              </DropdownSection>
+            </>
+          ) : null}
+          {pastNames.length > 0 || description ? (
+            <>
+              <DropdownDivider />
+              {pastNames.length > 0 ? (
+                <DropdownSection>
+                  <DropdownHeading>Past usernames</DropdownHeading>
+                  <ul className="col-span-full list-disc px-3.5 pb-1 pl-7 text-xs/4 text-zinc-600 sm:px-3">
+                    {pastNames.map((name) => (
+                      <li key={name}>{name}</li>
+                    ))}
+                  </ul>
+                </DropdownSection>
+              ) : null}
+              {description ? (
+                <blockquote
+                  className={clsx(
+                    'col-span-full mx-2 mb-1 border-l-2 border-zinc-200 py-0.5 pl-2.5',
+                    'text-[0.6875rem]/4 text-zinc-600 wrap-break-word',
+                    '[&_a]:text-blue-700 [&_a]:underline',
+                    '[&_p]:my-1 [&_p]:first:mt-0 [&_p]:last:mb-0',
+                    '[&_h1]:my-1 [&_h1]:text-xs/4 [&_h1]:font-semibold',
+                    '[&_h2]:my-1 [&_h2]:text-xs/4 [&_h2]:font-semibold',
+                    '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4',
+                    '[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4',
+                  )}
+                >
+                  <Markdown remarkPlugins={[remarkGfm]}>{description}</Markdown>
+                </blockquote>
+              ) : null}
+            </>
+          ) : null}
         </DropdownMenu>
       </Dropdown>
-
-      <details
-        className="rounded-lg"
-        open={userOpen}
-        onToggle={(event) => {
-          onUserOpenChange?.((event.currentTarget as HTMLDetailsElement).open)
-        }}
-      >
-        <summary
-          className="flex min-h-11 cursor-pointer touch-manipulation list-none items-center justify-between rounded-lg px-1 text-sm/5 font-medium text-zinc-700 select-none marker:content-none active:bg-zinc-950/5 [&::-webkit-details-marker]:hidden"
-          title="User details (3)"
-        >
-          <span>User details</span>
-          <span className={clsx('font-normal text-zinc-400', typeScale.small)}>3</span>
-        </summary>
-        <User
-          userDetails={{
-            ...userDetails,
-            uid: properties.uid ?? userDetails?.uid,
-            name: osmUser,
-          }}
-          whosThat={whosThat}
-          changesetUsername
-        />
-      </details>
 
       {visibleMetadata.length > 0 ? (
         <details className="rounded-lg">

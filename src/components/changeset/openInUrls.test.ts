@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { editorMapHash, hdycUrl, openInUrls } from './openInUrls.ts'
+import { editorMapHash, hdycUrl, missingMapsUrl, openInUrls } from './openInUrls.ts'
 
 describe('openInUrls', () => {
   test('builds Achavi, JOSM, Level0, osm-revert, and ResultMaps from the changeset id', () => {
@@ -27,5 +27,9 @@ describe('openInUrls', () => {
 
   test('builds HDYC from the OSM username', () => {
     expect(hdycUrl('alice')).toBe('https://hdyc.neis-one.org/?alice')
+  })
+
+  test('builds Missing Maps from the OSM username', () => {
+    expect(missingMapsUrl('Ozon OSM16')).toBe('https://www.missingmaps.org/users/#/Ozon%20OSM16')
   })
 })

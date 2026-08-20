@@ -28,7 +28,6 @@ const SHORTCUTS: Array<{ group: string; action: string; keys: string }> = [
   { group: 'Changeset detail', action: 'Filter edits of the current changeset’s user', keys: 'A' },
   { group: 'Panels', action: 'Toggle Changes tab', keys: '1' },
   { group: 'Panels', action: 'Toggle Discussion tab', keys: '2' },
-  { group: 'Panels', action: 'Toggle User details', keys: '3' },
   { group: 'Panels', action: 'Toggle Map controls', keys: '8' },
   { group: 'Other', action: 'Toggle Filters page', keys: '\\' },
   { group: 'Other', action: 'Show this Guide page', keys: '? or /' },

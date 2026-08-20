@@ -26,6 +26,10 @@ export function hdycUrl(username: string): string {
   return `https://hdyc.neis-one.org/?${username}`
 }
 
+export function missingMapsUrl(username: string): string {
+  return `https://www.missingmaps.org/users/#/${encodeURIComponent(username)}`
+}
+
 export function openExternal(url: string) {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
