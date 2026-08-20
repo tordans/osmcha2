@@ -1,18 +1,16 @@
 import { LanguageIcon } from '@heroicons/react/16/solid'
-import { Button } from '../ui/button.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 export default function TranslateButton({ text }: { text: string }) {
   return (
-    <Button
-      plain
+    <Tooltip
       href={`https://translate.google.com/#auto/en/${encodeURIComponent(text)}`}
       target="_blank"
       rel="noopener noreferrer"
-      title="Translate"
-      className="min-h-11 cursor-pointer touch-manipulation select-none"
+      content="Translate this comment with Google Translate"
+      className="min-h-11 min-w-11 justify-center rounded-lg text-zinc-950 active:bg-zinc-950/5 hover-fine:bg-zinc-950/5"
     >
-      Translate
-      <LanguageIcon data-slot="icon" />
-    </Button>
+      <LanguageIcon className="size-4" />
+    </Tooltip>
   )
 }

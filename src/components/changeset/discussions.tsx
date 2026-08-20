@@ -1,9 +1,9 @@
 import { ChatBubbleLeftIcon } from '@heroicons/react/16/solid'
-import { parse } from 'date-fns'
-import Linkify from 'linkify-react'
 import { useAuth } from '../../hooks/useAuth.ts'
+import { parseOsmDate } from '../../utils/datetime.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { RelativeTime } from '../relative_time.tsx'
+import { LinkifyText } from '../text/LinkifyText.tsx'
 import { CommentForm } from './comment.tsx'
 import { SignInButton } from './sign_in_button.tsx'
 import TranslateButton from './translate_button.tsx'
@@ -38,40 +38,30 @@ function Discussions({
       ) : (
         discussions.map((comment, index) => {
           const isChangesetUser = comment.user === changesetAuthor
-          const commentDate = comment.date
-            ? parse(comment.date, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
-            : null
+          const commentDate = comment.date ? parseOsmDate(comment.date) : null
           return (
             <div
               key={comment.id ?? `${comment.user}-${comment.date}-${index}`}
               className="relative mb-4 border-b border-b-zinc-100 pb-4 last:border-b-0"
             >
-              <div className="flex items-center justify-between gap-1">
-                <h4 className="flex items-center gap-1 font-semibold text-zinc-700">
-                  <ChatBubbleLeftIcon className="size-4 flex-none" />
-                  <span>
-                    Comment by{' '}
-                    <UserOSMLink userName={comment.user} linkClasses="text-blue-700 underline">
-                      {comment.user}
-                    </UserOSMLink>{' '}
-                    {isChangesetUser ? (
-                      <span className="font-normal text-zinc-400">(changeset author)</span>
-                    ) : null}{' '}
-                    {commentDate ? <RelativeTime datetime={commentDate} /> : null}:
-                  </span>
-                </h4>
+              <div className="absolute top-0 right-0 z-10">
                 <TranslateButton text={comment.text} />
               </div>
+              <h4 className="flex items-center gap-1 pr-11 font-semibold text-zinc-700">
+                <ChatBubbleLeftIcon className="size-4 flex-none" />
+                <span>
+                  Comment by{' '}
+                  <UserOSMLink userName={comment.user} linkClasses="text-blue-700 underline">
+                    {comment.user}
+                  </UserOSMLink>{' '}
+                  {isChangesetUser ? (
+                    <span className="font-normal text-zinc-400">(changeset author)</span>
+                  ) : null}{' '}
+                  {commentDate ? <RelativeTime datetime={commentDate} /> : null}:
+                </span>
+              </h4>
               <p className="mt-1 border-l-2 border-l-zinc-200 py-1 pl-2 break-words">
-                <Linkify
-                  options={{
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                    className: 'text-blue-700 underline',
-                  }}
-                >
-                  {comment.text}
-                </Linkify>
+                <LinkifyText text={comment.text} nl2br />
               </p>
               <DebugDataHelperDialog data={comment} title="Comment" />
             </div>
