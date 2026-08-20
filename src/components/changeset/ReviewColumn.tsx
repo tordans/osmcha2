@@ -220,7 +220,7 @@ function ReviewTab({
       aria-current={current ? 'page' : undefined}
       onClick={onClick}
       className={clsx(
-        'relative flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 border-b-2 px-1 text-sm font-medium whitespace-nowrap select-none',
+        'relative flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 border-b-2 px-3 text-sm font-medium whitespace-nowrap select-none',
         'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
         current
           ? 'border-blue-500 bg-blue-50 text-blue-700'
