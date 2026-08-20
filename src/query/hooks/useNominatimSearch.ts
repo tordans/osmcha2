@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { nominatimSearch } from '../../network/nominatim.ts'
+import { cacheForever } from '../cachePolicy.ts'
 
 export type NominatimPlace = {
   display_name: string
@@ -15,6 +16,6 @@ export function useNominatimSearch(query: string, type: string, enabled: boolean
       return json as NominatimPlace[]
     },
     enabled,
-    staleTime: 5 * 60 * 1000,
+    ...cacheForever,
   })
 }

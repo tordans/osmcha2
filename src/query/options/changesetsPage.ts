@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { fetchChangesetsPage } from '../../network/changesets_page.ts'
+import { cacheFiveMinutes } from '../cachePolicy.ts'
 
 export interface ChangesetsPageParams {
   pageIndex: number
@@ -11,7 +12,7 @@ export function changesetsPageQueryOptions({ pageIndex, filters, aoiId }: Change
   return queryOptions({
     queryKey: ['changesets', 'page', pageIndex, filters, aoiId],
     queryFn: () => fetchChangesetsPage(pageIndex, filters, aoiId, false),
-    staleTime: 5 * 60 * 1000,
+    ...cacheFiveMinutes,
     retry: 3,
   })
 }

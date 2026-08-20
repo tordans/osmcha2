@@ -14,6 +14,7 @@ export const router = createRouter({
   parseSearch: routerSearch.parse,
   stringifySearch: routerSearch.stringify,
   defaultPreload: 'intent',
+  // Query owns staleness via ensureQueryData — do not skip loaders from the router.
   defaultPreloadStaleTime: 0,
   context: { queryClient },
   scrollRestoration: true,

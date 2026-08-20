@@ -1,7 +1,9 @@
 import { useForm } from '@tanstack/react-form'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { postComment } from '../../network/changeset.ts'
+import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import { cancelablePromise } from '../../utils/promise.ts'
 import { Button } from '../ui/button.tsx'
 import { Textarea } from '../ui/textarea.tsx'
@@ -37,6 +39,7 @@ export function CommentForm({
   changesetIsHarmful,
   discussions,
 }: CommentFormProps) {
+  const queryClient = useQueryClient()
   const template = commentTemplate({ changesetIsHarmful, discussions, userDetails })
   const pendingRef = useRef<{ cancel: () => void } | null>(null)
 
@@ -55,6 +58,9 @@ export function CommentForm({
             description: 'Appears on OSMCha in a few minutes',
           })
           formApi.reset({ comment: '' })
+          void queryClient.invalidateQueries({
+            queryKey: changesetDiscussionQueryOptions(changesetId).queryKey,
+          })
         })
         .catch((error) => {
           if (error?.isCanceled) return

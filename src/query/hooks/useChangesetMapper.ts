@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getUserDetails } from '../../network/openstreetmap.ts'
 import { getUsers } from '../../network/whosthat.ts'
+import { cacheForever } from '../cachePolicy.ts'
 
 export function useChangesetMapper(uid: number | string | null | undefined, enabled: boolean) {
   const numericUid = Number(uid) || 0
@@ -10,7 +11,7 @@ export function useChangesetMapper(uid: number | string | null | undefined, enab
     queryKey: ['osm-user', numericUid],
     queryFn: () => getUserDetails(numericUid),
     enabled: canLoad,
-    staleTime: 5 * 60 * 1000,
+    ...cacheForever,
   })
 
   const aliasesQuery = useQuery({
@@ -20,7 +21,7 @@ export function useChangesetMapper(uid: number | string | null | undefined, enab
       return (users[0]?.names as string[] | undefined) ?? []
     },
     enabled: canLoad,
-    staleTime: 5 * 60 * 1000,
+    ...cacheForever,
   })
 
   return {

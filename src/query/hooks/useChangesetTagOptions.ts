@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../network/request.ts'
+import { cacheForever } from '../cachePolicy.ts'
 
 type TagRow = {
   id: number
@@ -17,6 +18,6 @@ export function useChangesetTagOptions() {
         .filter((row) => row.is_visible && row.for_changeset)
         .map((row) => ({ label: row.name, value: row.id }))
     },
-    staleTime: 60 * 60 * 1000,
+    ...cacheForever,
   })
 }

@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { fetchAndParseAugmentedDiff } from '../../network/changeset.ts'
 import { fetchChangesetMetadata } from '../../network/openstreetmap.ts'
 import { makeApiRequest, handleResponse } from '../../network/request.ts'
+import { cacheChangesetMap, cacheDiscussion, cacheForever } from '../cachePolicy.ts'
 
 export function changesetQueryOptions(changesetId: number) {
   return queryOptions({
@@ -14,7 +15,7 @@ export function changesetQueryOptions(changesetId: number) {
       }
       return handleResponse(res)
     },
-    staleTime: 10 * 60 * 1000,
+    ...cacheForever,
     retry: 3,
   })
 }
@@ -23,14 +24,19 @@ export function changesetMapQueryOptions(changesetId: number) {
   return queryOptions({
     queryKey: ['changesetMap', changesetId],
     queryFn: async () => {
-      const [metadata, adiff] = await Promise.all([
-        fetchChangesetMetadata(changesetId),
-        fetchAndParseAugmentedDiff(changesetId),
-      ])
-
-      return { metadata, adiff }
+      const adiff = await fetchAndParseAugmentedDiff(changesetId)
+      return { adiff }
     },
-    staleTime: 30 * 60 * 1000,
+    ...cacheChangesetMap,
+    retry: 3,
+  })
+}
+
+export function changesetDiscussionQueryOptions(changesetId: number) {
+  return queryOptions({
+    queryKey: ['changesetDiscussion', changesetId],
+    queryFn: () => fetchChangesetMetadata(changesetId),
+    ...cacheDiscussion,
     retry: 3,
   })
 }

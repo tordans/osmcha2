@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useMap } from 'react-map-gl/maplibre'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useChangeset } from '../../query/hooks/useChangeset.ts'
+import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
 import { filtersFromSearch } from '../../routing/filterSearch.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
@@ -72,6 +73,7 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
   const [mapSnapshot, setMapSnapshot] = useState<unknown>(undefined)
   const changesetQuery = useChangeset(changesetId)
   const mapQuery = useChangesetMap(changesetId)
+  const discussionQuery = useChangesetDiscussion(changesetId)
   const { token, user } = useAuth()
   const search = rootRouteApi.useSearch()
   const { aoi } = search
@@ -127,14 +129,8 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
       {show && (
         <>
           <JsonDetails title="OSMCha Changeset" data={changesetQuery.data} />
-          <JsonDetails
-            title="Changeset map (metadata + adiff)"
-            data={
-              mapQuery.data
-                ? { metadata: mapQuery.data.metadata, adiff: mapQuery.data.adiff }
-                : undefined
-            }
-          />
+          <JsonDetails title="Changeset map (adiff)" data={mapQuery.data?.adiff} />
+          <JsonDetails title="Changeset discussion" data={discussionQuery.data} />
           <JsonDetails title="URL filters" data={filtersDump} />
           <JsonDetails title="URL AOI (?aoi=)" data={aoiDump} />
           <JsonDetails title="Selected map feature" data={selected} />

@@ -1,5 +1,6 @@
 import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
+import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
@@ -9,6 +10,8 @@ import {
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
+import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
+import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import type { AdiffAction } from './changesetElements.ts'
@@ -36,7 +39,7 @@ type ReviewColumnProps = {
   whosThat?: string[]
   bindingsState: Record<string, boolean>
   exclusiveKeyToggle: (label: string) => void
-  osmInfo?: { adiff?: { actions?: AdiffAction[] }; metadata?: { changeset?: { comments?: any[] } } }
+  osmInfo?: { adiff?: { actions?: AdiffAction[] } }
   selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
@@ -54,20 +57,29 @@ export function ReviewColumn({
   setHighlight,
   zoomToAndSelect,
 }: ReviewColumnProps) {
+  const queryClient = useQueryClient()
   const [expanded, setExpanded] = useState(false)
   const dragStartY = useRef<number | null>(null)
   const dragged = useRef(false)
   const properties: Record<string, any> = currentChangeset.properties ?? {}
-  const discussions = osmInfo?.metadata?.changeset?.comments || []
   const changesetCount =
     (properties.create ?? 0) + (properties.modify ?? 0) + (properties.delete ?? 0)
   const changesActive = Boolean(bindingsState[CHANGESET_DETAILS_DETAILS.label])
   const discussionActive = Boolean(bindingsState[CHANGESET_DETAILS_DISCUSSIONS.label])
+  const { data: discussion } = useChangesetDiscussion(changesetId, {
+    pollWhileActive: true,
+  })
+  const discussions = discussion?.changeset?.comments || []
 
   function selectPanel(label: string) {
     const turningOn = !bindingsState[label]
     exclusiveKeyToggle(label)
     if (turningOn) setExpanded(true)
+    if (turningOn && label === CHANGESET_DETAILS_DISCUSSIONS.label) {
+      void queryClient.refetchQueries({
+        queryKey: changesetDiscussionQueryOptions(changesetId).queryKey,
+      })
+    }
   }
 
   useHotkeys(

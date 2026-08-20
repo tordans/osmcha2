@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { API_URL } from '../../config/index.ts'
 import { fetchReasons } from '../../network/reasons_tags.ts'
+import { cacheOneHour } from '../cachePolicy.ts'
 
 type ReasonRow = {
   id: string | number
@@ -56,6 +57,6 @@ export function useFilterAsyncOptions(
         .map((row) => ({ label: row.name, value: row.id }))
     },
     enabled: Boolean(dataURL),
-    staleTime: 5 * 60 * 1000,
+    ...cacheOneHour,
   })
 }
