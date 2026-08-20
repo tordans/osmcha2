@@ -62,19 +62,13 @@ export const CHANGESET_METADATA_KEYS: ChangesetMetadataKey[] = [
   },
 ]
 
-export const METADATA_KEY_ALIASES: Record<string, { filter: string; message: string }> = {
-  comment: { filter: 'Comment', message: 'Use the Comment filter instead.' },
-  source: { filter: 'Source', message: 'Use the Source filter instead.' },
-  imagery_used: { filter: 'Imagery used', message: 'Use the Imagery used filter instead.' },
-  created_by: {
-    filter: 'Editor',
-    message: 'Use the Editor filter instead (created_by is stored as editor).',
-  },
-  review_requested: {
-    filter: 'Reasons for Flagging',
-    message:
-      'OSMCha does not store review_requested in metadata. Use Reasons for Flagging → Review requested.',
-  },
+export const METADATA_KEY_ALIASES: Record<string, string> = {
+  comment: 'Use the Comment filter instead.',
+  source: 'Use the Source filter instead.',
+  imagery_used: 'Use the Imagery used filter instead.',
+  created_by: 'Use the Editor filter instead (created_by is stored as editor).',
+  review_requested:
+    'OSMCha does not store review_requested in metadata. Use Reasons for Flagging → Review requested.',
 }
 
 const keyByName = new Map(CHANGESET_METADATA_KEYS.map((entry) => [entry.key, entry]))
@@ -85,14 +79,17 @@ export function metadataKeyConfig(key: string): ChangesetMetadataKey | undefined
 
 export function defaultOperatorForKey(key: string): MetadataOperator {
   const config = metadataKeyConfig(key)
-  if (config) {
-    if (config.key === 'bot') return 'equals'
-    if (config.kind === 'number') return 'max'
-    return 'contains'
-  }
-  return 'contains'
+  if (!config) return 'contains'
+  if (config.kind === 'number') return 'max'
+  return config.operators[0] ?? 'contains'
 }
 
 export const CUSTOM_METADATA_KEY = '__custom__'
 
-export const DEFAULT_CUSTOM_OPERATORS: MetadataOperator[] = ['contains', 'exists', 'equals']
+export const DEFAULT_CUSTOM_OPERATORS: MetadataOperator[] = [
+  'contains',
+  'exists',
+  'equals',
+  'min',
+  'max',
+]

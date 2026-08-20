@@ -63,9 +63,14 @@ describe('parseMetadataQuery', () => {
     ])
   })
 
-  it('ignores tokens without exactly one equals sign', () => {
-    const { rows } = parseMetadataQuery('wrongtag')
-    expect(rows).toEqual([])
+  it('treats tokens without exactly one equals sign as unsupported', () => {
+    expect(parseMetadataQuery('wrongtag')).toEqual({ rows: [], unsupported: true })
+  })
+
+  it('treats leftover non-pairs mixed with valid tokens as unsupported', () => {
+    const { rows, unsupported } = parseMetadataQuery('hashtags=#hotosm,wrongtag')
+    expect(unsupported).toBe(true)
+    expect(rows[0]).toMatchObject({ key: 'hashtags', operator: 'contains', value: '#hotosm' })
   })
 
   it('returns no rows for empty input', () => {
@@ -134,6 +139,12 @@ describe('validateMetadataRow', () => {
       validateMetadataRow({ id: '1', key: 'host', operator: 'contains', value: 'a,b' }),
     ).toMatch(/commas/)
   })
+
+  it('rejects equals signs in values', () => {
+    expect(
+      validateMetadataRow({ id: '1', key: 'host', operator: 'contains', value: 'a=b' }),
+    ).toMatch(/=/)
+  })
 })
 
 describe('isSupportedMetadataQuery', () => {
@@ -145,5 +156,10 @@ describe('isSupportedMetadataQuery', () => {
 
   it('rejects unsupported __contains lookups', () => {
     expect(isSupportedMetadataQuery('host__contains=osm')).toBe(false)
+  })
+
+  it('rejects strings that are not key=value pairs', () => {
+    expect(isSupportedMetadataQuery('wrongtag')).toBe(false)
+    expect(isSupportedMetadataQuery('locale=en,wrongtag')).toBe(false)
   })
 })

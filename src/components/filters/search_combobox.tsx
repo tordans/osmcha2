@@ -13,6 +13,10 @@ function searchOptionKey(value: unknown): string {
   return JSON.stringify(value)
 }
 
+function defaultCreateLabel(query: string) {
+  return `Add ${query}`
+}
+
 type SearchComboboxProps = {
   options: SearchOption[]
   placeholder?: string
@@ -35,7 +39,7 @@ export function SearchCombobox({
   onQueryChange,
   clientFilter = true,
   allowCreate = false,
-  createLabel = (query) => `Add ${query}`,
+  createLabel = defaultCreateLabel,
   name,
 }: SearchComboboxProps) {
   const [query, setQuery] = useState('')

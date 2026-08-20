@@ -16,15 +16,18 @@ function newRowId(): string {
   return crypto.randomUUID()
 }
 
-function splitMetadataTokens(raw: string): string[] {
-  return raw
+function isKeyValueToken(token: string): boolean {
+  const eqIndex = token.indexOf('=')
+  return eqIndex > 0 && eqIndex === token.lastIndexOf('=')
+}
+
+function splitMetadataTokens(raw: string): { tokens: string[]; leftover: boolean } {
+  const parts = raw
     .split(',')
-    .map((token) => token.trim())
-    .filter((token) => {
-      if (!token) return false
-      const eqIndex = token.indexOf('=')
-      return eqIndex > 0 && eqIndex === token.lastIndexOf('=')
-    })
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+  const tokens = parts.filter(isKeyValueToken)
+  return { tokens, leftover: tokens.length !== parts.length }
 }
 
 function tokenUsesUnsupportedLookup(keyPart: string): boolean {
@@ -33,53 +36,33 @@ function tokenUsesUnsupportedLookup(keyPart: string): boolean {
   return !SUPPORTED_SUFFIXES.has(suffix)
 }
 
-function parseMetadataToken(token: string): { row: MetadataRow; unsupported: boolean } {
+function parseMetadataToken(token: string, id: string): { row: MetadataRow; unsupported: boolean } {
   const eqIndex = token.indexOf('=')
   const keyPart = token.slice(0, eqIndex).trim()
   const valuePart = token.slice(eqIndex + 1).trim()
   const unsupported = tokenUsesUnsupportedLookup(keyPart)
 
   if (valuePart === '*') {
-    return {
-      row: { id: newRowId(), key: keyPart, operator: 'exists', value: '' },
-      unsupported,
-    }
+    return { row: { id, key: keyPart, operator: 'exists', value: '' }, unsupported }
   }
 
   const minMatch = keyPart.match(/^(.+)__min$/)
   if (minMatch) {
-    return {
-      row: { id: newRowId(), key: minMatch[1], operator: 'min', value: valuePart },
-      unsupported,
-    }
+    return { row: { id, key: minMatch[1], operator: 'min', value: valuePart }, unsupported }
   }
 
   const maxMatch = keyPart.match(/^(.+)__max$/)
   if (maxMatch) {
-    return {
-      row: { id: newRowId(), key: maxMatch[1], operator: 'max', value: valuePart },
-      unsupported,
-    }
+    return { row: { id, key: maxMatch[1], operator: 'max', value: valuePart }, unsupported }
   }
 
   const exactMatch = keyPart.match(/^(.+)__exact$/)
   if (exactMatch) {
-    return {
-      row: {
-        id: newRowId(),
-        key: exactMatch[1],
-        operator: 'equals',
-        value: valuePart,
-      },
-      unsupported,
-    }
+    return { row: { id, key: exactMatch[1], operator: 'equals', value: valuePart }, unsupported }
   }
 
-  const baseKey = unsupported ? keyPart.split('__')[0] : keyPart
-  return {
-    row: { id: newRowId(), key: baseKey, operator: 'contains', value: valuePart },
-    unsupported,
-  }
+  const key = unsupported ? (keyPart.split('__')[0] ?? keyPart) : keyPart
+  return { row: { id, key, operator: 'contains', value: valuePart }, unsupported }
 }
 
 export function joinMetadataFilterValue(filter?: Filter): string {
@@ -91,20 +74,18 @@ export function joinMetadataFilterValue(filter?: Filter): string {
 }
 
 export function parseMetadataQuery(raw: string): { rows: MetadataRow[]; unsupported: boolean } {
-  if (!raw.trim()) {
-    return { rows: [], unsupported: false }
-  }
+  if (!raw.trim()) return { rows: [], unsupported: false }
 
-  const tokens = splitMetadataTokens(raw)
-  let unsupported = false
+  const { tokens, leftover } = splitMetadataTokens(raw)
+  if (!tokens.length) return { rows: [], unsupported: true }
+
+  let unsupported = leftover
   const rows: MetadataRow[] = []
-
-  for (const token of tokens) {
-    const parsed = parseMetadataToken(token)
+  for (const [index, token] of tokens.entries()) {
+    const parsed = parseMetadataToken(token, String(index))
     if (parsed.unsupported) unsupported = true
     rows.push(parsed.row)
   }
-
   return { rows, unsupported }
 }
 
@@ -136,12 +117,9 @@ export function serializeMetadataRows(rows: MetadataRow[]): string {
 }
 
 export function metadataRowsToFilter(rows: MetadataRow[]): Filter | undefined {
-  const items = rows
-    .map((row) => serializeMetadataRow(row))
-    .filter((value): value is string => value !== null)
-    .map((value) => ({ label: value, value }))
-
-  return items.length ? items : undefined
+  const serialized = serializeMetadataRows(rows)
+  if (!serialized) return undefined
+  return serialized.split(',').map((value) => ({ label: value, value }))
 }
 
 function hasInvalidKeyChars(key: string): boolean {
@@ -163,8 +141,7 @@ export function validateMetadataRow(row: MetadataRow): string | null {
       return null
     case 'min':
     case 'max': {
-      const trimmed = row.value.trim()
-      if (!/^-?\d+$/.test(trimmed)) return 'Enter a whole number.'
+      if (!/^-?\d+$/.test(row.value.trim())) return 'Enter a whole number.'
       return null
     }
     case 'contains':
@@ -172,6 +149,7 @@ export function validateMetadataRow(row: MetadataRow): string | null {
       const trimmed = row.value.trim()
       if (!trimmed) return 'Value is required.'
       if (trimmed.includes(',')) return 'Value cannot contain commas.'
+      if (trimmed.includes('=')) return 'Value cannot contain =.'
       return null
     }
     default:
@@ -180,20 +158,14 @@ export function validateMetadataRow(row: MetadataRow): string | null {
 }
 
 export function isSupportedMetadataQuery(raw: string): boolean {
-  if (!raw.trim()) return true
+  return !parseMetadataQuery(raw).unsupported
+}
 
-  const tokens = splitMetadataTokens(raw)
-  if (!tokens.length && raw.trim()) {
-    return true
-  }
-
-  for (const token of tokens) {
-    const eqIndex = token.indexOf('=')
-    const keyPart = token.slice(0, eqIndex).trim()
-    if (tokenUsesUnsupportedLookup(keyPart)) return false
-  }
-
-  return true
+export function canonicalMetadataQuery(raw: string): string {
+  if (!raw.trim()) return ''
+  const parsed = parseMetadataQuery(raw)
+  if (parsed.unsupported) return raw.trim()
+  return serializeMetadataRows(parsed.rows)
 }
 
 export function createEmptyMetadataRow(): MetadataRow {
