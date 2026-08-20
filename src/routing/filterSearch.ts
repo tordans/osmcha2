@@ -1,10 +1,9 @@
 import type { Filters } from '../components/filters/index.ts'
 import { deserializeFiltersFromObject } from '../utils/filters.ts'
-import type { OsmchaSearch } from './searchSchemas.ts'
+import { apiOrderFromUnknown, apiOrderToSearchParam, searchParamToApiOrder } from './orderParam.ts'
+import { searchParamsRegistry, type OsmchaSearch } from './searchSchemas.ts'
 
-const CHROME_SEARCH_KEYS = ['aoi', 'page', 'token', 'map'] as const
-
-const chromeKeySet = new Set<string>([...CHROME_SEARCH_KEYS, 'filters'])
+const chromeKeySet = new Set<string>([...searchParamsRegistry, 'filters', 'order_by'])
 
 function isFilterSearchKey(key: string) {
   return !chromeKeySet.has(key)
@@ -38,6 +37,12 @@ export function serializeFiltersToSearch(filters: Filters): Record<string, unkno
   const result: Record<string, unknown> = {}
 
   for (const [key, items] of Object.entries(filters)) {
+    if (key === 'order_by') {
+      const apiValue = apiOrderFromUnknown(items)
+      const order = apiValue ? apiOrderToSearchParam(apiValue) : undefined
+      if (order) result.order = order
+      continue
+    }
     if (!Array.isArray(items) || !key) continue
     const nonempty = items.filter((item) => item && typeof item === 'object' && item.value !== '')
     if (nonempty.length === 0) {
@@ -79,14 +84,19 @@ export function filtersFromSearch(search: OsmchaSearch): Filters {
     strings[key] = asString
   }
 
-  return { ...deserializeFiltersFromObject(strings), ...objects }
+  const result = { ...deserializeFiltersFromObject(strings), ...objects }
+  const orderApi = searchParamToApiOrder(search.order)
+  if (orderApi) {
+    result.order_by = [{ label: orderApi, value: orderApi }]
+  }
+  return result
 }
 
 type SearchLike = Record<string, unknown>
 
 export function stripFilterSearch(search: SearchLike): OsmchaSearch {
   const next: Record<string, unknown> = {}
-  for (const key of CHROME_SEARCH_KEYS) {
+  for (const key of searchParamsRegistry) {
     if (search[key] != null) next[key] = search[key]
   }
   return next as OsmchaSearch
@@ -109,14 +119,20 @@ export function migrateLegacyFilterSearch(
   pathname: string,
   search: OsmchaSearch,
 ): { pathname: string; search: OsmchaSearch } | null {
-  const legacy = parseLegacyFiltersBlob(search.filters)
   let next: OsmchaSearch = { ...search }
   let changed = false
 
-  if (legacy) {
-    next = withFilters(search, legacy)
+  const withoutOrderBy = migrateOrderBySearch(next)
+  if (withoutOrderBy) {
+    next = withoutOrderBy
     changed = true
-  } else if (search.filters != null) {
+  }
+
+  const legacy = parseLegacyFiltersBlob(next.filters)
+  if (legacy) {
+    next = withFilters(next, legacy)
+    changed = true
+  } else if (next.filters != null) {
     const { filters: _unused, ...rest } = next
     next = rest as OsmchaSearch
     changed = true
@@ -127,6 +143,18 @@ export function migrateLegacyFilterSearch(
   }
 
   return changed ? { pathname, search: next } : null
+}
+
+/** `order_by=-date` (Django / old OSMCha) → `order=date,desc`. */
+function migrateOrderBySearch(search: OsmchaSearch): OsmchaSearch | null {
+  const raw = search as Record<string, unknown>
+  if (!('order_by' in raw) || raw.order_by == null) return null
+  const { order_by: orderBy, ...rest } = raw
+  const apiValue = apiOrderFromUnknown(orderBy)
+  const order = apiValue ? apiOrderToSearchParam(apiValue) : undefined
+  const next = rest as OsmchaSearch
+  if (order && next.order == null) next.order = order
+  return next
 }
 
 function parseLegacyFiltersBlob(raw: unknown): Filters | null {

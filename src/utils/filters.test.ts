@@ -79,6 +79,16 @@ describe('serialize last_days', () => {
   })
 })
 
+describe('serialize order_by for the API', () => {
+  it('sends Django order_by=-date, not the URL order param', () => {
+    const query = serializeFiltersToQuery({
+      order_by: [{ label: 'Descending Date', value: '-date' }],
+    })
+    expect(query).toContain('order_by=-date')
+    expect(query).not.toContain('order=')
+  })
+})
+
 describe('applyFilterChange date exclusivity', () => {
   it('drops date__gte when setting last_days', () => {
     expect(
