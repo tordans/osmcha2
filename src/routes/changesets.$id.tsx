@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Loading } from '../components/loading.tsx'
 import { Button } from '../components/ui/button.tsx'
 import { changesetMapQueryOptions, changesetQueryOptions } from '../query/options/changeset.ts'
+import { osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { Changeset } from '../views/changeset.tsx'
 
 export const Route = createFileRoute('/changesets/$id')({
@@ -10,9 +11,7 @@ export const Route = createFileRoute('/changesets/$id')({
     parse: (raw) => z.object({ id: z.coerce.number().int().positive() }).parse(raw),
     stringify: ({ id }) => ({ id: String(id) }),
   },
-  validateSearch: z.object({
-    map: z.string().optional(),
-  }),
+  validateSearch: osmchaSearchSchema,
   loader: async ({ context, params }) => {
     try {
       await context.queryClient.ensureQueryData(changesetQueryOptions(params.id))

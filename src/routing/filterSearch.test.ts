@@ -34,6 +34,17 @@ describe('serializeFiltersToSearch', () => {
     ).toEqual({ order: 'date,asc' })
   })
 
+  it('writes the same search key for equivalent order filters', () => {
+    const first = serializeFiltersToSearch({
+      order_by: [{ label: 'Descending Date', value: '-date' }],
+    })
+    const second = serializeFiltersToSearch({
+      order_by: [{ label: '-date', value: '-date' }],
+    })
+    expect(JSON.stringify(first)).toBe(JSON.stringify(second))
+    expect(first).toEqual({ order: 'date,desc' })
+  })
+
   it('keeps the empty date__gte unbounded-from hack', () => {
     expect(
       serializeFiltersToSearch({

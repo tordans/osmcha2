@@ -7,8 +7,12 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
-import { withFilters } from '../routing/filterSearch.ts'
+import { serializeFiltersToSearch, withFilters } from '../routing/filterSearch.ts'
 import { applyFilterChange, deserializeFiltersFromObject } from '../utils/filters.ts'
+
+function filtersKey(filters: Filters) {
+  return JSON.stringify(serializeFiltersToSearch(filters))
+}
 
 const NEW_AOI = 'unnamed *'
 
@@ -26,15 +30,16 @@ export function Filters() {
   const deleteAOIMutation = useDeleteAOI()
 
   const [localFilters, setLocalFilters] = useState<Filters>(filtersFromUrl)
-  const [prevUrlFilters, setPrevUrlFilters] = useState<Filters>(filtersFromUrl)
+  const [prevUrlFiltersKey, setPrevUrlFiltersKey] = useState(() => filtersKey(filtersFromUrl))
   const [appliedAoiId, setAppliedAoiId] = useState<string | number | undefined>(undefined)
   const [active, setActive] = useState('')
 
   const loading = aoiLoading || createAOIMutation.isPending || updateAOIMutation.isPending
   const hasUrlFilters = Boolean(filtersFromUrl && Object.keys(filtersFromUrl).length > 0)
+  const urlFiltersKey = filtersKey(filtersFromUrl)
 
-  if (filtersFromUrl !== prevUrlFilters) {
-    setPrevUrlFilters(filtersFromUrl)
+  if (urlFiltersKey !== prevUrlFiltersKey) {
+    setPrevUrlFiltersKey(urlFiltersKey)
     setLocalFilters(filtersFromUrl)
     setAppliedAoiId(undefined)
   } else if (!hasUrlFilters && aoi?.properties?.filters && aoi.id !== appliedAoiId) {

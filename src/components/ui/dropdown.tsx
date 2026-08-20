@@ -63,7 +63,7 @@ export function DropdownMenu({
         // Shared icon/label/shortcut columns (Catalyst) so rows don't wrap to min-content
         'supports-[grid-template-columns:subgrid]:grid supports-[grid-template-columns:subgrid]:grid-cols-[auto_1fr_1.5rem_0.5rem_auto]',
         // Drop in from the trigger
-        'transition duration-200 ease-out data-closed:-translate-y-2 data-closed:scale-95 data-closed:opacity-0 data-leave:duration-150 data-leave:ease-in',
+        'transition duration-200 ease-out data-closed:pointer-events-none data-closed:-translate-y-2 data-closed:scale-95 data-closed:opacity-0 data-leave:duration-150 data-leave:ease-in',
       )}
     />
   )
