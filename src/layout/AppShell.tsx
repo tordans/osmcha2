@@ -6,13 +6,11 @@ import { usePaneLayoutStore } from '../stores/paneLayoutStore.ts'
 import { ChangesetsList } from '../views/changesets_list.tsx'
 import { BackToListButton } from './BackToListButton.tsx'
 import { ChromeHeader } from './NavigationFlyout.tsx'
+import { paneCardClassName } from './paneCard.ts'
 import { PaneResizeHandle } from './PaneResizeHandle.tsx'
 import { LIST_MAX, LIST_MIN, resizeSidePane } from './paneWidths.ts'
 import { useFullBleedLock } from './useFullBleedLock.ts'
 import { PaneAvailableContext, usePaneLayout } from './usePaneLayout.ts'
-
-const paneCard =
-  'min-[56rem]:rounded-lg min-[56rem]:bg-white min-[56rem]:shadow-sm min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const listHomeMatch = useMatch({ from: '/', shouldThrow: false })
@@ -55,7 +53,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           >
             <ChromeHeader />
-            <div className={clsx('flex min-h-0 flex-1 flex-col overflow-hidden', paneCard)}>
+            <div
+              className={clsx('flex min-h-0 flex-1 flex-col overflow-hidden', paneCardClassName)}
+            >
               <ChangesetsList />
             </div>
           </aside>
@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               fullBleed
                 ? 'h-full overflow-hidden'
                 : 'min-h-dvh overflow-x-hidden overflow-y-auto min-[56rem]:min-h-0',
-              !changeset && paneCard,
+              !changeset && paneCardClassName,
             )}
           >
             {!fullBleed && (
