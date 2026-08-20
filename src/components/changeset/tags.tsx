@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useChangesetTagOptions } from '../../query/hooks/useChangesetTagOptions.ts'
 import { useSetTag } from '../../query/hooks/useSetTag.ts'
 import { useAuthStore } from '../../stores/authStore.ts'
+import { BadgeButton } from '../ui/badge.tsx'
 import {
   Dropdown,
   DropdownButton,
@@ -15,9 +16,10 @@ interface TagsProps {
   changesetId: number
   disabled: boolean
   currentChangeset: any
+  color?: 'green' | 'orange' | 'zinc'
 }
 
-export function Tags({ changesetId, disabled, currentChangeset }: TagsProps) {
+export function Tags({ changesetId, disabled, currentChangeset, color = 'zinc' }: TagsProps) {
   const { data: options = [] } = useChangesetTagOptions()
   const token = useAuthStore((state) => state.token)
   const setTagMutation = useSetTag()
@@ -54,14 +56,16 @@ export function Tags({ changesetId, disabled, currentChangeset }: TagsProps) {
   const selectedIds = new Set(tags.map((t: any) => t.id))
 
   return (
-    <Dropdown>
+    <Dropdown className="contents">
       <DropdownButton
-        outline
+        as={BadgeButton}
+        color={color}
+        rounded="none"
         disabled={disabled}
-        className="min-h-11 cursor-pointer touch-manipulation select-none"
+        className="h-full cursor-pointer touch-manipulation items-center rounded-none select-none"
       >
-        Tags{tags.length > 0 ? ` (${tags.length})` : ''}
-        <ChevronDownIcon data-slot="icon" />
+        Tags
+        <ChevronDownIcon className="size-3.5" />
       </DropdownButton>
       <DropdownMenu anchor="bottom end">
         {options.map((option) => {

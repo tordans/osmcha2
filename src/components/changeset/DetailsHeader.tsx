@@ -39,7 +39,7 @@ import { parseOsmDate } from '../../utils/datetime.ts'
 import { editorShortname } from '../list/editorShortname.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
-import { Badge } from '../ui/badge.tsx'
+import { Badge, BadgeButton } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Divider } from '../ui/divider.tsx'
 import {
@@ -128,6 +128,7 @@ export function DetailsHeader({
   const checked = Boolean(properties.checked)
   const harmful = properties.harmful
   const resolved = hasResolvedTag(tags)
+  const reviewColor = resolved ? 'green' : harmful ? 'orange' : 'green'
   const editorLabel = editorShortname(properties.editor)
   const changesetDate = properties.date ? parseOsmDate(properties.date) : null
   const accountCreated = userDetails?.accountCreated
@@ -472,8 +473,13 @@ export function DetailsHeader({
 
       <div className="mt-2 flex flex-wrap items-center gap-2 pb-[env(safe-area-inset-bottom)] min-[56rem]:pb-1">
         {checked ? (
-          <>
-            <Badge color={resolved ? 'green' : harmful ? 'orange' : 'green'}>
+          <div
+            className={clsx(
+              'isolate inline-flex h-8 max-w-full min-w-0 flex-none items-stretch whitespace-nowrap',
+              'divide-x divide-black/10 overflow-hidden rounded-md ring-1 ring-black/10',
+            )}
+          >
+            <Badge color={reviewColor} rounded="none" className="h-full rounded-none">
               {harmful ? (
                 <HandThumbDownIcon className="size-4" />
               ) : (
@@ -481,24 +487,32 @@ export function DetailsHeader({
               )}{' '}
               by {properties.check_user || <i>Unknown user</i>}
             </Badge>
-            <Button
-              plain
+            <BadgeButton
+              color={reviewColor}
+              rounded="none"
               aria-label="Unreview changeset"
               onClick={() => handleMarkHarmful(-1)}
-              className="min-h-11 min-w-11 cursor-pointer touch-manipulation select-none"
+              className="h-full min-w-7 cursor-pointer touch-manipulation items-center justify-center rounded-none select-none"
             >
-              <XMarkIcon data-slot="icon" className="size-4" />
-            </Button>
+              <XMarkIcon className="size-3.5" />
+            </BadgeButton>
             {tags.map((tag) => (
               <Badge
                 key={tag.id ?? tag.name}
-                color={tag.id === RESOLVED_TAG_ID ? 'green' : undefined}
+                color={reviewColor}
+                rounded="none"
+                className="h-full rounded-none"
               >
                 {tag.name}
               </Badge>
             ))}
-            <Tags changesetId={changesetId} currentChangeset={currentChangeset} disabled={false} />
-          </>
+            <Tags
+              changesetId={changesetId}
+              currentChangeset={currentChangeset}
+              disabled={false}
+              color={reviewColor}
+            />
+          </div>
         ) : (
           <>
             <Button
