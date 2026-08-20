@@ -66,7 +66,10 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
             : value.username.length > 0
               ? fetchByUsername(value.username)
               : null
-        if (!lookup) return
+        if (!lookup) {
+          setPending(false)
+          return
+        }
 
         const user = await lookup
         onSave(user.username, user.uid)
@@ -77,9 +80,8 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
         toast.error('Could not find user', {
           description: error instanceof Error ? error.message : undefined,
         })
-      } finally {
-        setPending(false)
       }
+      setPending(false)
     },
   })
 

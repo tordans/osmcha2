@@ -20,7 +20,8 @@ export function useViewportEditorLayers(map: maplibre.Map | null, enabled: boole
       let timer: ReturnType<typeof setTimeout> | undefined
 
       const recompute = () => {
-        const gen = ++generation
+        generation = generation + 1
+        const gen = generation
         setStatus('loading')
         void loadLayersInViewport(map.getBounds(), VIEWPORT_LAYER_FILTER).then((next) => {
           if (gen !== generation) return
@@ -37,7 +38,7 @@ export function useViewportEditorLayers(map: maplibre.Map | null, enabled: boole
       recompute()
       map.on('moveend', onMoveEnd)
       return function unsubscribeViewportEditorLayers() {
-        generation += 1
+        generation = generation + 1
         clearTimeout(timer)
         map.off('moveend', onMoveEnd)
       }

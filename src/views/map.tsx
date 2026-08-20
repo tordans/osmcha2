@@ -59,6 +59,15 @@ function serializeMapCamera(map: MaplibreMap) {
   })
 }
 
+function runWhileApplyingCamera(flag: { current: boolean }, apply: () => void) {
+  flag.current = true
+  try {
+    apply()
+  } finally {
+    flag.current = false
+  }
+}
+
 function waitForMapStoreHydration(): Promise<void> {
   if (useMapStore.persist.hasHydrated()) return Promise.resolve()
   return new Promise((resolve) => {
@@ -192,15 +201,12 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
       if (intent.type !== 'restore') return
       if (serializeMapCamera(map) === mapSearch) return
 
-      applyingCameraRef.current = true
-      try {
+      runWhileApplyingCamera(applyingCameraRef, () => {
         map.jumpTo({
           center: [intent.camera.lng, intent.camera.lat],
           zoom: intent.camera.zoom,
         })
-      } finally {
-        applyingCameraRef.current = false
-      }
+      })
     },
     [mapLoaded, mainMap, mapSearch],
   )
@@ -215,13 +221,10 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
       const bounds = changesetViewBounds(viewer.geojson.features)
       if (!bounds) return
 
-      applyingCameraRef.current = true
-      try {
+      runWhileApplyingCamera(applyingCameraRef, () => {
         map.resize()
         jumpMapToChangesetBounds(map, bounds)
-      } finally {
-        applyingCameraRef.current = false
-      }
+      })
     },
     [mapLoaded, mainMap, viewer, mapSearch, containerSize.width, containerSize.height],
   )
