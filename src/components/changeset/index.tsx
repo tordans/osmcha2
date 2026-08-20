@@ -22,7 +22,6 @@ import {
   type ChangesetGeoJSON,
 } from '../../views/changesetFeatureState.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
-import ElementInfo from '../element_info.tsx'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
 import { ReviewColumn } from './ReviewColumn.tsx'
@@ -44,7 +43,7 @@ const columnToggleOptions = [CHANGESET_DETAILS_DETAILS, CHANGESET_DETAILS_DISCUS
 
 /**
  * Review workspace: map pane (children) plus the review column / bottom sheet.
- * Selected-feature card and map options stay on the map.
+ * Map options stay on the map; selected features highlight the Changes row.
  */
 function Changeset({
   changesetId,
@@ -140,16 +139,6 @@ function Changeset({
       <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden min-[56rem]:rounded-lg min-[56rem]:ring-1 min-[56rem]:ring-zinc-950/5">
         {children}
         <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-10 flex flex-col-reverse items-end gap-2 min-[56rem]:top-auto min-[56rem]:bottom-[max(0.75rem,env(safe-area-inset-bottom))] min-[56rem]:flex-col">
-          {ready && changesetId && selected && (
-            <div className="max-h-[40%] max-w-[min(100%,24rem)] min-w-0 overflow-y-auto rounded-lg bg-white px-3 py-2 shadow-sm ring-1 ring-zinc-950/10 min-[56rem]:max-h-[60%] min-[56rem]:max-w-[34rem]">
-              <ElementInfo
-                action={selected}
-                setHighlight={setHighlight}
-                changeset={currentChangeset}
-                changesetId={changesetId}
-              />
-            </div>
-          )}
           {ready && (
             <MapOptions
               ref={mapOptionsButtonRef}

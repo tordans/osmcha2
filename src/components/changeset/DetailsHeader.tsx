@@ -41,7 +41,11 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
-import { typeScale } from '../ui/typography.ts'
+import {
+  DescriptionDetails,
+  DescriptionList,
+  DescriptionTerm,
+} from '../ui/description-list.tsx'
 import { hdycUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { Tags } from './tags.tsx'
 import { User } from './user.tsx'
@@ -77,7 +81,7 @@ export type ReviewChangeset = {
     harmful?: boolean | null
     reasons?: NamedTag[]
     tags?: NamedTag[]
-    metadata?: { host?: string }
+    metadata?: Record<string, string | number>
   }
 }
 
@@ -299,7 +303,10 @@ export function DetailsHeader({
         </DropdownButton>
         <DropdownMenu anchor="bottom start">
           <DropdownSection>
-            <DropdownHeading>User {osmUser}</DropdownHeading>
+            <DropdownHeading>
+              User {osmUser}
+              {uid ? ` / ${uid}` : ''}
+            </DropdownHeading>
             <DropdownItem
               href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
               target="_blank"

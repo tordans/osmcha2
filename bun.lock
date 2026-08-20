@@ -26,7 +26,6 @@
         "@turf/truncate": "^7.1.0",
         "clsx": "^2.1.1",
         "date-fns": "^2.22.1",
-        "diff": "^8.0.3",
         "linkify-react": "^4.3.2",
         "linkifyjs": "^4.3.2",
         "maplibre-gl": "^5.1.0",

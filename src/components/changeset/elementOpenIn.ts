@@ -1,4 +1,4 @@
-/** Open-in URLs for a single OSM element. Same targets as `element_info` OpenInDropdown. */
+/** Open-in URLs for a single OSM element. */
 
 export function elementPath(type: string, id: number | string): string {
   return `${type}/${id}`

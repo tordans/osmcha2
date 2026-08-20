@@ -26,6 +26,7 @@ import {
   type NamedReason,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
+import { FlagFeatureButton } from './FlagFeatureButton.tsx'
 
 const ACTION_LABEL = {
   create: 'Created',
@@ -39,17 +40,26 @@ const ACTION_ICON = {
   delete: TrashIcon,
 } as const
 
+type ReviewedFeature = { id?: string; user?: string }
+
 type DetailsChangesProps = {
+  changesetId: number
   adiff?: { actions?: AdiffAction[] } | null
   features?: FlaggedFeature[]
-  reviewedFeatures?: Array<{ id?: string; user?: string }>
+  reviewedFeatures?: ReviewedFeature[]
   reasons?: NamedReason[]
   selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
 }
 
+function isUserFlagged(reviewedFeatures: ReviewedFeature[], type: string, id: number) {
+  const featureParam = `${type}-${id}`
+  return reviewedFeatures.some((entry) => entry.id === featureParam)
+}
+
 export function DetailsChanges({
+  changesetId,
   adiff,
   features = [],
   reviewedFeatures = [],
@@ -93,6 +103,8 @@ export function DetailsChanges({
                   <ElementChangeRow
                     key={`${group[0].type}/${group[0].id}`}
                     change={group[0]}
+                    changesetId={changesetId}
+                    reviewedFeatures={reviewedFeatures}
                     selected={selected}
                     setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
@@ -101,6 +113,8 @@ export function DetailsChanges({
                   <TagMutationGroup
                     key={group.map((change) => `${change.type}/${change.id}`).join(',')}
                     changes={group}
+                    changesetId={changesetId}
+                    reviewedFeatures={reviewedFeatures}
                     selected={selected}
                     setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
@@ -122,11 +136,15 @@ function isSelected(change: ElementChange, selected?: AdiffAction | null) {
 
 function TagMutationGroup({
   changes,
+  changesetId,
+  reviewedFeatures,
   selected,
   setHighlight,
   zoomToAndSelect,
 }: {
   changes: ElementChange[]
+  changesetId: number
+  reviewedFeatures: ReviewedFeature[]
   selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
@@ -154,6 +172,8 @@ function TagMutationGroup({
               <ElementChangeRow
                 key={`${change.type}/${change.id}`}
                 change={change}
+                changesetId={changesetId}
+                reviewedFeatures={reviewedFeatures}
                 selected={selected}
                 setHighlight={setHighlight}
                 zoomToAndSelect={zoomToAndSelect}
@@ -169,12 +189,16 @@ function TagMutationGroup({
 
 function ElementChangeRow({
   change,
+  changesetId,
+  reviewedFeatures,
   selected,
   setHighlight,
   zoomToAndSelect,
   showTags = true,
 }: {
   change: ElementChange
+  changesetId: number
+  reviewedFeatures: ReviewedFeature[]
   selected?: AdiffAction | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
@@ -244,6 +268,11 @@ function ElementChangeRow({
               </Badge>
             </Tooltip>
           ) : null}
+          <FlagFeatureButton
+            changesetId={changesetId}
+            featureId={`${change.type}/${change.id}`}
+            initiallyFlagged={isUserFlagged(reviewedFeatures, change.type, change.id)}
+          />
           <Button
             outline
             aria-label={`Show ${change.type}/${change.id} on map`}

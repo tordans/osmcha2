@@ -189,6 +189,7 @@ export function ReviewColumn({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {changesActive && (
             <DetailsChanges
+              changesetId={changesetId}
               adiff={osmInfo?.adiff}
               features={properties.features ?? []}
               reviewedFeatures={properties.reviewed_features ?? []}
