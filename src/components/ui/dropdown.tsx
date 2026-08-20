@@ -6,7 +6,7 @@ import { Link } from './link'
 
 /** Shared width for chrome Menu and list Filters; both open as compact drop panels. */
 export const chromeDropdownMenuClassName =
-  'flex w-72 max-w-[calc(100vw-1rem)] max-h-[min(32rem,calc(100dvh-5rem))] flex-col'
+  'w-72 max-w-[calc(100vw-1rem)] max-h-[min(32rem,calc(100dvh-5rem))]'
 
 export function Dropdown({
   backdrop = false,
@@ -50,15 +50,18 @@ export function DropdownMenu({
         '[--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] data-[anchor~=end]:[--anchor-offset:6px] data-[anchor~=start]:[--anchor-offset:-6px] sm:data-[anchor~=end]:[--anchor-offset:4px] sm:data-[anchor~=start]:[--anchor-offset:-4px]',
         // Above review pane (z-30) / debug chips; below open chrome triggers (data-open:z-[110])
         'isolate z-[100] origin-top rounded-xl p-1',
-        className ?? 'w-max',
+        // Shrink-to-fit labels; callers may override (e.g. chrome `w-72`)
+        className ?? 'w-max min-w-max',
         // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
         'outline outline-transparent focus:outline-hidden',
         // Handle scrolling when menu won't fit in viewport
-        'overflow-x-hidden overflow-y-auto',
+        'overflow-y-auto',
         // Opaque so list debug chips do not show through
         'bg-white',
         // Shadows
         'shadow-lg ring-1 ring-zinc-950/10',
+        // Shared icon/label/shortcut columns (Catalyst) so rows don't wrap to min-content
+        'supports-[grid-template-columns:subgrid]:grid supports-[grid-template-columns:subgrid]:grid-cols-[auto_1fr_1.5rem_0.5rem_auto]',
         // Drop in from the trigger
         'transition duration-200 ease-out data-closed:-translate-y-2 data-closed:scale-95 data-closed:opacity-0 data-leave:duration-150 data-leave:ease-in',
       )}
@@ -102,7 +105,9 @@ export function DropdownItem({
   }
 
   const { href: _href, ...buttonProps } = props
-  return <Headless.MenuItem<'button'> as="button" {...buttonProps} className={classes} />
+  return (
+    <Headless.MenuItem<'button'> as="button" type="button" {...buttonProps} className={classes} />
+  )
 }
 
 export function DropdownHeader({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
