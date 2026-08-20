@@ -96,7 +96,7 @@ export function Header({
       <header
         className={clsx(
           'flex h-11 items-center justify-between gap-2 border-b border-zinc-200 px-1',
-          diff > 0 ? 'bg-zinc-200' : 'bg-zinc-50',
+          diff > 0 ? 'bg-zinc-200' : 'bg-zinc-100',
         )}
       >
         <span

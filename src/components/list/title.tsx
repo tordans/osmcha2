@@ -1,22 +1,30 @@
 import clsx from 'clsx'
-import { parse } from 'date-fns'
+import { parseOsmDate } from '../../utils/datetime.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { typeScale } from '../ui/typography.ts'
 import { NumberOfComments } from './comments.tsx'
 import { editorShortname } from './editorShortname.ts'
+import { hasResolvedTag, ReviewStatusBadge } from './ReviewStatusBadge.tsx'
 
 interface TitleProps {
   date: string
   editor?: string | null
   commentsCount?: number
+  checked?: boolean
+  checkUser?: string | null
+  harmful?: boolean | null
+  tags?: Array<{ id?: number; name: string }>
 }
 
-function parseChangesetDate(date: string): Date {
-  const parsed = parse(date, "yyyy-MM-dd'T'HH:mm:ssX", new Date())
-  return Number.isNaN(parsed.getTime()) ? new Date(date) : parsed
-}
-
-export function Title({ date, editor, commentsCount }: TitleProps) {
+export function Title({
+  date,
+  editor,
+  commentsCount,
+  checked,
+  checkUser,
+  harmful,
+  tags = [],
+}: TitleProps) {
   return (
     <div
       className={clsx(
@@ -25,13 +33,19 @@ export function Title({ date, editor, commentsCount }: TitleProps) {
       )}
     >
       <span className="shrink-0 whitespace-nowrap">
-        <RelativeTime datetime={parseChangesetDate(date)} />
+        <RelativeTime datetime={parseOsmDate(date)} />
       </span>
-      <div className="flex min-w-0 flex-1 items-start justify-end gap-2">
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
         <span className="line-clamp-2 min-w-0 text-right wrap-anywhere">
           {editorShortname(editor)}
         </span>
         <NumberOfComments count={commentsCount} />
+        <ReviewStatusBadge
+          checked={checked}
+          checkUser={checkUser}
+          harmful={harmful}
+          resolved={hasResolvedTag(tags)}
+        />
       </div>
     </div>
   )

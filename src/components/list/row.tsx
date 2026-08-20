@@ -52,14 +52,16 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
           date={properties.date ?? ''}
           editor={editor}
           commentsCount={properties.comments_count}
+          checked={properties.checked}
+          checkUser={properties.check_user}
+          harmful={properties.harmful}
+          tags={properties.tags}
         />
         <div className={clsx('flex w-full items-center justify-between gap-1', typeScale.body)}>
           <div className="flex w-full flex-col gap-2">
             <PrimaryLine user={properties.user} uid={properties.uid} comment={properties.comment} />
             <SecondaryLine
               checked={properties.checked}
-              checkUser={properties.check_user}
-              harmful={properties.harmful}
               reasons={properties.reasons}
               tags={properties.tags}
             />

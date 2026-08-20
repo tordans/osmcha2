@@ -82,11 +82,11 @@ export function FiltersMenu() {
     return (
       <Dropdown backdrop className="min-w-0 flex-1">
         <DropdownButton
-          plain
+          outline
           data-panel-origin="filters"
           aria-label={triggerLabel}
           title={triggerLabel}
-          className="group relative h-8 min-h-8 w-full min-w-0 justify-start px-1 font-semibold data-open:z-110 sm:min-h-8"
+          className="group relative h-9 min-h-9 w-full min-w-0 justify-start data-open:z-[110]"
         >
           <span className="min-w-0 truncate">{triggerLabel}</span>
           <ChevronDownIcon

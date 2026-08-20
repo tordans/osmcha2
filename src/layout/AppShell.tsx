@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <aside
             className={clsx(
-              'min-h-0 min-w-0 flex-col',
+              '@container/list min-h-0 min-w-0 flex-col',
               listHome ? 'flex h-full' : 'hidden',
               'min-[56rem]:flex min-[56rem]:w-(--pane-list-width,18rem) min-[56rem]:shrink-0',
               fullBleed
