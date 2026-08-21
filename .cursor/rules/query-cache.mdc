@@ -1,0 +1,11 @@
+---
+description: Keep docs/caching.md in sync with Query cache policy, keys, and invalidation
+globs: src/query/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Query cache docs
+
+When you change `src/query/cachePolicy.ts`, a query key, a route loader prefetch, persist rules, or `invalidateQueries`, update [`docs/caching.md`](docs/caching.md) in the same change.
+
+That page is the human map of what we fetch, how long we keep it, and what mutations refresh.

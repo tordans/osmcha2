@@ -19,6 +19,8 @@ import**: copy the API token from osmcha.org (Account, or `localStorage` key
 
 API hosts, page size, and date defaults live in [`src/config/constants.ts`](./src/config/constants.ts). There is no `.env` file.
 
+How routes and APIs are cached: [`docs/caching.md`](./docs/caching.md).
+
 ## GitHub Pages
 
 Static hosting. The Vite `base` comes from `VITE_BASE` (GitHub Actions sets it
