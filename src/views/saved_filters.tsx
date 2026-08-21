@@ -19,24 +19,10 @@ import { Text } from '../components/ui/text.tsx'
 import { API_URL } from '../config/index.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
+import type { AoiFeature } from '../network/aoi.ts'
 import { useAllAOIs } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI } from '../query/hooks/useAOIMutations.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
-
-type AoiFeature = {
-  id: string
-  properties?: { name?: string }
-}
-
-function aoiList(data: unknown): AoiFeature[] {
-  if (!data) return []
-  if (Array.isArray(data)) return data as AoiFeature[]
-  if (typeof data === 'object' && 'features' in data) {
-    const features = (data as { features: unknown }).features
-    if (Array.isArray(features)) return features as AoiFeature[]
-  }
-  return []
-}
 
 function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
   const [editing, setEditing] = useState(false)
@@ -95,13 +81,8 @@ function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
   )
 }
 
-type UserData = {
-  avatar?: string
-}
-
 export function SavedFilters() {
   const { token, user } = useAuth()
-  const currentUser = user as UserData | undefined
   const { filters, aoiId, clearFilters } = useFilters()
   const aoisQuery = useAllAOIs()
   const createMutation = useCreateAOI()
@@ -125,11 +106,11 @@ export function SavedFilters() {
     })
   }
 
-  const aois = aoiList(aoisQuery.data)
+  const aois: AoiFeature[] = aoisQuery.data ?? []
 
   return (
     <AccountPage>
-      <SecondaryPagesHeader title="Saved Filters" avatar={currentUser?.avatar} />
+      <SecondaryPagesHeader title="Saved Filters" avatar={user?.avatar ?? undefined} />
       {token ? (
         <div className="flex flex-col gap-6">
           {aois.length === 0 ? (
@@ -151,12 +132,12 @@ export function SavedFilters() {
                       <div className="flex flex-wrap items-center gap-2">
                         <RouterLink
                           to="/filters"
-                          search={{ aoi: aoi.id }}
+                          search={{ aoi: String(aoi.id) }}
                           className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-2 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
                         >
                           {aoi.properties?.name}
                         </RouterLink>
-                        {aoiId === aoi.id ? <Badge color="zinc">Active</Badge> : null}
+                        {aoiId === String(aoi.id) ? <Badge color="zinc">Active</Badge> : null}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -175,7 +156,7 @@ export function SavedFilters() {
                           plain
                           type="button"
                           className="min-h-11"
-                          onClick={() => removeAOI(aoi.id)}
+                          onClick={() => removeAOI(String(aoi.id))}
                         >
                           <TrashIcon data-slot="icon" />
                           Delete

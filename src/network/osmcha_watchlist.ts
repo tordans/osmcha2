@@ -1,7 +1,16 @@
+import { z } from 'zod'
 import { api } from './request.ts'
 
-export function fetchWatchList(): Promise<any[]> {
-  return api.get<any[]>('/blacklisted-users/')
+const watchlistUserSchema = z.object({
+  username: z.string(),
+  uid: z.union([z.string(), z.number()]),
+  date: z.string().optional(),
+})
+
+export type WatchlistUser = z.infer<typeof watchlistUserSchema>
+
+export function fetchWatchList(): Promise<WatchlistUser[]> {
+  return api.get('/blacklisted-users/').then((data) => z.array(watchlistUserSchema).parse(data))
 }
 
 export function deleteFromWatchList(uid: string): Promise<any> {

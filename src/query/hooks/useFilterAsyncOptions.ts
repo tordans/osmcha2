@@ -1,19 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { API_URL } from '../../config/index.ts'
-import { fetchReasons } from '../../network/reasons_tags.ts'
+import { fetchReasons, tagListSchema } from '../../network/reasons_tags.ts'
+import { api } from '../../network/request.ts'
 import { cacheOneHour } from '../cachePolicy.ts'
-
-type ReasonRow = {
-  id: string | number
-  name: string
-}
-
-type TagRow = {
-  id: string | number
-  name: string
-  for_changeset?: boolean
-  trusted?: boolean
-}
 
 /** Options for the Filters form multi-selects (`suspicion-reasons`, `tags`). */
 export function useFilterAsyncOptions(
@@ -27,25 +15,16 @@ export function useFilterAsyncOptions(
       if (!dataURL) return []
 
       if (dataURL === 'suspicion-reasons') {
-        const reasons = (await fetchReasons()) as ReasonRow[]
+        const reasons = await fetchReasons()
         return reasons.map((reason) => ({
           label: reason.name,
           value: reason.id,
         }))
       }
 
-      const response = await fetch(
-        teamMode ? `${API_URL}/${dataURL}/` : `${API_URL}/${dataURL}/?page_size=200`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token ? `Token ${token}` : '',
-          },
-        },
-      )
-      const json = (await response.json()) as { results?: TagRow[] }
-      const rows = json.results ?? []
+      const endpoint = teamMode ? '/tags/' : '/tags/?page_size=200'
+      const json = await api.get(endpoint)
+      const rows = tagListSchema.parse(json).results ?? []
       if (teamMode) {
         return rows.map((row) =>
           row.trusted

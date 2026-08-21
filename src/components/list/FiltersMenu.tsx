@@ -2,6 +2,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useFilters } from '../../hooks/useFilters.ts'
+import type { AoiFeature } from '../../network/aoi.ts'
 import { useAOI, useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { stripFilterSearch, withFilters } from '../../routing/filterSearch.ts'
 import {
@@ -18,26 +19,6 @@ import {
 import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon } from '../ui/icons.ts'
 
 const rootRouteApi = getRouteApi('__root__')
-
-type UserData = {
-  username?: string
-  uid?: string | number
-}
-
-type AoiFeature = {
-  id: string | number
-  properties?: { name?: string }
-}
-
-function aoiList(data: unknown): AoiFeature[] {
-  if (!data) return []
-  if (Array.isArray(data)) return data as AoiFeature[]
-  if (typeof data === 'object' && data !== null && 'features' in data) {
-    const features = (data as { features: unknown }).features
-    if (Array.isArray(features)) return features as AoiFeature[]
-  }
-  return []
-}
 
 function filterName(aoi: AoiFeature) {
   return aoi.properties?.name || `Filter ${aoi.id}`
@@ -71,15 +52,14 @@ function selectedFilterLabel({
 export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   const { token, user } = useAuth()
   const signedIn = Boolean(token)
-  const currentUser = user as UserData | undefined
-  const username = currentUser?.username
-  const uid = currentUser?.uid
+  const username = user?.username
+  const uid = user?.uid
   const search = rootRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
   const { filters, aoiId } = useFilters()
   const { data: aoi } = useAOI(aoiId)
   const { data } = useAllAOIs()
-  const aois = aoiList(data)
+  const aois = data ?? []
   const selected = aois.find((item) => String(item.id) === aoiId)
   const selectedName = selected
     ? filterName(selected)

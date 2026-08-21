@@ -1,11 +1,6 @@
 import { useUserDetails } from '../query/hooks/useUserDetails.ts'
 import { useWatchlist } from '../query/hooks/useWatchlist.ts'
 
-interface UserDetailsWithWhitelists {
-  whitelists?: string[]
-  [key: string]: any
-}
-
 export const useIsUserListed = (
   username: string,
   uid: number,
@@ -15,7 +10,7 @@ export const useIsUserListed = (
   const { data: watchlist = [] } = useWatchlist()
 
   // Trustedlist comes from user details, not a separate API call
-  const trustedlist = (userDetails as UserDetailsWithWhitelists | undefined)?.whitelists || []
+  const trustedlist = userDetails?.whitelists || []
 
   const isInTrustedlist = Array.isArray(trustedlist) && trustedlist.includes(username)
   const isInWatchlist = Array.isArray(watchlist) && watchlist.some((user) => user.uid === uid)

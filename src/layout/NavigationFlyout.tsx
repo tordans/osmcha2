@@ -29,12 +29,6 @@ import { Logo } from './Logo.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
 
-type UserData = {
-  username?: string
-  uid?: string | number
-  avatar?: string
-}
-
 const chromeIconButtonClassName = 'h-9 min-h-9 w-9 min-w-9 bg-zinc-100 px-0 sm:px-0'
 
 const chromeButtonShadowClassName =
@@ -109,14 +103,13 @@ function ExpandListButton() {
 
 function NavigationMenu() {
   const { token, user } = useAuth()
-  const currentUser = user as UserData | undefined
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const queryClient = useQueryClient()
   const navigate = rootRouteApi.useNavigate()
   const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
   const search = rootRouteApi.useSearch()
 
-  const username = currentUser?.username
+  const username = user?.username
   const localOAuth = useOsmOAuthAvailable()
 
   const handleLoginClick = () => {
@@ -195,7 +188,12 @@ function NavigationMenu() {
           <DropdownHeading>Account</DropdownHeading>
           {token && (
             <div className="flex items-center gap-3 px-3 py-2">
-              <Avatar src={currentUser?.avatar} initials={initials} alt="" className="size-7" />
+              <Avatar
+                src={user?.avatar ?? undefined}
+                initials={initials}
+                alt=""
+                className="size-7"
+              />
               <span className="text-sm/5 font-medium text-zinc-950">{username || 'Signed in'}</span>
             </div>
           )}

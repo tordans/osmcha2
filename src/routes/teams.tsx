@@ -3,17 +3,13 @@ import { mappingTeamsQueryOptions, userDetailsQueryOptions } from '../query/opti
 import { useAuthStore } from '../stores/authStore.ts'
 import { MappingTeams } from '../views/teams.tsx'
 
-type UserDetails = {
-  username?: string
-}
-
 export const Route = createFileRoute('/teams')({
   loader: async ({ context }) => {
     const token = useAuthStore.getState().token
     if (!token) return
 
     const userDetails = await context.queryClient.ensureQueryData(userDetailsQueryOptions())
-    const username = (userDetails as UserDetails | undefined)?.username
+    const username = userDetails?.username
     if (username) {
       await context.queryClient.ensureQueryData(mappingTeamsQueryOptions(username))
     }

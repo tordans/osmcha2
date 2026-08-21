@@ -116,7 +116,7 @@ function getString(input: any): string {
   return String(input)
 }
 
-export function deserializeFiltersFromObject(apiFilters: Record<string, string>): any {
+export function deserializeFiltersFromObject(apiFilters: Record<string, unknown>): any {
   const result: any = {}
 
   for (const k of Object.keys(apiFilters)) {

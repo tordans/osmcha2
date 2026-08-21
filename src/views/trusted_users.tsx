@@ -33,10 +33,6 @@ type TrustedUserRow = {
   username: string
 }
 
-type UserData = {
-  avatar?: string
-}
-
 const EMPTY_TRUSTED: TrustedUserRow[] = []
 
 const features = tableFeatures({
@@ -48,7 +44,6 @@ const columnHelper = createColumnHelper<typeof features, TrustedUserRow>()
 
 export function TrustedUsers() {
   const { token, user } = useAuth()
-  const currentUser = user as UserData | undefined
   const { data: trustedList } = useTrustedlist()
   const addMutation = useAddToTrustedlist()
   const removeMutation = useRemoveFromTrustedlist()
@@ -115,7 +110,7 @@ export function TrustedUsers() {
 
   return (
     <AccountPage>
-      <SecondaryPagesHeader title="Trusted Users" avatar={currentUser?.avatar} />
+      <SecondaryPagesHeader title="Trusted Users" avatar={user?.avatar ?? undefined} />
       {token ? (
         <div className="flex flex-col gap-6">
           <Text>

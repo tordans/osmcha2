@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import type { UserDetails } from '../../network/auth.ts'
 import { deleteFromTrustedList, postUserToTrustedList } from '../../network/osmcha_trustedlist.ts'
 
 export function useAddToTrustedlist() {
@@ -11,7 +12,7 @@ export function useAddToTrustedlist() {
       await queryClient.cancelQueries({ queryKey: ['user', 'details'] })
       const previous = queryClient.getQueryData(['user', 'details'])
 
-      queryClient.setQueryData(['user', 'details'], (old: any) => {
+      queryClient.setQueryData(['user', 'details'], (old: UserDetails | undefined) => {
         if (!old) return old
         const whitelists = old.whitelists || []
         return { ...old, whitelists: [...whitelists, username] }
@@ -45,7 +46,7 @@ export function useRemoveFromTrustedlist() {
       await queryClient.cancelQueries({ queryKey: ['user', 'details'] })
       const previous = queryClient.getQueryData(['user', 'details'])
 
-      queryClient.setQueryData(['user', 'details'], (old: any) => {
+      queryClient.setQueryData(['user', 'details'], (old: UserDetails | undefined) => {
         if (!old) return old
         const whitelists = (old.whitelists || []).filter((u: string) => u !== username)
         return { ...old, whitelists }

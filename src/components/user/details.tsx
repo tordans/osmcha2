@@ -8,30 +8,21 @@ import { HandThumbDownIcon, HandThumbUpIcon } from '../ui/icons.ts'
 import { Text } from '../ui/text.tsx'
 import { Textarea } from '../ui/textarea.tsx'
 
-type UserDetails = {
-  message_good?: string
-  message_bad?: string
-  comment_feature?: boolean
-}
-
-const userDetailsSchema = z.object({
-  messageGood: z.string(),
-  messageBad: z.string(),
-})
-
 export function EditUserDetails() {
   const { token, user } = useAuth()
   const updateMutation = useUpdateUserDetails()
-  const userDetails = user as UserDetails | undefined
-  const commentFeature = userDetails?.comment_feature ?? false
+  const commentFeature = user?.comment_feature ?? false
 
   const form = useForm({
     defaultValues: {
-      messageGood: userDetails?.message_good || '',
-      messageBad: userDetails?.message_bad || '',
+      messageGood: user?.message_good || '',
+      messageBad: user?.message_bad || '',
     },
     validators: {
-      onSubmit: userDetailsSchema,
+      onSubmit: z.object({
+        messageGood: z.string(),
+        messageBad: z.string(),
+      }),
     },
     onSubmit: ({ value }) => {
       if (!token) return

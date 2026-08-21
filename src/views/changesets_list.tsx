@@ -35,7 +35,8 @@ function ChangesetsList() {
   const { filters, aoiId, page, setFilters, setPage } = useFilters()
   const pageIndex = page - 1
   const { data: aoi } = useAOI(aoiId)
-  const aoiOrderBy = aoi?.properties?.filters?.order_by ?? null
+  const orderByFilter = aoi?.properties?.filters?.order_by
+  const aoiOrderBy = typeof orderByFilter === 'string' ? orderByFilter : null
 
   const {
     data: currentPage,

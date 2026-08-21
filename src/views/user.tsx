@@ -17,14 +17,6 @@ import { EditUserDetails } from '../components/user/details.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
-type UserData = {
-  avatar?: string
-  username?: string
-  id?: string | number
-  uid?: string | number
-  is_staff?: boolean
-}
-
 function CopyTokenButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false)
 
@@ -49,11 +41,10 @@ function CopyTokenButton({ token }: { token: string }) {
 
 export function User() {
   const { token, user } = useAuth()
-  const currentUser = user as UserData | undefined
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const initials = currentUser?.username?.slice(0, 2).toUpperCase()
+  const initials = user?.username?.slice(0, 2).toUpperCase()
 
   const handleLogout = () => {
     clearAuth()
@@ -71,8 +62,8 @@ export function User() {
       </header>
 
       <div className="flex items-center gap-4">
-        <Avatar src={currentUser?.avatar} initials={initials} alt="" className="size-16" />
-        <Heading level={2}>Welcome, {currentUser?.username || 'stranger'}!</Heading>
+        <Avatar src={user?.avatar ?? undefined} initials={initials} alt="" className="size-16" />
+        <Heading level={2}>Welcome, {user?.username || 'stranger'}!</Heading>
       </div>
 
       <Divider soft />
@@ -81,12 +72,12 @@ export function User() {
         <Subheading>Info</Subheading>
         <DescriptionList>
           <DescriptionTerm>OSMCha ID</DescriptionTerm>
-          <DescriptionDetails>{currentUser?.id}</DescriptionDetails>
+          <DescriptionDetails>{user?.id}</DescriptionDetails>
           <DescriptionTerm>OSM ID</DescriptionTerm>
-          <DescriptionDetails>{currentUser?.uid}</DescriptionDetails>
+          <DescriptionDetails>{user?.uid}</DescriptionDetails>
           <DescriptionTerm>Username</DescriptionTerm>
-          <DescriptionDetails>{currentUser?.username}</DescriptionDetails>
-          {currentUser?.is_staff ? (
+          <DescriptionDetails>{user?.username}</DescriptionDetails>
+          {user?.is_staff ? (
             <>
               <DescriptionTerm>Staff</DescriptionTerm>
               <DescriptionDetails>Yes</DescriptionDetails>
@@ -105,7 +96,7 @@ export function User() {
       {token ? (
         <section className="flex flex-col gap-4">
           <Subheading>Review Comments Template</Subheading>
-          <EditUserDetails key={String(currentUser?.id ?? 'pending')} />
+          <EditUserDetails key={String(user?.id ?? 'pending')} />
         </section>
       ) : null}
     </AccountPage>

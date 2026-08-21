@@ -23,34 +23,26 @@ import {
 import { Text } from '../components/ui/text.tsx'
 import { SaveUser } from '../components/user/save_user.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
+import type { WatchlistUser } from '../network/osmcha_watchlist.ts'
 import { useWatchlist } from '../query/hooks/useWatchlist.ts'
 import { useAddToWatchlist, useRemoveFromWatchlist } from '../query/hooks/useWatchlistMutations.ts'
 import { listSearchFromFilters } from '../routing/filterSearch.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 import { parseOsmDate } from '../utils/datetime.ts'
 
-type WatchlistUser = {
-  username: string
-  uid: string
-  date?: string
-}
+type WatchlistUserRow = WatchlistUser
 
-type UserData = {
-  avatar?: string
-}
-
-const EMPTY_WATCHLIST: WatchlistUser[] = []
+const EMPTY_WATCHLIST: WatchlistUserRow[] = []
 
 const features = tableFeatures({
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
 })
 
-const columnHelper = createColumnHelper<typeof features, WatchlistUser>()
+const columnHelper = createColumnHelper<typeof features, WatchlistUserRow>()
 
 export function Watchlist() {
   const { token, user } = useAuth()
-  const currentUser = user as UserData | undefined
   const { data: watchlist = EMPTY_WATCHLIST } = useWatchlist()
   const addMutation = useAddToWatchlist()
   const removeMutation = useRemoveFromWatchlist()
@@ -109,7 +101,7 @@ export function Watchlist() {
               type="button"
               className="min-h-11"
               title="Remove from watchlist"
-              onClick={() => removeFromWatchList(listed.uid)}
+              onClick={() => removeFromWatchList(String(listed.uid))}
             >
               <TrashIcon data-slot="icon" />
               Remove
@@ -128,12 +120,12 @@ export function Watchlist() {
       sorting: [{ id: 'date', desc: true }],
     },
     enableSortingRemoval: false,
-    getRowId: (row) => row.uid,
+    getRowId: (row) => String(row.uid),
   })
 
   return (
     <AccountPage>
-      <SecondaryPagesHeader title="Watchlist" avatar={currentUser?.avatar} />
+      <SecondaryPagesHeader title="Watchlist" avatar={user?.avatar ?? undefined} />
       {token ? (
         <div className="flex flex-col gap-6">
           <Text>

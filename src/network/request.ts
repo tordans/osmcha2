@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { API_URL } from '../config/index.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
@@ -15,6 +16,21 @@ export function makeApiRequest(endpoint: string, options: RequestInit = {}): Req
   })
 }
 
+function errorMessageFromBody(data: unknown): string | undefined {
+  const asString = z.string().safeParse(data)
+  if (asString.success && asString.data) return asString.data
+  const obj = z
+    .object({
+      detail: z.unknown().optional(),
+      message: z.unknown().optional(),
+    })
+    .safeParse(data)
+  if (!obj.success) return undefined
+  if (typeof obj.data.detail === 'string' && obj.data.detail) return obj.data.detail
+  if (typeof obj.data.message === 'string' && obj.data.message) return obj.data.message
+  return undefined
+}
+
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     // Try to extract error message from server response
@@ -22,13 +38,7 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 
     try {
       const data = await response.json()
-      if (data.detail) {
-        errorMessage = data.detail
-      } else if (typeof data === 'string') {
-        errorMessage = data
-      } else if (data.message) {
-        errorMessage = data.message
-      }
+      errorMessage = errorMessageFromBody(data) ?? errorMessage
     } catch {
       // If JSON parsing fails, use statusText
     }

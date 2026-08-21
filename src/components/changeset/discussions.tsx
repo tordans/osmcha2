@@ -16,12 +16,6 @@ interface DiscussionsProps {
   changesetIsHarmful: boolean
 }
 
-interface UserDetails {
-  username?: string
-  message_bad?: string
-  message_good?: string
-}
-
 function Discussions({
   discussions,
   changesetId,
@@ -29,7 +23,6 @@ function Discussions({
   changesetIsHarmful,
 }: DiscussionsProps) {
   const { token, user } = useAuth()
-  const userDetails = user as UserDetails | undefined
 
   return (
     <section className="p-2.5">
@@ -77,7 +70,7 @@ function Discussions({
             changesetIsHarmful={changesetIsHarmful}
             discussions={discussions}
             token={token}
-            userDetails={userDetails || {}}
+            userDetails={user ?? {}}
           />
         </div>
       ) : (

@@ -111,21 +111,6 @@ type FiltersHeaderProps = {
   loadAoiId: (id: string) => void
 }
 
-type AoiFeature = {
-  id: string | number
-  properties?: { name?: string }
-}
-
-function aoiFeatures(data: unknown): AoiFeature[] {
-  if (!data) return []
-  if (Array.isArray(data)) return data as AoiFeature[]
-  if (typeof data === 'object' && data !== null && 'features' in data) {
-    const features = (data as { features: unknown }).features
-    if (Array.isArray(features)) return features as AoiFeature[]
-  }
-  return []
-}
-
 export function FiltersHeader({
   createAOI,
   updateAOI,
@@ -138,7 +123,7 @@ export function FiltersHeader({
   const navigate = rootRouteApi.useNavigate()
   const search = rootRouteApi.useSearch()
   const aoisQuery = useAllAOIs()
-  const aoiList: AoiOption[] = aoiFeatures(aoisQuery.data).map((aoi) => ({
+  const aoiList: AoiOption[] = (aoisQuery.data ?? []).map((aoi) => ({
     label: aoi.properties?.name || `Filter ${aoi.id}`,
     value: String(aoi.id),
   }))

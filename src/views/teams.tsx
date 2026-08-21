@@ -12,6 +12,7 @@ import {
 } from '../components/ui/table.tsx'
 import { Text } from '../components/ui/text.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
+import type { MappingTeam } from '../network/mapping_team.ts'
 import {
   useCreateMappingTeam,
   useDeleteMappingTeam,
@@ -20,20 +21,11 @@ import {
 import { listSearchFromFilters } from '../routing/filterSearch.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 
-type MappingTeam = {
-  id: number
-  name: string
-}
-
-type UserData = {
-  username?: string
-  avatar?: string
-}
+type MappingTeamRow = Pick<MappingTeam, 'id' | 'name'>
 
 export function MappingTeams() {
   const { token, user } = useAuth()
-  const currentUser = user as UserData | undefined
-  const teamsQuery = useMappingTeams(currentUser?.username)
+  const teamsQuery = useMappingTeams(user?.username)
   const createMutation = useCreateMappingTeam()
   const deleteMutation = useDeleteMappingTeam()
 
@@ -47,11 +39,11 @@ export function MappingTeams() {
     deleteMutation.mutate(teamId)
   }
 
-  const teams = (teamsQuery.data || []) as MappingTeam[]
+  const teams: MappingTeamRow[] = teamsQuery.data ?? []
 
   return (
     <AccountPage>
-      <SecondaryPagesHeader title="Teams" avatar={currentUser?.avatar} />
+      <SecondaryPagesHeader title="Teams" avatar={user?.avatar ?? undefined} />
       {token ? (
         <div className="flex flex-col gap-6">
           {teams.length === 0 ? (

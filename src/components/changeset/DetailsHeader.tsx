@@ -117,7 +117,7 @@ export function DetailsHeader({
   const { token, user } = useAuth()
   const { data: osmMetadata } = useChangesetDiscussion(changesetId)
   const changesetIsOpen = isOsmChangesetOpen(osmMetadata)
-  const username = (user as { username?: string } | undefined)?.username
+  const username = user?.username
   const markHarmfulMutation = useMarkHarmful()
   const properties = currentChangeset.properties ?? {}
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'

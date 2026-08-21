@@ -8,32 +8,12 @@ import { useMappingTeam, useUpdateMappingTeam } from '../query/hooks/useMappingT
 
 const teamRouteApi = getRouteApi('/teams/$id')
 
-type TeamUser = {
-  username?: string
-  uid?: string
-  joined?: string
-  left?: string
-}
-
-type TeamData = {
-  id: number
-  name: string
-  owner?: string
-  users: TeamUser[]
-}
-
-type UserData = {
-  username?: string
-  avatar?: string
-}
-
 export function EditMappingTeam() {
   const { id: teamId } = teamRouteApi.useParams()
   const { token, user } = useAuth()
   const teamQuery = useMappingTeam(teamId)
   const updateMutation = useUpdateMappingTeam()
-  const currentUser = user as UserData | undefined
-  const team = teamQuery.data as TeamData | undefined
+  const team = teamQuery.data
 
   const editTeam = (teamIdToEdit: number, name: string, users: object) => {
     if (!name || !users || !token) return
@@ -46,7 +26,7 @@ export function EditMappingTeam() {
 
   return (
     <AccountPage>
-      <SecondaryPagesHeader title="Edit team" avatar={currentUser?.avatar} />
+      <SecondaryPagesHeader title="Edit team" avatar={user?.avatar ?? undefined} />
       {token ? (
         <div className="flex flex-col gap-6">
           <Heading level={2}>Editing mapping team: {team?.name}</Heading>
@@ -55,7 +35,7 @@ export function EditMappingTeam() {
             onChange={editTeam}
             editing
             activeTeam={team}
-            userIsOwner={team?.owner === currentUser?.username}
+            userIsOwner={team?.owner === user?.username}
           />
         </div>
       ) : (
