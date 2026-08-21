@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Input } from '../ui/input.tsx'
-import { filterOptionLabel, type Filter } from './index.ts'
+import { filterOptionLabel, type Filter } from './filterTypes.ts'
 
 type TextProps = {
   name: string

@@ -6,7 +6,7 @@ import { Button } from '../ui/button.tsx'
 import { Label } from '../ui/fieldset.tsx'
 import { Input } from '../ui/input.tsx'
 import { Radio } from '../ui/radio.tsx'
-import type { Filter, Filters } from './index.ts'
+import type { Filter, Filters } from './filterTypes.ts'
 import { Text } from './text.tsx'
 
 const LAST_DAYS_PRESETS = [2, 7, 30] as const

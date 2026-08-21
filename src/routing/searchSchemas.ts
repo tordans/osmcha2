@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Filters } from '../components/filters/index.ts'
+import type { Filters } from '../components/filters/filterTypes.ts'
 
 export const osmchaSearchSchema = z
   .object({

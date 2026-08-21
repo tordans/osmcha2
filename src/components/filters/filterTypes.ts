@@ -1,12 +1,3 @@
-export { DateField, parseStoredDate } from './date.tsx'
-export { LocationSelect } from './location.tsx'
-export { Meta } from './meta.tsx'
-export { MetadataFilter } from './metadata.tsx'
-export { MappingTeamMultiSelect, MultiSelect } from './multi_select.tsx'
-export { Radio } from './radio.tsx'
-export { Text } from './text.tsx'
-export { Wrapper } from './wrapper.tsx'
-
 export type FilterOption = {
   label: string | object
   value: string | number | object

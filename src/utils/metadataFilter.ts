@@ -1,4 +1,4 @@
-import { filterOptionKey, type Filter } from '../components/filters/index.ts'
+import { filterOptionKey, type Filter } from '../components/filters/filterTypes.ts'
 import { metadataKeyConfig } from '../config/changesetMetadataKeys.ts'
 
 export type MetadataOperator = 'contains' | 'exists' | 'equals' | 'min' | 'max'

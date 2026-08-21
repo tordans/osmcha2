@@ -1,4 +1,4 @@
-import type { Filters } from '../components/filters/index.ts'
+import type { Filters } from '../components/filters/filterTypes.ts'
 import { deserializeFiltersFromObject, filtersSchema } from '../utils/filters.ts'
 import { apiOrderFromUnknown, apiOrderToSearchParam, searchParamToApiOrder } from './orderParam.ts'
 import { searchParamsRegistry, type OsmchaSearch } from './searchSchemas.ts'

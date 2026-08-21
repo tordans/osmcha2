@@ -1,7 +1,12 @@
 import { Button } from '../ui/button.tsx'
 import { XMarkIcon } from '../ui/icons.ts'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
-import { filterOptionKey, filterOptionLabel, type Filter, type FilterOption } from './index.ts'
+import {
+  filterOptionKey,
+  filterOptionLabel,
+  type Filter,
+  type FilterOption,
+} from './filterTypes.ts'
 
 type RadioProps = {
   name: string

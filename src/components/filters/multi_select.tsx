@@ -5,7 +5,12 @@ import { BadgeButton } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { XMarkIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
-import { filterOptionKey, filterOptionLabel, type Filter, type FilterOption } from './index.ts'
+import {
+  filterOptionKey,
+  filterOptionLabel,
+  type Filter,
+  type FilterOption,
+} from './filterTypes.ts'
 import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
 type MultiSelectProps = {

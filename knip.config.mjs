@@ -15,11 +15,9 @@ export default {
     'src/utils/toast.ts',
   ],
   ignoreIssues: {
-    'src/components/filters/index.ts': ['exports'],
     'src/components/changeset/**': ['exports', 'types'],
     'src/network/**': ['exports'],
     'src/routing/searchSchemas.ts': ['exports', 'types'],
-    'src/query/hooks/useNominatimSearch.ts': ['types'],
     'src/components/debug/DebugDataHelper.tsx': ['types'],
   },
   ignoreDependencies: ['tailwind-merge'],

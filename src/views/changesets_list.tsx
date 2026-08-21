@@ -2,7 +2,7 @@ import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
 import { Footer } from '../components/list/footer.tsx'
 import { Header } from '../components/list/header.tsx'
-import { List } from '../components/list/index.tsx'
+import { List } from '../components/list/list.tsx'
 import {
   FILTER_BINDING,
   HELP_BINDING,

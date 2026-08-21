@@ -1,6 +1,6 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import type { Filters } from '../components/filters/index.ts'
+import type { Filters } from '../components/filters/filterTypes.ts'
 import {
   filtersFromSearch,
   serializeFiltersToSearch,

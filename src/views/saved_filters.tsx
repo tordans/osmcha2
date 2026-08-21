@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '../components/ui/table.tsx'
 import { Text } from '../components/ui/text.tsx'
-import { API_URL } from '../config/index.ts'
+import { API_URL } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import type { AoiFeature } from '../network/aoi.ts'

@@ -17,7 +17,7 @@ import {
 } from '../components/ui/dropdown.tsx'
 import { ChevronDownIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '../components/ui/icons.ts'
 import { Text } from '../components/ui/text.tsx'
-import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/index.ts'
+import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useOsmOAuthAvailable } from '../hooks/useOsmOAuthAvailable.ts'
 import { getAuthUrl } from '../network/auth.ts'

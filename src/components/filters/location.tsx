@@ -20,7 +20,7 @@ import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
 import { areaLtBoundPolygon, parseAreaLt } from './areaLtBound.ts'
-import { filterOptionLabel, type Filter } from './index.ts'
+import { filterOptionLabel, type Filter } from './filterTypes.ts'
 import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
 type QueryTypeOption = { value: string; label: string }

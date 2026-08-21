@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { API_URL } from '../config/index.ts'
+import { API_URL } from '../config/constants.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
 export function makeApiRequest(endpoint: string, options: RequestInit = {}): Request {

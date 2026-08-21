@@ -1,3 +1,13 @@
+import pkg from '../../package.json'
+
+const isLocal = import.meta.env.DEV
+const appVersion = pkg.version
+export const appVersionLabel = `v${appVersion}${isLocal ? ' Local' : ''}`
+
+export const githubContributingUrl =
+  'https://github.com/osmcha/osmcha-frontend/blob/master/CONTRIBUTING.md'
+export const donateUrl = 'https://openstreetmap.app.neoncrm.com/forms/osmcha'
+
 export const API_URL = 'https://osmcha.org/api/v1'
 export const PAGE_SIZE = 25
 export const overpassBase = 'https://overpass-api.de/api/interpreter'

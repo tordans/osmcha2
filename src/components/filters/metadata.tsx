@@ -24,7 +24,7 @@ import { XMarkIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text, TextLink } from '../ui/text.tsx'
-import type { Filter } from './index.ts'
+import type { Filter } from './filterTypes.ts'
 
 const OPERATOR_LABELS: Record<MetadataOperator, string> = {
   contains: 'Contains',

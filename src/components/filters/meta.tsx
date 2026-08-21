@@ -1,7 +1,7 @@
 import { Button } from '../ui/button.tsx'
 import { XMarkIcon } from '../ui/icons.ts'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
-import type { Filters } from './index.ts'
+import type { Filters } from './filterTypes.ts'
 
 type MetaOption = {
   label: string
