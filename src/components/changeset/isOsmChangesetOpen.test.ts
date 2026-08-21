@@ -17,5 +17,6 @@ describe('isOsmChangesetOpen', () => {
 
   test('is true only when OSM reports the changeset still open', () => {
     expect(isOsmChangesetOpen({ changeset: { open: true } })).toBe(true)
+    expect(isOsmChangesetOpen({ changeset: { open: true, closed_at: null } })).toBe(true)
   })
 })

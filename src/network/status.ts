@@ -1,7 +1,14 @@
+import { z } from 'zod'
 import { statusUrl } from '../config/constants.ts'
 import { handleResponse } from './request.ts'
 
-export async function getStatus(): Promise<any> {
+const osmchaStatusSchema = z.object({
+  status: z.string(),
+  message: z.string().optional(),
+})
+
+export async function getStatus() {
   const res = await fetch(statusUrl, { method: 'GET' })
-  return handleResponse(res)
+  const data = await handleResponse(res)
+  return osmchaStatusSchema.parse(data)
 }

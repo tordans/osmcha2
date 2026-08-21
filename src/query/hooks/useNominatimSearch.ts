@@ -1,20 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { nominatimSearch } from '../../network/nominatim.ts'
+import { nominatimSearch, type NominatimPlace } from '../../network/nominatim.ts'
 import { cacheForever } from '../cachePolicy.ts'
 
-export type NominatimPlace = {
-  display_name: string
-  geojson: unknown
-}
+export type { NominatimPlace }
 
 export function useNominatimSearch(query: string, type: string, enabled: boolean) {
   return useQuery({
     queryKey: ['nominatim', type, query],
-    queryFn: async () => {
-      const json = await nominatimSearch(query, type)
-      if (!Array.isArray(json)) return [] as NominatimPlace[]
-      return json as NominatimPlace[]
-    },
+    queryFn: () => nominatimSearch(query, type),
     enabled,
     ...cacheForever,
   })

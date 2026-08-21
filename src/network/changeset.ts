@@ -2,6 +2,7 @@ import adiffParser from '@osmcha/osm-adiff-parser'
 import { subSeconds } from 'date-fns'
 import { adiffServiceUrl, apiOSM, overpassBase } from '../config/constants.ts'
 import { parseOsmDate } from '../utils/datetime.ts'
+import { osmChangesetPayloadSchema } from './openstreetmap.ts'
 import { api } from './request.ts'
 
 export function fetchChangeset(id: number) {
@@ -54,24 +55,31 @@ async function fetchAugmentedDiffFromOverpass(id: number) {
   if (!res.ok) {
     throw new Error(`OpenStreetMap changeset ${id} returned ${res.status} ${res.statusText}`.trim())
   }
-  const { changeset } = await res.json()
+  const parsed = osmChangesetPayloadSchema.safeParse(await res.json())
+  if (!parsed.success) {
+    throw new Error(`OpenStreetMap changeset ${id} returned invalid JSON`)
+  }
+  const { changeset } = parsed.data
+  if (!changeset.created_at) {
+    throw new Error(`OpenStreetMap changeset ${id} is missing created_at`)
+  }
   const createdAt = parseOsmDate(changeset.created_at)
-  const closedAt = changeset.closed_at && parseOsmDate(changeset.closed_at)
+  const adiffDates: Date[] = [subSeconds(createdAt, 1)]
+  if (changeset.closed_at) {
+    adiffDates.push(parseOsmDate(changeset.closed_at))
+  }
 
-  const adiffArgs = [subSeconds(createdAt, 1), closedAt]
-    .filter(Boolean)
-    .map((d) => `"${d.toISOString()}"`)
-    .join(',')
+  const adiffArgs = adiffDates.map((d) => `"${d.toISOString()}"`).join(',')
 
   let data = `[out:xml][adiff:${adiffArgs}];`
   data += '(node(bbox)(changed);way(bbox)(changed);relation(bbox)(changed););out meta geom(bbox);'
 
   const epsilon = 0.00001
   const bbox = [
-    changeset.min_lon - epsilon || -180,
-    changeset.min_lat - epsilon || -90,
-    changeset.max_lon + epsilon || 180,
-    changeset.max_lat + epsilon || 90,
+    changeset.min_lon! - epsilon || -180,
+    changeset.min_lat! - epsilon || -90,
+    changeset.max_lon! + epsilon || 180,
+    changeset.max_lat! + epsilon || 90,
   ]
 
   res = await fetch(`${overpassBase}?data=${encodeURIComponent(data)}&bbox=${bbox.join(',')}`)

@@ -1,6 +1,11 @@
+import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_BASEMAP_ID, isBuiltinBasemapId } from '../components/changeset/basemapStyles.ts'
+
+const persistedMapSchema = z.object({
+  style: z.string(),
+})
 
 interface MapState {
   style: string
@@ -18,6 +23,12 @@ export const useMapStore = create<MapState>()(
       partialize: (state) => ({
         style: isBuiltinBasemapId(state.style) ? state.style : DEFAULT_BASEMAP_ID,
       }),
+      merge: (persistedState, currentState) => {
+        const parsed = persistedMapSchema.safeParse(persistedState)
+        if (!parsed.success) return currentState
+        const style = isBuiltinBasemapId(parsed.data.style) ? parsed.data.style : DEFAULT_BASEMAP_ID
+        return { ...currentState, style }
+      },
     },
   ),
 )

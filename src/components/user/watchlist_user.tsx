@@ -12,13 +12,16 @@ type OsmUser = {
   username: string
 }
 
-type OsmUserJson = {
-  user: { id: number; display_name: string }
-}
+const osmUserByIdSchema = z.object({
+  user: z.object({
+    id: z.number(),
+    display_name: z.string(),
+  }),
+})
 
-type OsmChangesetsJson = {
-  changesets: Array<{ uid: number }>
-}
+const osmChangesetsByDisplayNameSchema = z.object({
+  changesets: z.array(z.object({ uid: z.number() })),
+})
 
 const watchlistUserSchema = z
   .object({
@@ -36,7 +39,7 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
 
   const fetchByUid = async (userId: string): Promise<OsmUser> => {
     const res = await fetch(`https://www.openstreetmap.org/api/0.6/user/${userId}.json`)
-    const data = await handleResponse<OsmUserJson>(res)
+    const data = osmUserByIdSchema.parse(await handleResponse(res))
     return { uid: data.user.id.toString(), username: data.user.display_name }
   }
 
@@ -44,7 +47,7 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
     const res = await fetch(
       `https://www.openstreetmap.org/api/0.6/changesets.json?display_name=${displayName}`,
     )
-    const data = await handleResponse<OsmChangesetsJson>(res)
+    const data = osmChangesetsByDisplayNameSchema.parse(await handleResponse(res))
     const changeset = data.changesets[0]
     if (!changeset) throw new Error('No changesets found for user')
     return fetchByUid(changeset.uid.toString())

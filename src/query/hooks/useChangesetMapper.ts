@@ -18,7 +18,7 @@ export function useChangesetMapper(uid: number | string | null | undefined, enab
     queryKey: ['whosthat', numericUid],
     queryFn: async () => {
       const users = await getUsers(numericUid)
-      return (users[0]?.names as string[] | undefined) ?? []
+      return users[0]?.names ?? []
     },
     enabled: canLoad,
     ...cacheForever,

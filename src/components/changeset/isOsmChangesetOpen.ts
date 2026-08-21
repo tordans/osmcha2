@@ -1,13 +1,8 @@
-type OsmChangesetPayload = {
-  changeset?: {
-    open?: boolean
-    closed_at?: string
-  }
-}
+import { osmChangesetPayloadSchema } from '../../network/openstreetmap.ts'
 
 /** OSM `/changeset/{id}.json` marks an in-progress edit with `open: true` (no `closed_at`). */
 export function isOsmChangesetOpen(metadata: unknown): boolean {
-  const changeset = (metadata as OsmChangesetPayload | null | undefined)?.changeset
-  if (!changeset) return false
-  return changeset.open === true
+  const parsed = osmChangesetPayloadSchema.safeParse(metadata)
+  if (!parsed.success) return false
+  return parsed.data.changeset.open === true
 }
