@@ -17,6 +17,7 @@ import {
 } from '../../config/bindings.ts'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useIsUserListed } from '../../hooks/useIsUserListed.ts'
+import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { useMarkHarmful } from '../../query/hooks/useMarkHarmful.ts'
 import {
   useAddToTrustedlist,
@@ -54,6 +55,7 @@ import {
 } from '../ui/icons.ts'
 import { typeScale } from '../ui/typography.ts'
 import { changesetTagsForDisplay } from './changesetTags.ts'
+import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { Tags } from './tags.tsx'
 
@@ -113,6 +115,8 @@ export function DetailsHeader({
   const { map } = changesetRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
   const { token, user } = useAuth()
+  const { data: osmMetadata } = useChangesetDiscussion(changesetId)
+  const changesetIsOpen = isOsmChangesetOpen(osmMetadata)
   const username = (user as { username?: string } | undefined)?.username
   const markHarmfulMutation = useMarkHarmful()
   const properties = currentChangeset.properties ?? {}
@@ -225,8 +229,21 @@ export function DetailsHeader({
           >
             <span className="min-w-0 flex-1 text-left">
               <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
-              <div className={clsx('-mt-0.5 font-normal text-zinc-500', typeScale.small)}>
+              <div
+                className={clsx(
+                  '-mt-0.5 flex flex-wrap items-center gap-x-1 font-normal text-zinc-500',
+                  typeScale.small,
+                )}
+              >
                 {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+                {changesetIsOpen ? (
+                  <Badge
+                    color="amber"
+                    title="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
+                  >
+                    Open
+                  </Badge>
+                ) : null}
                 {' | '}
                 <abbr
                   title={`Editor ${properties.editor ?? 'unknown'}${
