@@ -1,5 +1,9 @@
+import { z } from 'zod'
 import { osmchaSocialTokenUrl } from '../config/constants.ts'
 import { api, handleResponse } from './request.ts'
+
+const oauthTokenSchema = z.object({ token: z.string().min(1) })
+const authUrlSchema = z.object({ auth_url: z.string().min(1) })
 
 export async function postFinalTokensOSMCha(code: string) {
   const formData = new URLSearchParams()
@@ -13,15 +17,16 @@ export async function postFinalTokensOSMCha(code: string) {
       },
       body: formData.toString(),
     })
-    return handleResponse(res)
+    const data = await handleResponse(res)
+    return oauthTokenSchema.parse(data)
   } catch (e) {
     console.error(e)
     throw e
   }
 }
 
-export function getAuthUrl(): Promise<{ auth_url: string }> {
-  return api.post('/social-auth/')
+export async function getAuthUrl() {
+  return authUrlSchema.parse(await api.post('/social-auth/'))
 }
 
 export function fetchUserDetails() {

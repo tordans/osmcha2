@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { parseTokenPaste } from './auth.ts'
 
 export const BOOKMARKLET_SOURCE = 'osmcha2-bookmarklet'
@@ -6,6 +7,15 @@ export const AUTH_READY_TYPE = 'osmcha2-auth-ready'
 export const ALLOWED_HANDOFF_ORIGINS = ['https://osmcha.org', 'https://www.osmcha.org'] as const
 
 const ALLOWED_HANDOFF_ORIGIN_SET = new Set<string>(ALLOWED_HANDOFF_ORIGINS)
+
+const bookmarkletAuthMessageSchema = z.object({
+  source: z.literal(BOOKMARKLET_SOURCE),
+  auth: z.string(),
+})
+
+const authReadyMessageSchema = z.object({
+  type: z.literal(AUTH_READY_TYPE),
+})
 
 export function isAllowedHandoffOrigin(origin: string): boolean {
   return ALLOWED_HANDOFF_ORIGIN_SET.has(origin)
@@ -26,16 +36,13 @@ export function appEntryUrl(
 
 /** Extract a DRF token from a bookmarklet postMessage payload, or null if invalid. */
 export function parseBookmarkletAuthMessage(data: unknown): string | null {
-  if (!data || typeof data !== 'object') return null
-  if (!('source' in data) || data.source !== BOOKMARKLET_SOURCE) return null
-  if (!('auth' in data) || typeof data.auth !== 'string') return null
-  return parseTokenPaste(data.auth)
+  const parsed = bookmarkletAuthMessageSchema.safeParse(data)
+  if (!parsed.success) return null
+  return parseTokenPaste(parsed.data.auth)
 }
 
 export function isAuthReadyMessage(data: unknown): boolean {
-  return Boolean(
-    data && typeof data === 'object' && 'type' in data && data.type === AUTH_READY_TYPE,
-  )
+  return authReadyMessageSchema.safeParse(data).success
 }
 
 export function authReadyPayload() {

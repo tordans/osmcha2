@@ -1,5 +1,10 @@
+import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+
+const persistedAuthSchema = z.object({
+  token: z.union([z.string(), z.null()]),
+})
 
 interface AuthState {
   token: string | null
@@ -19,6 +24,11 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         token: state.token,
       }),
+      merge: (persistedState, currentState) => {
+        const parsed = persistedAuthSchema.safeParse(persistedState)
+        if (!parsed.success) return currentState
+        return { ...currentState, token: parsed.data.token }
+      },
       // One-time migration from Redux localStorage
       onRehydrateStorage: () => (state) => {
         if (state && !state.token) {

@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import { z } from 'zod'
 import { postFinalTokensOSMCha } from '../network/auth.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 
@@ -24,6 +25,12 @@ export const OSMCHA_ORG_AUTH_CONSOLE_SNIPPET = "copy(localStorage.getItem('auth'
 
 const TOKEN_PREFIX = /^token\s+/i
 
+const persistAuthJsonSchema = z.object({
+  state: z.object({
+    token: z.string(),
+  }),
+})
+
 /**
  * Accepts anything a user might paste from osmcha.org: a raw DRF token,
  * `Token <token>` (Account copy button), or Zustand persist JSON
@@ -45,13 +52,11 @@ function tokenFromAuthJson(trimmed: string): string | null {
   if (trimmed[0] !== '{' && trimmed[0] !== '"') return null
   try {
     const parsed: unknown = JSON.parse(trimmed)
-    if (typeof parsed === 'string') return parseTokenPaste(parsed)
-    if (!parsed || typeof parsed !== 'object') return null
-    const state = 'state' in parsed ? parsed.state : undefined
-    if (!state || typeof state !== 'object') return null
-    const token = 'token' in state ? state.token : undefined
-    if (typeof token !== 'string') return null
-    return parseTokenPaste(token)
+    const asString = z.string().safeParse(parsed)
+    if (asString.success) return parseTokenPaste(asString.data)
+    const persist = persistAuthJsonSchema.safeParse(parsed)
+    if (!persist.success) return null
+    return parseTokenPaste(persist.data.state.token)
   } catch {
     return null
   }
@@ -100,11 +105,7 @@ export async function completeOAuthLogin(code: string) {
   try {
     toast.warning('Logging in…', { duration: 1000 })
 
-    const { token } = (await postFinalTokensOSMCha(code)) as { token: string }
-
-    if (!token || token === '') {
-      throw new Error('Invalid token')
-    }
+    const { token } = await postFinalTokensOSMCha(code)
 
     // Save to Zustand store (persists to localStorage under "auth" key)
     useAuthStore.getState().setToken(token)
