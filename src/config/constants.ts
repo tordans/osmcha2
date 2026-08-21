@@ -6,7 +6,6 @@ export const statusUrl =
 
 export const osmchaSocialTokenUrl = `${API_URL}/social-auth/`
 
-export const osmUrl = 'https://www.openstreetmap.org'
 export const apiOSM = 'https://api.openstreetmap.org/api/0.6'
 export const adiffServiceUrl = 'https://adiffs.osmcha.org'
 
