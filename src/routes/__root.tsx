@@ -4,6 +4,7 @@ import { createRootRouteWithContext, Outlet, redirect } from '@tanstack/react-ro
 import { MotionConfig } from 'motion/react'
 import { TanStackAppDevtools } from '../components/shared/devtools/TanStackAppDevtools.tsx'
 import { useAppHeight } from '../hooks/useAppHeight.ts'
+import { useBookmarkletAuthHandoff } from '../hooks/useBookmarkletAuthHandoff.ts'
 import { AppShell } from '../layout/AppShell.tsx'
 import { PanePresence } from '../layout/PanePresence.tsx'
 import { aoiQueryOptions } from '../query/options/aoi.ts'
@@ -13,6 +14,7 @@ import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { getListPaneOpen } from '../stores/list-pane-store.ts'
+import { parseTokenPaste } from '../utils/auth.ts'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   validateSearch: osmchaSearchSchema,
@@ -31,9 +33,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       })
     }
 
-    const token = search.token?.trim()
-    if (token) {
-      useAuthStore.getState().setToken(token)
+    const rawToken = search.token?.trim()
+    if (rawToken) {
+      const token = parseTokenPaste(rawToken)
+      if (token) {
+        useAuthStore.getState().setToken(token)
+      }
       throw redirect({
         search: (prev) => ({ ...prev, token: undefined }),
         replace: true,
@@ -83,6 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootLayout() {
   useAppHeight()
+  useBookmarkletAuthHandoff()
 
   return (
     <MotionConfig reducedMotion="user">

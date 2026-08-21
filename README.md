@@ -16,9 +16,42 @@ Live preview: [tordans.github.io/osmcha2](https://tordans.github.io/osmcha2/).
 
 OAuth sign-in works on **localhost / 127.0.0.1** against production Django
 (Origin redirect). Other public hosts (including GitHub Pages) use **token
-import**: copy the API token from osmcha.org (Account, or `localStorage` key
-`auth`) and paste it here. The production API requires a token for list and
-changeset requests.
+import**: reuse the API token from osmcha.org. The production API requires a
+token for list and changeset requests.
+
+### Token import (GitHub Pages and custom hosts)
+
+On the Sign in screen you can:
+
+1. **Bookmarklet** — drag “Open osmcha2 signed in” (or “Copy auth JSON”) onto
+   your bookmarks bar. On [osmcha.org](https://osmcha.org) while signed in,
+   click the bookmark. The open variant uses `postMessage` from osmcha.org
+   only; the token never goes in the URL (avoid `?token=` — it leaks via
+   history, Pages logs, and referrers).
+2. **Paste** — Account → API key, Chrome Local Storage key `auth`, or a
+   Console snippet.
+
+Caveats: Chrome often blocks clicking `javascript:` links on the page —
+drag to the bookmarks bar (or use Copy code). osmcha.org CSP may block some
+bookmarklets; then use paste. Only install the bookmarklets from this app’s
+Sign in screen, and only run them on osmcha.org.
+
+### Preview the GitHub Pages login UI locally
+
+Localhost normally shows OSM Sign in, so you cannot see the token-paste
+screen without a flag. In `bun run dev`:
+
+1. Sign out if you are already signed in.
+2. Click the pink **token UI** chip next to the breakpoint helper (bottom
+   center).
+3. The Sign in screen and menu switch to token paste — the same flow as
+   [tordans.github.io/osmcha2](https://tordans.github.io/osmcha2/).
+
+The chip is a `sessionStorage` flag (`osmcha-preview-token-import`). It is
+only honored in the Vite dev server; production builds ignore it. Click
+again to return to OSM OAuth. A bookmarklet built while previewing is baked
+to the current origin (`http://127.0.0.1:3000/`); use the Pages deploy’s
+Sign in screen for a Pages-targeted bookmarklet.
 
 API hosts, page size, and date defaults live in [`src/config/constants.ts`](./src/config/constants.ts). There is no `.env` file.
 
