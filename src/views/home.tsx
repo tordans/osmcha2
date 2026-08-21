@@ -2,7 +2,7 @@ import { Heading } from '../components/ui/heading.tsx'
 import { ArrowLeftIcon } from '../components/ui/icons.ts'
 import { Link } from '../components/ui/link.tsx'
 import { Text } from '../components/ui/text.tsx'
-import { appVersion, isLocal } from '../config/index.ts'
+import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/index.ts'
 
 const footerLinkClassName =
   'inline-flex min-h-11 items-center text-base/6 text-zinc-500 underline decoration-zinc-950/20 sm:text-sm/6 hover-fine:decoration-zinc-950/50'
@@ -20,27 +20,19 @@ export function Home() {
         </div>
       </div>
       <footer className="flex flex-wrap items-center justify-center gap-x-3">
-        <Text>
-          v{appVersion}
-          {isLocal ? ' Local' : ''}
-        </Text>
+        <Text>{appVersionLabel}</Text>
         <Link href="/about" className={footerLinkClassName}>
           Guide
         </Link>
         <Link
-          href="https://github.com/osmcha/osmcha-frontend/blob/master/CONTRIBUTING.md"
+          href={githubContributingUrl}
           target="_blank"
           rel="noreferrer"
           className={footerLinkClassName}
         >
           GitHub
         </Link>
-        <Link
-          href="https://openstreetmap.app.neoncrm.com/forms/osmcha"
-          target="_blank"
-          rel="noreferrer"
-          className={footerLinkClassName}
-        >
+        <Link href={donateUrl} target="_blank" rel="noreferrer" className={footerLinkClassName}>
           Donate
         </Link>
       </footer>

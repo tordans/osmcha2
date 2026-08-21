@@ -15,6 +15,8 @@ import {
   DropdownSection,
 } from '../components/ui/dropdown.tsx'
 import { ChevronDownIcon } from '../components/ui/icons.ts'
+import { Text } from '../components/ui/text.tsx'
+import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/index.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
@@ -103,8 +105,24 @@ function NavigationMenu() {
         <DropdownSection>
           <DropdownHeading>About</DropdownHeading>
           <NavItem current={pathname === '/about'} onClick={() => goTo('/about')}>
-            About
+            Guide
           </NavItem>
+          <DropdownItem
+            href={githubContributingUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="cursor-pointer"
+          >
+            GitHub
+          </DropdownItem>
+          <DropdownItem
+            href={donateUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="cursor-pointer"
+          >
+            Donate
+          </DropdownItem>
         </DropdownSection>
 
         <DropdownDivider />
@@ -137,6 +155,12 @@ function NavigationMenu() {
               <TokenImport compact />
             </div>
           )}
+        </DropdownSection>
+
+        <DropdownDivider />
+        <DropdownSection>
+          <DropdownHeading>Version</DropdownHeading>
+          <Text className="col-span-full px-3.5 pb-1.5 sm:px-3">{appVersionLabel}</Text>
         </DropdownSection>
       </DropdownMenu>
     </Dropdown>
