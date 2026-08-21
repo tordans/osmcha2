@@ -1,13 +1,13 @@
 {
-  "name": "osmcha-frontend-v2",
+  "name": "osmcha2",
   "version": "2.0.0-alpha.1",
   "bugs": {
-    "url": "https://github.com/osmcha/osmcha-frontend/issues"
+    "url": "https://github.com/tordans/osmcha2/issues"
   },
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/osmcha/osmcha-frontend.git"
+    "url": "https://github.com/tordans/osmcha2.git"
   },
   "type": "module",
   "scripts": {
