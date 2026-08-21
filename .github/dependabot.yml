@@ -1,5 +1,5 @@
 # FMC Dependabot defaults (tech-stack), tuned for this Vite SPA.
-# Schedule: first Monday of each month, 07:00 Europe/Berlin.
+# Schedule: first Friday of each month, 07:00 Europe/Berlin (cron FRI#1).
 # See FixMyBerlin/fixmyskills tech-stack/references/dependabot.md
 version: 2
 updates:
@@ -8,7 +8,7 @@ updates:
       - /
     schedule:
       interval: cron
-      cronjob: '0 7 * * MON#1'
+      cronjob: '0 7 * * FRI#1'
       timezone: Europe/Berlin
     cooldown:
       default-days: 5
@@ -24,6 +24,7 @@ updates:
         patterns:
           - 'oxlint*'
           - 'oxfmt*'
+          - 'oxc-*'
           - 'vitest*'
           - '@testing-library/*'
           - 'knip*'
@@ -44,6 +45,7 @@ updates:
           - 'knip'
           - 'oxfmt'
           - 'oxlint*'
+          - 'oxc-*'
           - 'vitest'
           - 'vite'
           - '@types/*'
@@ -63,16 +65,20 @@ updates:
           - 'tailwindcss'
           - 'tailwind-merge'
           - '@headlessui/*'
-          - '@heroicons/*'
           - '@fontsource/*'
+          - '@date-fns/*'
+          - 'date-fns'
           - 'motion'
           - '@turf/*'
           - 'react'
           - 'react-dom'
           - '@types/react*'
           - 'maplibre-gl'
+          - 'react-map-gl'
           - '@osmcha/*'
+          - '@osm-editor-kit/*'
           - 'terra-draw*'
+          - 'lucide-react'
           - 'zod'
           - 'zustand'
         update-types:
@@ -89,12 +95,17 @@ updates:
           - '@tanstack/*'
           - '@tailwindcss/*'
           - 'tailwindcss'
+          - '@date-fns/*'
+          - 'date-fns'
           - '@turf/*'
           - 'react'
           - 'react-dom'
           - 'maplibre-gl'
+          - 'react-map-gl'
           - '@osmcha/*'
+          - '@osm-editor-kit/*'
           - 'terra-draw*'
+          - 'lucide-react'
           - 'zod'
           - 'zustand'
 
@@ -102,7 +113,7 @@ updates:
     directory: /
     schedule:
       interval: cron
-      cronjob: '0 7 * * MON#1'
+      cronjob: '0 7 * * FRI#1'
       timezone: Europe/Berlin
     cooldown:
       default-days: 5
