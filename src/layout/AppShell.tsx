@@ -76,7 +76,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
               >
                 <ChromeHeader />
-                <div className={clsx('relative z-0 flex min-h-0 flex-1 flex-col', paneCardClassName)}>
+                <div
+                  className={clsx('relative z-0 flex min-h-0 flex-1 flex-col', paneCardClassName)}
+                >
                   <div className={clsx('flex min-h-0 flex-1 flex-col', paneCardClipClassName)}>
                     <ChangesetsList />
                   </div>

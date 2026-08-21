@@ -78,7 +78,7 @@ function CollapseListButton() {
       className={clsx(
         chromeIconButtonClassName,
         chromeButtonShadowClassName,
-        'hidden min-[56rem]:inline-flex data-disabled:shadow-none',
+        'hidden data-disabled:shadow-none min-[56rem]:inline-flex',
       )}
       onClick={collapse}
     >

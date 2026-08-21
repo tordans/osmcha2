@@ -78,6 +78,28 @@ function waitForMapStoreHydration(): Promise<void> {
   })
 }
 
+/**
+ * MapLibre `compact` is the ⓘ toggle, not "start closed". On add it still sets
+ * `.maplibregl-compact-show` (expanded); it only collapses later on pan. Render this
+ * after `<AttributionControl>` so this effect runs after the control is added.
+ */
+function CollapseCompactAttributionOnMount() {
+  const { mainMap } = useMap()
+
+  useEffect(
+    function collapseCompactAttribution() {
+      mainMap
+        ?.getMap()
+        .getContainer()
+        .querySelector('.maplibregl-ctrl-attrib')
+        ?.classList.remove('maplibregl-compact-show')
+    },
+    [mainMap],
+  )
+
+  return null
+}
+
 interface CMapProps {
   changesetId: number | null
   imageryUsed?: string | null
@@ -312,6 +334,7 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
             id={CHANGESET_MAP_ID}
             initialViewState={initialViewState}
             mapStyle={mapStyle}
+            // Default control is bottom-right and always expanded. We place our own.
             attributionControl={false}
             maxPitch={0}
             maxZoom={22}
@@ -345,7 +368,9 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
                 beforeId={featureLayers[0].id}
               />
             ) : null}
+            {/* compact = ⓘ toggle (also collapses on pan). MapLibre still starts expanded. */}
             <AttributionControl compact position="bottom-left" />
+            <CollapseCompactAttributionOnMount />
           </Map>
         ) : null}
       </div>
