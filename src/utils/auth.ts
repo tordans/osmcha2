@@ -17,6 +17,47 @@ export function isOsmOAuthHost(hostname: string = window.location.hostname): boo
 }
 
 /**
+ * Paste this on osmcha.org’s DevTools Console to copy the persisted auth JSON.
+ * `copy()` is a Chrome/Edge/Firefox DevTools helper (not a page API).
+ */
+export const OSMCHA_ORG_AUTH_CONSOLE_SNIPPET = "copy(localStorage.getItem('auth'))"
+
+const TOKEN_PREFIX = /^token\s+/i
+
+/**
+ * Accepts anything a user might paste from osmcha.org: a raw DRF token,
+ * `Token <token>` (Account copy button), or Zustand persist JSON
+ * `{"state":{"token":"…"},"version":0}` from DevTools Local Storage.
+ */
+export function parseTokenPaste(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  const fromJson = tokenFromAuthJson(trimmed)
+  if (fromJson) return fromJson
+
+  const withoutPrefix = trimmed.replace(TOKEN_PREFIX, '').trim()
+  if (!withoutPrefix || withoutPrefix.startsWith('{')) return null
+  return withoutPrefix
+}
+
+function tokenFromAuthJson(trimmed: string): string | null {
+  if (trimmed[0] !== '{' && trimmed[0] !== '"') return null
+  try {
+    const parsed: unknown = JSON.parse(trimmed)
+    if (typeof parsed === 'string') return parseTokenPaste(parsed)
+    if (!parsed || typeof parsed !== 'object') return null
+    const state = 'state' in parsed ? parsed.state : undefined
+    if (!state || typeof state !== 'object') return null
+    const token = 'token' in state ? state.token : undefined
+    if (typeof token !== 'string') return null
+    return parseTokenPaste(token)
+  } catch {
+    return null
+  }
+}
+
+/**
  * If `search` contains a non-empty `token` param, return it and the same query
  * with `token` removed. Does not persist or log the value.
  *
@@ -38,9 +79,9 @@ export function takeAuthTokenFromSearch(
       if (!token) {
         const value = eq === -1 ? '' : part.slice(eq + 1)
         try {
-          token = decodeURIComponent(value.replace(/\+/g, ' ')).trim()
+          token = parseTokenPaste(decodeURIComponent(value.replace(/\+/g, ' '))) ?? ''
         } catch {
-          token = value.trim()
+          token = parseTokenPaste(value) ?? ''
         }
       }
       continue

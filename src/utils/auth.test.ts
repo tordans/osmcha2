@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { isOsmOAuthHost, takeAuthTokenFromSearch } from './auth.ts'
+import {
+  isOsmOAuthHost,
+  OSMCHA_ORG_AUTH_CONSOLE_SNIPPET,
+  parseTokenPaste,
+  takeAuthTokenFromSearch,
+} from './auth.ts'
 
 describe('isOsmOAuthHost', () => {
   it('allows OSM OAuth on localhost and osmcha.org', () => {
@@ -12,6 +17,49 @@ describe('isOsmOAuthHost', () => {
   it('blocks OSM OAuth on other public hosts', () => {
     expect(isOsmOAuthHost('osmcha.github.io')).toBe(false)
     expect(isOsmOAuthHost('example.com')).toBe(false)
+  })
+})
+
+describe('parseTokenPaste', () => {
+  it('returns null for empty or whitespace', () => {
+    expect(parseTokenPaste('')).toBeNull()
+    expect(parseTokenPaste('   ')).toBeNull()
+  })
+
+  it('accepts a raw token', () => {
+    expect(parseTokenPaste('  abc123  ')).toBe('abc123')
+  })
+
+  it('strips a Token prefix from the Account copy button', () => {
+    expect(parseTokenPaste('Token abc123')).toBe('abc123')
+    expect(parseTokenPaste('token abc123')).toBe('abc123')
+    expect(parseTokenPaste('TOKEN   abc123')).toBe('abc123')
+  })
+
+  it('extracts the token from osmcha.org Zustand persist JSON', () => {
+    expect(parseTokenPaste('{"state":{"token":"abc123"},"version":0}')).toBe('abc123')
+    expect(parseTokenPaste('  {"state":{"token":"abc123"},"version":0}  ')).toBe('abc123')
+  })
+
+  it('extracts a Token-prefixed value nested in persist JSON', () => {
+    expect(parseTokenPaste('{"state":{"token":"Token abc123"},"version":0}')).toBe('abc123')
+  })
+
+  it('accepts persist JSON wrapped in extra JSON quotes', () => {
+    expect(parseTokenPaste('"{\\"state\\":{\\"token\\":\\"abc123\\"}}"')).toBe('abc123')
+  })
+
+  it('returns null for JSON that is not persist auth', () => {
+    expect(parseTokenPaste('{"foo":1}')).toBeNull()
+    expect(parseTokenPaste('{"state":{}}')).toBeNull()
+    expect(parseTokenPaste('{"state":{"token":null}}')).toBeNull()
+    expect(parseTokenPaste('{not json')).toBeNull()
+  })
+})
+
+describe('OSMCHA_ORG_AUTH_CONSOLE_SNIPPET', () => {
+  it('copies the persist JSON from localStorage', () => {
+    expect(OSMCHA_ORG_AUTH_CONSOLE_SNIPPET).toBe("copy(localStorage.getItem('auth'))")
   })
 })
 
@@ -29,6 +77,16 @@ describe('takeAuthTokenFromSearch', () => {
       nextSearch: '?filters=%7B%7D',
     })
     expect(takeAuthTokenFromSearch('token=abc')).toEqual({
+      token: 'abc',
+      nextSearch: '',
+    })
+    expect(takeAuthTokenFromSearch('?token=Token%20abc')).toEqual({
+      token: 'abc',
+      nextSearch: '',
+    })
+    expect(
+      takeAuthTokenFromSearch('?token=%7B%22state%22%3A%7B%22token%22%3A%22abc%22%7D%7D'),
+    ).toEqual({
       token: 'abc',
       nextSearch: '',
     })
