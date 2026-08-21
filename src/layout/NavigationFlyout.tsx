@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { TokenImport } from '../components/token_import.tsx'
 import { Avatar } from '../components/ui/avatar.tsx'
+import { Button } from '../components/ui/button.tsx'
 import {
   chromeDropdownMenuClassName,
   Dropdown,
@@ -14,13 +15,15 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../components/ui/dropdown.tsx'
-import { ChevronDownIcon } from '../components/ui/icons.ts'
+import { ChevronDownIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '../components/ui/icons.ts'
 import { Text } from '../components/ui/text.tsx'
 import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/index.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { getAuthUrl } from '../network/auth.ts'
+import { usePrefetchChangesetsPage } from '../query/hooks/usePrefetchChangesetsPage.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
 import { useAuthStore } from '../stores/authStore.ts'
+import { useListPaneActions, useListPaneCanCollapse } from '../stores/list-pane-store.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
 
@@ -32,12 +35,75 @@ type UserData = {
   avatar?: string
 }
 
+const chromeIconButtonClassName = 'h-9 min-h-9 w-9 min-w-9 bg-zinc-100 px-0 sm:px-0'
+
+const chromeButtonShadowClassName =
+  'transition-shadow duration-200 data-hover:shadow-[0_1px_3px_rgb(24_24_27_/_0.14),0_1px_2px_rgb(24_24_27_/_0.08)] data-open:shadow-[0_1px_3px_rgb(24_24_27_/_0.14),0_1px_2px_rgb(24_24_27_/_0.08)]'
+
 export function ChromeHeader() {
   return (
     <header className="relative z-10 flex shrink-0 items-center justify-between gap-2 py-1 pt-[max(0.25rem,env(safe-area-inset-top))] pr-0 pl-1 min-[56rem]:pb-0">
       <Logo />
-      <NavigationMenu />
+      <div className="flex shrink-0 items-center gap-1">
+        <NavigationMenu />
+        <CollapseListButton />
+      </div>
     </header>
+  )
+}
+
+export function CollapsedListChrome() {
+  return (
+    <div className="pointer-events-none absolute top-[max(0.75rem,env(safe-area-inset-top))] left-[max(0.75rem,env(safe-area-inset-left))] z-40 hidden min-[56rem]:block">
+      <div className="pointer-events-auto flex items-center gap-1 rounded-lg bg-zinc-100 py-1 pr-1 pl-1 shadow-[0_0_16px_rgb(24_24_27_/_0.16),0_4px_12px_rgb(24_24_27_/_0.08)] ring-1 ring-zinc-950/5">
+        <Logo />
+        <ExpandListButton />
+      </div>
+    </div>
+  )
+}
+
+function CollapseListButton() {
+  const { collapse } = useListPaneActions()
+  const canCollapse = useListPaneCanCollapse()
+
+  return (
+    <Button
+      outline
+      aria-label="Hide changeset list"
+      aria-expanded
+      aria-controls="changeset-list-pane"
+      disabled={!canCollapse}
+      title={canCollapse ? undefined : 'Select a changeset to hide the list'}
+      className={clsx(
+        chromeIconButtonClassName,
+        chromeButtonShadowClassName,
+        'hidden min-[56rem]:inline-flex data-disabled:shadow-none',
+      )}
+      onClick={collapse}
+    >
+      <PanelLeftCloseIcon data-slot="icon" />
+    </Button>
+  )
+}
+
+function ExpandListButton() {
+  const { expand } = useListPaneActions()
+  const prefetchChangesetsPage = usePrefetchChangesetsPage()
+
+  return (
+    <Button
+      outline
+      aria-label="Show changeset list"
+      aria-expanded={false}
+      aria-controls="changeset-list-pane"
+      className={chromeIconButtonClassName}
+      onMouseEnter={prefetchChangesetsPage}
+      onFocus={prefetchChangesetsPage}
+      onClick={expand}
+    >
+      <PanelLeftOpenIcon data-slot="icon" />
+    </Button>
   )
 }
 
@@ -81,10 +147,8 @@ function NavigationMenu() {
         data-panel-origin="menu"
         className={clsx(
           'group relative isolate z-10 h-9 min-h-9 bg-zinc-100',
-          'transition-shadow duration-200',
+          chromeButtonShadowClassName,
           'data-hover:bg-zinc-100! data-open:z-[110] data-open:bg-zinc-100!',
-          'data-hover:shadow-[0_0_16px_rgb(24_24_27_/_0.16),0_4px_12px_rgb(24_24_27_/_0.08)]',
-          'data-open:shadow-[0_0_16px_rgb(24_24_27_/_0.16),0_4px_12px_rgb(24_24_27_/_0.08)]',
         )}
       >
         Menu

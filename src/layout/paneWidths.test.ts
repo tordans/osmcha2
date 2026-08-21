@@ -177,6 +177,67 @@ describe('clampPreferredWidths', () => {
   })
 })
 
+describe('collapsed list pane', () => {
+  it('gives the map the list slot and keeps review at its preferred width', () => {
+    expect(
+      clampPreferredWidths({
+        available: WIDE,
+        list: LIST_DEFAULT,
+        review: REVIEW_DEFAULT,
+        hasReview: true,
+        hasList: false,
+      }),
+    ).toEqual({ list: 0, review: REVIEW_DEFAULT })
+  })
+
+  it('lets review recover toward its preferred width when the list was squeezing it', () => {
+    const open = clampPreferredWidths({
+      available: 856,
+      list: LIST_DEFAULT,
+      review: REVIEW_DEFAULT,
+      hasReview: true,
+    })
+    const collapsed = clampPreferredWidths({
+      available: 856,
+      list: LIST_DEFAULT,
+      review: REVIEW_DEFAULT,
+      hasReview: true,
+      hasList: false,
+    })
+
+    expect(open.review).toBe(329)
+    expect(collapsed).toEqual({ list: 0, review: REVIEW_DEFAULT })
+    expect(856 - collapsed.review).toBeGreaterThan(856 - open.list - open.review)
+  })
+
+  it('does not grow review past the map minimum', () => {
+    expect(
+      clampPreferredWidths({
+        available: REVIEW_MIN + MAP_MIN - 40,
+        list: LIST_DEFAULT,
+        review: REVIEW_DEFAULT,
+        hasReview: true,
+        hasList: false,
+      }),
+    ).toEqual({ list: 0, review: REVIEW_MIN })
+  })
+
+  it('grows review against map slack when the list is hidden', () => {
+    const review = resizeSidePane({
+      side: 'review',
+      delta: 200,
+      available: WIDE,
+      list: LIST_DEFAULT,
+      review: REVIEW_DEFAULT,
+      hasReview: true,
+      hasList: false,
+    })
+
+    expect(review).toBe(584)
+    expect(WIDE - review).toBeGreaterThan(MAP_MIN)
+  })
+})
+
 describe('resizeSidePane two-pane', () => {
   it('grows list against main slack and ignores stored review', () => {
     const list = resizeSidePane({

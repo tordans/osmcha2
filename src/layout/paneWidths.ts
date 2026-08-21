@@ -37,17 +37,30 @@ export function clampPreferredWidths({
   list,
   review,
   hasReview,
+  hasList = true,
 }: {
   available: number
   list: number
   review: number
   hasReview: boolean
+  hasList?: boolean
 }): PreferredPaneWidths {
-  const listPref = clampPane(list, LIST_MIN, LIST_MAX, LIST_DEFAULT)
+  const listPref = hasList ? clampPane(list, LIST_MIN, LIST_MAX, LIST_DEFAULT) : 0
   const reviewPref = clampPane(review, REVIEW_MIN, REVIEW_MAX, REVIEW_DEFAULT)
 
   if (!Number.isFinite(available) || available <= 0) {
     return { list: listPref, review: reviewPref }
+  }
+
+  if (!hasList) {
+    if (!hasReview) {
+      return { list: 0, review: reviewPref }
+    }
+    const maxReview = available - MAP_MIN
+    if (maxReview <= REVIEW_MIN) {
+      return { list: 0, review: REVIEW_MIN }
+    }
+    return { list: 0, review: Math.min(reviewPref, maxReview) }
   }
 
   if (!hasReview) {
@@ -84,6 +97,7 @@ export function resizeSidePane({
   list,
   review,
   hasReview,
+  hasList = true,
   max,
 }: {
   side: PaneSide
@@ -92,15 +106,20 @@ export function resizeSidePane({
   list: number
   review: number
   hasReview: boolean
+  hasList?: boolean
   max?: number
 }): number {
   const listMax = side === 'list' ? (max ?? LIST_MAX) : LIST_MAX
   const reviewMax = side === 'review' ? (max ?? REVIEW_MAX) : REVIEW_MAX
-  const listPref = clampPane(list, LIST_MIN, listMax, LIST_DEFAULT)
+  const listPref = hasList ? clampPane(list, LIST_MIN, listMax, LIST_DEFAULT) : 0
   const reviewPref = clampPane(review, REVIEW_MIN, reviewMax, REVIEW_DEFAULT)
 
   if (side === 'review' && !hasReview) {
     return reviewPref
+  }
+
+  if (side === 'list' && !hasList) {
+    return listPref
   }
 
   const sideMin = side === 'list' ? LIST_MIN : REVIEW_MIN

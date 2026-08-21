@@ -22,6 +22,8 @@ import {
   Link,
   LoaderCircle,
   MessageCircle,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pencil,
   Plus,
   RefreshCw,
@@ -62,6 +64,8 @@ export const LanguageIcon = appIcon(Languages)
 export const LinkIcon = appIcon(Link)
 export const LoaderCircleIcon = appIcon(LoaderCircle)
 export const ExclamationTriangleIcon = appIcon(TriangleAlert)
+export const PanelLeftCloseIcon = appIcon(PanelLeftClose)
+export const PanelLeftOpenIcon = appIcon(PanelLeftOpen)
 export const PencilIcon = appIcon(Pencil)
 export const PencilSquareIcon = appIcon(SquarePen)
 export const PlusCircleIcon = appIcon(CirclePlus)

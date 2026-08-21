@@ -12,6 +12,7 @@ import { filtersFromSearch, migrateLegacyFilterSearch } from '../routing/filterS
 import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { useAuthStore } from '../stores/authStore.ts'
+import { getListPaneOpen } from '../stores/list-pane-store.ts'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   validateSearch: osmchaSearchSchema,
@@ -52,6 +53,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   loader: ({ context, deps }) => {
     const token = useAuthStore.getState().token
     if (!token) return
+    // List/AOI queries are for the sidebar. Skip while it is collapsed (changeset
+    // deep links start that way); hover-prefetch on the expand control warms them.
+    if (!getListPaneOpen()) return
 
     const pageIndex = deps.page - 1
     // Do not await: blocking kept the filter menu on the previous selection until

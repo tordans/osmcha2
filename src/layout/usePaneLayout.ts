@@ -6,13 +6,15 @@ import {
   useState,
   type CSSProperties,
 } from 'react'
+import { useListPaneOpen } from '../stores/list-pane-store.ts'
 import { usePaneLayoutStore } from '../stores/paneLayoutStore.ts'
 import { HANDLE_WIDTH, clampPreferredWidths } from './paneWidths.ts'
 
 export const PaneAvailableContext = createContext(0)
 
 export function usePaneLayout(hasReview: boolean) {
-  const handleCount = hasReview ? 2 : 1
+  const hasList = useListPaneOpen()
+  const handleCount = (hasList ? 1 : 0) + (hasReview ? 1 : 0)
   const rowRef = useRef<HTMLDivElement>(null)
   const [available, setAvailable] = useState(0)
   const listWidth = usePaneLayoutStore((state) => state.listWidth)
@@ -39,15 +41,26 @@ export function usePaneLayout(hasReview: boolean) {
     [handleCount],
   )
 
-  const displayed = clampPreferredWidths({
+  const displayedOpen = clampPreferredWidths({
     available,
     list: listWidth,
     review: reviewWidth,
     hasReview,
+    hasList: true,
   })
+  const displayed = hasList
+    ? displayedOpen
+    : clampPreferredWidths({
+        available,
+        list: listWidth,
+        review: reviewWidth,
+        hasReview,
+        hasList: false,
+      })
 
   const paneVars = {
-    '--pane-list-width': `${displayed.list}px`,
+    '--pane-list-width': `${displayedOpen.list}px`,
+    '--pane-list-slot-width': `${displayedOpen.list + HANDLE_WIDTH}px`,
     '--pane-review-width': `${displayed.review}px`,
   } as CSSProperties
 
@@ -56,6 +69,7 @@ export function usePaneLayout(hasReview: boolean) {
 
 export function useDisplayedPaneWidths(hasReview: boolean) {
   const available = useContext(PaneAvailableContext)
+  const hasList = useListPaneOpen()
   const listWidth = usePaneLayoutStore((state) => state.listWidth)
   const reviewWidth = usePaneLayoutStore((state) => state.reviewWidth)
   const displayed = clampPreferredWidths({
@@ -63,6 +77,7 @@ export function useDisplayedPaneWidths(hasReview: boolean) {
     list: listWidth,
     review: reviewWidth,
     hasReview,
+    hasList,
   })
   return { available, displayed }
 }

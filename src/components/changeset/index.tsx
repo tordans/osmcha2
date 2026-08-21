@@ -15,6 +15,7 @@ import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.
 import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
 import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
+import { getListPaneOpen } from '../../stores/list-pane-store.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
@@ -174,6 +175,7 @@ function Changeset({
                   list: listWidth,
                   review: reviewWidth,
                   hasReview: true,
+                  hasList: getListPaneOpen(),
                 }),
               )
             }}
