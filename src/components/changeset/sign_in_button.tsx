@@ -1,5 +1,5 @@
+import { useOsmOAuthAvailable } from '../../hooks/useOsmOAuthAvailable.ts'
 import { getAuthUrl } from '../../network/auth.ts'
-import { isOsmOAuthHost } from '../../utils/auth.ts'
 import { TokenImport } from '../token_import.tsx'
 import { Button } from '../ui/button.tsx'
 
@@ -8,8 +8,10 @@ interface SignInButtonProps {
 }
 
 function SignInButton({ text }: SignInButtonProps) {
-  if (!isOsmOAuthHost()) {
-    return <TokenImport />
+  const localOAuth = useOsmOAuthAvailable()
+
+  if (!localOAuth) {
+    return <TokenImport compact />
   }
 
   const handleLoginClick = () => {

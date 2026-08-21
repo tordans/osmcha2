@@ -19,12 +19,12 @@ import { ChevronDownIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '../compo
 import { Text } from '../components/ui/text.tsx'
 import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/index.ts'
 import { useAuth } from '../hooks/useAuth.ts'
+import { useOsmOAuthAvailable } from '../hooks/useOsmOAuthAvailable.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { usePrefetchChangesetsPage } from '../query/hooks/usePrefetchChangesetsPage.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { useListPaneActions, useListPaneCanCollapse } from '../stores/list-pane-store.ts'
-import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -117,9 +117,10 @@ function NavigationMenu() {
   const search = rootRouteApi.useSearch()
 
   const username = currentUser?.username
+  const localOAuth = useOsmOAuthAvailable()
 
   const handleLoginClick = () => {
-    if (!isOsmOAuthHost()) return
+    if (!localOAuth) return
     void getAuthUrl().then((res) => {
       window.location.assign(res.auth_url)
     })
@@ -212,7 +213,7 @@ function NavigationMenu() {
           </NavItem>
           {token ? (
             <NavItem onClick={handleLogout}>Sign out</NavItem>
-          ) : isOsmOAuthHost() ? (
+          ) : localOAuth ? (
             <NavItem onClick={handleLoginClick}>Sign in</NavItem>
           ) : (
             <div className="px-2 py-2">

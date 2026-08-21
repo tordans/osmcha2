@@ -1,7 +1,7 @@
 import { useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
-import { TailwindResponsiveHelper } from '../components/debug/TailwindResponsiveHelper.tsx'
+import { DebugOverlay } from '../components/debug/DebugOverlay.tsx'
 import { useListPaneOpen } from '../stores/list-pane-store.ts'
 import { usePaneLayoutStore } from '../stores/paneLayoutStore.ts'
 import { ChangesetsList } from '../views/changesets_list.tsx'
@@ -138,7 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </main>
         </div>
       </PaneAvailableContext.Provider>
-      <TailwindResponsiveHelper />
+      <DebugOverlay />
     </div>
   )
 }
