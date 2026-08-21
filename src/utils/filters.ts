@@ -1,37 +1,26 @@
 import { sub } from 'date-fns'
+import { z } from 'zod'
 import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from '../config/constants.ts'
 import { startOfLocalDay } from './datetime.ts'
 
-export function validateFilters(filters: any): boolean {
-  if (!filters || typeof filters !== 'object') {
-    throw new Error('The filters that you applied were not correct.')
+const filterOptionSchema = z.object({
+  label: z.unknown(),
+  value: z.unknown(),
+})
+
+export const filtersSchema = z.record(z.string(), z.array(filterOptionSchema))
+
+const FILTER_VALIDATION_ERROR = 'The filters that you applied were not correct.'
+
+export function validateFilters(filters: unknown): boolean {
+  const result = filtersSchema.safeParse(filters)
+  if (!result.success) {
+    throw new Error(FILTER_VALIDATION_ERROR)
   }
-
-  let valid = true
-  for (const key of Object.keys(filters)) {
-    const value = filters[key]
-
-    // Each filter value should be an array
-    if (!Array.isArray(value)) {
-      valid = false
-      return false
-    }
-
-    // Each item in the array should have label and value
-    for (const item of value) {
-      if (!item || typeof item !== 'object' || !('label' in item) || !('value' in item)) {
-        valid = false
-      }
-    }
-  }
-
-  if (!valid) {
-    console.log(filters)
-    throw new Error('The filters that you applied were not correct.')
-  }
-
   return true
 }
+
+const geometryJsonSchema = z.union([z.array(z.unknown()), z.record(z.string(), z.unknown())])
 
 export function getDefaultFromDate(extraDays = 0): any {
   const localMidnight = startOfLocalDay(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
@@ -149,7 +138,7 @@ export function deserializeFiltersFromObject(apiFilters: Record<string, string>)
       parsed = undefined
     }
 
-    if (parsed !== undefined && typeof parsed === 'object') {
+    if (parsed !== undefined && geometryJsonSchema.safeParse(parsed).success) {
       result[k] = [{ label: parsed, value: parsed }]
     } else {
       result[k] = v.split(',').map((val) => ({

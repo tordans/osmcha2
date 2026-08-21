@@ -1,5 +1,7 @@
 /** URL `order=date,desc` ↔ Django API `order_by=-date`. */
 
+import { z } from 'zod'
+
 const ORDER_FIELDS = ['date', 'check_date', 'create', 'modify', 'delete', 'comments_count'] as const
 
 const ORDER_DIRECTIONS = ['asc', 'desc'] as const
@@ -8,15 +10,12 @@ type OrderField = (typeof ORDER_FIELDS)[number]
 type OrderDirection = (typeof ORDER_DIRECTIONS)[number]
 type OrderSearchValue = `${OrderField},${OrderDirection}`
 
-const ORDER_FIELD_SET = new Set<string>(ORDER_FIELDS)
-const ORDER_DIRECTION_SET = new Set<string>(ORDER_DIRECTIONS)
+const orderFieldSchema = z.enum(ORDER_FIELDS)
+const orderDirectionSchema = z.enum(ORDER_DIRECTIONS)
+const orderFilterItemsSchema = z.array(z.object({ value: z.string() })).nonempty()
 
 function isOrderField(value: string): value is OrderField {
-  return ORDER_FIELD_SET.has(value)
-}
-
-function isOrderDirection(value: string): value is OrderDirection {
-  return ORDER_DIRECTION_SET.has(value)
+  return orderFieldSchema.safeParse(value).success
 }
 
 /** Parse Django `order_by` (`date` / `-date`) into field + direction. */
@@ -31,12 +30,14 @@ export function parseApiOrder(
 
 /** `date,desc` → Django `order_by` value `-date`. */
 export function searchParamToApiOrder(param: unknown): string | undefined {
-  if (typeof param !== 'string') return undefined
-  const parts = param.split(',')
+  const paramResult = z.string().safeParse(param)
+  if (!paramResult.success) return undefined
+  const parts = paramResult.data.split(',')
   if (parts.length !== 2) return undefined
-  const [field, direction] = parts
-  if (!isOrderField(field) || !isOrderDirection(direction)) return undefined
-  return direction === 'desc' ? `-${field}` : field
+  const fieldResult = orderFieldSchema.safeParse(parts[0])
+  const directionResult = orderDirectionSchema.safeParse(parts[1])
+  if (!fieldResult.success || !directionResult.success) return undefined
+  return directionResult.data === 'desc' ? `-${fieldResult.data}` : fieldResult.data
 }
 
 /** Django `order_by` value `-date` → URL `date,desc`. */
@@ -51,11 +52,10 @@ export function apiOrderFromUnknown(value: unknown): string | undefined {
   if (typeof value === 'string') {
     return parseApiOrder(value) ? value : undefined
   }
-  if (Array.isArray(value)) {
-    const first = value[0]
-    if (first && typeof first === 'object' && 'value' in first && typeof first.value === 'string') {
-      return parseApiOrder(first.value) ? first.value : undefined
-    }
+  const parsed = orderFilterItemsSchema.safeParse(value)
+  if (parsed.success) {
+    const apiValue = parsed.data[0].value
+    return parseApiOrder(apiValue) ? apiValue : undefined
   }
   return undefined
 }

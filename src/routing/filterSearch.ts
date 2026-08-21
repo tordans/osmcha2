@@ -1,5 +1,5 @@
 import type { Filters } from '../components/filters/index.ts'
-import { deserializeFiltersFromObject } from '../utils/filters.ts'
+import { deserializeFiltersFromObject, filtersSchema } from '../utils/filters.ts'
 import { apiOrderFromUnknown, apiOrderToSearchParam, searchParamToApiOrder } from './orderParam.ts'
 import { searchParamsRegistry, type OsmchaSearch } from './searchSchemas.ts'
 
@@ -69,9 +69,8 @@ export function filtersFromSearch(search: OsmchaSearch): Filters {
   const strings: Record<string, string> = {}
   const objects: Filters = {}
 
-  if (search.filters && typeof search.filters === 'object' && !Array.isArray(search.filters)) {
-    return search.filters as Filters
-  }
+  const fromBlob = parseLegacyFiltersBlob(search.filters)
+  if (fromBlob) return fromBlob
 
   for (const [key, value] of Object.entries(search)) {
     if (!isFilterSearchKey(key) || value == null) continue
@@ -159,19 +158,14 @@ function migrateOrderBySearch(search: OsmchaSearch): OsmchaSearch | null {
 
 function parseLegacyFiltersBlob(raw: unknown): Filters | null {
   if (raw == null) return null
+  let candidate: unknown = raw
   if (typeof raw === 'string') {
     try {
-      const parsed = JSON.parse(raw) as unknown
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Filters
-      }
+      candidate = JSON.parse(raw) as unknown
     } catch {
       return null
     }
-    return null
   }
-  if (typeof raw === 'object' && !Array.isArray(raw)) {
-    return raw as Filters
-  }
-  return null
+  const result = filtersSchema.safeParse(candidate)
+  return result.success ? (result.data as Filters) : null
 }
