@@ -67,27 +67,25 @@ export function BadgeButton({
   )) {
   const classes = clsx(
     className,
-    'group relative inline-flex focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+    'group relative inline-flex p-0 focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
     rounded === 'full' && 'rounded-md',
     rounded === 'left' && 'rounded-l-md',
     rounded === 'right' && 'rounded-r-md',
   )
 
+  const badge = (
+    <Badge color={color} rounded={rounded} className="h-full w-full justify-center">
+      {children}
+    </Badge>
+  )
+
   return typeof props.href === 'string' ? (
     <Link {...props} className={classes} ref={ref as React.Ref<HTMLAnchorElement>}>
-      <TouchTarget>
-        <Badge color={color} rounded={rounded}>
-          {children}
-        </Badge>
-      </TouchTarget>
+      <TouchTarget>{badge}</TouchTarget>
     </Link>
   ) : (
     <Headless.Button {...props} className={classes} ref={ref}>
-      <TouchTarget>
-        <Badge color={color} rounded={rounded}>
-          {children}
-        </Badge>
-      </TouchTarget>
+      <TouchTarget>{badge}</TouchTarget>
     </Headless.Button>
   )
 }

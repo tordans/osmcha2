@@ -522,25 +522,16 @@ export function DetailsHeader({
               rounded="none"
               aria-label="Unreview changeset"
               onClick={() => handleMarkHarmful(-1)}
-              className="h-full min-w-7 cursor-pointer touch-manipulation items-center justify-center rounded-none select-none"
+              className="h-full min-h-0 min-w-7 cursor-pointer touch-manipulation items-stretch justify-center rounded-none select-none"
             >
               <XMarkIcon className="size-3.5" />
             </BadgeButton>
-            {tags.map((tag) => (
-              <Badge
-                key={tag.id ?? tag.name}
-                color={reviewColor}
-                rounded="none"
-                className="h-full rounded-none"
-              >
-                {tag.name}
-              </Badge>
-            ))}
             <Tags
               changesetId={changesetId}
               currentChangeset={currentChangeset}
               disabled={false}
               color={reviewColor}
+              allowAdd={harmful === true}
             />
           </div>
         ) : (
