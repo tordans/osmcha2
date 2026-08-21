@@ -1,12 +1,12 @@
 import { queryOptions } from '@tanstack/react-query'
 import { fetchAllAOIs, fetchAOI } from '../../network/aoi.ts'
-import { cacheForever } from '../cachePolicy.ts'
+import { cacheSavedFilters } from '../cachePolicy.ts'
 
 export function aoiQueryOptions(aoiId: string) {
   return queryOptions({
     queryKey: ['aoi', aoiId],
     queryFn: () => fetchAOI(aoiId),
-    ...cacheForever,
+    ...cacheSavedFilters,
     retry: 3,
   })
 }
@@ -15,7 +15,7 @@ export function allAoisQueryOptions() {
   return queryOptions({
     queryKey: ['aois'],
     queryFn: fetchAllAOIs,
-    ...cacheForever,
+    ...cacheSavedFilters,
     retry: 3,
   })
 }

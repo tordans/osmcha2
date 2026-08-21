@@ -1,4 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query'
+import {
+  persistQueryClientRestore,
+  persistQueryClientSubscribe,
+} from '@tanstack/react-query-persist-client'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -7,17 +11,39 @@ import '@fontsource/open-sans/latin.css'
 import './assets/index.css'
 
 import { queryClient } from './query/client.ts'
+import { persistQueryOptions } from './query/persist.ts'
 import { router } from './router.tsx'
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element not found')
 
 const root = createRoot(container)
-root.render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <AppToaster />
-    </QueryClientProvider>
-  </StrictMode>,
-)
+
+async function bootstrap() {
+  try {
+    await persistQueryClientRestore({
+      queryClient,
+      persister: persistQueryOptions.persister,
+      maxAge: persistQueryOptions.maxAge,
+    })
+  } catch (error) {
+    console.warn('Could not restore query cache', error)
+  }
+
+  persistQueryClientSubscribe({
+    queryClient,
+    persister: persistQueryOptions.persister,
+    dehydrateOptions: persistQueryOptions.dehydrateOptions,
+  })
+
+  root.render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <AppToaster />
+      </QueryClientProvider>
+    </StrictMode>,
+  )
+}
+
+void bootstrap()

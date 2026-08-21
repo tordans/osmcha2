@@ -15,6 +15,7 @@ type TagRow = {
   trusted?: boolean
 }
 
+/** Options for the Filters form multi-selects (`suspicion-reasons`, `tags`). */
 export function useFilterAsyncOptions(
   dataURL: string | undefined,
   token: string | null,

@@ -43,8 +43,8 @@ interface HeaderProps {
   aoiOrderBy: string | null
   handleFilterOrderBy: (value: OrderOption[]) => void
   pending: boolean
-  diffLoading: boolean
-  diff: number
+  listIsStale: boolean
+  isRefreshing: boolean
   currentPage?: {
     count?: number
   }
@@ -57,8 +57,8 @@ export function Header({
   aoiOrderBy,
   handleFilterOrderBy,
   pending,
-  diffLoading,
-  diff,
+  listIsStale,
+  isRefreshing,
   currentPage,
   reloadChangesetsPageData,
 }: HeaderProps) {
@@ -94,12 +94,7 @@ export function Header({
         ) : null}
         <DebugDataHelperDialog data={aoi} title="saved filter (AOI) for this list" />
       </div>
-      <header
-        className={clsx(
-          'flex h-11 items-center justify-between gap-2 border-b border-zinc-200 px-1',
-          diff > 0 ? 'bg-zinc-200' : 'bg-zinc-100',
-        )}
-      >
+      <header className="flex h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-1">
         <span
           aria-busy={pending}
           aria-label={pending ? 'Loading changesets' : `${changesetCount} changesets`}
@@ -113,16 +108,12 @@ export function Header({
           <span className="hidden @[10rem]:inline">changesets</span>
         </span>
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            outline
-            className={clsx('h-9 min-h-9 items-center', diff <= 0 && 'w-9 min-w-9 px-0 sm:px-0')}
+          <RefreshChangesetsButton
+            stale={listIsStale}
+            loading={isRefreshing}
+            disabled={!signedIn || isRefreshing}
             onClick={reloadChangesetsPageData}
-            disabled={!signedIn || diffLoading}
-            aria-label="Refresh"
-          >
-            <ArrowPathIcon data-slot="icon" className={clsx(diffLoading && 'animate-spin')} />
-            {diff > 0 ? `${diff} new` : null}
-          </Button>
+          />
           <OrderMenu
             selected={selected}
             options={options}
@@ -139,6 +130,44 @@ export function Header({
         </div>
       </header>
     </div>
+  )
+}
+
+function RefreshChangesetsButton({
+  stale,
+  loading,
+  disabled,
+  onClick,
+}: {
+  stale: boolean
+  loading: boolean
+  disabled: boolean
+  onClick: () => void
+}) {
+  const label = stale
+    ? 'List may be outdated. Refresh to load new changesets.'
+    : 'Refresh changeset list'
+  const icon = <ArrowPathIcon data-slot="icon" className={clsx(loading && 'animate-spin')} />
+  const shared = {
+    className: 'h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0',
+    onClick,
+    disabled,
+    title: label,
+    'aria-label': label,
+  }
+
+  if (stale) {
+    return (
+      <Button color="orange" {...shared}>
+        {icon}
+      </Button>
+    )
+  }
+
+  return (
+    <Button outline {...shared}>
+      {icon}
+    </Button>
   )
 }
 

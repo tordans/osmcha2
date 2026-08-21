@@ -11,8 +11,10 @@ import {
   REFRESH_CHANGESETS,
 } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
+import { LIST_REFRESH_HINT_MS } from '../query/cachePolicy.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useChangesetsPage } from '../query/hooks/useChangesetsPage.ts'
+import { useStaleAfter } from '../query/hooks/useStaleAfter.ts'
 import { searchWithoutMap } from '../routing/mapParam.ts'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -38,12 +40,15 @@ function ChangesetsList() {
   const {
     data: currentPage,
     isLoading,
+    isFetching,
+    dataUpdatedAt,
     refetch,
   } = useChangesetsPage({
     pageIndex,
     filters,
     aoiId,
   })
+  const listIsStale = useStaleAfter(dataUpdatedAt, LIST_REFRESH_HINT_MS)
 
   const changesetsPage = currentPage as ChangesetsPageData | undefined
 
@@ -128,8 +133,8 @@ function ChangesetsList() {
         handleFilterOrderBy={handleFilterOrderBy}
         currentPage={changesetsPage}
         pending={isLoading}
-        diff={0}
-        diffLoading={false}
+        listIsStale={listIsStale}
+        isRefreshing={isFetching && !isLoading}
         reloadChangesetsPageData={reloadChangesetsPageData}
       />
       <List
