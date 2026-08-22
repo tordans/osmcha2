@@ -15,12 +15,21 @@ import {
 } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
+import type { AdiffAction } from '../components/changeset/changesetElements.ts'
 import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
+import {
+  actionMatchingRef,
+  refDeepLinkKey,
+  refParamFromElement,
+  type RefParam,
+} from '../components/changeset/refSelection.ts'
 import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
+import { parsePinParam } from '../routing/pinParam.ts'
+import { parseRefParam } from '../routing/refParam.ts'
 import { useMapActions, useMapLoaded } from '../stores/map-loaded-store.ts'
 import { useMapStore } from '../stores/mapStore.ts'
 import {
@@ -33,6 +42,7 @@ import {
 import {
   changesetCameraIntent,
   changesetFitOptions,
+  jumpMapToAdiffElement,
   jumpMapToChangesetBounds,
 } from './changesetCamera.ts'
 import {
@@ -104,13 +114,15 @@ interface CMapProps {
   changesetId: number | null
   imageryUsed?: string | null
   viewer: ChangesetAdiffViewer | null
-  setSelected: (action: any) => void
+  selectRef: (ref: RefParam | null) => void
+  inAppDeepLinkKey: string | null
 }
 
-function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
+function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }: CMapProps) {
   const { token } = useAuth()
-  const { map: mapSearch } = changesetRouteApi.useSearch()
+  const { map: mapSearch, ref: refSearch, pin: pinSearch } = changesetRouteApi.useSearch()
   const navigate = changesetRouteApi.useNavigate()
+  const zoomedDeepLinkKeyRef = useRef<string | null>(null)
   const styleId = useMapStore((state) => state.style)
   const changesetQuery = useChangesetMap(changesetId)
   const { mainMap } = useMap()
@@ -125,6 +137,7 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
   const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [cursor, setCursor] = useState('default')
+  const [styleEpoch, setStyleEpoch] = useState(0)
 
   const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
@@ -251,6 +264,60 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
     [mapLoaded, mainMap, viewer, mapSearch, containerSize.width, containerSize.height],
   )
 
+  const applyFeatureStateFromRef = useEffectEvent((map: MaplibreMap) => {
+    if (!viewer) return
+    const parsed = parseRefParam(refSearch ?? '')
+    const geojson = viewer.geojson as ChangesetGeoJSON
+    const action = actionMatchingRef(viewer.adiff.actions as AdiffAction[], parsed)
+    if (!parsed || !action) {
+      clearSelectedFeatureState(map, geojson)
+      return
+    }
+    setSelectedFeatureState(map, geojson, parsed.type, parsed.id)
+  })
+
+  const zoomOnceForDeepLink = useEffectEvent((map: MaplibreMap) => {
+    if (!viewer || changesetId == null) return
+    const parsed = parseRefParam(refSearch ?? '')
+    const key = refDeepLinkKey(changesetId, parsed, pinSearch)
+    if (!key || !parsed) {
+      zoomedDeepLinkKeyRef.current = null
+      return
+    }
+    if (zoomedDeepLinkKeyRef.current === key) return
+    if (inAppDeepLinkKey === key) {
+      zoomedDeepLinkKeyRef.current = key
+      return
+    }
+    const action = actionMatchingRef(viewer.adiff.actions as AdiffAction[], parsed)
+    if (!action) return
+    zoomedDeepLinkKeyRef.current = key
+    const pin = parsePinParam(pinSearch ?? '')
+    runWhileApplyingCamera(applyingCameraRef, () => {
+      jumpMapToAdiffElement(map, viewer, parsed.type, parsed.id, pin)
+    })
+  })
+
+  useEffect(
+    function syncSelectedFeatureStateFromRef() {
+      if (!mapLoaded) return
+      const map = mainMap?.getMap()
+      if (!map) return
+      applyFeatureStateFromRef(map)
+    },
+    [mapLoaded, mainMap, viewer, refSearch, styleEpoch],
+  )
+
+  useEffect(
+    function zoomOnceForDeepLinkRef() {
+      if (!mapLoaded) return
+      const map = mainMap?.getMap()
+      if (!map) return
+      zoomOnceForDeepLink(map)
+    },
+    [mapLoaded, mainMap, viewer, changesetId, refSearch, pinSearch, inAppDeepLinkKey, styleEpoch],
+  )
+
   if (!token) {
     return <SignIn />
   }
@@ -280,7 +347,7 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
     exposeMainMapForDebugging(map)
     markMapLoaded()
     urlWritesEnabledRef.current = true
-    setSelected(null)
+    setStyleEpoch((epoch) => epoch + 1)
   }
 
   function handleMoveEnd(event: ViewStateChangeEvent) {
@@ -304,7 +371,7 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
     const geojson = viewer.geojson as ChangesetGeoJSON
 
     if (nextFeatureId == null) {
-      setSelected(null)
+      selectRef(null)
       clearSelectedFeatureState(map, geojson)
       return
     }
@@ -312,10 +379,10 @@ function CMap({ changesetId, imageryUsed, viewer, setSelected }: CMapProps) {
     if (!action) return
 
     const element = action.new ?? action.old
-    setSelected(action)
-    if (element?.type && element.id != null) {
-      setSelectedFeatureState(map, geojson, element.type, element.id)
-    }
+    const nextRef = refParamFromElement(element?.type, element?.id)
+    if (!nextRef) return
+    selectRef(nextRef)
+    setSelectedFeatureState(map, geojson, nextRef.type, nextRef.id)
   }
 
   function handleMouseMove({ features }: MapLayerMouseEvent) {

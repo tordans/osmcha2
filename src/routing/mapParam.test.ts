@@ -43,9 +43,14 @@ describe('mapParam', () => {
   })
 
   test('omits map when opening a different changeset', () => {
-    expect(searchWithoutMap({ users: 'a', page: 2, map: '12/52.5/13.4' })).toEqual({
-      users: 'a',
-      page: 2,
-    })
+    expect(
+      searchWithoutMap({
+        users: 'a',
+        page: 2,
+        map: '12/52.5/13.4',
+        ref: 'way/1',
+        pin: '52.5,13.4',
+      }),
+    ).toEqual({ users: 'a', page: 2 })
   })
 })

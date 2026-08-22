@@ -10,6 +10,7 @@ import {
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
+import type { NoteTarget } from '../../notes/discussionNotes.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import { Badge } from '../ui/badge.tsx'
@@ -18,6 +19,7 @@ import type { AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
+import type { RefParam } from './refSelection.ts'
 
 const COLUMN_TABS = [
   {
@@ -41,6 +43,10 @@ type ReviewColumnProps = {
   exclusiveKeyToggle: (label: string) => void
   osmInfo?: { adiff?: { actions?: AdiffAction[] } }
   selected?: AdiffAction | null
+  selectedRef?: RefParam | null
+  selectRef: (ref: RefParam | null) => void
+  revealRef: (target: NoteTarget) => void
+  deepLinkReveal?: RefParam | null
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
 }
@@ -54,11 +60,20 @@ export function ReviewColumn({
   exclusiveKeyToggle,
   osmInfo,
   selected,
+  selectedRef,
+  selectRef,
+  revealRef,
+  deepLinkReveal,
   setHighlight,
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(() => selectedRef != null)
+  const [expandedForReveal, setExpandedForReveal] = useState(deepLinkReveal)
+  if (deepLinkReveal != null && deepLinkReveal !== expandedForReveal) {
+    setExpandedForReveal(deepLinkReveal)
+    setExpanded(true)
+  }
   const dragStartY = useRef<number | null>(null)
   const dragged = useRef(false)
   const properties: Record<string, any> = currentChangeset.properties ?? {}
@@ -70,6 +85,12 @@ export function ReviewColumn({
     pollWhileActive: true,
   })
   const discussions = discussion?.changeset?.comments || []
+
+  function revealDiscussionNote(target: NoteTarget) {
+    if (!changesActive) exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
+    setExpanded(true)
+    revealRef(target)
+  }
 
   function selectPanel(label: string) {
     const turningOn = !bindingsState[label]
@@ -209,6 +230,9 @@ export function ReviewColumn({
                     reviewedFeatures={properties.reviewed_features ?? []}
                     reasons={properties.reasons ?? []}
                     selected={selected}
+                    selectedRef={selectedRef}
+                    selectRef={selectRef}
+                    deepLinkReveal={deepLinkReveal}
                     setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
                   />
@@ -226,6 +250,7 @@ export function ReviewColumn({
                     discussions={discussions}
                     changesetIsHarmful={Boolean(properties.harmful)}
                     changesetId={changesetId}
+                    revealRef={revealDiscussionNote}
                   />
                 </motion.div>
               ) : null}

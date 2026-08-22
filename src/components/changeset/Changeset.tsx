@@ -1,5 +1,4 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
-import bbox from '@turf/bbox'
 import clsx from 'clsx'
 import React, { useRef, useState } from 'react'
 import { useMap } from 'react-map-gl/maplibre'
@@ -13,20 +12,24 @@ import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.
 import { PaneResizeHandle } from '../../layout/PaneResizeHandle.tsx'
 import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.ts'
 import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
+import type { NoteTarget } from '../../notes/discussionNotes.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
 import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
 import { getListPaneOpen } from '../../stores/list-pane-store.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
+import { jumpMapToAdiffElement } from '../../views/changesetCamera.ts'
 import {
   setHighlightedFeatureState,
   setSelectedFeatureState,
   type ChangesetGeoJSON,
 } from '../../views/changesetFeatureState.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
+import type { AdiffAction } from './changesetElements.ts'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
+import { refDeepLinkKey, refParamFromElement, type RefParam } from './refSelection.ts'
 import { ReviewColumn } from './ReviewColumn.tsx'
 
 type ChangesetProps = {
@@ -37,8 +40,12 @@ type ChangesetProps = {
   setShowElements: (elements: Array<string>) => any
   setShowActions: (actions: Array<string>) => any
   viewer: ChangesetAdiffViewer | null
-  selected: any
-  setSelected: (selected: any) => void
+  selected: AdiffAction | null
+  selectedRef: RefParam | null
+  selectRef: (ref: RefParam | null) => void
+  revealRef: (target: NoteTarget) => void
+  pinSearch?: string
+  inAppDeepLinkKey: string | null
   children: React.ReactNode
 }
 
@@ -57,7 +64,11 @@ function Changeset({
   setShowActions,
   viewer,
   selected,
-  setSelected,
+  selectedRef,
+  selectRef,
+  revealRef,
+  pinSearch,
+  inAppDeepLinkKey,
   children,
 }: ChangesetProps) {
   const { token } = useAuth()
@@ -72,6 +83,8 @@ function Changeset({
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null)
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
+  const [appliedDeepLinkKey, setAppliedDeepLinkKey] = useState<string | null>(null)
+  const [deepLinkReveal, setDeepLinkReveal] = useState<RefParam | null>(null)
 
   const [bindingsState, setBindingsState] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -80,6 +93,19 @@ function Changeset({
     }
     return initial
   })
+
+  const deepLinkKey =
+    changesetId != null ? refDeepLinkKey(changesetId, selectedRef, pinSearch) : null
+  if (!deepLinkKey || !selectedRef) {
+    if (appliedDeepLinkKey != null) setAppliedDeepLinkKey(null)
+  } else if (inAppDeepLinkKey !== deepLinkKey && appliedDeepLinkKey !== deepLinkKey) {
+    setAppliedDeepLinkKey(deepLinkKey)
+    setBindingsState({
+      [CHANGESET_DETAILS_DETAILS.label]: true,
+      [CHANGESET_DETAILS_DISCUSSIONS.label]: false,
+    })
+    setDeepLinkReveal(selectedRef)
+  }
 
   function exclusiveKeyToggle(label: string) {
     setBindingsState((prev) => exclusiveKeyToggleState(columnToggleOptions, prev, label))
@@ -106,35 +132,12 @@ function Changeset({
   }
 
   function zoomToAndSelect(type: string, id: number) {
+    const nextRef = refParamFromElement(type, id)
+    if (nextRef) selectRef(nextRef)
     if (!mainMap || !mapLoaded || !viewer) return
     const map = mainMap.getMap()
-
-    const features = viewer.geojson.features.filter(
-      (feature) => feature.properties?.type === type && feature.properties?.id === id,
-    )
-
-    let bounds = bbox({ type: 'FeatureCollection', features })
-    if (bounds.length === 6) {
-      bounds = [bounds[0], bounds[1], bounds[3], bounds[4]]
-    }
-    const nextCamera = map.cameraForBounds(bounds as [number, number, number, number], {
-      padding: 50,
-      maxZoom: 18,
-    })
-    if (nextCamera) {
-      map.jumpTo(nextCamera)
-    }
-
+    jumpMapToAdiffElement(map, viewer, type, id)
     setSelectedFeatureState(map, viewer.geojson as ChangesetGeoJSON, type, id)
-
-    const action = viewer.adiff.actions.find(
-      (item: { new?: { type?: string; id?: number }; old?: { type?: string; id?: number } }) => {
-        const element = item.new ?? item.old
-        return element?.type === type && element?.id === id
-      },
-    )
-
-    setSelected(action)
   }
 
   return (
@@ -190,6 +193,10 @@ function Changeset({
             exclusiveKeyToggle={exclusiveKeyToggle}
             osmInfo={osmInfo}
             selected={selected}
+            selectedRef={selectedRef}
+            selectRef={selectRef}
+            revealRef={revealRef}
+            deepLinkReveal={deepLinkReveal}
             setHighlight={setHighlight}
             zoomToAndSelect={zoomToAndSelect}
           />

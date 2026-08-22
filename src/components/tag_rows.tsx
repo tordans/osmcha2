@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
-import { ArrowRightIcon } from './ui/icons.ts'
+import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
 
 export type TagRowsItem =
@@ -91,10 +91,18 @@ export function TagRows({
   rows,
   emptyLabel,
   className,
+  highlightedKey,
+  onKeyClick,
+  noteCountByKey,
+  onNoteCountClick,
 }: {
   rows: TagRowsItem[]
   emptyLabel?: string
   className?: string
+  highlightedKey?: string
+  onKeyClick?: (key: string) => void
+  noteCountByKey?: Record<string, number>
+  onNoteCountClick?: (key: string) => void
 }) {
   if (rows.length === 0) {
     return emptyLabel ? (
@@ -107,7 +115,19 @@ export function TagRows({
       {rows.map((row) => (
         <div
           key={row.key}
-          className="flex flex-wrap items-start gap-x-2 gap-y-0.5 border-b border-zinc-950/5 py-1"
+          className={clsx(
+            'flex flex-wrap items-start gap-x-2 gap-y-0.5 border-b border-zinc-950/5 py-1',
+            onKeyClick && 'min-h-11 cursor-pointer touch-manipulation hover:bg-zinc-50',
+            highlightedKey === row.key && 'ring-2 ring-yellow-400 ring-offset-1',
+          )}
+          onClick={
+            onKeyClick
+              ? (event) => {
+                  event.stopPropagation()
+                  onKeyClick(row.key)
+                }
+              : undefined
+          }
         >
           <dt
             className="max-w-full shrink-0 pt-0.5 font-medium break-all text-zinc-800"
@@ -115,11 +135,61 @@ export function TagRows({
           >
             {row.key}
           </dt>
-          <dd className="min-w-0 flex-[1_1_6rem]">
-            <TagRowValue row={row} />
+          <dd className="flex min-w-0 flex-[1_1_6rem] items-start gap-1">
+            <div className="min-w-0 flex-1">
+              <TagRowValue row={row} />
+            </div>
+            <TagNoteCountBadge
+              tagKey={row.key}
+              count={noteCountByKey?.[row.key] ?? 0}
+              onNoteCountClick={onNoteCountClick}
+            />
           </dd>
         </div>
       ))}
     </dl>
+  )
+}
+
+function TagNoteCountBadge({
+  tagKey,
+  count,
+  onNoteCountClick,
+}: {
+  tagKey: string
+  count: number
+  onNoteCountClick?: (key: string) => void
+}) {
+  if (count <= 0) return null
+
+  const label = `${count} ${count === 1 ? 'note' : 'notes'} on ${tagKey}`
+  const className = clsx(
+    'relative mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-md bg-zinc-600/10 px-1',
+    'text-[10px] leading-4 font-medium text-zinc-700',
+    "after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-['']",
+  )
+
+  if (!onNoteCountClick) {
+    return (
+      <span className={className} aria-label={label}>
+        <ChatBubbleLeftIcon variant="fill" className="size-3" />
+        {count}
+      </span>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className={clsx(className, 'cursor-pointer hover:bg-zinc-600/20')}
+      onClick={(event) => {
+        event.stopPropagation()
+        onNoteCountClick(tagKey)
+      }}
+    >
+      <ChatBubbleLeftIcon variant="fill" className="size-3" />
+      {count}
+    </button>
   )
 }

@@ -63,6 +63,19 @@ describe('filtersFromSearch', () => {
     })
   })
 
+  it('ignores ref and pin chrome so they are not filter keys', () => {
+    expect(
+      filtersFromSearch({
+        page: 1,
+        ref: 'way/123',
+        pin: '52.5,13.4',
+        uids: '11881',
+      } as OsmchaSearch),
+    ).toEqual({
+      uids: [{ label: '11881', value: '11881' }],
+    })
+  })
+
   it('rebuilds order_by from order=date,desc', () => {
     expect(filtersFromSearch({ page: 1, order: 'date,desc' } as OsmchaSearch)).toEqual({
       order_by: [{ label: '-date', value: '-date' }],
@@ -229,5 +242,23 @@ describe('withFilters / stripFilterSearch', () => {
       users: 'ann',
     })
     expect(stripFilterSearch(current)).toEqual({ page: 2, order: 'date,desc' })
+  })
+
+  it('keeps ref and pin as chrome like map and order', () => {
+    const current = {
+      page: 2,
+      map: '12/52.5/13.4',
+      order: 'date,desc',
+      ref: 'way/123',
+      pin: '52.5,13.4',
+      uids: '11881',
+    } as OsmchaSearch
+    expect(stripFilterSearch(current)).toEqual({
+      page: 2,
+      map: '12/52.5/13.4',
+      order: 'date,desc',
+      ref: 'way/123',
+      pin: '52.5,13.4',
+    })
   })
 })

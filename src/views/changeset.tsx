@@ -4,11 +4,21 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/Changeset.tsx'
+import type { AdiffAction } from '../components/changeset/changesetElements.ts'
+import {
+  actionMatchingRef,
+  refDeepLinkKey,
+  searchWithRef,
+  searchWithRefAndPin,
+  type RefParam,
+} from '../components/changeset/refSelection.ts'
 import { SignIn } from '../components/sign_in.tsx'
 import { FILTER_BY_USER } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
+import type { NoteTarget } from '../notes/discussionNotes.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
+import { parseRefParam } from '../routing/refParam.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import { ChangesetLoadError, ChangesetPending } from './changesetLoadStates.tsx'
@@ -34,11 +44,13 @@ function Changeset() {
 
 function ChangesetSession({ changesetId }: { changesetId: number }) {
   const { setFilters } = useFilters()
+  const search = changesetRouteApi.useSearch()
+  const navigate = changesetRouteApi.useNavigate()
   const changesetQuery = useQuery(changesetQueryOptions(changesetId))
   const mapQuery = useChangesetMap(changesetId)
   const changeset = changesetQuery.data as ChangesetData | undefined
+  const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
 
-  const [selected, setSelected] = useState<unknown>(null)
   const [showElements, setShowElements] = useState<Array<string>>(['node', 'way', 'relation'])
   const [showActions, setShowActions] = useState<Array<string>>([
     'create',
@@ -47,6 +59,24 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     'noop',
   ])
   const viewer = useChangesetAdiffViewer(mapQuery.data?.adiff, showElements, showActions)
+  const selectedRef = parseRefParam(search.ref ?? '')
+  const selected = actionMatchingRef((viewer?.adiff.actions ?? []) as AdiffAction[], selectedRef)
+
+  function selectRef(ref: RefParam | null) {
+    setInAppDeepLinkKey(refDeepLinkKey(changesetId, ref, search.pin))
+    void navigate({
+      search: (prev) => searchWithRef(prev, ref),
+      replace: true,
+    })
+  }
+
+  /** Deep-link without marking in-app, so the one-shot reveal (tab, sheet, scroll, flash, zoom) still runs. */
+  function revealRef(target: NoteTarget) {
+    void navigate({
+      search: (prev) => searchWithRefAndPin(prev, target.ref ?? null, target.pin),
+      replace: true,
+    })
+  }
 
   function filterChangesetsByUser() {
     if (changeset?.properties) {
@@ -90,7 +120,11 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
         setShowActions={setShowActions}
         viewer={viewer}
         selected={selected}
-        setSelected={setSelected}
+        selectedRef={selectedRef}
+        selectRef={selectRef}
+        revealRef={revealRef}
+        pinSearch={search.pin}
+        inAppDeepLinkKey={inAppDeepLinkKey}
       >
         <CMap
           changesetId={changesetId}
@@ -100,7 +134,8 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
               : null
           }
           viewer={viewer}
-          setSelected={setSelected}
+          selectRef={selectRef}
+          inAppDeepLinkKey={inAppDeepLinkKey}
         />
       </ChangesetWorkspace>
     </MapProvider>

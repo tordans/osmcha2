@@ -1,5 +1,8 @@
+import bbox from '@turf/bbox'
 import type { Map } from 'maplibre-gl'
 import { parseMapParam, type MapParam } from '../routing/mapParam.ts'
+import type { PinParam } from '../routing/pinParam.ts'
+import type { ChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import type { LngLatBoundsTuple } from './changesetViewBounds.ts'
 
 export type ChangesetCameraIntent = { type: 'restore'; camera: MapParam } | { type: 'fit' }
@@ -41,5 +44,41 @@ export function jumpMapToChangesetBounds(map: Map, bounds: LngLatBoundsTuple): b
   const camera = map.cameraForBounds(bounds, options)
   if (!camera) return false
   map.jumpTo(camera)
+  return true
+}
+
+/** Fit the camera to an element's features, optionally including a note pin. */
+export function jumpMapToAdiffElement(
+  map: Map,
+  viewer: ChangesetAdiffViewer,
+  type: string,
+  id: number,
+  pin?: PinParam | null,
+): boolean {
+  const features = viewer.geojson.features.filter(
+    (feature) => feature.properties?.type === type && feature.properties?.id === id,
+  )
+  const fitFeatures = pin
+    ? [
+        ...features,
+        {
+          type: 'Feature' as const,
+          properties: {},
+          geometry: { type: 'Point' as const, coordinates: [pin.lng, pin.lat] },
+        },
+      ]
+    : features
+  if (fitFeatures.length === 0) return false
+
+  let bounds = bbox({ type: 'FeatureCollection', features: fitFeatures })
+  if (bounds.length === 6) {
+    bounds = [bounds[0], bounds[1], bounds[3], bounds[4]]
+  }
+  const nextCamera = map.cameraForBounds(bounds as [number, number, number, number], {
+    padding: 50,
+    maxZoom: 18,
+  })
+  if (!nextCamera) return false
+  map.jumpTo(nextCamera)
   return true
 }

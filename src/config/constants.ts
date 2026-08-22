@@ -27,3 +27,13 @@ export const nominatimUrl = 'https://nominatim.openstreetmap.org/search.php'
 export const DEFAULT_FROM_DATE = 2
 /** Hide changesets newer than this many minutes (adiff tiles lag OSMCha ingest). */
 export const DEFAULT_TO_DATE = 5
+
+/** Origin emitted in posted See URLs. Local Vite uses the current origin. */
+export const NOTE_PUBLIC_ORIGIN = isLocal
+  ? typeof window !== 'undefined'
+    ? window.location.origin
+    : 'http://127.0.0.1:3000'
+  : 'https://osmcha.org'
+
+/** Hostnames accepted when parsing See URLs (compare case-insensitively). */
+export const NOTE_LINK_HOSTS = ['osmcha.org', 'www.osmcha.org', 'localhost', '127.0.0.1'] as const
