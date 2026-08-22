@@ -10,11 +10,11 @@ The API still stores `harmful` true/false (`set-good` / `set-harmful`). Tag name
 
 ## Verdicts
 
-| UI | API | Meaning |
-| --- | --- | --- |
-| **Looks OK** | `set-good` (`harmful: false`) | Nothing stood out; I think this is OK. Keyboard **G**. |
+| UI               | API                             | Meaning                                                                                     |
+| ---------------- | ------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Looks OK**     | `set-good` (`harmful: false`)   | Nothing stood out; I think this is OK. Keyboard **G**.                                      |
 | **Needs a look** | `set-harmful` (`harmful: true`) | Something is worth checking, discussing, reverting, or working on. Keyboard **B** (no tag). |
-| Clear | `uncheck` | Remove the review. Does **not** clear tags in Django. |
+| Clear            | `uncheck`                       | Remove the review. Does **not** clear tags in Django.                                       |
 
 Icons: CircleCheck (Looks OK / Resolved), Flag (soft not-OK), MessageCircleWarning (High / Critical / DWG).
 
@@ -24,12 +24,12 @@ Icons: CircleCheck (Looks OK / Resolved), Flag (soft not-OK), MessageCircleWarni
 
 At most one tag per exclusive group (UI replaces siblings):
 
-| Group | Tags |
-| --- | --- |
-| Intent | Unintentional, Intentional |
-| Severity | Severity: Low, Severity: High, Severity: Critical |
-| Follow-up | Unresolved, Resolved |
-| Escalation | DWG (on/off) |
+| Group      | Tags                                              |
+| ---------- | ------------------------------------------------- |
+| Intent     | Unintentional, Intentional                        |
+| Severity   | Severity: Low, Severity: High, Severity: Critical |
+| Follow-up  | Unresolved, Resolved                              |
+| Escalation | DWG (on/off)                                      |
 
 You may combine across groups (e.g. Unintentional + Low + Unresolved).
 
@@ -49,18 +49,18 @@ First match wins:
 
 ## Name, tooltip, icon per state + tag
 
-| Combo | Name | Tooltip | Icon |
-| --- | --- | --- | --- |
-| Looks OK | Looks OK | Nothing stood out; I think this is OK. | CircleCheck |
-| Needs a look (no tag) | Needs a look | Something here is worth checking or discussing. | Flag |
-| + Unintentional | Unintentional | Looks like a mistake, not deliberate. | Flag |
-| + Intentional | Intentional | Looks deliberate. | Flag |
-| + Severity: Low | Severity: Low | Minor issues; still worth a look. | Flag |
-| + Severity: High | Severity: High | Serious issues; discuss, revert, or fix. | MessageCircleWarning |
-| + Severity: Critical | Severity: Critical | Critical damage to the map; needs urgent attention. | MessageCircleWarning |
-| + Unresolved | Unresolved | Still needs discussion, revert, or work. | Flag\* |
-| + Resolved | Resolved | The issues were addressed. | CircleCheck |
-| + DWG | DWG | Report this to the Data Working Group. | MessageCircleWarning |
+| Combo                 | Name               | Tooltip                                             | Icon                 |
+| --------------------- | ------------------ | --------------------------------------------------- | -------------------- |
+| Looks OK              | Looks OK           | Nothing stood out; I think this is OK.              | CircleCheck          |
+| Needs a look (no tag) | Needs a look       | Something here is worth checking or discussing.     | Flag                 |
+| + Unintentional       | Unintentional      | Looks like a mistake, not deliberate.               | Flag                 |
+| + Intentional         | Intentional        | Looks deliberate.                                   | Flag                 |
+| + Severity: Low       | Severity: Low      | Minor issues; still worth a look.                   | Flag                 |
+| + Severity: High      | Severity: High     | Serious issues; discuss, revert, or fix.            | MessageCircleWarning |
+| + Severity: Critical  | Severity: Critical | Critical damage to the map; needs urgent attention. | MessageCircleWarning |
+| + Unresolved          | Unresolved         | Still needs discussion, revert, or work.            | Flag\*               |
+| + Resolved            | Resolved           | The issues were addressed.                          | CircleCheck          |
+| + DWG                 | DWG                | Report this to the Data Working Group.              | MessageCircleWarning |
 
 \*Unless High / Critical / DWG is also set.
 

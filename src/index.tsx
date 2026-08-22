@@ -13,6 +13,7 @@ import './assets/index.css'
 import { queryClient } from './query/client.ts'
 import { persistQueryOptions } from './query/persist.ts'
 import { router } from './router.tsx'
+import { waitForAuthHydration } from './stores/authStore.ts'
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element not found')
@@ -20,15 +21,16 @@ if (!container) throw new Error('Root element not found')
 const root = createRoot(container)
 
 async function bootstrap() {
-  try {
-    await persistQueryClientRestore({
+  await Promise.all([
+    persistQueryClientRestore({
       queryClient,
       persister: persistQueryOptions.persister,
       maxAge: persistQueryOptions.maxAge,
-    })
-  } catch (error) {
-    console.warn('Could not restore query cache', error)
-  }
+    }).catch((error) => {
+      console.warn('Could not restore query cache', error)
+    }),
+    waitForAuthHydration(),
+  ])
 
   persistQueryClientSubscribe({
     queryClient,

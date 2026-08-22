@@ -40,12 +40,7 @@ export function Title({
           {editorShortname(editor)}
         </span>
         <NumberOfComments count={commentsCount} />
-        <ReviewStatusBadge
-          checked={checked}
-          checkUser={checkUser}
-          harmful={harmful}
-          tags={tags}
-        />
+        <ReviewStatusBadge checked={checked} checkUser={checkUser} harmful={harmful} tags={tags} />
       </div>
     </div>
   )

@@ -45,6 +45,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       })
     }
 
+    // OSM returns to `/authorized?code=&state=`. If those params land on any
+    // other path (legacy filter migration used to bounce `/authorized` → `/`),
+    // send them to the exchange route instead of leaving a dead code in the URL.
+    const oauthCode = search.code?.trim()
+    if (oauthCode && pathname !== '/authorized') {
+      throw redirect({
+        href: `/authorized${searchStr}${hash ? `#${hash}` : ''}`,
+        replace: true,
+      })
+    }
+
     const migrated = migrateLegacyFilterSearch(pathname, search)
     if (migrated) {
       const qs = routerSearch.stringify(migrated.search)

@@ -19,12 +19,12 @@ import { ChevronDownIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '../compo
 import { Text } from '../components/ui/text.tsx'
 import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
-import { useOsmOAuthAvailable } from '../hooks/useOsmOAuthAvailable.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { usePrefetchChangesetsPage } from '../query/hooks/usePrefetchChangesetsPage.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { useListPaneActions, useListPaneCanCollapse } from '../stores/list-pane-store.ts'
+import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -110,7 +110,7 @@ function NavigationMenu() {
   const search = rootRouteApi.useSearch()
 
   const username = user?.username
-  const localOAuth = useOsmOAuthAvailable()
+  const localOAuth = isOsmOAuthHost()
 
   const handleLoginClick = () => {
     if (!localOAuth) return

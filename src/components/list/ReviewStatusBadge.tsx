@@ -1,16 +1,12 @@
-import { Badge } from '../ui/badge.tsx'
-import {
-  CircleCheckIcon,
-  FlagIcon,
-  MessageCircleWarningIcon,
-} from '../ui/icons.ts'
-import { Tooltip } from '../ui/tooltip.tsx'
 import {
   hasResolvedTag,
   type NamedTag,
   type ReviewIconKind,
   reviewPresentation,
 } from '../changeset/reviewPresentation.ts'
+import { Badge } from '../ui/badge.tsx'
+import { CircleCheckIcon, FlagIcon, MessageCircleWarningIcon } from '../ui/icons.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 export { hasResolvedTag }
 

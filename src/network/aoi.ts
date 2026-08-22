@@ -14,11 +14,29 @@ const aoiFeatureSchema = z.object({
 
 export type AoiFeature = z.infer<typeof aoiFeatureSchema>
 
-const aoiListResponseSchema = z.object({
-  results: z.object({
-    features: z.array(aoiFeatureSchema),
-  }),
+const aoiFeatureListSchema = z.array(aoiFeatureSchema)
+
+const aoiFeatureCollectionSchema = z.object({
+  features: aoiFeatureListSchema,
 })
+
+const aoiListResponseSchema = z.object({
+  results: aoiFeatureCollectionSchema,
+})
+
+/** Normalize API, GeoJSON, or persisted query-cache shapes to a feature list. */
+export function aoiListFromQueryData(data: unknown): AoiFeature[] {
+  const asList = aoiFeatureListSchema.safeParse(data)
+  if (asList.success) return asList.data
+
+  const asCollection = aoiFeatureCollectionSchema.safeParse(data)
+  if (asCollection.success) return asCollection.data.features
+
+  const asApi = aoiListResponseSchema.safeParse(data)
+  if (asApi.success) return asApi.data.results.features
+
+  return []
+}
 
 export function createAOI(name: string, filters: any): Promise<AoiFeature> {
   return api

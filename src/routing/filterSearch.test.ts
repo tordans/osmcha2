@@ -149,6 +149,26 @@ describe('migrateLegacyFilterSearch', () => {
     expect(migrateLegacyFilterSearch('/user', { page: 1 } as OsmchaSearch)).toBeNull()
   })
 
+  it('does not treat OSM OAuth callback params as list filters', () => {
+    expect(
+      migrateLegacyFilterSearch('/authorized', {
+        page: 1,
+        code: 'oauth-code',
+        state: 'oauth-state',
+      } as OsmchaSearch),
+    ).toBeNull()
+  })
+
+  it('keeps /authorized on the callback even when list filters are also present', () => {
+    expect(
+      migrateLegacyFilterSearch('/authorized', {
+        page: 1,
+        code: 'oauth-code',
+        uids: '11881',
+      } as OsmchaSearch),
+    ).toBeNull()
+  })
+
   it('moves flattened filter params off /user onto /', () => {
     expect(migrateLegacyFilterSearch('/user', { page: 1, uids: '11881' } as OsmchaSearch)).toEqual({
       pathname: '/',

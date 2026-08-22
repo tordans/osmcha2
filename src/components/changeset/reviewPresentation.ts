@@ -151,8 +151,7 @@ export function reviewPresentation({
   const tagNames = tags.map((tag) => tag.name).filter(Boolean)
 
   if (harmful === false) {
-    const leftover =
-      tagNames.length > 0 ? ` Leftover tags: ${tagNames.join(', ')}.` : ''
+    const leftover = tagNames.length > 0 ? ` Leftover tags: ${tagNames.join(', ')}.` : ''
     return {
       icon: 'circleCheck',
       color: 'green',

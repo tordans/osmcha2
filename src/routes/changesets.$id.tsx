@@ -1,11 +1,13 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { z } from 'zod'
+import { isMissingCredentialsError } from '../network/request.ts'
 import {
   changesetDiscussionQueryOptions,
   changesetMapQueryOptions,
   changesetQueryOptions,
 } from '../query/options/changeset.ts'
 import { osmchaSearchSchema } from '../routing/searchSchemas.ts'
+import { useAuthStore } from '../stores/authStore.ts'
 import { Changeset } from '../views/changeset.tsx'
 import {
   ChangesetLoadError,
@@ -20,11 +22,17 @@ export const Route = createFileRoute('/changesets/$id')({
   },
   validateSearch: osmchaSearchSchema,
   loader: async ({ context, params }) => {
+    if (!useAuthStore.getState().token) return
+
     try {
       await context.queryClient.ensureQueryData(changesetQueryOptions(params.id))
     } catch (error) {
       if (error instanceof Error && /not found/i.test(error.message)) {
         throw notFound()
+      }
+      if (isMissingCredentialsError(error)) {
+        context.queryClient.removeQueries({ queryKey: changesetQueryOptions(params.id).queryKey })
+        return
       }
       throw error
     }

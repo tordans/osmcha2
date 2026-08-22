@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { fetchAndParseAugmentedDiff } from '../../network/changeset.ts'
 import { fetchChangesetMetadata } from '../../network/openstreetmap.ts'
-import { makeApiRequest, handleResponse } from '../../network/request.ts'
+import { handleResponse, isMissingCredentialsError, makeApiRequest } from '../../network/request.ts'
 import { cacheChangesetMap, cacheDiscussion, cacheForever } from '../cachePolicy.ts'
 
 export function changesetQueryOptions(changesetId: number) {
@@ -16,7 +16,10 @@ export function changesetQueryOptions(changesetId: number) {
       return handleResponse(res)
     },
     ...cacheForever,
-    retry: 3,
+    retry: (failureCount, error) => {
+      if (isMissingCredentialsError(error)) return false
+      return failureCount < 3
+    },
   })
 }
 

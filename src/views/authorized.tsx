@@ -1,5 +1,6 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { withoutOAuthCallbackSearch } from '../routing/searchSchemas.ts'
 import { completeOAuthLogin } from '../utils/auth.ts'
 
 const oauthCodesStarted = new Set<string>()
@@ -13,8 +14,16 @@ export function Authorized() {
       const params = new URLSearchParams(searchStr)
       const authCode = params.get('code')
 
+      const goHome = () => {
+        void navigate({
+          to: '/',
+          search: (prev) => withoutOAuthCallbackSearch(prev),
+          replace: true,
+        })
+      }
+
       if (!authCode) {
-        void navigate({ to: '/', replace: true })
+        goHome()
         return
       }
 
@@ -22,12 +31,10 @@ export function Authorized() {
       oauthCodesStarted.add(authCode)
 
       completeOAuthLogin(authCode)
-        .then(() => {
-          void navigate({ to: '/', replace: true })
-        })
+        .then(goHome)
         .catch((error) => {
           console.error('OAuth completion failed:', error)
-          void navigate({ to: '/', replace: true })
+          goHome()
         })
     },
     [searchStr, navigate],

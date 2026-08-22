@@ -45,3 +45,13 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 )
+
+export function waitForAuthHydration(): Promise<void> {
+  if (useAuthStore.persist.hasHydrated()) return Promise.resolve()
+  return new Promise((resolve) => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => {
+      unsub()
+      resolve()
+    })
+  })
+}

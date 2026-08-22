@@ -17,7 +17,10 @@ export function TailwindResponsiveHelper() {
       <span className="md:font-bold md:underline" title="48rem md">
         md
       </span>
-      <span className="min-[56rem]:font-bold min-[56rem]:underline" title="56rem layout split">
+      <span
+        className="min-[56rem]:font-bold min-[56rem]:underline"
+        title="56rem (896px): list + map split"
+      >
         56
       </span>
       <span className="lg:font-bold lg:underline" title="64rem lg">

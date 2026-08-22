@@ -1,9 +1,14 @@
 import type { Filters } from '../components/filters/filterTypes.ts'
 import { deserializeFiltersFromObject, filtersSchema } from '../utils/filters.ts'
 import { apiOrderFromUnknown, apiOrderToSearchParam, searchParamToApiOrder } from './orderParam.ts'
-import { searchParamsRegistry, type OsmchaSearch } from './searchSchemas.ts'
+import { oauthSearchKeys, searchParamsRegistry, type OsmchaSearch } from './searchSchemas.ts'
 
-const chromeKeySet = new Set<string>([...searchParamsRegistry, 'filters', 'order_by'])
+const chromeKeySet = new Set<string>([
+  ...searchParamsRegistry,
+  ...oauthSearchKeys,
+  'filters',
+  'order_by',
+])
 
 function isFilterSearchKey(key: string) {
   return !chromeKeySet.has(key)
@@ -137,7 +142,9 @@ export function migrateLegacyFilterSearch(
     changed = true
   }
 
-  if (isAccountPath(pathname) && hasFilterSearchParams(next)) {
+  // Keep `/authorized?code=` on that route so the OAuth exchange can run.
+  // Treating `code`/`state` as chrome is not enough if real filters are also present.
+  if (isAccountPath(pathname) && hasFilterSearchParams(next) && next.code?.trim() == null) {
     return { pathname: '/', search: next }
   }
 

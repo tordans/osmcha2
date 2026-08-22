@@ -31,6 +31,12 @@ function errorMessageFromBody(data: unknown): string | undefined {
   return undefined
 }
 
+export const MISSING_CREDENTIALS_MESSAGE = 'Authentication credentials were not provided.'
+
+export function isMissingCredentialsError(error: unknown): boolean {
+  return error instanceof Error && error.message === MISSING_CREDENTIALS_MESSAGE
+}
+
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     // Try to extract error message from server response

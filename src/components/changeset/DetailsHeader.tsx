@@ -62,11 +62,7 @@ import { typeScale } from '../ui/typography.ts'
 import { changesetTagsForDisplay } from './changesetTags.ts'
 import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
-import {
-  type NamedTag,
-  REVIEW_TAG_META,
-  reviewPresentation,
-} from './reviewPresentation.ts'
+import { type NamedTag, REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
 import { Tags } from './tags.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')

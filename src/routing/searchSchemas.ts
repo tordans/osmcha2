@@ -9,6 +9,9 @@ export const osmchaSearchSchema = z
     map: z.string().optional(),
     /** List sort: `order=date,desc` (field,direction). */
     order: z.string().optional(),
+    /** OSM OAuth callback (must not be treated as changeset filters). */
+    code: z.string().optional(),
+    state: z.string().optional(),
     /** Legacy blob `?filters={…}` — redirected to top-level filter params. */
     filters: z.unknown().optional(),
   })
@@ -20,5 +23,15 @@ export type OsmchaSearch = z.infer<typeof osmchaSearchSchema>
 export const EMPTY_FILTERS: Filters = {}
 
 export const searchParamsRegistry = ['aoi', 'page', 'token', 'map', 'order'] as const
+
+/** OSM OAuth callback query keys — chrome, not changeset filters. */
+export const oauthSearchKeys = ['code', 'state'] as const
+
+export function withoutOAuthCallbackSearch<T extends Record<string, unknown>>(
+  search: T,
+): Omit<T, 'code' | 'state'> {
+  const { code: _code, state: _state, ...rest } = search
+  return rest
+}
 
 export type SearchParamKey = (typeof searchParamsRegistry)[number]

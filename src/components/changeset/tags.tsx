@@ -87,11 +87,7 @@ export function Tags({
               color={color}
               rounded="none"
               disabled={disabled}
-              aria-label={
-                leftover
-                  ? `Remove leftover tag ${tag.name}`
-                  : `Remove tag ${tag.name}`
-              }
+              aria-label={leftover ? `Remove leftover tag ${tag.name}` : `Remove tag ${tag.name}`}
               onClick={() => onRemove(option)}
               className="h-full min-h-0 cursor-pointer touch-manipulation items-stretch rounded-none select-none"
             >
