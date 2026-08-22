@@ -13,7 +13,7 @@ OSMCha has no store for per-object discussion; the only durable write is an OSM 
 
 - One `ref` parameter, not `element` plus `tag`: `type/id` or `type/id/key`. The key is everything after the second `/`. Absent `ref` means the changeset itself.
 - Orthogonal `pin=lat,lng`, rounded to five decimals.
-- Canonical posted URL: `https://<NOTE_PUBLIC_ORIGIN>/changesets/{id}?ref=...&pin=...`. Never include `map=`.
+- Canonical posted URL: `{NOTE_PUBLIC_ORIGIN}/changesets/{id}?ref=...&pin=...` (today `https://tordans.github.io/osmcha2/changesets/{id}?…`). Never include `map=`. The parser accepts `/changesets/{id}` and `/osmcha2/changesets/{id}` on allowlisted hosts so GitHub Pages and local Vite both round-trip.
 - Groups split on a line starting with `See ` plus an allowlisted `https://` URL whose path is this changeset and whose query has `ref` and/or `pin`. The visible label is decoration; OSMCha derives chips from `ref`.
 - The composer writes frozen labels: backticks around object and key, `>` for object→tag, 📍 first when a pin is present. The parser never requires the label.
 - Reference footer `See https://<origin>/changesets/{id}` only when there is no See group.

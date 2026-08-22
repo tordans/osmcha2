@@ -223,6 +223,19 @@ Still first.
       notes: [{ ref: { type: 'node', id: 4 }, body: 'Slash.' }],
     })
   })
+
+  test('parses GitHub Pages /osmcha2/changesets/{id} on tordans.github.io', () => {
+    const pages = `https://tordans.github.io/osmcha2/changesets/${CHANGESET_ID}?ref=way/123`
+    expect(parse(`See \`way/123\` ${pages}\nFrom Pages.`)).toEqual({
+      intro: '',
+      notes: [{ ref: { type: 'way', id: 123 }, body: 'From Pages.' }],
+    })
+  })
+
+  test('ignores another repo on the same GitHub Pages host', () => {
+    const text = `See https://tordans.github.io/other-app/changesets/${CHANGESET_ID}?ref=way/1\nNot us.`
+    expect(parse(text)).toEqual({ intro: text, notes: [] })
+  })
 })
 
 describe('composeDiscussionPost', () => {
@@ -270,6 +283,18 @@ describe('composeDiscussionPost', () => {
   test('returns an empty string when intro and notes are empty', () => {
     expect(compose({})).toBe('')
     expect(compose({ intro: '  ', notes: [] })).toBe('')
+  })
+
+  test('default origin is the GitHub Pages site including /osmcha2', () => {
+    const posted = composeDiscussionPost({
+      changesetId: CHANGESET_ID,
+      notes: [{ ref: { type: 'way', id: 1 }, body: 'Hi.' }],
+    })
+    expect(posted).toContain(
+      `See \`way/1\` https://tordans.github.io/osmcha2/changesets/${CHANGESET_ID}?ref=way/1`,
+    )
+    expect(posted).not.toContain('https://osmcha.org/changesets/')
+    expect(posted).not.toContain('localhost')
   })
 })
 

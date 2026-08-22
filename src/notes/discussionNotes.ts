@@ -1,4 +1,8 @@
-import { NOTE_LINK_HOSTS, NOTE_PUBLIC_ORIGIN } from '../config/constants.ts'
+import {
+  NOTE_LINK_HOSTS,
+  NOTE_LINK_PATH_PREFIXES,
+  NOTE_PUBLIC_ORIGIN,
+} from '../config/constants.ts'
 import { parsePinParam, serializePinParam, type PinParam } from '../routing/pinParam.ts'
 import { parseRefParam, serializeRefParam, type RefParam } from '../routing/refParam.ts'
 
@@ -44,9 +48,19 @@ function hostAllowed(hostname: string, linkHosts: readonly string[]): boolean {
   return linkHosts.some((host) => host.toLowerCase() === needle)
 }
 
+function changesetPathPrefixes(): string[] {
+  const prefixes = new Set<string>(NOTE_LINK_PATH_PREFIXES)
+  const base = String(import.meta.env.BASE_URL ?? '/').replace(/\/+$/, '')
+  if (base && base !== '/') prefixes.add(base)
+  return [...prefixes]
+}
+
 function isThisChangesetPath(pathname: string, changesetId: number): boolean {
-  const expected = `/changesets/${changesetId}`
-  return pathname === expected || pathname === `${expected}/`
+  const normalized =
+    pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname
+  return changesetPathPrefixes().some(
+    (prefix) => normalized === `${prefix}/changesets/${changesetId}`,
+  )
 }
 
 /** Leave `/`, `:`, and `,` readable in posted See URLs, matching routerSearch. */

@@ -28,12 +28,23 @@ export const DEFAULT_FROM_DATE = 2
 /** Hide changesets newer than this many minutes (adiff tiles lag OSMCha ingest). */
 export const DEFAULT_TO_DATE = 5
 
-/** Origin emitted in posted See URLs. Local Vite uses the current origin. */
-export const NOTE_PUBLIC_ORIGIN = isLocal
-  ? typeof window !== 'undefined'
-    ? window.location.origin
-    : 'http://127.0.0.1:3000'
-  : 'https://osmcha.org'
+/**
+ * Public site root emitted in posted See URLs (no trailing slash).
+ * Includes the GitHub Pages base path. Never localhost — posted OSM text is public.
+ */
+export const NOTE_PUBLIC_ORIGIN = 'https://tordans.github.io/osmcha2'
 
 /** Hostnames accepted when parsing See URLs (compare case-insensitively). */
-export const NOTE_LINK_HOSTS = ['osmcha.org', 'www.osmcha.org', 'localhost', '127.0.0.1'] as const
+export const NOTE_LINK_HOSTS = [
+  'tordans.github.io',
+  'osmcha.org',
+  'www.osmcha.org',
+  'localhost',
+  '127.0.0.1',
+] as const
+
+/**
+ * Path prefixes before `/changesets/{id}` in a See URL.
+ * Empty is the site root (local Vite, osmcha.org). `/osmcha2` is GitHub Pages.
+ */
+export const NOTE_LINK_PATH_PREFIXES = ['', '/osmcha2'] as const
