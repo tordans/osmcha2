@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronsUpDown,
   ChevronUp,
+  CircleCheck,
   CirclePlus,
   Clipboard,
   ClipboardCheck,
@@ -22,6 +23,7 @@ import {
   Link,
   LoaderCircle,
   MessageCircle,
+  MessageCircleWarning,
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
@@ -51,6 +53,7 @@ export const ChevronLeftIcon = appIcon(ChevronLeft)
 export const ChevronRightIcon = appIcon(ChevronRight)
 export const ChevronsUpDownIcon = appIcon(ChevronsUpDown)
 export const ChevronUpIcon = appIcon(ChevronUp)
+export const CircleCheckIcon = appIcon(CircleCheck)
 export const ClipboardDocumentCheckIcon = appIcon(ClipboardCheck)
 export const ClipboardIcon = appIcon(Clipboard)
 export const ArrowTopRightOnSquareIcon = appIcon(ExternalLink)
@@ -63,6 +66,7 @@ export const HandThumbUpIcon = appIcon(ThumbsUp)
 export const LanguageIcon = appIcon(Languages)
 export const LinkIcon = appIcon(Link)
 export const LoaderCircleIcon = appIcon(LoaderCircle)
+export const MessageCircleWarningIcon = appIcon(MessageCircleWarning)
 export const ExclamationTriangleIcon = appIcon(TriangleAlert)
 export const PanelLeftCloseIcon = appIcon(PanelLeftClose)
 export const PanelLeftOpenIcon = appIcon(PanelLeftOpen)

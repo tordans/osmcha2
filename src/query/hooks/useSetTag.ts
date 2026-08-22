@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { exclusiveSiblingsOf } from '../../components/changeset/reviewPresentation.ts'
 import { setTag } from '../../network/changeset.ts'
 
 interface SetTagParams {
@@ -12,24 +13,35 @@ export function useSetTag() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ changesetId, tag, remove }: SetTagParams) => setTag(changesetId, tag, remove),
+    mutationFn: async ({ changesetId, tag, remove }: SetTagParams) => {
+      if (!remove) {
+        const siblings = exclusiveSiblingsOf(tag.value)
+        for (const siblingId of siblings) {
+          try {
+            await setTag(changesetId, { value: siblingId, label: String(siblingId) }, true)
+          } catch {
+            // Sibling may not be present; ignore.
+          }
+        }
+      }
+      return setTag(changesetId, tag, remove)
+    },
 
     onMutate: async ({ changesetId, tag, remove }) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['changeset', changesetId] })
 
-      // Snapshot previous value
       const previous = queryClient.getQueryData(['changeset', changesetId])
 
       const updateTags = (existingTags: any[]) => {
         if (remove) {
           return existingTags.filter((t: any) => t.id !== tag.value)
-        } else {
-          return [...existingTags, { id: tag.value, name: tag.label }]
         }
+        const siblings = new Set(exclusiveSiblingsOf(tag.value))
+        const withoutSiblings = existingTags.filter((t: any) => !siblings.has(t.id))
+        if (withoutSiblings.some((t: any) => t.id === tag.value)) return withoutSiblings
+        return [...withoutSiblings, { id: tag.value, name: tag.label }]
       }
 
-      // Optimistically update changeset detail
       queryClient.setQueryData(['changeset', changesetId], (old: any) => {
         if (!old) return old
 
@@ -47,7 +59,6 @@ export function useSetTag() {
         }
       })
 
-      // Optimistically update changeset in list pages
       queryClient.setQueriesData({ queryKey: ['changesets', 'page'] }, (old: any) => {
         if (!old?.features) return old
         const features = old.features.map((f: any) => {
@@ -74,8 +85,7 @@ export function useSetTag() {
       })
     },
 
-    onError: (error: Error, variables, context) => {
-      // Rollback on error
+    onError: (error: Error, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(['changeset', context.changesetId], context.previous)
       }
@@ -84,8 +94,7 @@ export function useSetTag() {
       })
     },
 
-    onSettled: (data, error, variables) => {
-      // Invalidate queries to refetch
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['changeset', variables.changesetId],
       })

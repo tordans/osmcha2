@@ -6,7 +6,7 @@
   - [Why use OSMCha?](#why-use-osmcha)
   - [What is vandalism?](#what-is-vandalism)
   - [What are flagged changesets and how are they automatically flagged?](#what-are-flagged-changesets-and-how-are-they-automatically-flagged)
-  - [Why to review a changeset as Good/Bad 👍 / 👎 ?](#why-to-review-a-changeset-as-goodbad----)
+  - [Why to review a changeset as Looks OK / Needs a look?](#why-to-review-a-changeset-as-looks-ok--needs-a-look)
   - [Future of OSMCha and validation using OSM-Compare](#future-of-osmcha-and-validation-using-osm-compare)
 - [Usage](#usage)
   - [How to review a changeset?](#how-to-review-a-changeset)
@@ -101,20 +101,24 @@ restrictions, land use classification etc.
   functions in OSM-Compare for flagging deletions of cities, overlap between
   features, and similar rule based scenarios.
 
-### Why to review a changeset as Good/Bad 👍 / 👎 ?
+### Why to review a changeset as Looks OK / Needs a look?
 
-- Any changeset on OSM can be reviewed by the community to confirm the quality
-  of the edit. You can 👍 for edits that do not cause any damage to the map, and
-  👎 for those that may break map data or is invalid data.
+- Any changeset on OSM can be reviewed by the community. Mark **Looks OK** when
+  nothing stood out and you think the edit is fine. Mark **Needs a look** when
+  something is worth checking, discussing, reverting, or working on.
+
+- Tags on a Needs a look review (intent, severity, follow-up, DWG) describe what
+  you want highlighted. High / Critical / DWG escalate the icon to a stronger
+  warning. See [docs/review.md](docs/review.md).
 
 - This data is collected to help improve the compare functions in OSM-Compare
   project. Thus helping it become more efficient and robust by testing it
-  against a verified database of good and bad changesets.
+  against a verified database of reviewed changesets.
 
 - Consistent categorisation of changesets also helps to build an open source
   database for use in ventures related to machine learning or automating the
-  detection process for bad edits instead of writing rule based compare
-  functions for all possible scenarios of bad edits.
+  detection process for problematic edits instead of writing rule based compare
+  functions for all possible scenarios.
 
 ### Future of OSMCha and validation using OSM-Compare
 
@@ -170,7 +174,7 @@ what a problematic edit is on OSM, please refer to our guide on
 
 - Similarly, if there are comments on the changeset on OpenStreetMap, OSMCha presents the discussion under the discussion tab.
 
-- User's can automatically post OSM changeset discussion comments directly from OSMCha. You can define comment templates on your [user page](https://osmcha.org/user), so you will have a base message to send to a user after reviewing the changeset as good or bad. Right after your review, the comment form will be filled with your saved text. We suggest you to communicate with other mappers to alert them of errors, aspects to improve or simply to welcome a new user or praise a good edit.
+- User's can automatically post OSM changeset discussion comments directly from OSMCha. You can define comment templates on your [user page](https://osmcha.org/user), so you will have a base message to send to a user after reviewing the changeset as Looks OK or Needs a look. Right after your review, the comment form will be filled with your saved text. We suggest you to communicate with other mappers to alert them of errors, aspects to improve or simply to welcome a new user or praise a good edit.
 
 <img width="300" alt="osmcha-users" src="https://user-images.githubusercontent.com/8921295/35940051-ee1c8dce-0c1b-11e8-924a-4c1bcc31fcce.png">
 
@@ -354,8 +358,8 @@ Yes. Keyboard shortcuts on OSMCha help the reviewer to go through a list of chan
 | Open changeset in Achavi                         | `V`        |
 | Open user profile in HDYC                        | `H`        |
 | Open changeset in Level0                         | `L`        |
-| Review changeset as Good                         | `G`        |
-| Review changeset as Bad                          | `B`        |
+| Mark changeset as Looks OK                       | `G`        |
+| Mark changeset as Needs a look                   | `B`        |
 | Undo or clear changeset review                   | `U` or `C` |
 | Filter edits of the current changeset's user     | `A`        |
 | **Changeset panels**                             |            |
@@ -372,18 +376,23 @@ Yes. Keyboard shortcuts on OSMCha help the reviewer to go through a list of chan
 
 <img width="200" alt="osmcha-tags" src="https://user-images.githubusercontent.com/8921295/27322174-b0561022-55ba-11e7-81e9-3507278d4f58.png">
 
-The button `Tags` will only appear when you review a changeset good or bad, but it's recommended and essentially used to describe the details of the changeset that was found to be bad. Here are the different tags that can be used:
+The **Highlight** control appears after you mark a changeset **Needs a look**.
+Tags describe what you want discussed; they enhance the binary review, they do
+not replace it. Full model: [docs/review.md](docs/review.md).
 
-- **Severity**: **Critical**, **High** or **Low**, to estimate how bad do these edits on a changeset affect OpenStreetMap data
-- **Unresolved**: To input action taken by the you (reviewer) on a changeset. It is unresolved when the you (reviewer) have commented on the changeset to inform the mapper for corrections or no action has been taken by the you (reviewer) to correct the map data.
-- **Intent**: **Intentional** or **Unintentional** to capture the intent of the user. This is contextual information subjective to the edits and users.
-- **DWG**: When a changeset needs to be reported to the Data Working Group
+- **Severity**: **Critical**, **High** or **Low** — how serious the issues are.
+  High and Critical escalate the review icon.
+- **Unresolved** / **Resolved**: still needs work, or the issues were addressed
+  (Resolved turns the badge green again).
+- **Intent**: **Intentional** or **Unintentional** — deliberate vs mistake.
+- **DWG**: escalate to the Data Working Group (also escalates the icon).
 
 ### What if I want to change my review for a changeset?
 
-Yes, it is possible to change the review for a changeset from `Good` to `Bad` or
+Yes, it is possible to change the review from Looks OK to Needs a look or
 vise versa. You can also unreview a changeset by clicking on the `'x'` beside your
-username on the top right corner button.
+username on the review chip. Unchecking does not clear tags; marking Looks OK
+with leftover tags asks whether to remove them.
 
 <img width="280" alt="osmcha-undo" src="https://user-images.githubusercontent.com/8921295/33522551-66bc5f1a-d815-11e7-810b-16725b33e1cf.gif">
 

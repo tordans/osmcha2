@@ -6,22 +6,34 @@ interface MarkHarmfulParams {
   changesetId: number
   harmful: boolean | -1
   username: string
+  /** When set, PUT body includes `{ tags }`. Use `[]` to clear tags on Looks OK. */
+  tags?: number[]
+  /** Optimistic tag objects when applying tags with set-harmful / set-good. */
+  tagObjects?: Array<{ id: number; name: string }>
 }
 
 export function useMarkHarmful() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ changesetId, harmful }: MarkHarmfulParams) => setHarmful(changesetId, harmful),
+    mutationFn: ({ changesetId, harmful, tags }: MarkHarmfulParams) =>
+      setHarmful(changesetId, harmful, tags),
 
-    onMutate: async ({ changesetId, harmful, username }) => {
-      // Cancel outgoing refetches
+    onMutate: async ({ changesetId, harmful, username, tags, tagObjects }) => {
       await queryClient.cancelQueries({ queryKey: ['changeset', changesetId] })
 
-      // Snapshot previous value
       const previous = queryClient.getQueryData(['changeset', changesetId])
 
-      // Optimistically update changeset detail
+      const nextTags = (existing: Array<{ id?: number; name: string }> = []) => {
+        if (tags === undefined) return existing
+        if (tags.length === 0) return []
+        if (tagObjects) return tagObjects
+        return tags.map((id) => {
+          const known = existing.find((tag) => tag.id === id)
+          return known ?? { id, name: String(id) }
+        })
+      }
+
       queryClient.setQueryData(['changeset', changesetId], (old: any) => {
         if (!old) return old
         return {
@@ -31,11 +43,11 @@ export function useMarkHarmful() {
             check_user: harmful === -1 ? null : username,
             checked: harmful !== -1,
             harmful: harmful === -1 ? null : harmful,
+            ...(tags !== undefined ? { tags: nextTags(old.properties?.tags) } : {}),
           },
         }
       })
 
-      // Optimistically update changeset in list pages
       queryClient.setQueriesData({ queryKey: ['changesets', 'page'] }, (old: any) => {
         if (!old?.features) return old
         const features = old.features.map((f: any) => {
@@ -47,6 +59,7 @@ export function useMarkHarmful() {
                 check_user: harmful === -1 ? null : username,
                 checked: harmful !== -1,
                 harmful: harmful === -1 ? null : harmful,
+                ...(tags !== undefined ? { tags: nextTags(f.properties?.tags) } : {}),
               },
             }
           }
@@ -62,14 +75,13 @@ export function useMarkHarmful() {
       if (harmful === -1) {
         toast.success('Review cleared')
       } else if (harmful) {
-        toast.success('Changeset marked as harmful')
+        toast.success('Marked as needs a look')
       } else {
-        toast.success('Changeset marked as good')
+        toast.success('Marked as looks OK')
       }
     },
 
     onError: (error: Error, variables, context) => {
-      // Rollback on error
       if (context?.previous) {
         queryClient.setQueryData(['changeset', context.changesetId], context.previous)
       }
@@ -78,8 +90,7 @@ export function useMarkHarmful() {
       })
     },
 
-    onSettled: (data, error, variables) => {
-      // Invalidate queries to refetch
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['changeset', variables.changesetId],
       })

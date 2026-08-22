@@ -1,46 +1,61 @@
 import { Badge } from '../ui/badge.tsx'
-import { HandThumbDownIcon, HandThumbUpIcon } from '../ui/icons.ts'
+import {
+  CircleCheckIcon,
+  FlagIcon,
+  MessageCircleWarningIcon,
+} from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
+import {
+  hasResolvedTag,
+  type NamedTag,
+  type ReviewIconKind,
+  reviewPresentation,
+} from '../changeset/reviewPresentation.ts'
 
-type NamedTag = { id?: number; name: string }
+export { hasResolvedTag }
 
-const RESOLVED_TAG_ID = 9
-
-export function hasResolvedTag(tags: NamedTag[] = []) {
-  return tags.some((tag) => tag.id === RESOLVED_TAG_ID)
-}
-
-function reviewBadgeColor({ resolved, harmful }: { resolved: boolean; harmful?: boolean | null }) {
-  return resolved ? 'green' : harmful ? 'orange' : 'green'
+export function ReviewVerdictIcon({
+  kind,
+  variant = 'fill',
+  className = 'size-4',
+}: {
+  kind: ReviewIconKind
+  variant?: 'outline' | 'fill'
+  className?: string
+}) {
+  if (kind === 'circleCheck') {
+    return <CircleCheckIcon variant={variant} className={className} />
+  }
+  if (kind === 'messageWarning') {
+    return <MessageCircleWarningIcon variant={variant} className={className} />
+  }
+  return <FlagIcon variant={variant} className={className} />
 }
 
 type ReviewStatusBadgeProps = {
   checked?: boolean
   checkUser?: string | null
   harmful?: boolean | null
-  resolved?: boolean
+  tags?: NamedTag[]
 }
 
 export function ReviewStatusBadge({
   checked,
   checkUser,
   harmful,
-  resolved = false,
+  tags = [],
 }: ReviewStatusBadgeProps) {
-  if (!checked) return null
-
-  const reviewer = checkUser || 'Unknown user'
-  const verdict = harmful ? 'harmful' : 'good'
-  const label = `Reviewed as ${verdict} by ${reviewer}`
+  const presentation = reviewPresentation({ checked, harmful, tags, checkUser })
+  if (!presentation) return null
 
   return (
-    <Tooltip content={label} as="span" className="flex-none @[22rem]/list:pointer-events-none">
-      <Badge color={reviewBadgeColor({ resolved, harmful })} className="h-6" aria-label={label}>
-        {harmful ? (
-          <HandThumbDownIcon variant="fill" className="size-4" />
-        ) : (
-          <HandThumbUpIcon variant="fill" className="size-4" />
-        )}
+    <Tooltip
+      content={presentation.tooltip}
+      as="span"
+      className="flex-none @[22rem]/list:pointer-events-none"
+    >
+      <Badge color={presentation.color} className="h-6" aria-label={presentation.tooltip}>
+        <ReviewVerdictIcon kind={presentation.icon} />
         <span className="hidden @[22rem]/list:inline">by {checkUser || <i>Unknown user</i>}</span>
       </Badge>
     </Tooltip>

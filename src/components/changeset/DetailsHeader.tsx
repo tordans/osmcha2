@@ -1,6 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
+import { useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
@@ -31,25 +32,29 @@ import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { parseOsmDate } from '../../utils/datetime.ts'
 import { editorShortname } from '../list/editorShortname.ts'
+import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
+import { Alert, AlertActions, AlertDescription, AlertTitle } from '../ui/alert.tsx'
 import { Badge, BadgeButton } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Divider } from '../ui/divider.tsx'
 import {
   Dropdown,
   DropdownButton,
+  DropdownDescription,
   DropdownDivider,
   DropdownHeading,
   DropdownItem,
+  DropdownLabel,
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
 import {
   ChevronDownIcon,
+  CircleCheckIcon,
   ExclamationTriangleIcon,
-  HandThumbDownIcon,
-  HandThumbUpIcon,
+  FlagIcon,
   StarIcon,
   XMarkIcon,
 } from '../ui/icons.ts'
@@ -57,14 +62,15 @@ import { typeScale } from '../ui/typography.ts'
 import { changesetTagsForDisplay } from './changesetTags.ts'
 import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
+import {
+  type NamedTag,
+  REVIEW_TAG_META,
+  reviewPresentation,
+} from './reviewPresentation.ts'
 import { Tags } from './tags.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 const rootRouteApi = getRouteApi('__root__')
-
-const RESOLVED_TAG_ID = 9
-
-type NamedTag = { id?: number; name: string }
 
 export type ReviewUserDetails = {
   uid?: number | string
@@ -95,10 +101,6 @@ export type ReviewChangeset = {
   }
 }
 
-function hasResolvedTag(tags: NamedTag[]) {
-  return tags.some((tag) => tag.id === RESOLVED_TAG_ID)
-}
-
 type DetailsHeaderProps = {
   changesetId: number
   currentChangeset: ReviewChangeset
@@ -119,6 +121,7 @@ export function DetailsHeader({
   const changesetIsOpen = isOsmChangesetOpen(osmMetadata)
   const username = user?.username
   const markHarmfulMutation = useMarkHarmful()
+  const [leftoverAlertOpen, setLeftoverAlertOpen] = useState(false)
   const properties = currentChangeset.properties ?? {}
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
@@ -132,8 +135,13 @@ export function DetailsHeader({
   const reasons = properties.reasons ?? []
   const checked = Boolean(properties.checked)
   const harmful = properties.harmful
-  const resolved = hasResolvedTag(tags)
-  const reviewColor = resolved ? 'green' : harmful ? 'orange' : 'green'
+  const presentation = reviewPresentation({
+    checked,
+    harmful,
+    tags,
+    checkUser: properties.check_user,
+  })
+  const reviewColor = presentation?.color ?? 'green'
   const editorLabel = editorShortname(properties.editor)
   const changesetDate = properties.date ? parseOsmDate(properties.date) : null
   const accountCreated = userDetails?.accountCreated
@@ -148,8 +156,9 @@ export function DetailsHeader({
   const visibleMetadata = changesetTagsForDisplay(properties.metadata)
   const pastNames = whosThat.length > 1 ? whosThat.slice(0, -1) : []
   const description = userDetails?.description?.trim() ?? ''
+  const hasLeftoverTags = tags.length > 0
 
-  function handleMarkHarmful(value: boolean | -1) {
+  function markLooksOk(clearTags: boolean) {
     if (!token) {
       toast.error('You must be logged in to mark changesets')
       return
@@ -160,9 +169,61 @@ export function DetailsHeader({
     }
     markHarmfulMutation.mutate({
       changesetId,
+      harmful: false,
+      username,
+      ...(clearTags ? { tags: [] } : {}),
+    })
+    setLeftoverAlertOpen(false)
+  }
+
+  /** Looks OK — alert when leftover issue tags remain. Keep docs/review.md in sync. */
+  function requestLooksOk() {
+    if (!token) {
+      toast.error('You must be logged in to mark changesets')
+      return
+    }
+    if (!username) {
+      toast.error('Username not available')
+      return
+    }
+    if (hasLeftoverTags) {
+      setLeftoverAlertOpen(true)
+      return
+    }
+    markLooksOk(false)
+  }
+
+  function handleMarkHarmful(
+    value: boolean | -1,
+    options?: { tags?: number[]; tagObjects?: Array<{ id: number; name: string }> },
+  ) {
+    if (!token) {
+      toast.error('You must be logged in to mark changesets')
+      return
+    }
+    if (!username) {
+      toast.error('Username not available')
+      return
+    }
+    if (value === false) {
+      requestLooksOk()
+      return
+    }
+    markHarmfulMutation.mutate({
+      changesetId,
       harmful: value,
       username,
+      tags: options?.tags,
+      tagObjects: options?.tagObjects,
     })
+  }
+
+  function markNeedsALook(tag?: { id: number; name: string }) {
+    if (tag) {
+      handleMarkHarmful(true, { tags: [tag.id], tagObjects: [tag] })
+    } else {
+      handleMarkHarmful(true)
+    }
   }
 
   function filterOsmchaByUser() {
@@ -183,7 +244,7 @@ export function DetailsHeader({
   useHotkeys([
     ...VERIFY_BAD.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => handleMarkHarmful(true),
+      callback: () => markNeedsALook(),
     })),
     ...VERIFY_CLEAR.hotkeys.map((hotkey) => ({
       hotkey,
@@ -191,7 +252,7 @@ export function DetailsHeader({
     })),
     ...VERIFY_GOOD.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => handleMarkHarmful(false),
+      callback: () => requestLooksOk(),
     })),
     ...OPEN_IN_JOSM.hotkeys.map((hotkey) => ({
       hotkey,
@@ -354,27 +415,27 @@ export function DetailsHeader({
             </span>
             <span
               className="isolate inline-flex shrink-0 rounded-md"
-              title="Changesets of this user marked good or bad in OSMCha"
+              title="Changesets of this user marked Looks OK or Needs a look in OSMCha"
             >
               <Badge rounded="left">
                 {checkedGood.toLocaleString()}{' '}
-                <HandThumbUpIcon
+                <CircleCheckIcon
                   variant="fill"
                   className="inline size-4 text-zinc-600"
-                  aria-label="Good changesets"
+                  aria-label="Looks OK changesets"
                 />
               </Badge>
               <Badge rounded="right" className="-ml-px">
                 <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
                   {checkedBad.toLocaleString()}{' '}
                 </span>
-                <HandThumbDownIcon
+                <FlagIcon
                   variant="fill"
                   className={clsx(
                     'inline size-4',
                     checkedBad ? 'text-orange-500' : 'text-zinc-600',
                   )}
-                  aria-label="Harmful changesets"
+                  aria-label="Needs a look changesets"
                 />
               </Badge>
             </span>
@@ -502,65 +563,175 @@ export function DetailsHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {checked ? (
-          <div
-            className={clsx(
-              'isolate inline-flex h-8 max-w-full min-w-0 flex-none items-stretch whitespace-nowrap',
-              'divide-x divide-black/10 overflow-hidden rounded-md ring-1 ring-black/10',
-            )}
-          >
-            <Badge color={reviewColor} rounded="none" className="h-full rounded-none">
-              {harmful ? (
-                <HandThumbDownIcon variant="fill" className="size-4" />
-              ) : (
-                <HandThumbUpIcon variant="fill" className="size-4" />
-              )}{' '}
-              by {properties.check_user || <i>Unknown user</i>}
-            </Badge>
-            <BadgeButton
-              color={reviewColor}
-              rounded="none"
-              aria-label="Unreview changeset"
-              onClick={() => handleMarkHarmful(-1)}
-              className="h-full min-h-0 min-w-7 cursor-pointer touch-manipulation items-stretch justify-center rounded-none select-none"
+        {checked && presentation ? (
+          <>
+            <div
+              className={clsx(
+                'isolate inline-flex h-8 max-w-full min-w-0 flex-none items-stretch whitespace-nowrap',
+                'divide-x divide-black/10 overflow-hidden rounded-md ring-1 ring-black/10',
+              )}
             >
-              <XMarkIcon className="size-3.5" />
-            </BadgeButton>
-            <Tags
-              changesetId={changesetId}
-              currentChangeset={currentChangeset}
-              disabled={false}
-              color={reviewColor}
-              allowAdd={harmful === true}
-            />
-          </div>
+              <Badge
+                color={reviewColor}
+                rounded="none"
+                className="h-full rounded-none"
+                title={presentation.tooltip}
+                aria-label={presentation.tooltip}
+              >
+                <ReviewVerdictIcon kind={presentation.icon} /> by{' '}
+                {properties.check_user || <i>Unknown user</i>}
+              </Badge>
+              <BadgeButton
+                color={reviewColor}
+                rounded="none"
+                aria-label="Unreview changeset"
+                onClick={() => handleMarkHarmful(-1)}
+                className="h-full min-h-0 min-w-7 cursor-pointer touch-manipulation items-stretch justify-center rounded-none select-none"
+              >
+                <XMarkIcon className="size-3.5" />
+              </BadgeButton>
+              {harmful === true ? (
+                <Tags
+                  changesetId={changesetId}
+                  currentChangeset={currentChangeset}
+                  disabled={false}
+                  color={reviewColor}
+                  allowAdd
+                />
+              ) : null}
+            </div>
+            {harmful === false && hasLeftoverTags ? (
+              <div
+                className={clsx(
+                  'isolate inline-flex h-8 max-w-full min-w-0 flex-none items-stretch whitespace-nowrap',
+                  'divide-x divide-black/10 overflow-hidden rounded-md ring-1 ring-black/10',
+                )}
+                aria-label="Leftover review tags"
+              >
+                <Tags
+                  changesetId={changesetId}
+                  currentChangeset={currentChangeset}
+                  disabled={false}
+                  color="zinc"
+                  allowAdd={false}
+                  leftover
+                />
+              </div>
+            ) : null}
+          </>
         ) : (
           <>
             <Button
               outline
-              aria-label="Mark changeset as good"
-              onClick={() => handleMarkHarmful(false)}
-              className="min-h-11 min-w-11 cursor-pointer touch-manipulation select-none"
+              aria-label="Nothing stood out; I think this is OK"
+              onClick={() => requestLooksOk()}
+              className="min-h-11 cursor-pointer touch-manipulation select-none"
             >
-              <HandThumbUpIcon
+              <CircleCheckIcon
                 data-slot="icon"
                 className="size-4 text-zinc-600 active:text-green-500"
               />
+              Looks OK
             </Button>
-            <Button
-              outline
-              aria-label="Mark changeset as harmful"
-              onClick={() => handleMarkHarmful(true)}
-              className="min-h-11 min-w-11 cursor-pointer touch-manipulation select-none"
-            >
-              <HandThumbDownIcon
-                data-slot="icon"
-                className="size-4 text-zinc-600 active:text-orange-500"
-              />
-            </Button>
+            <Dropdown>
+              <DropdownButton
+                outline
+                aria-label="Something here is worth checking or discussing"
+                className="min-h-11 cursor-pointer touch-manipulation select-none"
+              >
+                <FlagIcon
+                  data-slot="icon"
+                  className="size-4 text-zinc-600 active:text-orange-500"
+                />
+                Needs a look
+                <ChevronDownIcon data-slot="icon" className="size-4" />
+              </DropdownButton>
+              <DropdownMenu anchor="bottom start">
+                <DropdownItem onClick={() => markNeedsALook()}>
+                  <FlagIcon data-slot="icon" />
+                  <DropdownLabel>Needs a look</DropdownLabel>
+                  <DropdownDescription>
+                    Something here is worth checking or discussing.
+                  </DropdownDescription>
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>Intent</DropdownHeading>
+                  {REVIEW_TAG_META.filter((tag) => tag.group === 'intent').map((tag) => (
+                    <DropdownItem
+                      key={tag.id}
+                      onClick={() => markNeedsALook({ id: tag.id, name: tag.name })}
+                    >
+                      <ReviewVerdictIcon kind={tag.icon} variant="outline" />
+                      <DropdownLabel>{tag.name}</DropdownLabel>
+                      <DropdownDescription>{tag.tooltip}</DropdownDescription>
+                    </DropdownItem>
+                  ))}
+                </DropdownSection>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>Severity</DropdownHeading>
+                  {REVIEW_TAG_META.filter((tag) => tag.group === 'severity').map((tag) => (
+                    <DropdownItem
+                      key={tag.id}
+                      onClick={() => markNeedsALook({ id: tag.id, name: tag.name })}
+                    >
+                      <ReviewVerdictIcon kind={tag.icon} variant="outline" />
+                      <DropdownLabel>{tag.name}</DropdownLabel>
+                      <DropdownDescription>{tag.tooltip}</DropdownDescription>
+                    </DropdownItem>
+                  ))}
+                </DropdownSection>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>Follow-up</DropdownHeading>
+                  {REVIEW_TAG_META.filter((tag) => tag.group === 'followUp').map((tag) => (
+                    <DropdownItem
+                      key={tag.id}
+                      onClick={() => markNeedsALook({ id: tag.id, name: tag.name })}
+                    >
+                      <ReviewVerdictIcon kind={tag.icon} variant="outline" />
+                      <DropdownLabel>{tag.name}</DropdownLabel>
+                      <DropdownDescription>{tag.tooltip}</DropdownDescription>
+                    </DropdownItem>
+                  ))}
+                </DropdownSection>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownHeading>Escalation</DropdownHeading>
+                  {REVIEW_TAG_META.filter((tag) => tag.group === 'escalation').map((tag) => (
+                    <DropdownItem
+                      key={tag.id}
+                      onClick={() => markNeedsALook({ id: tag.id, name: tag.name })}
+                    >
+                      <ReviewVerdictIcon kind={tag.icon} variant="outline" />
+                      <DropdownLabel>{tag.name}</DropdownLabel>
+                      <DropdownDescription>{tag.tooltip}</DropdownDescription>
+                    </DropdownItem>
+                  ))}
+                </DropdownSection>
+              </DropdownMenu>
+            </Dropdown>
           </>
         )}
       </div>
+
+      <Alert open={leftoverAlertOpen} onClose={() => setLeftoverAlertOpen(false)} size="md">
+        <AlertTitle>Remove leftover tags?</AlertTitle>
+        <AlertDescription>
+          These tags describe issues and do not belong with Looks OK:{' '}
+          {tags.map((tag) => tag.name).join(', ') || 'none'}.
+        </AlertDescription>
+        <AlertActions>
+          <Button plain onClick={() => setLeftoverAlertOpen(false)}>
+            Cancel
+          </Button>
+          <Button outline onClick={() => markLooksOk(false)}>
+            Keep tags
+          </Button>
+          <Button onClick={() => markLooksOk(true)}>Remove tags and mark Looks OK</Button>
+        </AlertActions>
+      </Alert>
 
       <Divider className="mt-1" />
     </header>

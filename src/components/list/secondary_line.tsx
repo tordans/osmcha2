@@ -12,7 +12,8 @@ interface SecondaryLineProps {
 export function SecondaryLine({ checked, reasons = [], tags = [] }: SecondaryLineProps) {
   const resolved = hasResolvedTag(tags)
   const showReasons = !checked && reasons.length > 0
-  const showTags = !resolved && tags.length > 0
+  // Hide tags when Needs a look + Resolved (done). Show leftovers under Looks OK.
+  const showTags = tags.length > 0 && !(checked && resolved)
 
   if (!showReasons && !showTags) return null
 
@@ -26,9 +27,14 @@ export function SecondaryLine({ checked, reasons = [], tags = [] }: SecondaryLin
         </div>
       ) : null}
       {showTags ? (
-        <div className="flex flex-wrap items-center gap-1">
+        <div
+          className="flex flex-wrap items-center gap-1"
+          aria-label={checked ? 'Leftover review tags' : 'Review tags'}
+        >
           {tags.map((tag) => (
-            <Badge key={tag.id ?? tag.name}>{tag.name}</Badge>
+            <Badge key={tag.id ?? tag.name} color={checked ? 'zinc' : undefined}>
+              {tag.name}
+            </Badge>
           ))}
         </div>
       ) : null}

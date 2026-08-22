@@ -81,44 +81,44 @@
     "metaOf": ["harmful", "checked"],
     "options": [
       {
-        "label": "Bad only",
+        "label": "Needs a look",
         "value": {
           "harmful": [
             {
-              "label": "Show Bad only",
+              "label": "Show Needs a look only",
               "value": "True"
             }
           ]
         }
       },
       {
-        "label": "Good only",
+        "label": "Looks OK",
         "value": {
           "harmful": [
             {
-              "label": "Show Good only",
+              "label": "Show Looks OK only",
               "value": "False"
             }
           ]
         }
       },
       {
-        "label": "Both Good or Bad",
+        "label": "Reviewed",
         "value": {
           "checked": [
             {
-              "label": "Both Good or Bad",
+              "label": "Reviewed",
               "value": "True"
             }
           ]
         }
       },
       {
-        "label": "Not Reviewed",
+        "label": "Not reviewed",
         "value": {
           "checked": [
             {
-              "label": "Not Reviewed",
+              "label": "Not reviewed",
               "value": "False"
             }
           ]
@@ -126,7 +126,7 @@
       }
     ],
     "placeholder": "Filter by the type of review",
-    "description": "Filter for changesets that have been manually reviewed and marked (either good or bad)"
+    "description": "Filter for changesets that have been manually reviewed as Looks OK or Needs a look"
   },
   {
     "name": "check_date",

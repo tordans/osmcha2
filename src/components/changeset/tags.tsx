@@ -11,6 +11,7 @@ import {
   DropdownMenu,
 } from '../ui/dropdown.tsx'
 import { CheckIcon, ChevronDownIcon, XMarkIcon } from '../ui/icons.ts'
+import { REVIEW_TAG_META } from './reviewPresentation.ts'
 
 type TagOption = { label: string; value: number }
 
@@ -25,8 +26,10 @@ type TagsProps = {
   disabled: boolean
   currentChangeset: TaggedChangeset
   color?: 'green' | 'orange' | 'zinc'
-  /** Harmful reviews can add tags; good reviews can only remove leftovers. */
+  /** Needs a look: add tags. Looks OK leftovers: remove only. */
   allowAdd?: boolean
+  /** Separate leftover cluster label for screen readers. */
+  leftover?: boolean
 }
 
 export function Tags({
@@ -35,6 +38,7 @@ export function Tags({
   currentChangeset,
   color = 'zinc',
   allowAdd = true,
+  leftover = false,
 }: TagsProps) {
   const { data: options = [] } = useChangesetTagOptions()
   const token = useAuthStore((state) => state.token)
@@ -42,6 +46,17 @@ export function Tags({
   const tags = currentChangeset.properties?.tags ?? []
   const selectedIds = new Set(tags.map((tag) => tag.id).filter((id) => id != null))
   const showDropdown = allowAdd && options.length > 0
+
+  // Prefer known review tag order; fall back to API options for unknown tags.
+  const menuOptions: TagOption[] =
+    options.length > 0
+      ? [
+          ...REVIEW_TAG_META.filter((meta) => options.some((o) => o.value === meta.id)).map(
+            (meta) => ({ label: meta.name, value: meta.id }),
+          ),
+          ...options.filter((o) => !REVIEW_TAG_META.some((meta) => meta.id === o.value)),
+        ]
+      : REVIEW_TAG_META.map((meta) => ({ label: meta.name, value: meta.id }))
 
   function requireToken(action: 'add' | 'remove') {
     if (token) return true
@@ -72,7 +87,11 @@ export function Tags({
               color={color}
               rounded="none"
               disabled={disabled}
-              aria-label={`Remove tag ${tag.name}`}
+              aria-label={
+                leftover
+                  ? `Remove leftover tag ${tag.name}`
+                  : `Remove tag ${tag.name}`
+              }
               onClick={() => onRemove(option)}
               className="h-full min-h-0 cursor-pointer touch-manipulation items-stretch rounded-none select-none"
             >
@@ -101,11 +120,11 @@ export function Tags({
             disabled={disabled}
             className="h-full min-h-0 cursor-pointer touch-manipulation items-stretch rounded-none select-none"
           >
-            Tags
+            Highlight
             <ChevronDownIcon className="size-3.5" />
           </DropdownButton>
           <DropdownMenu anchor="bottom end">
-            {options.map((option) => {
+            {menuOptions.map((option) => {
               const selected = selectedIds.has(option.value)
               return (
                 <DropdownItem

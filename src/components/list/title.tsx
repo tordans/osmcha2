@@ -4,7 +4,7 @@ import { RelativeTime } from '../relative_time.tsx'
 import { typeScale } from '../ui/typography.ts'
 import { NumberOfComments } from './comments.tsx'
 import { editorShortname } from './editorShortname.ts'
-import { hasResolvedTag, ReviewStatusBadge } from './ReviewStatusBadge.tsx'
+import { ReviewStatusBadge } from './ReviewStatusBadge.tsx'
 
 interface TitleProps {
   date: string
@@ -44,7 +44,7 @@ export function Title({
           checked={checked}
           checkUser={checkUser}
           harmful={harmful}
-          resolved={hasResolvedTag(tags)}
+          tags={tags}
         />
       </div>
     </div>

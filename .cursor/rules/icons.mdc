@@ -16,4 +16,4 @@ Import from `src/components/ui/icons.ts` (not `lucide-react`, not `@heroicons`).
 - **outline** (default): buttons, dropdown items, tabs, clear/close, chevrons, sort, filter, back, copy
 - **fill**: badges, empty-state glyphs, trusted/watchlist markers, review verdicts in text, OSM action glyphs (create/modify/delete), debug inspect
 
-Same icon can be both: thumbs on Mark good/bad are outline; thumbs in a review badge are `variant="fill"`.
+Same icon can be both: CircleCheck / Flag on Looks OK / Needs a look actions are outline; the same glyphs in a review badge are `variant="fill"`. MessageCircleWarning is used when High / Critical / DWG escalate a Needs a look review.

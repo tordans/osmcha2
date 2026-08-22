@@ -1,0 +1,11 @@
+---
+description: Keep docs/review.md in sync with review presentation, tags, and leftover Alert
+globs: src/components/changeset/reviewPresentation.ts,src/components/changeset/DetailsHeader.tsx,src/components/changeset/tags.tsx,src/components/list/ReviewStatusBadge.tsx,src/query/hooks/useMarkHarmful.ts,src/query/hooks/useSetTag.ts
+alwaysApply: false
+---
+
+# Review docs
+
+When you change review verdicts, tag exclusivity, icon precedence, leftover-tag Alert behavior, or `set-good` / `set-harmful` tag payloads, update [`docs/review.md`](docs/review.md) in the same change.
+
+That page is the human map of Looks OK / Needs a look and how tags enhance the binary API state.

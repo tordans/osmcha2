@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth.ts'
 import { useUpdateUserDetails } from '../../query/hooks/useUpdateUserDetails.ts'
 import { Button } from '../ui/button.tsx'
 import { Field, FieldGroup, Label } from '../ui/fieldset.tsx'
-import { HandThumbDownIcon, HandThumbUpIcon } from '../ui/icons.ts'
+import { CircleCheckIcon, FlagIcon } from '../ui/icons.ts'
 import { Text } from '../ui/text.tsx'
 import { Textarea } from '../ui/textarea.tsx'
 
@@ -46,12 +46,12 @@ export function EditUserDetails() {
           {(field) => (
             <Field>
               <Label className="flex items-center gap-2">
-                Default comment for changesets reviewed as GOOD
-                <HandThumbUpIcon variant="fill" className="size-4 text-green-700" />
+                Default comment when you mark Looks OK
+                <CircleCheckIcon variant="fill" className="size-4 text-green-700" />
               </Label>
               <Textarea
                 rows={4}
-                placeholder="Define a default message to the changesets you review as good. You can edit it before post a comment."
+                placeholder="Define a default message for changesets you mark as Looks OK. You can edit it before posting a comment."
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.target.value)}
@@ -63,12 +63,12 @@ export function EditUserDetails() {
           {(field) => (
             <Field>
               <Label className="flex items-center gap-2">
-                Default comment for changesets reviewed as BAD
-                <HandThumbDownIcon variant="fill" className="size-4 text-red-700" />
+                Default comment when you mark Needs a look
+                <FlagIcon variant="fill" className="size-4 text-orange-600" />
               </Label>
               <Textarea
                 rows={4}
-                placeholder="Define a default message to the changesets you review as bad. You can edit it before post a comment."
+                placeholder="Define a default message for changesets you mark as Needs a look. You can edit it before posting a comment."
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.target.value)}

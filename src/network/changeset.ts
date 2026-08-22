@@ -91,10 +91,16 @@ async function fetchAugmentedDiffFromOverpass(id: number) {
   return await res.text()
 }
 
-export function setHarmful(id: number, harmful: boolean | -1) {
+/**
+ * Mark a changeset as Looks OK (`set-good`), Needs a look (`set-harmful`), or clear.
+ * Optional `tags` is sent as `{ tags: number[] }` — use `[]` to clear leftover tags on Looks OK.
+ * Keep review model docs in sync: docs/review.md
+ */
+export function setHarmful(id: number, harmful: boolean | -1, tags?: number[]) {
   // -1 is for unsetting
   const action = harmful === -1 ? 'uncheck' : harmful ? 'set-harmful' : 'set-good'
-  return api.put(`/changesets/${id}/${action}/`)
+  const body = tags !== undefined ? { tags } : undefined
+  return api.put(`/changesets/${id}/${action}/`, body)
 }
 
 export function setTag(id: number, tag: any, remove: boolean = false) {
