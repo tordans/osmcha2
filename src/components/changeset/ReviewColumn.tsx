@@ -47,6 +47,7 @@ type ReviewColumnProps = {
   selectRef: (ref: RefParam | null) => void
   revealRef: (target: NoteTarget) => void
   deepLinkReveal?: RefParam | null
+  deepLinkEpoch?: number
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
 }
@@ -64,14 +65,15 @@ export function ReviewColumn({
   selectRef,
   revealRef,
   deepLinkReveal,
+  deepLinkEpoch = 0,
   setHighlight,
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
   const [expanded, setExpanded] = useState(() => selectedRef != null)
-  const [expandedForReveal, setExpandedForReveal] = useState(deepLinkReveal)
-  if (deepLinkReveal != null && deepLinkReveal !== expandedForReveal) {
-    setExpandedForReveal(deepLinkReveal)
+  const [expandedForEpoch, setExpandedForEpoch] = useState(0)
+  if (deepLinkEpoch > 0 && deepLinkEpoch !== expandedForEpoch) {
+    setExpandedForEpoch(deepLinkEpoch)
     setExpanded(true)
   }
   const dragStartY = useRef<number | null>(null)
@@ -233,6 +235,7 @@ export function ReviewColumn({
                     selectedRef={selectedRef}
                     selectRef={selectRef}
                     deepLinkReveal={deepLinkReveal}
+                    deepLinkEpoch={deepLinkEpoch}
                     setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
                   />

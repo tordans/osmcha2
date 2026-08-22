@@ -29,7 +29,7 @@ import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import type { AdiffAction } from './changesetElements.ts'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
-import { refDeepLinkKey, refParamFromElement, type RefParam } from './refSelection.ts'
+import { refDeepLinkKey, refParamFromElement, refsEqual, type RefParam } from './refSelection.ts'
 import { ReviewColumn } from './ReviewColumn.tsx'
 
 type ChangesetProps = {
@@ -46,6 +46,8 @@ type ChangesetProps = {
   revealRef: (target: NoteTarget) => void
   pinSearch?: string
   inAppDeepLinkKey: string | null
+  revealNonce: number
+  revealTarget: NoteTarget | null
   children: React.ReactNode
 }
 
@@ -69,6 +71,8 @@ function Changeset({
   revealRef,
   pinSearch,
   inAppDeepLinkKey,
+  revealNonce,
+  revealTarget,
   children,
 }: ChangesetProps) {
   const { token } = useAuth()
@@ -85,6 +89,7 @@ function Changeset({
   const mapLoaded = useMapLoaded()
   const [appliedDeepLinkKey, setAppliedDeepLinkKey] = useState<string | null>(null)
   const [deepLinkReveal, setDeepLinkReveal] = useState<RefParam | null>(null)
+  const [deepLinkEpoch, setDeepLinkEpoch] = useState(0)
 
   const [bindingsState, setBindingsState] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -94,17 +99,25 @@ function Changeset({
     return initial
   })
 
-  const deepLinkKey =
+  const urlDeepLinkKey =
     changesetId != null ? refDeepLinkKey(changesetId, selectedRef, pinSearch) : null
-  if (!deepLinkKey || !selectedRef) {
-    if (appliedDeepLinkKey != null) setAppliedDeepLinkKey(null)
-  } else if (inAppDeepLinkKey !== deepLinkKey && appliedDeepLinkKey !== deepLinkKey) {
-    setAppliedDeepLinkKey(deepLinkKey)
-    setBindingsState({
-      [CHANGESET_DETAILS_DETAILS.label]: true,
-      [CHANGESET_DETAILS_DISCUSSIONS.label]: false,
-    })
-    setDeepLinkReveal(selectedRef)
+  const revealPending = revealTarget != null && !refsEqual(revealTarget.ref, selectedRef)
+  const applyKey =
+    revealNonce > 0 && revealTarget && !revealPending
+      ? `${changesetId}:reveal:${revealNonce}`
+      : urlDeepLinkKey
+  if (!revealPending) {
+    if (!applyKey) {
+      if (appliedDeepLinkKey != null) setAppliedDeepLinkKey(null)
+    } else if (inAppDeepLinkKey !== urlDeepLinkKey && appliedDeepLinkKey !== applyKey) {
+      setAppliedDeepLinkKey(applyKey)
+      setDeepLinkEpoch((epoch) => epoch + 1)
+      setBindingsState({
+        [CHANGESET_DETAILS_DETAILS.label]: true,
+        [CHANGESET_DETAILS_DISCUSSIONS.label]: false,
+      })
+      setDeepLinkReveal(revealTarget?.ref ?? selectedRef)
+    }
   }
 
   function exclusiveKeyToggle(label: string) {
@@ -197,6 +210,7 @@ function Changeset({
             selectRef={selectRef}
             revealRef={revealRef}
             deepLinkReveal={deepLinkReveal}
+            deepLinkEpoch={deepLinkEpoch}
             setHighlight={setHighlight}
             zoomToAndSelect={zoomToAndSelect}
           />

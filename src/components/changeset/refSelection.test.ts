@@ -6,8 +6,10 @@ import {
   changesetObjectUrl,
   refDeepLinkKey,
   refParamFromElement,
+  refsEqual,
   searchWithRef,
   searchWithRefAndPin,
+  tagGroupContainsRef,
 } from './refSelection.ts'
 
 const actions: AdiffAction[] = [
@@ -86,10 +88,23 @@ describe('searchWithRefAndPin', () => {
     })
   })
 
-  test('leaves pin untouched when the note has no pin', () => {
+  test('leaves pin untouched when pin is omitted', () => {
     expect(searchWithRefAndPin({ page: 1, pin: '52.52,13.40' }, { type: 'way', id: 123 })).toEqual({
       page: 1,
       pin: '52.52,13.40',
+      ref: 'way/123',
+    })
+  })
+
+  test('clears pin when pin is null so a note without a pin does not keep the last one', () => {
+    expect(
+      searchWithRefAndPin(
+        { page: 1, ref: 'way/1', pin: '52.52,13.40' },
+        { type: 'way', id: 123 },
+        null,
+      ),
+    ).toEqual({
+      page: 1,
       ref: 'way/123',
     })
   })
@@ -119,7 +134,30 @@ describe('refDeepLinkKey', () => {
       '999:way/123/highway:52.52,13.40',
     )
     expect(refDeepLinkKey(999, { type: 'way', id: 123 })).toBe('999:way/123:')
-    expect(refDeepLinkKey(999, null, '52.52,13.40')).toBeNull()
+    expect(refDeepLinkKey(999, null, '52.52,13.40')).toBe('999::52.52,13.40')
+    expect(refDeepLinkKey(999, null)).toBeNull()
+  })
+})
+
+describe('refsEqual', () => {
+  test('treats missing refs as equal and compares type, id, and key', () => {
+    expect(refsEqual(null, undefined)).toBe(true)
+    expect(refsEqual({ type: 'way', id: 1 }, { type: 'way', id: 1 })).toBe(true)
+    expect(refsEqual({ type: 'way', id: 1, key: 'highway' }, { type: 'way', id: 1 })).toBe(false)
+    expect(refsEqual({ type: 'way', id: 1 }, { type: 'node', id: 1 })).toBe(false)
+  })
+})
+
+describe('tagGroupContainsRef', () => {
+  const group = [
+    { type: 'way', id: 1 },
+    { type: 'way', id: 2 },
+  ]
+
+  test('matches type and id, ignoring a tag key', () => {
+    expect(tagGroupContainsRef(group, { type: 'way', id: 2, key: 'highway' })).toBe(true)
+    expect(tagGroupContainsRef(group, { type: 'way', id: 9 })).toBe(false)
+    expect(tagGroupContainsRef(group, null)).toBe(false)
   })
 })
 

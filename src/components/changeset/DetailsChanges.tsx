@@ -45,7 +45,12 @@ import {
   OtherNotesSection,
 } from './NotesBlock.tsx'
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
-import { changesetObjectUrl, refParamFromElement, type RefParam } from './refSelection.ts'
+import {
+  changesetObjectUrl,
+  refParamFromElement,
+  tagGroupContainsRef,
+  type RefParam,
+} from './refSelection.ts'
 
 const ACTION_LABEL = {
   create: 'Created',
@@ -74,6 +79,7 @@ type DetailsChangesProps = {
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
   deepLinkReveal?: RefParam | null
+  deepLinkEpoch?: number
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
 }
@@ -122,6 +128,7 @@ export function DetailsChanges({
   selectedRef,
   selectRef,
   deepLinkReveal,
+  deepLinkEpoch = 0,
   setHighlight,
   zoomToAndSelect,
 }: DetailsChangesProps) {
@@ -193,6 +200,7 @@ export function DetailsChanges({
                     selectedRef={selectedRef}
                     selectRef={selectRef}
                     deepLinkReveal={deepLinkReveal}
+                    deepLinkEpoch={deepLinkEpoch}
                     setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
                     notesByObject={located.byObject}
@@ -221,6 +229,7 @@ function TagMutationGroup({
   selectedRef,
   selectRef,
   deepLinkReveal,
+  deepLinkEpoch,
   setHighlight,
   zoomToAndSelect,
   notesByObject,
@@ -232,6 +241,7 @@ function TagMutationGroup({
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
   deepLinkReveal?: RefParam | null
+  deepLinkEpoch?: number
   setHighlight: (type: string, id: number, isHighlighted: boolean) => void
   zoomToAndSelect: (type: string, id: number) => void
   notesByObject: Map<string, ObjectNotes>
@@ -239,11 +249,15 @@ function TagMutationGroup({
   const mutations = tagMutationRows(changes[0].tags)
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
   const containsSelected = selectedInGroup != null
+  const revealInGroup = tagGroupContainsRef(changes, deepLinkReveal)
   const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
 
   return (
     <li className="px-2 py-2">
-      <Headless.Disclosure key={disclosureKey} defaultOpen={containsSelected}>
+      <Headless.Disclosure
+        key={`${disclosureKey}:${revealInGroup ? String(deepLinkEpoch ?? 0) : '0'}`}
+        defaultOpen={containsSelected || revealInGroup}
+      >
         {({ open }) => (
           <>
             <Headless.DisclosureButton

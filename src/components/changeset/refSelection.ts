@@ -27,14 +27,20 @@ export function searchWithRef<T extends object>(search: T, ref: RefParam | null)
   return { ...search, ref: serializeRefParam(ref) }
 }
 
-/** `searchWithRef`, then set `pin` when given. Omitting `pin` leaves the existing value. */
+/**
+ * `searchWithRef`, then pin: `undefined` leaves it, `null` clears it, a value writes it.
+ */
 export function searchWithRefAndPin<T extends object>(
   search: T,
   ref: RefParam | null,
   pin?: PinParam | null,
 ): T {
   const withRef = searchWithRef(search, ref)
-  if (!pin) return withRef
+  if (pin === undefined) return withRef
+  if (pin === null) {
+    const { pin: _pin, ...rest } = withRef as T & { pin?: string }
+    return rest as T
+  }
   return { ...withRef, pin: serializePinParam(pin) }
 }
 
@@ -54,8 +60,23 @@ export function refDeepLinkKey(
   ref: RefParam | null,
   pin?: string,
 ): string | null {
-  if (!ref) return null
-  return `${changesetId}:${serializeRefParam(ref)}:${pin ?? ''}`
+  if (!ref && !pin) return null
+  return `${changesetId}:${ref ? serializeRefParam(ref) : ''}:${pin ?? ''}`
+}
+
+export function refsEqual(a: RefParam | null | undefined, b: RefParam | null | undefined): boolean {
+  if (!a && !b) return true
+  if (!a || !b) return false
+  return a.type === b.type && a.id === b.id && (a.key ?? '') === (b.key ?? '')
+}
+
+/** True when `ref` addresses any object in a same-tag group (tag key ignored). */
+export function tagGroupContainsRef(
+  changes: Array<{ type: string; id: number }>,
+  ref: RefParam | null | undefined,
+): boolean {
+  if (!ref) return false
+  return changes.some((change) => change.type === ref.type && change.id === ref.id)
 }
 
 /** Object-level copy URL. Strips a tag key; does not include `pin`. */

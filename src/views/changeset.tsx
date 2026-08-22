@@ -50,6 +50,8 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const mapQuery = useChangesetMap(changesetId)
   const changeset = changesetQuery.data as ChangesetData | undefined
   const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
+  const [revealNonce, setRevealNonce] = useState(0)
+  const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
 
   const [showElements, setShowElements] = useState<Array<string>>(['node', 'way', 'relation'])
   const [showActions, setShowActions] = useState<Array<string>>([
@@ -63,6 +65,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const selected = actionMatchingRef((viewer?.adiff.actions ?? []) as AdiffAction[], selectedRef)
 
   function selectRef(ref: RefParam | null) {
+    setRevealTarget(null)
     setInAppDeepLinkKey(refDeepLinkKey(changesetId, ref, search.pin))
     void navigate({
       search: (prev) => searchWithRef(prev, ref),
@@ -72,8 +75,11 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
 
   /** Deep-link without marking in-app, so the one-shot reveal (tab, sheet, scroll, flash, zoom) still runs. */
   function revealRef(target: NoteTarget) {
+    setInAppDeepLinkKey(null)
+    setRevealTarget(target)
+    setRevealNonce((nonce) => nonce + 1)
     void navigate({
-      search: (prev) => searchWithRefAndPin(prev, target.ref ?? null, target.pin),
+      search: (prev) => searchWithRefAndPin(prev, target.ref ?? null, target.pin ?? null),
       replace: true,
     })
   }
@@ -125,6 +131,8 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
         revealRef={revealRef}
         pinSearch={search.pin}
         inAppDeepLinkKey={inAppDeepLinkKey}
+        revealNonce={revealNonce}
+        revealTarget={revealTarget}
       >
         <CMap
           changesetId={changesetId}
