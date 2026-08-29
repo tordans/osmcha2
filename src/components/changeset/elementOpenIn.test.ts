@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest'
 import { elementOpenInUrls, idToMinimalForm } from './elementOpenIn.ts'
 
 describe('elementOpenInUrls', () => {
-  test('builds OSM, iD, JOSM, Level0, and RapiD from type/id', () => {
+  test('builds OSM history, iD, JOSM, Level0, and RapiD from type/id', () => {
     const urls = elementOpenInUrls('way/42')
-    expect(urls.osm).toBe('https://www.openstreetmap.org/way/42')
+    expect(urls.history).toBe('https://www.openstreetmap.org/way/42/history')
     expect(urls.id).toBe('https://www.openstreetmap.org/edit?editor=id&way=42')
     expect(urls.josm).toBe('http://127.0.0.1:8111/load_object?new_layer=true&objects=w42')
     expect(urls.level0).toBe('http://level0.osmz.ru/?url=way/42')

@@ -1,45 +1,85 @@
+import { useEffect, useState } from 'react'
 import {
   Dropdown,
   DropdownButton,
-  DropdownDivider,
   DropdownHeading,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
 } from '../ui/dropdown.tsx'
-import { ArrowTopRightOnSquareIcon, ChevronDownIcon } from '../ui/icons.ts'
+import { CheckIcon, LinkIcon } from '../ui/icons.ts'
 import { elementOpenInUrls } from './elementOpenIn.ts'
+import { changesetObjectUrl, refParamFromElement } from './refSelection.ts'
+
+const COPIED_RESET_MS = 2000
 
 type DropdownOpenElementProps = {
+  changesetId: number
   type: string
   id: number
   lat?: number
   lon?: number
 }
 
-export function DropdownOpenElement({ type, id, lat, lon }: DropdownOpenElementProps) {
+export function DropdownOpenElement({
+  changesetId,
+  type,
+  id,
+  lat,
+  lon,
+}: DropdownOpenElementProps) {
   const elementId = `${type}/${id}`
   const urls = elementOpenInUrls(elementId, lat, lon)
+  const objectRef = refParamFromElement(type, id)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(
+    function resetCopiedIcon() {
+      if (!copied) return
+      const timeoutId = window.setTimeout(() => {
+        setCopied(false)
+      }, COPIED_RESET_MS)
+      return function clearCopiedReset() {
+        window.clearTimeout(timeoutId)
+      }
+    },
+    [copied],
+  )
 
   return (
     <Dropdown>
       <DropdownButton
         outline
-        aria-label={`Open ${elementId} in`}
+        aria-label={`Links for ${elementId}`}
+        title="Copy OSMCha link or open this object elsewhere"
         className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
       >
-        <ArrowTopRightOnSquareIcon data-slot="icon" className="size-4" />
-        <ChevronDownIcon data-slot="icon" className="size-4" />
+        {copied ? <CheckIcon data-slot="icon" /> : <LinkIcon data-slot="icon" />}
       </DropdownButton>
-      <DropdownMenu anchor="bottom end">
-        <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
-          OSM Website
-        </DropdownItem>
-        <DropdownDivider />
-        <DropdownSection>
+      <DropdownMenu
+        anchor="bottom end"
+        className="flex! w-max min-w-max max-w-[calc(100vw-1rem)] grid-cols-none! flex-row items-stretch divide-x divide-zinc-950/5 overflow-x-auto"
+      >
+        <DropdownSection className="shrink-0 grid-cols-none!">
+          <DropdownHeading>OSMCha</DropdownHeading>
+          <DropdownItem
+            aria-label={`Copy OSMCha link to ${elementId}`}
+            onClick={() => {
+              if (!objectRef) return
+              void navigator.clipboard
+                .writeText(changesetObjectUrl(changesetId, objectRef))
+                .then(() => {
+                  setCopied(true)
+                })
+            }}
+          >
+            Copy link
+          </DropdownItem>
+        </DropdownSection>
+        <DropdownSection className="shrink-0 grid-cols-none!">
           <DropdownHeading>History</DropdownHeading>
           <DropdownItem href={urls.history} target="_blank" rel="noopener noreferrer">
-            OSM
+            OSM Website
           </DropdownItem>
           <DropdownItem href={urls.deepHistory} target="_blank" rel="noopener noreferrer">
             Deep History
@@ -48,8 +88,7 @@ export function DropdownOpenElement({ type, id, lat, lon }: DropdownOpenElementP
             PeWu
           </DropdownItem>
         </DropdownSection>
-        <DropdownDivider />
-        <DropdownSection>
+        <DropdownSection className="shrink-0 grid-cols-none!">
           <DropdownHeading>Editor</DropdownHeading>
           <DropdownItem href={urls.id} target="_blank" rel="noopener noreferrer">
             iD
@@ -65,18 +104,15 @@ export function DropdownOpenElement({ type, id, lat, lon }: DropdownOpenElementP
           </DropdownItem>
         </DropdownSection>
         {urls.mapillary && urls.panoramax ? (
-          <>
-            <DropdownDivider />
-            <DropdownSection>
-              <DropdownHeading>Street-level</DropdownHeading>
-              <DropdownItem href={urls.mapillary} target="_blank" rel="noopener noreferrer">
-                Mapillary
-              </DropdownItem>
-              <DropdownItem href={urls.panoramax} target="_blank" rel="noopener noreferrer">
-                Panoramax
-              </DropdownItem>
-            </DropdownSection>
-          </>
+          <DropdownSection className="shrink-0 grid-cols-none!">
+            <DropdownHeading>Street-level</DropdownHeading>
+            <DropdownItem href={urls.mapillary} target="_blank" rel="noopener noreferrer">
+              Mapillary
+            </DropdownItem>
+            <DropdownItem href={urls.panoramax} target="_blank" rel="noopener noreferrer">
+              Panoramax
+            </DropdownItem>
+          </DropdownSection>
         ) : null}
       </DropdownMenu>
     </Dropdown>

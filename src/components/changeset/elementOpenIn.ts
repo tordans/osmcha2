@@ -11,7 +11,6 @@ export function idToMinimalForm(id: string): string {
 
 export function elementOpenInUrls(id: string, lat?: number, lng?: number) {
   const urls: {
-    osm: string
     id: string
     josm: string
     level0: string
@@ -22,11 +21,11 @@ export function elementOpenInUrls(id: string, lat?: number, lng?: number) {
     mapillary?: string
     panoramax?: string
   } = {
-    osm: `https://www.openstreetmap.org/${id}`,
     id: `https://www.openstreetmap.org/edit?editor=id&${id.replace('/', '=')}`,
     josm: `http://127.0.0.1:8111/load_object?new_layer=true&objects=${idToMinimalForm(id)}`,
     level0: `http://level0.osmz.ru/?url=${id}`,
     rapid: `https://rapideditor.org/edit#id=${idToMinimalForm(id)}`,
+    // Same object page as /${id}, with the history tab open
     history: `https://www.openstreetmap.org/${id}/history`,
     deepHistory: `https://osmlab.github.io/osm-deep-history/#/${id}`,
     pewu: `https://pewu.github.io/osm-history/#/${id}`,

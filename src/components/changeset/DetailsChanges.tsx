@@ -14,11 +14,9 @@ import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
-  CheckIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
   EyeIcon,
-  LinkIcon,
   PencilIcon,
   PlusCircleIcon,
   TrashIcon,
@@ -44,12 +42,7 @@ import {
   OtherNotesSection,
 } from './NotesBlock.tsx'
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
-import {
-  changesetObjectUrl,
-  refParamFromElement,
-  tagGroupContainsRef,
-  type RefParam,
-} from './refSelection.ts'
+import { refParamFromElement, tagGroupContainsRef, type RefParam } from './refSelection.ts'
 
 const ACTION_LABEL = {
   create: 'Created',
@@ -499,7 +492,6 @@ function ElementChangeRow({
               </Badge>
             </Tooltip>
           ) : null}
-          <CopyObjectLinkButton changesetId={changesetId} type={change.type} id={change.id} />
           <Button
             outline
             aria-label={`Show ${change.type}/${change.id} on map`}
@@ -509,6 +501,7 @@ function ElementChangeRow({
             <EyeIcon data-slot="icon" />
           </Button>
           <DropdownOpenElement
+            changesetId={changesetId}
             type={change.type}
             id={change.id}
             lat={change.lat}
@@ -540,36 +533,5 @@ function ElementChangeRow({
         selectRef={selectRef}
       />
     </li>
-  )
-}
-
-function CopyObjectLinkButton({
-  changesetId,
-  type,
-  id,
-}: {
-  changesetId: number
-  type: ElementChange['type']
-  id: number
-}) {
-  const [copied, setCopied] = useState(false)
-  const objectRef = refParamFromElement(type, id)
-
-  return (
-    <Button
-      outline
-      type="button"
-      aria-label={`Copy link to ${type}/${id}`}
-      title="Copy link to this object"
-      className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
-      onClick={() => {
-        if (!objectRef) return
-        void navigator.clipboard.writeText(changesetObjectUrl(changesetId, objectRef)).then(() => {
-          setCopied(true)
-        })
-      }}
-    >
-      {copied ? <CheckIcon data-slot="icon" /> : <LinkIcon data-slot="icon" />}
-    </Button>
   )
 }
