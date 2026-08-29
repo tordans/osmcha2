@@ -12,11 +12,9 @@ import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
-import { Button } from '../ui/button.tsx'
 import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
-  EyeIcon,
   PencilIcon,
   PlusCircleIcon,
   TrashIcon,
@@ -420,11 +418,6 @@ function ElementChangeRow({
     [flashKey, flashNonce],
   )
 
-  function selectThisObject() {
-    const nextRef = refParamFromElement(change.type, change.id)
-    if (nextRef) selectRef(nextRef)
-  }
-
   function scrollToTagNotes(key: string) {
     document.getElementById(noteThreadDomId(change.type, change.id, key))?.scrollIntoView({
       block: 'nearest',
@@ -441,7 +434,7 @@ function ElementChangeRow({
         currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
         flash && 'ring-2 ring-yellow-400 ring-offset-1',
       )}
-      onClick={selectThisObject}
+      onClick={() => zoomToAndSelect(change.type, change.id)}
       onMouseEnter={() => setHighlight(change.type, change.id, true)}
       onMouseLeave={() => setHighlight(change.type, change.id, false)}
     >
@@ -492,14 +485,6 @@ function ElementChangeRow({
               </Badge>
             </Tooltip>
           ) : null}
-          <Button
-            outline
-            aria-label={`Show ${change.type}/${change.id} on map`}
-            onClick={() => zoomToAndSelect(change.type, change.id)}
-            className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
-          >
-            <EyeIcon data-slot="icon" />
-          </Button>
           <DropdownOpenElement
             changesetId={changesetId}
             type={change.type}

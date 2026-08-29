@@ -21,13 +21,7 @@ type DropdownOpenElementProps = {
   lon?: number
 }
 
-export function DropdownOpenElement({
-  changesetId,
-  type,
-  id,
-  lat,
-  lon,
-}: DropdownOpenElementProps) {
+export function DropdownOpenElement({ changesetId, type, id, lat, lon }: DropdownOpenElementProps) {
   const elementId = `${type}/${id}`
   const urls = elementOpenInUrls(elementId, lat, lon)
   const objectRef = refParamFromElement(type, id)
@@ -58,7 +52,7 @@ export function DropdownOpenElement({
       </DropdownButton>
       <DropdownMenu
         anchor="bottom end"
-        className="flex! w-max min-w-max max-w-[calc(100vw-1rem)] grid-cols-none! flex-row items-stretch divide-x divide-zinc-950/5 overflow-x-auto"
+        className="flex! w-max max-w-[calc(100vw-1rem)] min-w-max grid-cols-none! flex-row items-stretch divide-x divide-zinc-950/5 overflow-x-auto"
       >
         <DropdownSection className="shrink-0 grid-cols-none!">
           <DropdownHeading>OSMCha</DropdownHeading>
