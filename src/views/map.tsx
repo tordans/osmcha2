@@ -44,6 +44,7 @@ import {
   changesetFitOptions,
   jumpMapToAdiffElement,
   jumpMapToChangesetBounds,
+  jumpMapToPin,
 } from './changesetCamera.ts'
 import {
   clearSelectedFeatureState,
@@ -279,8 +280,9 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const zoomOnceForDeepLink = useEffectEvent((map: MaplibreMap) => {
     if (!viewer || changesetId == null) return
     const parsed = parseRefParam(refSearch ?? '')
+    const pin = parsePinParam(pinSearch ?? '')
     const key = refDeepLinkKey(changesetId, parsed, pinSearch)
-    if (!key || !parsed) {
+    if (!key || (!parsed && !pin)) {
       zoomedDeepLinkKeyRef.current = null
       return
     }
@@ -289,10 +291,20 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       zoomedDeepLinkKeyRef.current = key
       return
     }
+    if (!parsed) {
+      if (!pin) {
+        zoomedDeepLinkKeyRef.current = null
+        return
+      }
+      zoomedDeepLinkKeyRef.current = key
+      runWhileApplyingCamera(applyingCameraRef, () => {
+        jumpMapToPin(map, pin)
+      })
+      return
+    }
     const action = actionMatchingRef(viewer.adiff.actions as AdiffAction[], parsed)
     if (!action) return
     zoomedDeepLinkKeyRef.current = key
-    const pin = parsePinParam(pinSearch ?? '')
     runWhileApplyingCamera(applyingCameraRef, () => {
       jumpMapToAdiffElement(map, viewer, parsed.type, parsed.id, pin)
     })

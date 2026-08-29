@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { changesetCameraIntent, changesetFitPadding } from './changesetCamera.ts'
+import {
+  changesetCameraIntent,
+  changesetFitPadding,
+  featuresToFitForNote,
+} from './changesetCamera.ts'
 
 describe('changesetCameraIntent', () => {
   test('fits when the URL has no map camera', () => {
@@ -30,5 +34,31 @@ describe('changesetFitPadding', () => {
 
   test('uses a modest padding on a large pane instead of 200px', () => {
     expect(changesetFitPadding(1200, 900)).toBe(80)
+  })
+})
+
+describe('featuresToFitForNote', () => {
+  const viewer = {
+    geojson: {
+      type: 'FeatureCollection' as const,
+      features: [
+        {
+          type: 'Feature' as const,
+          properties: { type: 'way', id: 1 },
+          geometry: { type: 'Point' as const, coordinates: [13, 52] },
+        },
+      ],
+    },
+  }
+
+  test('pin-only notes still produce a point to fit', () => {
+    const features = featuresToFitForNote(viewer, null, { lat: 52.5, lng: 13.4 })
+    expect(features).toHaveLength(1)
+    expect(features[0]?.geometry).toEqual({ type: 'Point', coordinates: [13.4, 52.5] })
+  })
+
+  test('includes the object and the pin when both are present', () => {
+    const features = featuresToFitForNote(viewer, { type: 'way', id: 1 }, { lat: 52.5, lng: 13.4 })
+    expect(features).toHaveLength(2)
   })
 })

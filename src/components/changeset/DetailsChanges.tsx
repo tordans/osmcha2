@@ -37,7 +37,6 @@ import {
   type NamedReason,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
-import { FlagFeatureButton } from './FlagFeatureButton.tsx'
 import {
   ChangesetNotesSection,
   ChangesNotesHeader,
@@ -84,11 +83,6 @@ type DetailsChangesProps = {
   zoomToAndSelect: (type: string, id: number) => void
 }
 
-function isUserFlagged(reviewedFeatures: ReviewedFeature[], type: string, id: number) {
-  const featureParam = `${type}-${id}`
-  return reviewedFeatures.some((entry) => entry.id === featureParam)
-}
-
 function listedObjectsFromChanges(changes: ElementChange[]) {
   const listedObjects = new Set<string>()
   const keysByObject = new Map<string, Set<string>>()
@@ -114,6 +108,21 @@ function noteCountByKey(notes?: ObjectNotes): Record<string, number> {
   const counts: Record<string, number> = {}
   for (const [key, list] of notes.byKey) {
     if (list.length > 0) counts[key] = list.length
+  }
+  return counts
+}
+
+function aggregateNoteCountByKey(
+  changes: ElementChange[],
+  notesByObject: Map<string, ObjectNotes>,
+): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const change of changes) {
+    for (const [key, count] of Object.entries(
+      noteCountByKey(notesByObject.get(objectRefKey(change.type, change.id))),
+    )) {
+      counts[key] = (counts[key] ?? 0) + count
+    }
   }
   return counts
 }
@@ -181,7 +190,6 @@ export function DetailsChanges({
                     key={`${group[0].type}/${group[0].id}`}
                     change={group[0]}
                     changesetId={changesetId}
-                    reviewedFeatures={reviewedFeatures}
                     selected={selected}
                     selectedRef={selectedRef}
                     selectRef={selectRef}
@@ -195,7 +203,6 @@ export function DetailsChanges({
                     key={group.map((change) => `${change.type}/${change.id}`).join(',')}
                     changes={group}
                     changesetId={changesetId}
-                    reviewedFeatures={reviewedFeatures}
                     selected={selected}
                     selectedRef={selectedRef}
                     selectRef={selectRef}
@@ -224,7 +231,6 @@ function isSelected(change: ElementChange, selected?: AdiffAction | null) {
 function TagMutationGroup({
   changes,
   changesetId,
-  reviewedFeatures,
   selected,
   selectedRef,
   selectRef,
@@ -236,7 +242,6 @@ function TagMutationGroup({
 }: {
   changes: ElementChange[]
   changesetId: number
-  reviewedFeatures: ReviewedFeature[]
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -251,6 +256,31 @@ function TagMutationGroup({
   const containsSelected = selectedInGroup != null
   const revealInGroup = tagGroupContainsRef(changes, deepLinkReveal)
   const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
+  const groupNoteCountByKey = aggregateNoteCountByKey(changes, notesByObject)
+  const highlightTagKey = revealInGroup && deepLinkReveal?.key ? deepLinkReveal.key : undefined
+
+  function targetChangeForTag(key: string) {
+    if (selectedInGroup) return selectedInGroup
+    const withNotes = changes.find((change) => {
+      const notes = notesByObject.get(objectRefKey(change.type, change.id))
+      return (notes?.byKey.get(key)?.length ?? 0) > 0
+    })
+    return withNotes ?? changes[0]
+  }
+
+  function selectGroupTag(key: string) {
+    const target = targetChangeForTag(key)
+    const nextRef = refParamFromElement(target.type, target.id, key)
+    if (nextRef) selectRef(nextRef)
+  }
+
+  function scrollToGroupTagNotes(key: string) {
+    const target = targetChangeForTag(key)
+    selectGroupTag(key)
+    document.getElementById(noteThreadDomId(target.type, target.id, key))?.scrollIntoView({
+      block: 'nearest',
+    })
+  }
 
   return (
     <li className="px-2 py-2">
@@ -276,7 +306,14 @@ function TagMutationGroup({
               <Badge>{changes.length}</Badge>
             </Headless.DisclosureButton>
             <div className="mt-1 border-t font-mono">
-              <TagRows rows={mutations} emptyLabel="No tag changes" />
+              <TagRows
+                rows={mutations}
+                emptyLabel="No tag changes"
+                highlightedKey={highlightTagKey}
+                onKeyClick={selectGroupTag}
+                noteCountByKey={groupNoteCountByKey}
+                onNoteCountClick={scrollToGroupTagNotes}
+              />
             </div>
             <Headless.DisclosurePanel static>
               <motion.div
@@ -292,7 +329,6 @@ function TagMutationGroup({
                       key={`${change.type}/${change.id}`}
                       change={change}
                       changesetId={changesetId}
-                      reviewedFeatures={reviewedFeatures}
                       selected={selected}
                       selectedRef={selectedRef}
                       selectRef={selectRef}
@@ -316,7 +352,6 @@ function TagMutationGroup({
 function ElementChangeRow({
   change,
   changesetId,
-  reviewedFeatures,
   selected,
   selectedRef,
   selectRef,
@@ -328,7 +363,6 @@ function ElementChangeRow({
 }: {
   change: ElementChange
   changesetId: number
-  reviewedFeatures: ReviewedFeature[]
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -466,11 +500,6 @@ function ElementChangeRow({
             </Tooltip>
           ) : null}
           <CopyObjectLinkButton changesetId={changesetId} type={change.type} id={change.id} />
-          <FlagFeatureButton
-            changesetId={changesetId}
-            featureId={`${change.type}/${change.id}`}
-            initiallyFlagged={isUserFlagged(reviewedFeatures, change.type, change.id)}
-          />
           <Button
             outline
             aria-label={`Show ${change.type}/${change.id} on map`}

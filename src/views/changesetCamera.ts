@@ -47,30 +47,17 @@ export function jumpMapToChangesetBounds(map: Map, bounds: LngLatBoundsTuple): b
   return true
 }
 
-/** Fit the camera to an element's features, optionally including a note pin. */
-export function jumpMapToAdiffElement(
-  map: Map,
-  viewer: ChangesetAdiffViewer,
-  type: string,
-  id: number,
-  pin?: PinParam | null,
-): boolean {
-  const features = viewer.geojson.features.filter(
-    (feature) => feature.properties?.type === type && feature.properties?.id === id,
-  )
-  const fitFeatures = pin
-    ? [
-        ...features,
-        {
-          type: 'Feature' as const,
-          properties: {},
-          geometry: { type: 'Point' as const, coordinates: [pin.lng, pin.lat] },
-        },
-      ]
-    : features
-  if (fitFeatures.length === 0) return false
+function pinPointFeature(pin: PinParam): GeoJSON.Feature {
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry: { type: 'Point', coordinates: [pin.lng, pin.lat] },
+  }
+}
 
-  let bounds = bbox({ type: 'FeatureCollection', features: fitFeatures })
+function jumpMapToFitFeatures(map: Map, features: GeoJSON.Feature[]): boolean {
+  if (features.length === 0) return false
+  let bounds = bbox({ type: 'FeatureCollection', features })
   if (bounds.length === 6) {
     bounds = [bounds[0], bounds[1], bounds[3], bounds[4]]
   }
@@ -81,4 +68,34 @@ export function jumpMapToAdiffElement(
   if (!nextCamera) return false
   map.jumpTo(nextCamera)
   return true
+}
+
+/** Features to fit for an object `ref` and/or a pin. Pin-only notes have no ref. */
+export function featuresToFitForNote(
+  viewer: { geojson: GeoJSON.FeatureCollection },
+  ref: { type: string; id: number } | null,
+  pin?: PinParam | null,
+): GeoJSON.Feature[] {
+  const features = ref
+    ? viewer.geojson.features.filter(
+        (feature) => feature.properties?.type === ref.type && feature.properties?.id === ref.id,
+      )
+    : []
+  return pin ? [...features, pinPointFeature(pin)] : features
+}
+
+/** Fit the camera to an element's features, optionally including a note pin. */
+export function jumpMapToAdiffElement(
+  map: Map,
+  viewer: ChangesetAdiffViewer,
+  type: string,
+  id: number,
+  pin?: PinParam | null,
+): boolean {
+  return jumpMapToFitFeatures(map, featuresToFitForNote(viewer, { type, id }, pin))
+}
+
+/** Fit the camera to a pin-only note (no object `ref`). */
+export function jumpMapToPin(map: Map, pin: PinParam): boolean {
+  return jumpMapToFitFeatures(map, [pinPointFeature(pin)])
 }

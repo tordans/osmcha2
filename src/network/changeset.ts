@@ -115,13 +115,3 @@ export function setTag(id: number, tag: any, remove: boolean = false) {
 export function postComment(id: number, comment: string) {
   return api.post(`/changesets/${id}/comment/`, { comment })
 }
-
-export function flagFeature(changeset: number, feature: string) {
-  const featureParam = feature.replace('/', '-')
-  return api.put(`/changesets/${changeset}/review-feature/${featureParam}`)
-}
-
-export function unflagFeature(changeset: number, feature: string) {
-  const featureParam = feature.replace('/', '-')
-  return api.delete(`/changesets/${changeset}/review-feature/${featureParam}`)
-}

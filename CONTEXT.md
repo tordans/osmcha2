@@ -34,4 +34,5 @@ The `See <url>` line that starts a note group in a discussion post.
 _Avoid_: Group header, reference line
 
 **Flag**:
-An OSMCha `reviewed_features` action. A note is not a flag.
+Leftover OSMCha `reviewed_features` data, shown read-only as “Flagged by …”. Not an action in v2.
+_Avoid_: treating Flag as a review action
