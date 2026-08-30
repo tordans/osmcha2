@@ -94,6 +94,14 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '127.0.0.1',
       open: false,
+      // Spyglass nginx CORS allows `localhost`, not `127.0.0.1`. Same-origin tiles in Vite.
+      proxy: {
+        '/spyglass': {
+          target: 'https://spyglass.jochentopf.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/spyglass/, ''),
+        },
+      },
       // Cursor's embedded browser was serving a stale prebundle (`?v=de1bebf7`)
       // after the stream shim landed; skip caching in dev.
       headers: {

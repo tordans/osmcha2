@@ -108,12 +108,21 @@ MapLibre: one source. Native vector tiles exist z2–18 (`invalid tile` at z0, z
 
 ```tsx
 <Source
+  id="spyglass"
   type="vector"
-  tiles={['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']}
+  tiles={
+    import.meta.env.DEV
+      ? ['/spyglass/vector/osm/{z}/{x}/{y}.mvt']
+      : ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
+  }
   minzoom={15}
   maxzoom={18}
 />
+<Layer id="spyglass-ways-line" type="line" source="spyglass" source-layer="ways" />
+<Layer id="spyglass-nodes-circle" type="circle" source="spyglass" source-layer="nodes" />
 ```
+
+Sibling `<Source>` / `<Layer>` (not nested). vis.gl `Layer` retries `addLayer` until the vector source and `beforeId` exist — do not wrap this in `useEffect` + `styledata`.
 
 Berlin check: `15/17603/10749` → 200.
 
@@ -127,9 +136,9 @@ Headers: `Content-Type: application/vnd.mapbox-vector-tile`. gzip. `Cache-Contro
 
 ### CORS (production tiles, not README)
 
-- Origin `http://localhost:5173` → `Access-Control-Allow-Origin` echo
+- Origin `http://localhost:3000` / `http://localhost:5173` → `Access-Control-Allow-Origin` echo
+- Origin `http://127.0.0.1:3000` → **no ACAO** (Vite in this repo binds `127.0.0.1:3000`)
 - Origin `https://osmcha.org` → no ACAO
-- `http://127.0.0.1:5173` and `https://localhost:5173` → no ACAO
 - `/status.json` is ACAO `*` (different endpoint)
 
-Overlay works in local Vite. osmcha.org cannot load tiles until Spyglass nginx allows that origin or we add a proxy (out of scope).
+Local Vite uses a same-origin proxy (`/spyglass` → spyglass.jochentopf.com) so tiles load. osmcha.org still cannot load tiles until Spyglass nginx allows that origin or the app is served through a proxy.

@@ -11,6 +11,7 @@ import {
   inspectTagsFromProperties,
   isClickableMapFeature,
   spyglassEnabledAtZoom,
+  spyglassTileUrls,
   spyglassZoomForGate,
 } from './spyglassOverlay.ts'
 
@@ -21,6 +22,15 @@ const viewerLayers = [
   { id: 'changeset-way-unchanged' },
   { id: 'changeset-node-unchanged' },
 ]
+
+describe('spyglassTileUrls', () => {
+  test('uses a same-origin Vite proxy in dev and the Spyglass host in production', () => {
+    expect(spyglassTileUrls(true)).toEqual(['/spyglass/vector/osm/{z}/{x}/{y}.mvt'])
+    expect(spyglassTileUrls(false)).toEqual([
+      'https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt',
+    ])
+  })
+})
 
 describe('spyglassZoomForGate', () => {
   test('prefers the live map zoom over the URL', () => {

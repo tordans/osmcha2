@@ -586,31 +586,6 @@ function SpyglassInspectFlyout({
 
 /** Dim overlay must sit above the basemap and below changeset features. */
 function ChangesetOverlayBackground({ layer, beforeId }: { layer: LayerProps; beforeId: string }) {
-  const { mainMap } = useMap()
-  const mapLoaded = useMapLoaded()
-  const [targetReady, setTargetReady] = useState(false)
-
-  useEffect(
-    function subscribeOverlayPlacement() {
-      const map = mainMap?.getMap()
-      if (!mapLoaded || !map) {
-        return
-      }
-
-      const updatePlacement = () => {
-        setTargetReady(Boolean(map.getLayer(beforeId)))
-      }
-      const frame = requestAnimationFrame(updatePlacement)
-      map.on('styledata', updatePlacement)
-      return function unsubscribeOverlayPlacement() {
-        cancelAnimationFrame(frame)
-        map.off('styledata', updatePlacement)
-      }
-    },
-    [mainMap, mapLoaded, beforeId],
-  )
-
-  if (!targetReady) return null
   return <Layer {...layer} beforeId={beforeId} />
 }
 

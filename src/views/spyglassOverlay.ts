@@ -5,7 +5,6 @@ import {
 
 export const SPYGLASS_MIN_ZOOM = 15
 export const SPYGLASS_MAX_ZOOM = 18
-export const SPYGLASS_TILES = ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
 export const SPYGLASS_SOURCE_ID = 'spyglass'
 export const SPYGLASS_WAY_LAYER_ID = 'spyglass-ways-line'
 export const SPYGLASS_NODE_LAYER_ID = 'spyglass-nodes-circle'
@@ -17,6 +16,14 @@ export const CHANGESET_NOOP_LAYER_IDS: string[] = [
 
 export const SPYGLASS_ATTRIBUTION =
   '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://spyglass.jochentopf.com/">Spyglass</a>'
+
+/** Vite proxies `/spyglass` so tiles are same-origin (Spyglass CORS allows `localhost`, not `127.0.0.1`). */
+export function spyglassTileUrls(isDev: boolean): string[] {
+  if (isDev) return ['/spyglass/vector/osm/{z}/{x}/{y}.mvt']
+  return ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
+}
+
+export const SPYGLASS_TILES = spyglassTileUrls(import.meta.env.DEV)
 
 const NON_TAG_KEYS = new Set([
   'type',
