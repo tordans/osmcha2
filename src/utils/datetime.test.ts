@@ -71,4 +71,26 @@ describe('formatAccountAge', () => {
     expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now)).toBe('>2 years old')
     expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now)).toBe('>2 years old')
   })
+
+  test('compact drops the trailing " old"', () => {
+    expect(formatAccountAge(parseOsmDate('2026-08-30T11:48:00.000Z'), now, { compact: true })).toBe(
+      '12 min',
+    )
+    expect(formatAccountAge(parseOsmDate('2026-08-18T12:00:00.000Z'), now, { compact: true })).toBe(
+      '12 days',
+    )
+    expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now, { compact: true })).toBe(
+      '>2 years',
+    )
+    expect(formatAccountAge(now, now, { compact: true })).toBe('just now')
+  })
+
+  test('full is uncapped past two years', () => {
+    expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now, { full: true })).toBe(
+      '2 years old',
+    )
+    expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now, { full: true })).toBe(
+      '11 years old',
+    )
+  })
 })

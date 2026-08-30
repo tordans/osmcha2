@@ -54,15 +54,30 @@ export function parseOsmDate(value: string): Date {
   return isValid(parsed) ? parsed : new Date(value)
 }
 
+export type FormatAccountAgeOptions = {
+  /** Drop the trailing " old" (visible meta label). */
+  compact?: boolean
+  /** Uncapped distance (tooltip); default caps at ">2 years". */
+  full?: boolean
+}
+
 /**
  * Compact mapper-account age for the review header.
- * Minutes while younger than an hour; then date-fns’ largest unit; 2+ years cap.
+ * Minutes while younger than an hour; then date-fns’ largest unit; 2+ years cap
+ * unless `full` is set.
  */
-export function formatAccountAge(created: Date, now: Date = new Date()): string {
+export function formatAccountAge(
+  created: Date,
+  now: Date = new Date(),
+  options: FormatAccountAgeOptions = {},
+): string {
+  const { compact = false, full = false } = options
+  const suffix = compact ? '' : ' old'
+
   if (created >= now || differenceInMinutes(now, created) < 1) return 'just now'
   if (differenceInHours(now, created) < 1) {
-    return `${differenceInMinutes(now, created)} min old`
+    return `${differenceInMinutes(now, created)} min${suffix}`
   }
-  if (differenceInYears(now, created) >= 2) return '>2 years old'
-  return `${formatDistanceStrict(created, now, { roundingMethod: 'floor' })} old`
+  if (!full && differenceInYears(now, created) >= 2) return `>2 years${suffix}`
+  return `${formatDistanceStrict(created, now, { roundingMethod: 'floor' })}${suffix}`
 }

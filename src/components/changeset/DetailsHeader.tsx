@@ -511,9 +511,15 @@ export function DetailsHeader({
             </span>
             <div className={headerMenuMetaClassName}>
               {accountCreated ? (
-                <Tooltip as="span" content={formatLocalDateTime(accountCreated)}>
+                <Tooltip
+                  as="span"
+                  content={[
+                    formatLocalDateTime(accountCreated),
+                    formatAccountAge(accountCreated, new Date(), { full: true }),
+                  ].join('\n')}
+                >
                   <time dateTime={accountCreated.toISOString()}>
-                    {formatAccountAge(accountCreated)}
+                    {formatAccountAge(accountCreated, new Date(), { compact: true })}
                   </time>
                 </Tooltip>
               ) : null}
@@ -521,13 +527,17 @@ export function DetailsHeader({
                 <>
                   {accountCreated ? ' | ' : null}
                   <Tooltip as="span" content={`${editCount.toLocaleString()} edits`}>
-                    {`${formatCompactCount(editCount)} edits`}
+                    {formatCompactCount(editCount)}
                   </Tooltip>
                 </>
               ) : null}
               <Tooltip
                 as="span"
-                content="Changesets of this user marked Looks OK or Needs a look in OSMCha"
+                content={[
+                  'Changesets of this user marked in OSMCha:',
+                  `${checkedGood.toLocaleString()} Looks OK`,
+                  `${checkedBad.toLocaleString()} Needs a look`,
+                ].join('\n')}
                 className="isolate ml-auto inline-flex shrink-0 rounded-md"
               >
                 <Badge rounded="left" className={headerReviewCountBadgeClassName}>
