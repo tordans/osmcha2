@@ -1,85 +1,87 @@
 import {
-  ArrowDownWideNarrow,
+  ArrowClockwise,
   ArrowLeft,
   ArrowRight,
-  Bug,
-  CalendarDays,
+  ArrowSquareOut,
+  BugBeetle,
+  CalendarBlank,
+  CaretDown,
+  CaretLeft,
+  CaretRight,
+  CaretUp,
+  CaretUpDown,
+  ChatCircleText,
   Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsUpDown,
-  ChevronUp,
-  CircleCheck,
-  CirclePlus,
+  CheckCircle,
+  CircleNotch,
   Clipboard,
-  ClipboardCheck,
-  ExternalLink,
+  ClipboardText,
   Eye,
-  Flag,
+  FlagPennant,
   Funnel,
   Globe,
-  Languages,
   Link,
-  LoaderCircle,
   MapPin,
-  MessageCircle,
-  MessageCircleWarning,
-  PanelLeftClose,
-  PanelLeftOpen,
+  NotePencil,
   Pencil,
   Plus,
-  Quote,
-  RefreshCw,
+  PlusCircle,
+  Quotes,
   Rss,
-  SquarePen,
+  Sidebar,
+  SortAscending,
   Star,
   ThumbsDown,
   ThumbsUp,
-  Trash2,
-  TriangleAlert,
+  Trash,
+  Translate,
+  Warning,
+  WarningCircle,
   X,
-} from 'lucide-react'
+} from '@phosphor-icons/react'
 import { appIcon } from './icon.tsx'
 
-export const ArrowDownWideNarrowIcon = appIcon(ArrowDownWideNarrow)
+/** Action / control icons — Phosphor `regular` (outline). */
+export const ArrowDownWideNarrowIcon = appIcon(SortAscending)
 export const ArrowLeftIcon = appIcon(ArrowLeft)
 export const ArrowRightIcon = appIcon(ArrowRight)
-export const ArrowPathIcon = appIcon(RefreshCw)
-export const BugAntIcon = appIcon(Bug)
-export const CalendarDaysIcon = appIcon(CalendarDays)
-export const ChatBubbleLeftIcon = appIcon(MessageCircle)
+export const ArrowPathIcon = appIcon(ArrowClockwise)
+export const CalendarDaysIcon = appIcon(CalendarBlank)
 export const CheckIcon = appIcon(Check)
-export const ChevronDownIcon = appIcon(ChevronDown)
-export const ChevronLeftIcon = appIcon(ChevronLeft)
-export const ChevronRightIcon = appIcon(ChevronRight)
-export const ChevronsUpDownIcon = appIcon(ChevronsUpDown)
-export const ChevronUpIcon = appIcon(ChevronUp)
-export const CircleCheckIcon = appIcon(CircleCheck)
-export const ClipboardDocumentCheckIcon = appIcon(ClipboardCheck)
+export const ChevronDownIcon = appIcon(CaretDown)
+export const ChevronLeftIcon = appIcon(CaretLeft)
+export const ChevronRightIcon = appIcon(CaretRight)
+export const ChevronsUpDownIcon = appIcon(CaretUpDown)
+export const ChevronUpIcon = appIcon(CaretUp)
+export const ClipboardDocumentCheckIcon = appIcon(ClipboardText)
 export const ClipboardIcon = appIcon(Clipboard)
-export const ArrowTopRightOnSquareIcon = appIcon(ExternalLink)
+export const ArrowTopRightOnSquareIcon = appIcon(ArrowSquareOut)
 export const EyeIcon = appIcon(Eye)
-/** Lucide Flag’s pole is stroke-drawn; fill alone collapses to a pennant. */
-export const FlagIcon = appIcon(Flag, { keepStrokeWhenFilled: true })
 export const FunnelIcon = appIcon(Funnel)
 export const GlobeAltIcon = appIcon(Globe)
 export const HandThumbDownIcon = appIcon(ThumbsDown)
 export const HandThumbUpIcon = appIcon(ThumbsUp)
-export const LanguageIcon = appIcon(Languages)
+export const LanguageIcon = appIcon(Translate)
 export const LinkIcon = appIcon(Link)
 export const MapPinIcon = appIcon(MapPin)
-export const LoaderCircleIcon = appIcon(LoaderCircle)
-export const MessageCircleWarningIcon = appIcon(MessageCircleWarning)
-export const ExclamationTriangleIcon = appIcon(TriangleAlert)
-export const PanelLeftCloseIcon = appIcon(PanelLeftClose)
-export const PanelLeftOpenIcon = appIcon(PanelLeftOpen)
+export const LoaderCircleIcon = appIcon(CircleNotch)
+export const PanelLeftCloseIcon = appIcon(Sidebar)
+export const PanelLeftOpenIcon = appIcon(Sidebar)
 export const PencilIcon = appIcon(Pencil)
-export const PencilSquareIcon = appIcon(SquarePen)
-export const PlusCircleIcon = appIcon(CirclePlus)
+export const PencilSquareIcon = appIcon(NotePencil)
+export const PlusCircleIcon = appIcon(PlusCircle)
 export const PlusIcon = appIcon(Plus)
-export const QuoteIcon = appIcon(Quote)
+export const QuoteIcon = appIcon(Quotes)
 export const RssIcon = appIcon(Rss)
-export const StarIcon = appIcon(Star)
-export const TrashIcon = appIcon(Trash2)
+export const TrashIcon = appIcon(Trash)
 export const XMarkIcon = appIcon(X)
+/** Dual-use: outline on buttons; pass `variant="fill"` for status badges. */
+export const ChatBubbleLeftIcon = appIcon(ChatCircleText)
+export const CircleCheckIcon = appIcon(CheckCircle)
+export const FlagIcon = appIcon(FlagPennant)
+
+/** Status-only — Phosphor `duotone` by default (`variant="fill"`). */
+export const BugAntIcon = appIcon(BugBeetle, { status: true })
+export const MessageCircleWarningIcon = appIcon(WarningCircle, { status: true })
+export const ExclamationTriangleIcon = appIcon(Warning, { status: true })
+export const StarIcon = appIcon(Star, { status: true })

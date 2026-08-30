@@ -89,7 +89,7 @@ const headerMenuMetaClassName = clsx(
 
 /** Compact review counters in the user meta line (override Button’s `data-slot=icon` sizing). */
 const headerReviewCountBadgeClassName = 'gap-x-0.5 px-1 py-0 text-[0.625rem]/3 sm:text-[0.625rem]/3'
-const headerReviewCountIconClassName = 'inline size-3! my-0!'
+const headerReviewCountIconClassName = 'inline size-3.5! my-0!'
 
 /** Full sidebar content width; cancel Headless’ default start/end nudge so the panel lines up. */
 const reviewHeaderMenuClassName = clsx(

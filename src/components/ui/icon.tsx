@@ -1,37 +1,44 @@
-import type { LucideIcon } from 'lucide-react'
+import type { Icon as PhosphorIcon, IconProps, IconWeight } from '@phosphor-icons/react'
 import type { ComponentPropsWithoutRef } from 'react'
 
-/** Matches Catalyst `sm:text-sm/6 font-semibold` stroke at `size-4`. */
-export const ICON_STROKE_WIDTH = 1.5
-
+/**
+ * `outline` → Phosphor `regular` (buttons / controls).
+ * `fill` → Phosphor `duotone` (status / non-action indicators).
+ */
 export type IconVariant = 'outline' | 'fill'
 
-export type AppIconProps = Omit<ComponentPropsWithoutRef<'svg'>, 'strokeWidth'> & {
+export type AppIconProps = Omit<ComponentPropsWithoutRef<'svg'>, 'ref'> & {
   variant?: IconVariant
-  size?: number | string
-  strokeWidth?: number | string
-  absoluteStrokeWidth?: boolean
+  size?: IconProps['size']
+  color?: IconProps['color']
+  mirrored?: boolean
+  weight?: IconWeight
+}
+
+function weightForVariant(variant: IconVariant): IconWeight {
+  return variant === 'fill' ? 'duotone' : 'regular'
 }
 
 /**
- * Wrap a Lucide glyph with OSMCha defaults: `data-slot="icon"`, thin outline,
- * or filled for status/info. Callers may override `strokeWidth` / `fill`.
+ * Wrap a Phosphor glyph with OSMCha defaults: `data-slot="icon"` for Catalyst
+ * buttons, regular outline for actions, duotone for status (`variant="fill"`).
  */
 export function appIcon(
-  Glyph: LucideIcon,
+  Glyph: PhosphorIcon,
   options?: {
-    /** Keep outline stroke when filled (e.g. Lucide Flag’s pole is stroke-only). */
-    keepStrokeWhenFilled?: boolean
+    /** Default to duotone (status / badge icons, not button actions). */
+    status?: boolean
   },
 ) {
-  function AppIcon({ variant = 'outline', strokeWidth, fill, ...props }: AppIconProps) {
-    const isFill = variant === 'fill'
-    const dropStroke = isFill && !options?.keepStrokeWhenFilled
+  function AppIcon({ variant, weight, size, color, mirrored, ...props }: AppIconProps) {
+    const resolvedVariant = variant ?? (options?.status ? 'fill' : 'outline')
     return (
       <Glyph
         data-slot="icon"
-        strokeWidth={strokeWidth ?? (dropStroke ? 0 : ICON_STROKE_WIDTH)}
-        fill={fill ?? (isFill ? 'currentColor' : 'none')}
+        weight={weight ?? weightForVariant(resolvedVariant)}
+        size={size}
+        color={color}
+        mirrored={mirrored}
         {...props}
       />
     )
