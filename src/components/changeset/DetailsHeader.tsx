@@ -664,14 +664,11 @@ export function DetailsHeader({
 
       <div className={clsx('flex flex-col gap-1', typeScale.body)}>
         <blockquote
-          className={clsx(
-            'relative flex w-full items-start gap-1 leading-tight wrap-break-word hyphens-auto not-italic',
-            comment && 'min-h-11',
-          )}
+          className="relative flex w-full items-start gap-1 leading-tight wrap-break-word hyphens-auto not-italic"
           lang="en"
         >
           <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
-          <p className={clsx('min-w-0 flex-1', comment && 'pr-11')}>
+          <p className={clsx('min-w-0 flex-1', comment && 'pr-4')}>
             <span className="sr-only">Changeset comment: </span>
             <LinkifyText text={comment || 'NO COMMENT'} />
           </p>

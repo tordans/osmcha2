@@ -84,10 +84,8 @@ function Discussions({
               key={post.id ?? `${post.user}-${post.date}-${index}`}
               className="relative mb-4 border-b border-b-zinc-100 pb-4 last:border-b-0"
             >
-              <div className="absolute top-0 right-0 z-10">
-                <TranslateButton text={text} />
-              </div>
-              <h4 className="flex items-center gap-1 pr-11 font-semibold text-zinc-700">
+              <TranslateButton text={text} />
+              <h4 className="flex items-center gap-1 pr-4 font-semibold text-zinc-700">
                 <ChatBubbleLeftIcon variant="fill" className="size-4 flex-none" />
                 <span>
                   Post by{' '}

@@ -9,6 +9,7 @@ import {
 } from 'react'
 
 type TooltipAs = 'button' | 'span' | 'abbr'
+type TooltipPlacement = 'bottom' | 'bottom-end'
 
 type TooltipProps = {
   content: string
@@ -21,7 +22,26 @@ type TooltipProps = {
   'aria-label'?: string
   /** `span`/`abbr` for non-interactive labels (valid inside links/buttons). */
   as?: TooltipAs
+  /** Default centers under the trigger; `bottom-end` grows left from a right-edge control. */
+  placement?: TooltipPlacement
 }
+
+const panelPositionClassName = {
+  bottom:
+    'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2',
+  'bottom-end':
+    'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [right:anchor(right)] [left:auto]',
+} as const
+
+const panelArrowClassName = {
+  bottom: 'before:left-1/2 before:-translate-x-1/2',
+  'bottom-end': 'before:right-1.5 before:left-auto',
+} as const
+
+const panelTryClassName = {
+  bottom: '[position-try-fallbacks:flip-block,flip-inline]',
+  'bottom-end': '[position-try-fallbacks:flip-block]',
+} as const
 
 const nativeInterestInvokers =
   typeof HTMLElement !== 'undefined' && 'interestForElement' in HTMLElement.prototype
@@ -44,6 +64,7 @@ export function Tooltip({
   rel,
   'aria-label': ariaLabel,
   as = 'button',
+  placement = 'bottom',
 }: TooltipProps) {
   const reactId = useId()
   const id = `tooltip-${reactId.replaceAll(':', '')}`
@@ -80,7 +101,7 @@ export function Tooltip({
   const isHelp = as === 'abbr' || (as === 'span' && !href && !onClick)
   const triggerClassName = clsx(
     'inline-flex touch-manipulation items-center select-none',
-    href || onClick ? 'cursor-pointer' : isHelp ? 'cursor-help' : null,
+    href || onClick || as === 'button' ? 'cursor-pointer' : isHelp ? 'cursor-help' : null,
     as === 'abbr' && 'underline decoration-zinc-400 decoration-dotted underline-offset-2',
     '[interest-delay:0.2s_0.1s]',
     className,
@@ -139,11 +160,12 @@ export function Tooltip({
         popover="hint"
         role="tooltip"
         className={clsx(
-          'm-0 max-w-xs border-0 bg-zinc-950 px-2 py-1 text-xs/4 text-white',
+          'm-0 w-max max-w-xs border-0 bg-zinc-950 px-2 py-1 text-left text-xs/4 text-white',
           'rounded-md shadow-lg',
-          "before:pointer-events-none before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-x-4 before:border-b-4 before:border-x-transparent before:border-b-zinc-950 before:content-['']",
-          'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2',
-          '[position-try-fallbacks:flip-block]',
+          "before:pointer-events-none before:absolute before:bottom-full before:border-x-4 before:border-b-4 before:border-x-transparent before:border-b-zinc-950 before:content-['']",
+          panelArrowClassName[placement],
+          panelPositionClassName[placement],
+          panelTryClassName[placement],
           '[transition-behavior:allow-discrete]',
           'transition-[display,overlay,opacity,transform] duration-150 ease-out',
           'translate-y-1 scale-[0.96] opacity-0',
