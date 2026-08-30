@@ -102,7 +102,10 @@ const changesetOpenMenuClassName = clsx(
   '@container/changeset-open origin-top-left',
 )
 
-const userOpenMenuClassName = clsx(reviewHeaderMenuClassName, 'origin-top-right')
+const userOpenMenuClassName = clsx(
+  reviewHeaderMenuClassName,
+  '@container/user-open origin-top-right',
+)
 
 function useReviewHeaderMenuWidth() {
   const pairRef = useRef<HTMLDivElement>(null)
@@ -130,13 +133,14 @@ function useReviewHeaderMenuWidth() {
 }
 
 /** Items under a group heading: up to three equal columns once the menu is wide enough. */
-const changesetOpenItemsClassName = clsx(
+const headerOpenItemsClassName = clsx(
   'col-span-full grid grid-cols-1',
   '@min-[20rem]/changeset-open:grid-cols-3',
+  '@min-[20rem]/user-open:grid-cols-3',
 )
 
 /** Override DropdownItem’s `col-span-full` so items can sit in the item grid. */
-const changesetOpenItemClassName = 'col-span-1!'
+const headerOpenItemClassName = 'col-span-1!'
 
 export type ReviewUserDetails = {
   uid?: number | string
@@ -385,18 +389,21 @@ export function DetailsHeader({
             className={changesetOpenMenuClassName}
             style={menuStyle}
           >
-            <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
-              Changeset on OpenStreetMap.org
-            </DropdownItem>
+            <DropdownSection>
+              <DropdownHeading>Changeset #{changesetId}</DropdownHeading>
+              <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
+                Changeset on OpenStreetMap.org
+              </DropdownItem>
+            </DropdownSection>
             <DropdownDivider />
             <DropdownSection>
               <DropdownHeading>Changeset tools</DropdownHeading>
-              <div className={changesetOpenItemsClassName}>
+              <div className={headerOpenItemsClassName}>
                 <DropdownItem
                   href={urls.achavi}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   Achavi
                 </DropdownItem>
@@ -404,7 +411,7 @@ export function DetailsHeader({
                   href={urls.osmRevert}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   osm-revert
                 </DropdownItem>
@@ -412,7 +419,7 @@ export function DetailsHeader({
                   href={urls.resultMaps}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   ResultMaps
                 </DropdownItem>
@@ -421,12 +428,12 @@ export function DetailsHeader({
             <DropdownDivider />
             <DropdownSection>
               <DropdownHeading>Open map location in editor</DropdownHeading>
-              <div className={changesetOpenItemsClassName}>
+              <div className={headerOpenItemsClassName}>
                 <DropdownItem
                   href={urls.id}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   iD
                 </DropdownItem>
@@ -434,7 +441,7 @@ export function DetailsHeader({
                   href={urls.rapid}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   Rapid
                 </DropdownItem>
@@ -443,12 +450,12 @@ export function DetailsHeader({
             <DropdownDivider />
             <DropdownSection>
               <DropdownHeading>Open changeset in editor</DropdownHeading>
-              <div className={changesetOpenItemsClassName}>
+              <div className={headerOpenItemsClassName}>
                 <DropdownItem
                   href={urls.josm}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   JOSM
                 </DropdownItem>
@@ -456,7 +463,7 @@ export function DetailsHeader({
                   href={urls.level0}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={changesetOpenItemClassName}
+                  className={headerOpenItemClassName}
                 >
                   Level0
                 </DropdownItem>
@@ -571,25 +578,34 @@ export function DetailsHeader({
                 User {osmUser}
                 {uid ? ` / ${uid}` : ''}
               </DropdownHeading>
-              <DropdownItem
-                href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                OSM profile
-              </DropdownItem>
-              <DropdownItem href={hdycUrl(osmUser)} target="_blank" rel="noopener noreferrer">
-                HDYC
-              </DropdownItem>
-              {properties.user || userDetails?.name ? (
+              <div className={headerOpenItemsClassName}>
                 <DropdownItem
-                  href={missingMapsUrl(osmUser)}
+                  href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className={headerOpenItemClassName}
                 >
-                  Missing Maps
+                  OSM profile
                 </DropdownItem>
-              ) : null}
+                <DropdownItem
+                  href={hdycUrl(osmUser)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={headerOpenItemClassName}
+                >
+                  HDYC
+                </DropdownItem>
+                {properties.user || userDetails?.name ? (
+                  <DropdownItem
+                    href={missingMapsUrl(osmUser)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={headerOpenItemClassName}
+                  >
+                    Missing Maps
+                  </DropdownItem>
+                ) : null}
+              </div>
             </DropdownSection>
             {uid ? (
               <>
@@ -618,18 +634,22 @@ export function DetailsHeader({
                       Remove from trusted users
                     </DropdownItem>
                   ) : (
-                    <>
+                    <div className={headerOpenItemsClassName}>
                       <DropdownItem
                         onClick={() =>
                           addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
                         }
+                        className={headerOpenItemClassName}
                       >
                         Add to watchlist
                       </DropdownItem>
-                      <DropdownItem onClick={() => addToTrustedlistMutation.mutate(osmUser)}>
+                      <DropdownItem
+                        onClick={() => addToTrustedlistMutation.mutate(osmUser)}
+                        className={headerOpenItemClassName}
+                      >
                         Add to trusted users
                       </DropdownItem>
-                    </>
+                    </div>
                   )}
                 </DropdownSection>
               </>
