@@ -8,6 +8,7 @@ import {
   DropdownSection,
 } from '../ui/dropdown.tsx'
 import { CheckIcon, LinkIcon } from '../ui/icons.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { elementOpenInUrls } from './elementOpenIn.ts'
 import { changesetObjectUrl, refParamFromElement } from './refSelection.ts'
 
@@ -42,14 +43,19 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
 
   return (
     <Dropdown>
-      <DropdownButton
-        outline
-        aria-label={`Links for ${elementId}`}
-        title="Copy OSMCha link or open this object elsewhere"
-        className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+      <Tooltip
+        as="span"
+        content="Copy OSMCha link or open this object elsewhere"
+        className="inline-flex"
       >
-        {copied ? <CheckIcon data-slot="icon" /> : <LinkIcon data-slot="icon" />}
-      </DropdownButton>
+        <DropdownButton
+          outline
+          aria-label={`Links for ${elementId}`}
+          className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+        >
+          {copied ? <CheckIcon data-slot="icon" /> : <LinkIcon data-slot="icon" />}
+        </DropdownButton>
+      </Tooltip>
       <DropdownMenu
         anchor="bottom end"
         className="flex! w-max max-w-[calc(100vw-1rem)] min-w-max grid-cols-none! flex-row items-stretch divide-x divide-zinc-950/5 overflow-x-auto"

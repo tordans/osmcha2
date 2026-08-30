@@ -17,6 +17,7 @@ import {
 } from '../components/ui/dropdown.tsx'
 import { ChevronDownIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from '../components/ui/icons.ts'
 import { Text } from '../components/ui/text.tsx'
+import { Tooltip } from '../components/ui/tooltip.tsx'
 import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { getAuthUrl } from '../network/auth.ts'
@@ -61,14 +62,13 @@ function CollapseListButton() {
   const { collapse } = useListPaneActions()
   const canCollapse = useListPaneCanCollapse()
 
-  return (
+  const button = (
     <Button
       outline
       aria-label="Hide changeset list"
       aria-expanded
       aria-controls="changeset-list-pane"
       disabled={!canCollapse}
-      title={canCollapse ? undefined : 'Select a changeset to hide the list'}
       className={clsx(
         chromeIconButtonClassName,
         chromeButtonShadowClassName,
@@ -78,6 +78,14 @@ function CollapseListButton() {
     >
       <PanelLeftCloseIcon data-slot="icon" />
     </Button>
+  )
+
+  if (canCollapse) return button
+
+  return (
+    <Tooltip as="span" content="Select a changeset to hide the list" className="inline-flex">
+      {button}
+    </Tooltip>
   )
 }
 

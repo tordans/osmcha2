@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react'
 
+type TooltipAs = 'button' | 'span' | 'abbr'
+
 type TooltipProps = {
   content: string
   children: ReactNode
@@ -17,8 +19,8 @@ type TooltipProps = {
   target?: string
   rel?: string
   'aria-label'?: string
-  /** `span` for non-interactive labels (valid inside links/buttons). */
-  as?: 'button' | 'span'
+  /** `span`/`abbr` for non-interactive labels (valid inside links/buttons). */
+  as?: TooltipAs
 }
 
 const nativeInterestInvokers =
@@ -28,6 +30,9 @@ const nativeInterestInvokers =
  * Tooltip on the browser top layer: `popover="hint"` + CSS anchor positioning.
  * Chromium also honors `interestfor` (hover/focus/long-press). Other browsers
  * get a small pointer/focus fallback that still uses `showPopover()`.
+ * Enter/exit uses Tailwind `open:` / `starting:open:` so native `display`/`overlay`
+ * can animate with `allow-discrete` (same idea as Motion chrome, without fighting
+ * the popover top layer).
  */
 export function Tooltip({
   content,
@@ -72,48 +77,46 @@ export function Tooltip({
         onBlur: hideTooltip,
       }
 
+  const isHelp = as === 'abbr' || (as === 'span' && !href && !onClick)
   const triggerClassName = clsx(
     'inline-flex touch-manipulation items-center select-none',
-    href || onClick ? 'cursor-pointer' : 'cursor-help',
+    href || onClick ? 'cursor-pointer' : isHelp ? 'cursor-help' : null,
+    as === 'abbr' && 'underline decoration-zinc-400 decoration-dotted underline-offset-2',
     '[interest-delay:0.2s_0.1s]',
     className,
   )
-  const triggerAriaLabel = as === 'span' ? ariaLabel : (ariaLabel ?? content)
+  const triggerAriaLabel = as === 'button' || href ? (ariaLabel ?? content) : ariaLabel
+
+  const triggerProps = {
+    interestfor: id,
+    ...fallback,
+    'aria-label': triggerAriaLabel,
+    'aria-describedby': id,
+    className: triggerClassName,
+    style: triggerStyle,
+  }
 
   const trigger = href ? (
     <a
       href={href}
       target={target}
       rel={rel}
-      {...{ interestfor: id }}
-      {...fallback}
+      {...triggerProps}
       onClick={(event) => {
         hideTooltip()
         onClick?.(event)
       }}
-      aria-label={triggerAriaLabel}
-      aria-describedby={id}
-      className={triggerClassName}
-      style={triggerStyle}
     >
       {children}
     </a>
   ) : as === 'span' ? (
-    <span
-      {...{ interestfor: id }}
-      {...fallback}
-      aria-label={triggerAriaLabel}
-      aria-describedby={id}
-      className={triggerClassName}
-      style={triggerStyle}
-    >
-      {children}
-    </span>
+    <span {...triggerProps}>{children}</span>
+  ) : as === 'abbr' ? (
+    <abbr {...triggerProps}>{children}</abbr>
   ) : (
     <button
       type="button"
-      {...{ interestfor: id }}
-      {...fallback}
+      {...triggerProps}
       onClick={(event) => {
         if (!nativeInterestInvokers) {
           const panel = panelRef.current
@@ -122,10 +125,6 @@ export function Tooltip({
         }
         onClick?.(event)
       }}
-      aria-label={triggerAriaLabel}
-      aria-describedby={id}
-      className={triggerClassName}
-      style={triggerStyle}
     >
       {children}
     </button>
@@ -144,6 +143,12 @@ export function Tooltip({
           'rounded-md shadow-lg',
           'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2',
           '[position-try-fallbacks:flip-block]',
+          '[transition-behavior:allow-discrete]',
+          'transition-[display,overlay,opacity,transform] duration-150 ease-out',
+          'translate-y-1 scale-[0.96] opacity-0',
+          'open:translate-y-0 open:scale-100 open:opacity-100',
+          'starting:open:translate-y-1 starting:open:scale-[0.96] starting:open:opacity-0',
+          'motion-reduce:transition-none',
         )}
         style={panelStyle}
       >

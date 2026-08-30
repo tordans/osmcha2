@@ -58,6 +58,7 @@ import {
   StarIcon,
   XMarkIcon,
 } from '../ui/icons.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
 import { changesetTagsForDisplay } from './changesetTags.ts'
 import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
@@ -294,21 +295,22 @@ export function DetailsHeader({
               >
                 {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
                 {changesetIsOpen ? (
-                  <Badge
-                    color="amber"
-                    title="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
+                  <Tooltip
+                    as="span"
+                    content="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
                   >
-                    Open
-                  </Badge>
+                    <Badge color="amber">Open</Badge>
+                  </Tooltip>
                 ) : null}
                 {' | '}
-                <abbr
-                  title={`Editor ${properties.editor ?? 'unknown'}${
+                <Tooltip
+                  as="abbr"
+                  content={`Editor ${properties.editor ?? 'unknown'}${
                     properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
                   }`}
                 >
                   {editorLabel}
-                </abbr>
+                </Tooltip>
               </div>
             </span>
             <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
@@ -409,9 +411,10 @@ export function DetailsHeader({
               ) : null}
               {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
             </span>
-            <span
+            <Tooltip
+              as="span"
+              content="Changesets of this user marked Looks OK or Needs a look in OSMCha"
               className="isolate inline-flex shrink-0 rounded-md"
-              title="Changesets of this user marked Looks OK or Needs a look in OSMCha"
             >
               <Badge rounded="left">
                 {checkedGood.toLocaleString()}{' '}
@@ -434,7 +437,7 @@ export function DetailsHeader({
                   aria-label="Needs a look changesets"
                 />
               </Badge>
-            </span>
+            </Tooltip>
             <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
           </DropdownButton>
           <DropdownMenu
@@ -567,16 +570,17 @@ export function DetailsHeader({
                 'divide-x divide-black/10 overflow-hidden rounded-md ring-1 ring-black/10',
               )}
             >
-              <Badge
-                color={reviewColor}
-                rounded="none"
-                className="h-full rounded-none"
-                title={presentation.tooltip}
-                aria-label={presentation.tooltip}
-              >
-                <ReviewVerdictIcon kind={presentation.icon} /> by{' '}
-                {properties.check_user || <i>Unknown user</i>}
-              </Badge>
+              <Tooltip as="span" content={presentation.tooltip} className="h-full">
+                <Badge
+                  color={reviewColor}
+                  rounded="none"
+                  className="h-full rounded-none"
+                  aria-label={presentation.tooltip}
+                >
+                  <ReviewVerdictIcon kind={presentation.icon} /> by{' '}
+                  {properties.check_user || <i>Unknown user</i>}
+                </Badge>
+              </Tooltip>
               <BadgeButton
                 color={reviewColor}
                 rounded="none"

@@ -15,6 +15,7 @@ import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 import type { AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
@@ -277,20 +278,21 @@ function ReviewTab({
   children: ReactNode
 }) {
   return (
-    <Headless.Button
-      type="button"
-      title={title}
-      aria-current={current ? 'page' : undefined}
-      onClick={onClick}
-      className={clsx(
-        'relative flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 border-b-2 px-3 text-sm font-medium whitespace-nowrap select-none',
-        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
-        current
-          ? 'border-blue-500 bg-blue-50 text-blue-700'
-          : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700',
-      )}
-    >
-      {children}
-    </Headless.Button>
+    <Tooltip as="span" content={title} className="inline-flex">
+      <Headless.Button
+        type="button"
+        aria-current={current ? 'page' : undefined}
+        onClick={onClick}
+        className={clsx(
+          'relative flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 border-b-2 px-3 text-sm font-medium whitespace-nowrap select-none',
+          'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+          current
+            ? 'border-blue-500 bg-blue-50 text-blue-700'
+            : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700',
+        )}
+      >
+        {children}
+      </Headless.Button>
+    </Tooltip>
   )
 }

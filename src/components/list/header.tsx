@@ -31,6 +31,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from '../ui/icons.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { FiltersMenu } from './FiltersMenu.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -152,22 +153,23 @@ function RefreshChangesetsButton({
     className: 'h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0',
     onClick,
     disabled,
-    title: label,
     'aria-label': label,
   }
 
-  if (stale) {
-    return (
-      <Button color="orange" {...shared}>
-        {icon}
-      </Button>
-    )
-  }
-
-  return (
+  const button = stale ? (
+    <Button color="orange" {...shared}>
+      {icon}
+    </Button>
+  ) : (
     <Button outline {...shared}>
       {icon}
     </Button>
+  )
+
+  return (
+    <Tooltip as="span" content={label} className="inline-flex">
+      {button}
+    </Tooltip>
   )
 }
 
@@ -189,11 +191,11 @@ function OrderMenu({
 
   if (disabled) {
     return (
-      <span title={title} className="shrink-0">
+      <Tooltip as="span" content={title ?? ariaLabel} className="shrink-0">
         <Button outline disabled aria-label={ariaLabel} className={iconButtonClassName}>
           <ArrowDownWideNarrowIcon data-slot="icon" />
         </Button>
-      </span>
+      </Tooltip>
     )
   }
 

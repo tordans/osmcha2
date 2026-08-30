@@ -11,6 +11,7 @@ import { Heading } from '../ui/heading.tsx'
 import { LinkIcon, RssIcon, XMarkIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -173,27 +174,29 @@ export function FiltersHeader({
 
         {aoiId ? (
           <>
-            <Button
-              type="button"
-              plain
-              aria-label="Copy filter URL"
-              title="Copy filter URL"
-              className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
-              onClick={() => {
-                void navigator.clipboard.writeText(`${shareOrigin}/?aoi=${aoiId}`)
-              }}
-            >
-              <LinkIcon data-slot="icon" />
-            </Button>
-            <Button
-              plain
-              href={`${API_URL}/aoi/${aoiId}/changesets/feed/`}
-              aria-label="RSS Feed"
-              title="RSS Feed"
-              className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
-            >
-              <RssIcon data-slot="icon" />
-            </Button>
+            <Tooltip as="span" content="Copy filter URL" className="inline-flex">
+              <Button
+                type="button"
+                plain
+                aria-label="Copy filter URL"
+                className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+                onClick={() => {
+                  void navigator.clipboard.writeText(`${shareOrigin}/?aoi=${aoiId}`)
+                }}
+              >
+                <LinkIcon data-slot="icon" />
+              </Button>
+            </Tooltip>
+            <Tooltip as="span" content="RSS Feed" className="inline-flex">
+              <Button
+                plain
+                href={`${API_URL}/aoi/${aoiId}/changesets/feed/`}
+                aria-label="RSS Feed"
+                className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+              >
+                <RssIcon data-slot="icon" />
+              </Button>
+            </Tooltip>
           </>
         ) : null}
 

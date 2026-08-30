@@ -7,6 +7,7 @@ import { Heading } from '../ui/heading.tsx'
 import { PlusIcon, TrashIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Text } from '../ui/text.tsx'
+import { Tooltip } from '../ui/tooltip.tsx'
 
 type TeamUser = {
   username?: string
@@ -194,17 +195,18 @@ export default function NewTeam(props: NewTeamProps) {
                       )}
                     </form.Field>
                     <div className="flex items-end">
-                      <Button
-                        type="button"
-                        plain
-                        disabled={usersField.state.value.length === 1}
-                        onClick={() => usersField.removeValue(index)}
-                        className="min-h-11 min-w-11"
-                        title="Remove user"
-                        aria-label="Remove user"
-                      >
-                        <TrashIcon data-slot="icon" />
-                      </Button>
+                      <Tooltip as="span" content="Remove user" className="inline-flex">
+                        <Button
+                          type="button"
+                          plain
+                          disabled={usersField.state.value.length === 1}
+                          onClick={() => usersField.removeValue(index)}
+                          className="min-h-11 min-w-11"
+                          aria-label="Remove user"
+                        >
+                          <TrashIcon data-slot="icon" />
+                        </Button>
+                      </Tooltip>
                     </div>
                   </div>
                 ))}
