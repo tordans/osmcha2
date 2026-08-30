@@ -1,0 +1,248 @@
+import {
+  CHANGESET_OVERLAY_BG_LAYER_ID,
+  changesetInteractiveLayerIds,
+} from './changesetAdiffViewer.ts'
+
+export const SPYGLASS_MIN_ZOOM = 15
+export const SPYGLASS_MAX_ZOOM = 18
+export const SPYGLASS_TILES = ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
+export const SPYGLASS_SOURCE_ID = 'spyglass'
+export const SPYGLASS_WAY_LAYER_ID = 'spyglass-ways-line'
+export const SPYGLASS_NODE_LAYER_ID = 'spyglass-nodes-circle'
+export const SPYGLASS_LAYER_IDS: string[] = [SPYGLASS_WAY_LAYER_ID, SPYGLASS_NODE_LAYER_ID]
+export const CHANGESET_NOOP_LAYER_IDS: string[] = [
+  'changeset-way-unchanged',
+  'changeset-node-unchanged',
+]
+
+export const SPYGLASS_ATTRIBUTION =
+  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://spyglass.jochentopf.com/">Spyglass</a>'
+
+const NON_TAG_KEYS = new Set([
+  'type',
+  'id',
+  'action',
+  'side',
+  'version',
+  'timestamp',
+  'uid',
+  'user',
+  'changeset',
+  'visible',
+  'lat',
+  'lon',
+  'nodes',
+  'members',
+  'relations',
+  'num_tags',
+  'tags_changed',
+  'old_tags',
+  'new_tags',
+])
+
+export type SpyglassOverlayState = 'off' | 'armed' | 'active'
+
+export type InspectHover = {
+  kind: 'spyglass' | 'noop'
+  type: string
+  id: number | string
+  tags: Array<[string, string]>
+  extraCount: number
+}
+
+export type InspectableMapFeature = {
+  id?: string | number
+  source?: string
+  sourceLayer?: string
+  layer?: { id?: string }
+  properties?: Record<string, unknown> | null
+}
+
+export function spyglassEnabledAtZoom(enabled: boolean, zoom: number): SpyglassOverlayState {
+  if (!enabled) return 'off'
+  return zoom >= SPYGLASS_MIN_ZOOM ? 'active' : 'armed'
+}
+
+/** Prefer the live map zoom; fall back to the URL camera before `onLoad`. */
+export function spyglassZoomForGate(
+  mapZoom: number | null,
+  urlZoom: number | null | undefined,
+): number {
+  if (mapZoom != null) return mapZoom
+  return urlZoom ?? 0
+}
+
+export function changesetClickableLayerIds(layers: Array<{ id: string }>): string[] {
+  return changesetInteractiveLayerIds(layers).filter((id) => !isNoopLayerId(id))
+}
+
+export function changesetInspectLayerIds(
+  layers: Array<{ id: string }>,
+  options: { overlayActive: boolean; showNoop: boolean },
+): string[] {
+  const ids = changesetClickableLayerIds(layers)
+  if (!options.overlayActive) return ids
+  if (options.showNoop) ids.push(...CHANGESET_NOOP_LAYER_IDS)
+  ids.push(...SPYGLASS_LAYER_IDS)
+  return ids
+}
+
+export function cursorForMapHover(
+  features: Array<InspectableMapFeature> | undefined,
+  options: { pinPlacement: boolean; overlayActive: boolean },
+): 'crosshair' | 'pointer' | 'help' | 'default' {
+  if (options.pinPlacement) return 'crosshair'
+  const hits = features ?? []
+  if (hits.some((feature) => isClickableMapFeature(feature))) return 'pointer'
+  if (options.overlayActive && hits.some((feature) => isInspectMapFeature(feature))) return 'help'
+  return 'default'
+}
+
+export function inspectTagsFromProperties(
+  properties: Record<string, unknown> | null | undefined,
+  options?: { skipMetadataKeys?: boolean },
+): Array<[string, string]> {
+  if (!properties) return []
+  const nested = properties.tags
+  if (isPlainObject(nested)) return tagEntries(nested, { skipMetadataKeys: false })
+  return tagEntries(properties, { skipMetadataKeys: options?.skipMetadataKeys ?? true })
+}
+
+export function inspectHoverFromFeatures(
+  features: Array<InspectableMapFeature> | undefined,
+): InspectHover | null {
+  const hits = features ?? []
+  if (hits.some((feature) => isClickableMapFeature(feature))) return null
+
+  const parsed: Array<{
+    kind: InspectHover['kind']
+    type: string
+    id: number | string
+    tags: Array<[string, string]>
+    source: string
+  }> = []
+  for (const feature of hits) {
+    const next = parseInspectFeature(feature)
+    if (next) parsed.push(next)
+  }
+  const first = parsed[0]
+  if (!first) return null
+
+  const seen = new Set([inspectUniqueKey(first.source, first.id)])
+  let extraCount = 0
+  for (const item of parsed.slice(1)) {
+    const key = inspectUniqueKey(item.source, item.id)
+    if (seen.has(key)) continue
+    seen.add(key)
+    extraCount += 1
+  }
+
+  return {
+    kind: first.kind,
+    type: first.type,
+    id: first.id,
+    tags: first.tags,
+    extraCount,
+  }
+}
+
+function isNoopLayerId(id: string | undefined): boolean {
+  return id != null && CHANGESET_NOOP_LAYER_IDS.includes(id)
+}
+
+function isSpyglassLayerId(id: string | undefined): boolean {
+  return id != null && SPYGLASS_LAYER_IDS.includes(id)
+}
+
+function isChangesetLayerId(id: string | undefined): boolean {
+  return id != null && id.startsWith('changeset-') && id !== CHANGESET_OVERLAY_BG_LAYER_ID
+}
+
+function isChangesetNoopFeature(feature: InspectableMapFeature): boolean {
+  if (isSpyglassLayerId(layerIdOf(feature))) return false
+  if (isNoopLayerId(layerIdOf(feature))) return true
+  return isChangesetLayerId(layerIdOf(feature)) && feature.properties?.action === 'noop'
+}
+
+function isInspectMapFeature(feature: InspectableMapFeature): boolean {
+  return isSpyglassLayerId(layerIdOf(feature)) || isChangesetNoopFeature(feature)
+}
+
+export function isClickableMapFeature(feature: InspectableMapFeature): boolean {
+  if (!isChangesetLayerId(layerIdOf(feature))) return false
+  return !isChangesetNoopFeature(feature)
+}
+
+function layerIdOf(feature: InspectableMapFeature): string | undefined {
+  return feature.layer?.id
+}
+
+function inspectUniqueKey(source: string, id: number | string): string {
+  return `${source}:${id}`
+}
+
+function parseInspectFeature(feature: InspectableMapFeature): {
+  kind: InspectHover['kind']
+  type: string
+  id: number | string
+  tags: Array<[string, string]>
+  source: string
+} | null {
+  const layerId = layerIdOf(feature)
+  const tags = inspectTagsFromProperties(feature.properties, {
+    skipMetadataKeys: !isSpyglassLayerId(layerId),
+  })
+  const source = feature.source ?? ''
+
+  if (isSpyglassLayerId(layerId)) {
+    const type = osmTypeFromSpyglassSourceLayer(feature.sourceLayer, layerId)
+    if (type == null || feature.id == null) return null
+    return { kind: 'spyglass', type, id: feature.id, tags, source }
+  }
+
+  if (isChangesetNoopFeature(feature)) {
+    const type = feature.properties?.type
+    const id = feature.properties?.id
+    if (typeof type !== 'string' || type.length === 0 || id == null) return null
+    if (typeof id !== 'string' && typeof id !== 'number') return null
+    return { kind: 'noop', type, id, tags, source }
+  }
+
+  return null
+}
+
+function osmTypeFromSpyglassSourceLayer(
+  sourceLayer: string | undefined,
+  layerId: string | undefined,
+): string | null {
+  if (sourceLayer === 'nodes' || layerId === SPYGLASS_NODE_LAYER_ID) return 'node'
+  if (sourceLayer === 'ways' || layerId === SPYGLASS_WAY_LAYER_ID) return 'way'
+  return null
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function stringifyTagValue(value: unknown): string | null {
+  if (value == null) return null
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  return null
+}
+
+function tagEntries(
+  record: Record<string, unknown>,
+  options: { skipMetadataKeys: boolean },
+): Array<[string, string]> {
+  const tags: Array<[string, string]> = []
+  for (const [key, raw] of Object.entries(record)) {
+    if (key.startsWith('@')) continue
+    if (options.skipMetadataKeys && (NON_TAG_KEYS.has(key) || key === 'tags')) continue
+    const value = stringifyTagValue(raw)
+    if (value == null) continue
+    tags.push([key, value])
+  }
+  return tags
+}

@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 
 export const CHANGESET_MAP_ID = 'mainMap'
 export const CHANGESET_SOURCE_ID = 'changeset'
-const CHANGESET_OVERLAY_BG_LAYER_ID = 'changeset-overlay-bg'
+export const CHANGESET_OVERLAY_BG_LAYER_ID = 'changeset-overlay-bg'
 
 const OSM_ADIFF_ATTRIBUTION =
   'Map data from <a href=https://openstreetmap.org/copyright>OpenStreetMap</a>'

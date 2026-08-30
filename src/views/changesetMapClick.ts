@@ -1,9 +1,10 @@
 import type { Map, Point } from 'maplibre-gl'
-import type { AdiffAction } from '../components/changeset/changesetElements.ts'
+import { isNoopAction, type AdiffAction } from '../components/changeset/changesetElements.ts'
+import { isClickableMapFeature } from './spyglassOverlay.ts'
 
 type PickableFeature = {
   id?: string | number
-  properties?: { type?: string; id?: number } | null
+  properties?: { type?: string; id?: number; action?: string } | null
 }
 
 export function rotateOverlappingFeatures<T extends PickableFeature>(
@@ -42,13 +43,15 @@ export function pickChangesetActionFromClick(options: {
 
   // Justified exception for hit slop + overlap carousel: react-map-gl `event.features`
   // is point-exact and has no overlap rotation. Not used for hover.
-  const rendered = map.queryRenderedFeatures(
-    [
-      [point.x - 5, point.y - 5],
-      [point.x + 5, point.y + 5],
-    ],
-    { layers: layerIds },
-  )
+  const rendered = map
+    .queryRenderedFeatures(
+      [
+        [point.x - 5, point.y - 5],
+        [point.x + 5, point.y + 5],
+      ],
+      { layers: layerIds },
+    )
+    .filter((feature) => isClickableMapFeature(feature))
 
   const picked = rotateOverlappingFeatures(rendered, previousFeatureId)
   if (!picked) {
@@ -57,6 +60,7 @@ export function pickChangesetActionFromClick(options: {
 
   const action =
     actions.find((item) => {
+      if (isNoopAction(item)) return false
       const element = item.new ?? item.old
       return (
         element?.type === picked.feature.properties?.type &&

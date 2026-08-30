@@ -1,10 +1,22 @@
 import * as Headless from '@headlessui/react'
 import type { EliCategory, EliLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
+import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useMap } from 'react-map-gl/maplibre'
+import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStore } from '../../stores/mapStore.ts'
+import {
+  useSpyglassActions,
+  useSpyglassEnabled,
+  useSpyglassMapZoom,
+} from '../../stores/spyglass-store.ts'
+import {
+  SPYGLASS_MIN_ZOOM,
+  spyglassEnabledAtZoom,
+  spyglassZoomForGate,
+} from '../../views/spyglassOverlay.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
@@ -14,6 +26,7 @@ import {
   CircleCheckIcon,
   FunnelIcon,
   GlobeAltIcon,
+  ScanSearchIcon,
   StarIcon,
 } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -26,6 +39,8 @@ import {
   parseImageryUsed,
 } from './matchImageryUsed.ts'
 import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
+
+const changesetRouteApi = getRouteApi('/changesets/$id')
 
 /** ELI category keys in display order (matches Editor Layer Index / iD grouping). */
 const ELI_CATEGORY_ORDER = [
@@ -450,6 +465,77 @@ function ViewportEditorLayerList({
   )
 }
 
+function spyglassToggleCopy(state: ReturnType<typeof spyglassEnabledAtZoom>): {
+  ariaLabel: string
+  tooltip: string
+  iconClassName: string
+} {
+  if (state === 'armed') {
+    return {
+      ariaLabel: 'Current OSM data armed — zoom in to inspect',
+      tooltip: 'Zoom in to inspect OSM data',
+      iconClassName: 'size-5 text-amber-600',
+    }
+  }
+  if (state === 'active') {
+    return {
+      ariaLabel: 'Hide current OSM data',
+      tooltip: 'Hide current OSM data',
+      iconClassName: 'size-5 text-emerald-600',
+    }
+  }
+  return {
+    ariaLabel: 'Show current OSM data',
+    tooltip: 'Show current OSM data',
+    iconClassName: 'size-5 text-zinc-700',
+  }
+}
+
+function SpyglassMapControl() {
+  const enabled = useSpyglassEnabled()
+  const mapZoom = useSpyglassMapZoom()
+  const { toggleEnabled } = useSpyglassActions()
+  const { map: mapSearch } = changesetRouteApi.useSearch()
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const urlZoom = parseMapParam(mapSearch ?? '')?.zoom
+  const state = spyglassEnabledAtZoom(enabled, spyglassZoomForGate(mapZoom, urlZoom))
+  const copy = spyglassToggleCopy(state)
+
+  function zoomToSpyglass() {
+    if (!mapLoaded) return
+    mainMap?.getMap().easeTo({ zoom: SPYGLASS_MIN_ZOOM })
+  }
+
+  return (
+    <>
+      <Tooltip as="span" content={copy.tooltip} className="inline-flex">
+        <button
+          type="button"
+          aria-label={copy.ariaLabel}
+          aria-pressed={enabled}
+          className={mapControlButtonClassName}
+          onClick={toggleEnabled}
+        >
+          <ScanSearchIcon className={copy.iconClassName} />
+        </button>
+      </Tooltip>
+      {state === 'armed' ? (
+        <button
+          type="button"
+          className={clsx(
+            'min-h-11 cursor-pointer touch-manipulation rounded-lg px-3 text-sm font-medium text-zinc-950 select-none active:bg-zinc-100',
+            flyoutSurfaceClassName,
+          )}
+          onClick={zoomToSpyglass}
+        >
+          Zoom in to see OSM data
+        </button>
+      ) : null}
+    </>
+  )
+}
+
 type MapOptionsProps = {
   showElements: Array<string>
   showActions: Array<string>
@@ -477,6 +563,7 @@ export function MapOptions({
         setShowActions={setShowActions}
       />
       <MapImageryOptions imageryUsed={imageryUsed} />
+      <SpyglassMapControl />
     </Headless.PopoverGroup>
   )
 }

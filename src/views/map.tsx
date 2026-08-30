@@ -25,6 +25,7 @@ import {
 } from '../components/changeset/refSelection.ts'
 import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
+import { flyoutSurfaceClassName } from '../components/ui/flyout.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
@@ -38,9 +39,13 @@ import {
 import { useMapActions, useMapLoaded } from '../stores/map-loaded-store.ts'
 import { useMapStore } from '../stores/mapStore.ts'
 import {
+  useSpyglassActions,
+  useSpyglassEnabled,
+  useSpyglassMapZoom,
+} from '../stores/spyglass-store.ts'
+import {
   CHANGESET_MAP_ID,
   CHANGESET_SOURCE_ID,
-  changesetInteractiveLayerIds,
   splitChangesetLayers,
   type ChangesetAdiffViewer,
 } from './changesetAdiffViewer.ts'
@@ -64,6 +69,16 @@ import {
   exposeMainMapForDebugging,
 } from './exposeMainMapForDebugging.ts'
 import { ChangesetPinMarkers, PinPlacementOverlay } from './PinPlacementOverlay.tsx'
+import {
+  changesetClickableLayerIds,
+  changesetInspectLayerIds,
+  cursorForMapHover,
+  inspectHoverFromFeatures,
+  spyglassEnabledAtZoom,
+  spyglassZoomForGate,
+  type InspectHover,
+} from './spyglassOverlay.ts'
+import { SpyglassOverlay } from './SpyglassOverlay.tsx'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
@@ -146,7 +161,12 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [cursor, setCursor] = useState('default')
   const [styleEpoch, setStyleEpoch] = useState(0)
+  const [inspectHover, setInspectHover] = useState<InspectHover | null>(null)
+  const [inspectPoint, setInspectPoint] = useState<{ x: number; y: number } | null>(null)
   const pinPlacement = usePinPlacement()
+  const spyglassEnabled = useSpyglassEnabled()
+  const spyglassMapZoom = useSpyglassMapZoom()
+  const { setMapZoom } = useSpyglassActions()
 
   const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
@@ -168,11 +188,12 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     function resetMapLoadedOnUnmount() {
       return function resetMapLoadedWhenMapUnmounts() {
         resetMapLoaded()
+        setMapZoom(null)
         clearMainMapDebugExposure()
         urlWritesEnabledRef.current = false
       }
     },
-    [resetMapLoaded],
+    [resetMapLoaded, setMapZoom],
   )
 
   useEffect(function observeMapContainerSize() {
@@ -347,7 +368,15 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const viewBounds = viewer ? changesetViewBounds(viewer.geojson.features) : null
   const layers = viewer?.layers() ?? []
   const { overlayBg, featureLayers } = splitChangesetLayers(layers)
-  const interactiveLayerIds = changesetInteractiveLayerIds(layers)
+  const overlayState = spyglassEnabledAtZoom(
+    spyglassEnabled,
+    spyglassZoomForGate(spyglassMapZoom, parsedCamera?.zoom),
+  )
+  const overlayActive = overlayState === 'active'
+  const showActions = viewer?.options.showActions
+  const showNoop = Array.isArray(showActions) && showActions.includes('noop')
+  const clickableLayerIds = changesetClickableLayerIds(layers)
+  const interactiveLayerIds = changesetInspectLayerIds(layers, { overlayActive, showNoop })
   const initialViewState = parsedCamera
     ? { longitude: parsedCamera.lng, latitude: parsedCamera.lat, zoom: parsedCamera.zoom }
     : viewBounds && fitOptions
@@ -366,11 +395,13 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     map.keyboard.disableRotation()
     exposeMainMapForDebugging(map)
     markMapLoaded()
+    setMapZoom(map.getZoom())
     urlWritesEnabledRef.current = true
     setStyleEpoch((epoch) => epoch + 1)
   }
 
   function handleMoveEnd(event: ViewStateChangeEvent) {
+    setMapZoom(event.viewState.zoom)
     if (applyingCameraRef.current) return
     const { latitude, longitude, zoom } = event.viewState
     writeMapToUrl(serializeMapParam({ zoom, lat: latitude, lng: longitude }))
@@ -390,20 +421,23 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     const { action, nextFeatureId } = pickChangesetActionFromClick({
       map,
       point: event.point,
-      interactiveLayerIds,
+      interactiveLayerIds: clickableLayerIds,
       actions: viewer.adiff.actions,
       previousFeatureId: lastClickFeatureIdRef.current,
     })
 
-    lastClickFeatureIdRef.current = nextFeatureId
     const geojson = viewer.geojson as ChangesetGeoJSON
 
     if (nextFeatureId == null) {
+      // Spyglass / noop are inspect-only. Do not treat them as an empty-map deselect.
+      if (inspectHoverFromFeatures(event.features)) return
+      lastClickFeatureIdRef.current = null
       selectRef(null)
       clearSelectedFeatureState(map, geojson)
       return
     }
 
+    lastClickFeatureIdRef.current = nextFeatureId
     if (!action) return
 
     const element = action.new ?? action.old
@@ -413,17 +447,33 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     setSelectedFeatureState(map, geojson, nextRef.type, nextRef.id)
   }
 
-  function handleMouseMove({ features }: MapLayerMouseEvent) {
-    setCursor(features?.length ? 'pointer' : 'default')
+  function handleMouseMove(event: MapLayerMouseEvent) {
+    const placingPin = Boolean(pinPlacement)
+    setCursor(
+      cursorForMapHover(event.features, {
+        pinPlacement: placingPin,
+        overlayActive,
+      }),
+    )
+    if (placingPin) {
+      setInspectHover(null)
+      setInspectPoint(null)
+      return
+    }
+    const hover = inspectHoverFromFeatures(event.features)
+    setInspectHover(hover)
+    setInspectPoint(hover ? { x: event.point.x, y: event.point.y } : null)
   }
 
   function handleMouseLeave() {
     setCursor('default')
+    setInspectHover(null)
+    setInspectPoint(null)
   }
 
   return (
     <>
-      <div ref={containerRef} className="h-full w-full">
+      <div ref={containerRef} className="relative h-full w-full">
         {canMountMap && mapStyle && viewer ? (
           <Map
             id={CHANGESET_MAP_ID}
@@ -463,12 +513,18 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
                 beforeId={featureLayers[0].id}
               />
             ) : null}
+            {overlayActive && featureLayers[0] ? (
+              <SpyglassOverlay beforeId={featureLayers[0].id} />
+            ) : null}
             {/* compact = ⓘ toggle (also collapses on pan). MapLibre still starts expanded. */}
             <AttributionControl compact position="bottom-left" />
             <CollapseCompactAttributionOnMount />
             <PinPlacementOverlay />
             <ChangesetPinMarkers changesetId={changesetId} />
           </Map>
+        ) : null}
+        {overlayActive && inspectHover && inspectPoint ? (
+          <SpyglassInspectFlyout hover={inspectHover} point={inspectPoint} />
         ) : null}
       </div>
       {showError && (
@@ -494,6 +550,37 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
         </div>
       )}
     </>
+  )
+}
+
+function SpyglassInspectFlyout({
+  hover,
+  point,
+}: {
+  hover: InspectHover
+  point: { x: number; y: number }
+}) {
+  return (
+    <div
+      className={`pointer-events-none absolute z-20 max-w-xs rounded-lg px-2 py-1.5 ${flyoutSurfaceClassName}`}
+      style={{ left: point.x + 12, top: point.y + 12 }}
+    >
+      <div className="text-sm font-medium text-zinc-950">
+        {hover.type}/{hover.id}
+      </div>
+      {hover.tags.length > 0 ? (
+        <div className="mt-1 max-h-40 overflow-y-auto text-xs text-zinc-700">
+          {hover.tags.map(([key, value]) => (
+            <div key={key} className="truncate">
+              {key}={value}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {hover.extraCount > 0 ? (
+        <div className="mt-1 text-xs text-zinc-500">+{hover.extraCount} more</div>
+      ) : null}
+    </div>
   )
 }
 

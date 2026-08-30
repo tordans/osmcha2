@@ -36,3 +36,12 @@ _Avoid_: Group header, reference line
 **Flag**:
 Leftover OSMCha `reviewed_features` data, shown read-only as “Flagged by …”. Not an action in v2.
 _Avoid_: treating Flag as a review action
+
+### Map
+
+**Spyglass overlay**:
+Live tagged OSM objects from Spyglass tiles; hover-inspect only.
+_Avoid_: data layer, query tool, X-RAY.
+
+**Unchanged element**:
+An object in the changeset payload that was not edited (adiff `noop`). Shown as purple context. Distinct from **unchanged tags** on an edited object.

@@ -32,6 +32,7 @@ import {
   Quote,
   RefreshCw,
   Rss,
+  ScanSearch,
   SquarePen,
   Star,
   ThumbsDown,
@@ -80,6 +81,7 @@ export const PlusCircleIcon = appIcon(CirclePlus)
 export const PlusIcon = appIcon(Plus)
 export const QuoteIcon = appIcon(Quote)
 export const RssIcon = appIcon(Rss)
+export const ScanSearchIcon = appIcon(ScanSearch)
 export const StarIcon = appIcon(Star)
 export const TrashIcon = appIcon(Trash2)
 export const XMarkIcon = appIcon(X)
