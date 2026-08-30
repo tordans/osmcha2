@@ -310,11 +310,18 @@ export function tagMutationKey(tags: TagRow[]): string {
   )
 }
 
-/** Group elements that share the same added/removed/changed tags (unchanged tags ignored). */
+/**
+ * Group elements that share the same added/removed/changed tags (unchanged tags ignored).
+ * Elements with no tag mutations stay ungrouped — they are not “the same tag changes”.
+ */
 export function groupChangesByTagMutation(changes: ElementChange[]): ElementChange[][] {
   const groups = new Map<string, ElementChange[]>()
+  let ungrouped = 0
   for (const change of changes) {
-    const key = tagMutationKey(change.tags)
+    const key =
+      tagMutationRows(change.tags).length === 0
+        ? `__ungrouped:${ungrouped++}`
+        : tagMutationKey(change.tags)
     const group = groups.get(key)
     if (group) group.push(change)
     else groups.set(key, [change])

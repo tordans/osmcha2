@@ -6,6 +6,7 @@ import {
   matchFlaggedFeature,
   mergeFlaggedFeatures,
   tagMutationKey,
+  tagMutationRows,
   tagRows,
 } from './changesetElements.ts'
 
@@ -162,6 +163,36 @@ describe('groupChangesByTagMutation', () => {
       new: { tags: { highway: 'footway', name: 'South' } },
     })
     expect(tagMutationKey(left)).toBe(tagMutationKey(right))
+  })
+
+  test('does not group elements that have no tag mutations', () => {
+    const changes = buildElementChanges([
+      {
+        type: 'modify',
+        old: { type: 'node', id: 1, version: 1, lat: 1, lon: 1, tags: { highway: 'crossing' } },
+        new: { type: 'node', id: 1, version: 2, lat: 1.1, lon: 1, tags: { highway: 'crossing' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 2, version: 1, lat: 2, lon: 2, tags: { highway: 'crossing' } },
+        new: { type: 'node', id: 2, version: 2, lat: 2.1, lon: 2, tags: { highway: 'crossing' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'way', id: 3, version: 1, tags: { highway: 'residential', name: 'A Street' } },
+        new: { type: 'way', id: 3, version: 2, tags: { highway: 'service', name: 'A Street' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'way', id: 4, version: 1, tags: { highway: 'residential', name: 'B Street' } },
+        new: { type: 'way', id: 4, version: 2, tags: { highway: 'service', name: 'B Street' } },
+      },
+    ])
+    expect(tagMutationRows(changes[0].tags)).toEqual([])
+    expect(tagMutationRows(changes[1].tags)).toEqual([])
+    expect(
+      groupChangesByTagMutation(changes).map((group) => group.map((change) => change.id)),
+    ).toEqual([[1], [2], [3, 4]])
   })
 })
 
