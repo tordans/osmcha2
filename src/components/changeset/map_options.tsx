@@ -1,4 +1,5 @@
 import * as Headless from '@headlessui/react'
+import type { EliCategory, EliLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useMap } from 'react-map-gl/maplibre'
@@ -7,14 +8,106 @@ import { useMapStore } from '../../stores/mapStore.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
-import { FunnelIcon, GlobeAltIcon } from '../ui/icons.ts'
+import { flyoutSurfaceClassName } from '../ui/flyout.ts'
+import { ChevronDownIcon, CircleCheckIcon, FunnelIcon, GlobeAltIcon, StarIcon } from '../ui/icons.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
 import {
   isDuplicateOfBuiltinLayer,
   isImageryUsedMatch,
+  matchAllImageryUsedSelections,
+  matchImageryUsedSelection,
   parseImageryUsed,
 } from './matchImageryUsed.ts'
 import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
+
+/** ELI category keys in display order (matches Editor Layer Index / iD grouping). */
+const ELI_CATEGORY_ORDER = [
+  'photo',
+  'historicphoto',
+  'map',
+  'historicmap',
+  'osmbasedmap',
+  'elevation',
+  'qa',
+  'other',
+] as const satisfies readonly EliCategory[]
+
+const ELI_CATEGORY_LABELS: Record<EliCategory, string> = {
+  photo: 'Aerial imagery',
+  historicphoto: 'Historic imagery',
+  map: 'Maps',
+  historicmap: 'Historic maps',
+  osmbasedmap: 'OSM-based maps',
+  elevation: 'Elevation',
+  qa: 'Quality assurance',
+  other: 'Misc',
+}
+
+function eliCategoryOf(layer: Pick<EliLayer, 'category'>): EliCategory {
+  return layer.category ?? 'other'
+}
+
+function compareViewportLayers(
+  a: EliLayer,
+  b: EliLayer,
+  imageryUsed: string | null | undefined,
+): number {
+  const aUsed = isImageryUsedMatch(imageryUsed, a.name) || isImageryUsedMatch(imageryUsed, a.id)
+  const bUsed = isImageryUsedMatch(imageryUsed, b.name) || isImageryUsedMatch(imageryUsed, b.id)
+  if (aUsed !== bUsed) return aUsed ? -1 : 1
+  if (a.best !== b.best) return a.best ? -1 : 1
+  return a.name.localeCompare(b.name)
+}
+
+function groupViewportLayersByCategory(
+  layers: readonly EliLayer[],
+  imageryUsed: string | null | undefined,
+): Array<{ category: EliCategory; label: string; layers: EliLayer[] }> {
+  const byCategory = new Map<EliCategory, EliLayer[]>()
+  for (const layer of layers) {
+    const category = eliCategoryOf(layer)
+    const bucket = byCategory.get(category)
+    if (bucket) bucket.push(layer)
+    else byCategory.set(category, [layer])
+  }
+
+  return ELI_CATEGORY_ORDER.flatMap((category) => {
+    const groupLayers = byCategory.get(category)
+    if (!groupLayers?.length) return []
+    return [
+      {
+        category,
+        label: ELI_CATEGORY_LABELS[category],
+        layers: [...groupLayers].sort((a, b) => compareViewportLayers(a, b, imageryUsed)),
+      },
+    ]
+  })
+}
+
+type TopImageryRow = {
+  styleId: string
+  label: string
+  used: boolean
+}
+
+/** Builtin defaults plus every matched `imagery_used` layer (ELI rows duplicated here). */
+function buildTopImageryRows(imageryUsed: string | null | undefined): TopImageryRow[] {
+  const usedMatches = matchAllImageryUsedSelections(imageryUsed)
+  const usedStyleIds = new Set(usedMatches.map((match) => match.styleId))
+  const rows: TopImageryRow[] = usedMatches.map((match) => ({
+    styleId: match.styleId,
+    label: match.label,
+    used: true,
+  }))
+
+  for (const option of BUILTIN_BASEMAP_OPTIONS) {
+    if (usedStyleIds.has(option.id)) continue
+    rows.push({ styleId: option.id, label: option.label, used: false })
+  }
+
+  return rows
+}
 
 const add = (arr: string[], elem: string): string[] => {
   const set = new Set(arr)
@@ -35,8 +128,10 @@ const toggle = (arr: string[], elem: string): string[] => {
 const mapControlButtonClassName =
   'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100'
 
-const mapControlPanelClassName =
-  'z-40 w-80 max-h-[min(70dvh,36rem)] overflow-y-auto rounded-xl bg-white p-3 shadow-lg ring-1 ring-zinc-950/10'
+const mapControlPanelClassName = clsx(
+  'z-40 max-h-[min(70dvh,36rem)] w-80 overflow-y-auto rounded-xl p-3',
+  flyoutSurfaceClassName,
+)
 
 function imageryLayerButtonClassName(active: boolean) {
   return clsx(
@@ -143,11 +238,25 @@ function MapFilterOptions({
   )
 }
 
-function UsedBadge() {
+function BestForAreaIcon() {
   return (
-    <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-xs font-medium text-emerald-800">
-      Used
-    </span>
+    <Tooltip as="span" content="Best for this area" className="inline-flex shrink-0">
+      <StarIcon
+        variant="fill"
+        className="size-4 text-yellow-500"
+        aria-hidden="true"
+      />
+    </Tooltip>
+  )
+}
+
+function ChangesetUsedIcon({ className }: { className?: string }) {
+  return (
+    <CircleCheckIcon
+      variant="fill"
+      className={clsx('size-4 shrink-0 text-emerald-600', className)}
+      aria-hidden="true"
+    />
   )
 }
 
@@ -162,37 +271,65 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
   const style = useMapStore((state) => state.style)
   const setStyle = useMapStore((state) => state.setStyle)
   const imageryTokens = parseImageryUsed(imageryUsed)
+  const appliedMatch = matchImageryUsedSelection(imageryUsed)
+  const isAppliedFromChangeset = appliedMatch !== null && style === appliedMatch.styleId
+  const appliedTooltip = appliedMatch
+    ? `Applied background layer ${appliedMatch.label} that was used in this changeset.`
+    : null
+
+  const imageryButton = (
+    <Headless.PopoverButton
+      aria-label={appliedTooltip ?? 'Background imagery'}
+      className={mapControlButtonClassName}
+    >
+      <GlobeAltIcon
+        className={clsx('size-5', isAppliedFromChangeset ? 'text-emerald-600' : 'text-zinc-700')}
+      />
+    </Headless.PopoverButton>
+  )
 
   return (
     <Headless.Popover>
       {({ open }) => (
         <>
-          <Headless.PopoverButton
-            aria-label="Background imagery"
-            className={mapControlButtonClassName}
-          >
-            <GlobeAltIcon className="size-5 text-zinc-700" />
-          </Headless.PopoverButton>
+          {isAppliedFromChangeset && appliedTooltip ? (
+            <Tooltip as="span" content={appliedTooltip} className="inline-flex">
+              {imageryButton}
+            </Tooltip>
+          ) : (
+            imageryButton
+          )}
           <Headless.PopoverPanel anchor="top end" className={mapControlPanelClassName}>
             <h2 className="mb-2 text-base font-semibold text-zinc-950">Background imagery</h2>
             {imageryTokens.length > 0 && (
-              <p className="mb-2 text-sm text-zinc-500">
-                Changeset used: {imageryTokens.join(', ')}
+              <p
+                className={clsx(
+                  'mb-2 flex items-start gap-1.5 text-sm',
+                  isAppliedFromChangeset ? 'text-emerald-600' : 'text-zinc-500',
+                )}
+              >
+                <ChangesetUsedIcon className="mt-0.5" />
+                <span>Changeset used: {imageryTokens.join(', ')}</span>
               </p>
             )}
 
             <section className="space-y-1">
-              {BUILTIN_BASEMAP_OPTIONS.map((opt) => (
+              {buildTopImageryRows(imageryUsed).map((row) => (
                 <button
-                  key={opt.id}
+                  key={row.styleId}
                   type="button"
-                  onClick={() => setStyle(opt.id)}
-                  className={imageryLayerButtonClassName(style === opt.id)}
+                  onClick={() => setStyle(row.styleId)}
+                  className={imageryLayerButtonClassName(style === row.styleId)}
                 >
-                  <span>{opt.label}</span>
-                  {isImageryUsedMatch(imageryUsed, opt.label) ||
-                  isImageryUsedMatch(imageryUsed, opt.id) ? (
-                    <UsedBadge />
+                  <span className="min-w-0 truncate">{row.label}</span>
+                  {row.used ? (
+                    <Tooltip
+                      as="span"
+                      content="Used in this changeset"
+                      className="inline-flex shrink-0"
+                    >
+                      <ChangesetUsedIcon />
+                    </Tooltip>
                   ) : null}
                 </button>
               ))}
@@ -212,6 +349,39 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
   )
 }
 
+function ViewportLayerButton({
+  layer,
+  imageryUsed,
+  style,
+  setStyle,
+}: {
+  layer: EliLayer
+  imageryUsed?: string | null
+  style: string
+  setStyle: (style: string) => void
+}) {
+  const value = toEliStyleId(layer.id)
+  const used =
+    isImageryUsedMatch(imageryUsed, layer.name) || isImageryUsedMatch(imageryUsed, layer.id)
+  return (
+    <button
+      type="button"
+      onClick={() => setStyle(value)}
+      className={imageryLayerButtonClassName(style === value)}
+    >
+      <span className="min-w-0 truncate">{layer.name}</span>
+      <span className="flex shrink-0 items-center gap-1">
+        {layer.best ? <BestForAreaIcon /> : null}
+        {used ? (
+          <Tooltip as="span" content="Used in this changeset" className="inline-flex shrink-0">
+            <ChangesetUsedIcon />
+          </Tooltip>
+        ) : null}
+      </span>
+    </button>
+  )
+}
+
 function ViewportEditorLayerList({
   enabled,
   map,
@@ -226,20 +396,13 @@ function ViewportEditorLayerList({
   setStyle: (style: string) => void
 }) {
   const { layers, status } = useViewportEditorLayers(map, enabled)
-  const visibleLayers = layers
-    .filter((layer) => !isDuplicateOfBuiltinLayer(layer))
-    .sort((a, b) => {
-      const aUsed = isImageryUsedMatch(imageryUsed, a.name) || isImageryUsedMatch(imageryUsed, a.id)
-      const bUsed = isImageryUsedMatch(imageryUsed, b.name) || isImageryUsedMatch(imageryUsed, b.id)
-      if (aUsed !== bUsed) return aUsed ? -1 : 1
-      if (a.best !== b.best) return a.best ? -1 : 1
-      return a.name.localeCompare(b.name)
-    })
+  const visibleLayers = layers.filter((layer) => !isDuplicateOfBuiltinLayer(layer))
+  const categoryGroups = groupViewportLayersByCategory(visibleLayers, imageryUsed)
 
   return (
     <>
       <Divider className="my-3" />
-      <section className="space-y-1">
+      <section className="space-y-2">
         <h3 className="text-base font-medium text-zinc-700">In this view</h3>
         {status !== 'ready' && visibleLayers.length === 0 ? (
           <p className="px-2 py-2 text-sm text-zinc-500">
@@ -249,29 +412,42 @@ function ViewportEditorLayerList({
         {status === 'ready' && visibleLayers.length === 0 ? (
           <p className="px-2 py-2 text-sm text-zinc-500">No extra imagery for this view.</p>
         ) : null}
-        {visibleLayers.map((layer) => {
-          const value = toEliStyleId(layer.id)
-          const used =
-            isImageryUsedMatch(imageryUsed, layer.name) || isImageryUsedMatch(imageryUsed, layer.id)
-          return (
-            <button
-              key={layer.id}
-              type="button"
-              onClick={() => setStyle(value)}
-              className={imageryLayerButtonClassName(style === value)}
-            >
-              <span className="min-w-0">
-                <span className="block truncate">{layer.name}</span>
-                {layer.best ? (
-                  <span className="block text-xs font-normal text-zinc-500">
-                    Best for this area
+        {categoryGroups.map(({ category, label, layers: groupLayers }) => (
+          <Headless.Disclosure key={category} defaultOpen={false}>
+            {({ open }) => (
+              <div
+                className={clsx(
+                  'rounded-lg border border-zinc-950/10',
+                  open && 'bg-zinc-50',
+                )}
+              >
+                <Headless.DisclosureButton className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-2.5 text-left text-sm font-medium text-zinc-700 select-none active:bg-zinc-950/5">
+                  <span className="min-w-0 truncate">
+                    {label}
+                    <span className="ml-1.5 font-normal text-zinc-500">{groupLayers.length}</span>
                   </span>
-                ) : null}
-              </span>
-              {used ? <UsedBadge /> : null}
-            </button>
-          )
-        })}
+                  <ChevronDownIcon
+                    className={clsx(
+                      'size-4 shrink-0 text-zinc-500 transition',
+                      open && 'rotate-180',
+                    )}
+                  />
+                </Headless.DisclosureButton>
+                <Headless.DisclosurePanel className="space-y-1 border-t border-zinc-950/10 px-1 py-1">
+                  {groupLayers.map((layer) => (
+                    <ViewportLayerButton
+                      key={layer.id}
+                      layer={layer}
+                      imageryUsed={imageryUsed}
+                      style={style}
+                      setStyle={setStyle}
+                    />
+                  ))}
+                </Headless.DisclosurePanel>
+              </div>
+            )}
+          </Headless.Disclosure>
+        ))}
       </section>
     </>
   )

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   isDuplicateOfBuiltinLayer,
   isImageryUsedMatch,
+  matchAllImageryUsedSelections,
   matchBuiltinStyleId,
+  matchImageryUsedSelection,
   matchImageryUsedStyleId,
   parseImageryUsed,
 } from './matchImageryUsed.ts'
@@ -47,6 +49,34 @@ describe('matchImageryUsedStyleId', () => {
   it('skips overlay sources and returns null when nothing matches', () => {
     expect(matchImageryUsedStyleId('Mapillary Images', eliLayers)).toBe(null)
     expect(matchImageryUsedStyleId('Not reported', eliLayers)).toBe(null)
+  })
+})
+
+describe('matchImageryUsedSelection', () => {
+  it('returns style id and display label for the matched layer', () => {
+    expect(matchImageryUsedSelection('Bing Maps Aerial', eliLayers)).toEqual({
+      styleId: 'bing',
+      label: 'Bing Maps Aerial',
+    })
+    expect(matchImageryUsedSelection('Maxar Premium Imagery (Maxar 2024)', eliLayers)).toEqual({
+      styleId: 'eli:Maxar-Premium',
+      label: 'Maxar Premium Imagery',
+    })
+  })
+})
+
+describe('matchAllImageryUsedSelections', () => {
+  it('returns every matched token, including ELI layers after builtins', () => {
+    expect(
+      matchAllImageryUsedSelections(
+        'Bing Maps Aerial;Mapillary Images;Maxar Premium Imagery;Berlin Geoportal Aerial',
+        eliLayers,
+      ),
+    ).toEqual([
+      { styleId: 'bing', label: 'Bing Maps Aerial' },
+      { styleId: 'eli:Maxar-Premium', label: 'Maxar Premium Imagery' },
+      { styleId: 'eli:Berlin-Geoportal', label: 'Berlin Geoportal Aerial' },
+    ])
   })
 })
 

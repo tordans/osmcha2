@@ -89,16 +89,51 @@ export function isDuplicateOfBuiltinLayer(layer: ImageryLayerRef): boolean {
   return matchBuiltinStyleId(layer.name) !== null || matchBuiltinStyleId(layer.id) !== null
 }
 
+export type ImageryUsedMatch = {
+  styleId: string
+  label: string
+}
+
+/** Every parseable `imagery_used` token that maps to a builtin or ELI basemap (deduped). */
+export function matchAllImageryUsedSelections(
+  imageryUsed: string | null | undefined,
+  eliLayers: readonly ImageryLayerRef[] = getLayers(),
+): ImageryUsedMatch[] {
+  const seen = new Set<string>()
+  const matches: ImageryUsedMatch[] = []
+
+  for (const token of parseImageryUsed(imageryUsed)) {
+    const builtin = matchBuiltinStyleId(token)
+    if (builtin) {
+      if (seen.has(builtin)) continue
+      seen.add(builtin)
+      const option = BUILTIN_BASEMAP_OPTIONS.find((entry) => entry.id === builtin)
+      matches.push({ styleId: builtin, label: option?.label ?? token })
+      continue
+    }
+
+    const eli = matchEliLayer(token, eliLayers)
+    if (!eli) continue
+    const styleId = toEliStyleId(eli.id)
+    if (seen.has(styleId)) continue
+    seen.add(styleId)
+    matches.push({ styleId, label: eli.name })
+  }
+
+  return matches
+}
+
+/** First parseable `imagery_used` token that maps to a builtin or ELI basemap. */
+export function matchImageryUsedSelection(
+  imageryUsed: string | null | undefined,
+  eliLayers: readonly ImageryLayerRef[] = getLayers(),
+): ImageryUsedMatch | null {
+  return matchAllImageryUsedSelections(imageryUsed, eliLayers)[0] ?? null
+}
+
 export function matchImageryUsedStyleId(
   imageryUsed: string | null | undefined,
   eliLayers: readonly ImageryLayerRef[] = getLayers(),
 ): string | null {
-  for (const token of parseImageryUsed(imageryUsed)) {
-    const builtin = matchBuiltinStyleId(token)
-    if (builtin) return builtin
-
-    const eli = matchEliLayer(token, eliLayers)
-    if (eli) return toEliStyleId(eli.id)
-  }
-  return null
+  return matchImageryUsedSelection(imageryUsed, eliLayers)?.styleId ?? null
 }

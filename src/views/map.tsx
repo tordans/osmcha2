@@ -133,7 +133,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const applyingCameraRef = useRef(false)
   const urlWritesEnabledRef = useRef(false)
   const lastClickFeatureIdRef = useRef<string | number | null>(null)
-  const matchedImageryRef = useRef(false)
+  const matchedImageryUsedRef = useRef<string | null | undefined>(undefined)
   const emptyAdiffWarnedRef = useRef(false)
   const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -193,8 +193,8 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
         await waitForMapStoreHydration()
         if (cancelled) return
 
-        if (!matchedImageryRef.current) {
-          matchedImageryRef.current = true
+        if (matchedImageryUsedRef.current !== imageryUsed) {
+          matchedImageryUsedRef.current = imageryUsed
           const matchedStyleId = matchImageryUsedStyleId(imageryUsed)
           if (matchedStyleId && matchedStyleId !== useMapStore.getState().style) {
             useMapStore.getState().setStyle(matchedStyleId)
