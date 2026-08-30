@@ -32,7 +32,7 @@ export function Select({
         {...props}
         className={clsx([
           // Basic layout
-          'relative block w-full appearance-none rounded-lg py-[calc(--spacing(2.5)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
+          'relative block w-full cursor-pointer appearance-none rounded-lg py-[calc(--spacing(2.5)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
           'min-h-11 sm:min-h-9',
           // Horizontal padding
           multiple

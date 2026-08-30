@@ -30,6 +30,11 @@ import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { parsePinParam } from '../routing/pinParam.ts'
 import { parseRefParam } from '../routing/refParam.ts'
+import {
+  getChangesetNotesActions,
+  getPinPlacement,
+  usePinPlacement,
+} from '../stores/changeset-notes-store.ts'
 import { useMapActions, useMapLoaded } from '../stores/map-loaded-store.ts'
 import { useMapStore } from '../stores/mapStore.ts'
 import {
@@ -58,6 +63,8 @@ import {
   clearMainMapDebugExposure,
   exposeMainMapForDebugging,
 } from './exposeMainMapForDebugging.ts'
+import { ChangesetPinMarkers, PinPlacementOverlay } from './PinPlacementOverlay.tsx'
+import { shouldIgnoreMapClick } from './suppressMapClick.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -139,6 +146,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [cursor, setCursor] = useState('default')
   const [styleEpoch, setStyleEpoch] = useState(0)
+  const pinPlacement = usePinPlacement()
 
   const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
@@ -370,6 +378,14 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
 
   function handleClick(event: MapLayerMouseEvent) {
     if (!viewer) return
+    if (shouldIgnoreMapClick()) return
+    if (getPinPlacement()) {
+      getChangesetNotesActions().placePin({
+        lat: event.lngLat.lat,
+        lng: event.lngLat.lng,
+      })
+      return
+    }
     const map = event.target
     const { action, nextFeatureId } = pickChangesetActionFromClick({
       map,
@@ -421,7 +437,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
             pitchWithRotate={false}
             touchPitch={false}
             interactiveLayerIds={interactiveLayerIds}
-            cursor={cursor}
+            cursor={pinPlacement ? 'crosshair' : cursor}
             style={{ width: '100%', height: '100%' }}
             onLoad={handleLoad}
             onMoveEnd={handleMoveEnd}
@@ -450,6 +466,8 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
             {/* compact = ⓘ toggle (also collapses on pan). MapLibre still starts expanded. */}
             <AttributionControl compact position="bottom-left" />
             <CollapseCompactAttributionOnMount />
+            <PinPlacementOverlay />
+            <ChangesetPinMarkers changesetId={changesetId} />
           </Map>
         ) : null}
       </div>

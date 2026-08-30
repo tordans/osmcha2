@@ -79,7 +79,7 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
         <DropdownSection className="shrink-0 grid-cols-none!">
           <DropdownHeading>History</DropdownHeading>
           <DropdownItem href={urls.history} target="_blank" rel="noopener noreferrer">
-            OSM Website
+            History on OpenStreetMap.org
           </DropdownItem>
           <DropdownItem href={urls.deepHistory} target="_blank" rel="noopener noreferrer">
             Deep History
@@ -89,7 +89,7 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
           </DropdownItem>
         </DropdownSection>
         <DropdownSection className="shrink-0 grid-cols-none!">
-          <DropdownHeading>Editor</DropdownHeading>
+          <DropdownHeading>Open object in editor</DropdownHeading>
           <DropdownItem href={urls.id} target="_blank" rel="noopener noreferrer">
             iD
           </DropdownItem>
@@ -100,7 +100,7 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
             Level0
           </DropdownItem>
           <DropdownItem href={urls.rapid} target="_blank" rel="noopener noreferrer">
-            RapiD
+            Rapid
           </DropdownItem>
         </DropdownSection>
         {urls.mapillary && urls.panoramax ? (

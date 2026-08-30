@@ -93,7 +93,7 @@ const headerReviewCountIconClassName = 'inline size-3! my-0!'
 /** Full sidebar content width; cancel Headless’ default start/end nudge so the panel lines up. */
 const reviewHeaderMenuClassName = clsx(
   'w-(--button-width) max-w-[calc(100vw-1.25rem)]',
-  '[--anchor-offset:0px]! data-[anchor~=start]:[--anchor-offset:0px]! data-[anchor~=end]:[--anchor-offset:0px]!',
+  '[--anchor-offset:0px]! data-[anchor~=end]:[--anchor-offset:0px]! data-[anchor~=start]:[--anchor-offset:0px]!',
 )
 
 const changesetOpenMenuClassName = clsx(
@@ -554,11 +554,7 @@ export function DetailsHeader({
               </Tooltip>
             </div>
           </DropdownButton>
-          <DropdownMenu
-            anchor="bottom end"
-            className={userOpenMenuClassName}
-            style={menuStyle}
-          >
+          <DropdownMenu anchor="bottom end" className={userOpenMenuClassName} style={menuStyle}>
             <DropdownSection>
               <DropdownHeading>
                 User {osmUser}

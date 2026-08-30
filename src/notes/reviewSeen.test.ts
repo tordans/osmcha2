@@ -64,9 +64,9 @@ describe('latestForeignNoteAt', () => {
   })
 
   test('skips notes with no date', () => {
-    expect(latestForeignNoteAt([{ author: 'alice' }, { author: 'bob', date: '2026-01-01T00:00:00Z' }])).toBe(
-      '2026-01-01T00:00:00Z',
-    )
+    expect(
+      latestForeignNoteAt([{ author: 'alice' }, { author: 'bob', date: '2026-01-01T00:00:00Z' }]),
+    ).toBe('2026-01-01T00:00:00Z')
   })
 })
 

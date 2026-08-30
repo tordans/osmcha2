@@ -160,7 +160,7 @@ export function Tooltip({
         popover="hint"
         role="tooltip"
         className={clsx(
-          'm-0 w-max max-w-xs border-0 bg-zinc-950 px-2 py-1 text-left text-xs/4 text-white',
+          'm-0 w-max max-w-xs border-0 bg-zinc-950 px-2 py-1 text-left text-xs/4 whitespace-pre-line text-white',
           'rounded-md shadow-lg',
           "before:pointer-events-none before:absolute before:bottom-full before:border-x-4 before:border-b-4 before:border-x-transparent before:border-b-zinc-950 before:content-['']",
           panelArrowClassName[placement],

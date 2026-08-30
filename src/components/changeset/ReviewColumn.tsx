@@ -11,6 +11,7 @@ import {
 } from '../../config/bindings.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
+import { isOsmSandboxAuth } from '../../notes/osmAuthConfig.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import { Badge } from '../ui/badge.tsx'
@@ -171,6 +172,11 @@ export function ReviewColumn({
           userDetails={userDetails}
           whosThat={whosThat}
         />
+        {import.meta.env.DEV && isOsmSandboxAuth() ? (
+          <p className="px-2.5 pb-1 text-xs text-amber-800">
+            Discussion posts go to the OSM sandbox, not osm.org.
+          </p>
+        ) : null}
 
         <div
           className={clsx(
@@ -252,9 +258,17 @@ export function ReviewColumn({
                   <Discussions
                     changesetAuthor={properties.user ?? ''}
                     discussions={discussions}
-                    changesetIsHarmful={Boolean(properties.harmful)}
                     changesetId={changesetId}
                     revealRef={revealDiscussionNote}
+                    onFinishInChanges={() => {
+                      exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
+                      setExpanded(true)
+                      requestAnimationFrame(() => {
+                        document
+                          .getElementById('finish-review')
+                          ?.scrollIntoView({ block: 'nearest' })
+                      })
+                    }}
                   />
                 </motion.div>
               ) : null}

@@ -1,6 +1,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { useState } from 'react'
+import { flyoutFrostedSurfaceClassName } from '../ui/flyout.ts'
 import { ChevronsUpDownIcon } from '../ui/icons.ts'
 
 export type SearchOption = {
@@ -110,7 +111,7 @@ export function SearchCombobox({
           'isolate min-w-[calc(var(--input-width)+8px)] scroll-py-1 rounded-xl p-1 select-none empty:invisible',
           'outline outline-transparent focus:outline-hidden',
           'overflow-y-scroll overscroll-contain',
-          'bg-white/75 shadow-lg ring-1 ring-zinc-950/10 backdrop-blur-xl',
+          flyoutFrostedSurfaceClassName,
           'transition-opacity duration-100 ease-in data-closed:data-leave:opacity-0 data-transition:pointer-events-none',
         )}
       >

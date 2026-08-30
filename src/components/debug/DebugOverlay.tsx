@@ -15,9 +15,7 @@ function AdminChipSeparator() {
 }
 
 function openTanStackDevtools() {
-  document
-    .querySelector<HTMLButtonElement>('button[aria-label="Open TanStack Devtools"]')
-    ?.click()
+  document.querySelector<HTMLButtonElement>('button[aria-label="Open TanStack Devtools"]')?.click()
 }
 
 export function DebugOverlay() {
@@ -28,9 +26,7 @@ export function DebugOverlay() {
   return (
     <>
       <TanStackAppDevtools />
-      <div
-        className={`fixed bottom-1 left-1 z-30 ${adminChipClassName}`}
-      >
+      <div className={`fixed bottom-1 left-1 z-30 ${adminChipClassName}`}>
         <button
           type="button"
           title="Open TanStack Devtools"

@@ -111,7 +111,3 @@ export function setTag(id: number, tag: any, remove: boolean = false) {
   const endpoint = `/changesets/${id}/tags/${tag.value}/`
   return remove ? api.delete(endpoint) : api.post(endpoint, { tag_pk: tag, id })
 }
-
-export function postComment(id: number, comment: string) {
-  return api.post(`/changesets/${id}/comment/`, { comment })
-}

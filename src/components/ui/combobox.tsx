@@ -1,6 +1,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { useState } from 'react'
+import { flyoutFrostedSurfaceClassName } from './flyout.ts'
 import { CheckIcon, ChevronsUpDownIcon } from './icons.ts'
 
 export function Combobox<T>({
@@ -89,7 +90,7 @@ export function Combobox<T>({
             'data-disabled:border-zinc-950/20',
           ])}
         />
-        <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex items-center px-2">
+        <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex cursor-pointer items-center px-2">
           <ChevronsUpDownIcon
             className="size-5 text-zinc-500 group-data-disabled:text-zinc-600 group-data-hover:text-zinc-700 sm:size-4 forced-colors:text-[CanvasText]"
             aria-hidden="true"
@@ -108,10 +109,7 @@ export function Combobox<T>({
           'outline outline-transparent focus:outline-hidden',
           // Handle scrolling when menu won't fit in viewport
           'overflow-y-scroll overscroll-contain',
-          // Popover background
-          'bg-white/75 backdrop-blur-xl',
-          // Shadows
-          'shadow-lg ring-1 ring-zinc-950/10',
+          flyoutFrostedSurfaceClassName,
           // Transitions
           'transition-opacity duration-100 ease-in data-closed:data-leave:opacity-0 data-transition:pointer-events-none',
         )}
@@ -146,7 +144,7 @@ export function ComboboxOption<T>({
       {...props}
       className={clsx(
         // Basic layout
-        'group/option grid w-full cursor-default grid-cols-[1fr_--spacing(5)] items-baseline gap-x-2 rounded-lg py-2.5 pr-2 pl-3.5 sm:grid-cols-[1fr_--spacing(4)] sm:py-1.5 sm:pr-2 sm:pl-3',
+        'group/option grid w-full cursor-pointer grid-cols-[1fr_--spacing(5)] items-baseline gap-x-2 rounded-lg py-2.5 pr-2 pl-3.5 sm:grid-cols-[1fr_--spacing(4)] sm:py-1.5 sm:pr-2 sm:pl-3',
         // Typography
         'text-base/6 text-zinc-950 sm:text-sm/6 forced-colors:text-[CanvasText]',
         // Focus

@@ -117,7 +117,7 @@ export function Radio({
     <Headless.Radio
       data-slot="control"
       {...props}
-      className={clsx(className, 'group inline-flex focus:outline-hidden')}
+      className={clsx(className, 'group inline-flex cursor-pointer focus:outline-hidden')}
     >
       <span className={clsx([base, colors[color]])}>
         <span

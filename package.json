@@ -61,6 +61,7 @@
     "lucide-react": "^1.31.0",
     "maplibre-gl": "^5.1.0",
     "motion": "^13.1.0",
+    "osm-auth": "^3.2.0",
     "react": "^19",
     "react-dom": "^19",
     "react-map-gl": "^8",

@@ -1,17 +1,34 @@
 import * as Headless from '@headlessui/react'
+import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import {
+  flattenObjectNotes,
   locateNotes,
   objectRefKey,
   type LocatedNotes,
   type ObjectNotes,
 } from '../../notes/locateNotes.ts'
+import {
+  draftsForObject,
+  isObjectSeenCollapsed,
+  latestForeignNoteAt,
+  type ChangesetDraft,
+} from '../../notes/reviewSeen.ts'
+import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
+import {
+  useChangesetDraft,
+  useChangesetNotesActions,
+  useFocusedObject,
+  useOpenEditor,
+  useSeenMap,
+} from '../../stores/changeset-notes-store.ts'
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
+import { Button } from '../ui/button.tsx'
 import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
@@ -21,6 +38,7 @@ import {
 } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
+import { ObjectReviewActions } from './AddNoteButton.tsx'
 import {
   buildElementChanges,
   groupChangesByTagMutation,
@@ -33,6 +51,8 @@ import {
   type NamedReason,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
+import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
+import { NoteEditor } from './NoteEditor.tsx'
 import {
   ChangesetNotesSection,
   ChangesNotesHeader,
@@ -118,6 +138,23 @@ function aggregateNoteCountByKey(
   return counts
 }
 
+function reviewState(
+  change: ElementChange,
+  seenMap: Record<string, string> | undefined,
+  objectNotes: ObjectNotes | undefined,
+  draft: ChangesetDraft | undefined,
+  currentUser?: string,
+) {
+  const notes = flattenObjectNotes(objectNotes)
+  const drafts = draftsForObject(draft, change.type, change.id)
+  const hasNotes = notes.length > 0 || drafts.some((note) => note.body.trim())
+  const collapsed = isObjectSeenCollapsed({
+    seenAt: seenMap?.[objectRefKey(change.type, change.id)],
+    latestForeignNoteAt: latestForeignNoteAt(notes, currentUser),
+  })
+  return { collapsed, hasNotes, drafts }
+}
+
 export function DetailsChanges({
   changesetId,
   adiff,
@@ -135,6 +172,11 @@ export function DetailsChanges({
   const { data: discussion } = useChangesetDiscussion(changesetId, {
     pollWhileActive: true,
   })
+  const userKey = useNotesUserKey()
+  const seenMap = useSeenMap(userKey, changesetId)
+  const draft = useChangesetDraft(userKey, changesetId)
+  const focusedObject = useFocusedObject()
+  const { markSeen, markUnseen, toggleEditor, requestFinishFocus } = useChangesetNotesActions()
   const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
   const changes = buildElementChanges(adiff?.actions ?? [], flagged, reasons)
   const grouped = groupElementChanges(changes)
@@ -145,6 +187,38 @@ export function DetailsChanges({
     keysByObject,
   })
   const totalNotes = countLocatedNotes(located)
+  const currentUser = userKey === 'anonymous' ? undefined : userKey
+
+  useHotkeys([
+    {
+      hotkey: 'N',
+      callback: () => {
+        if (!focusedObject || focusedObject.changesetId !== changesetId) return
+        const nextRef = refParamFromElement(focusedObject.type, focusedObject.id)
+        if (nextRef) toggleEditor(userKey, changesetId, nextRef)
+      },
+    },
+    {
+      hotkey: 'S',
+      callback: () => {
+        if (!focusedObject || focusedObject.changesetId !== changesetId) return
+        const objectKey = objectRefKey(focusedObject.type, focusedObject.id)
+        const change = changes.find(
+          (item) => item.type === focusedObject.type && item.id === focusedObject.id,
+        )
+        if (!change) return
+        const { collapsed } = reviewState(
+          change,
+          seenMap,
+          located.byObject.get(objectKey),
+          draft,
+          currentUser,
+        )
+        if (collapsed) markUnseen(userKey, changesetId, objectKey)
+        else markSeen(userKey, changesetId, objectKey)
+      },
+    },
+  ])
 
   if (!adiff) {
     return <Loading className="pt-10" />
@@ -164,6 +238,7 @@ export function DetailsChanges({
       <ChangesetNotesSection notes={located.changesetNotes} />
       {grouped.map(([actionType, actionChanges]) => {
         const Icon = ACTION_ICON[actionType]
+        const groups = groupChangesByTagMutation(actionChanges)
         return (
           <Fragment key={actionType}>
             <h2
@@ -175,7 +250,7 @@ export function DetailsChanges({
               <Icon variant="fill" className="size-4 flex-none" /> {ACTION_LABEL[actionType]}
             </h2>
             <ul>
-              {groupChangesByTagMutation(actionChanges).map((group) =>
+              {groups.map((group) =>
                 group.length === 1 ? (
                   <ElementChangeRow
                     key={`${group[0].type}/${group[0].id}`}
@@ -210,6 +285,14 @@ export function DetailsChanges({
         )
       })}
       <OtherNotesSection notes={located.unmatched} />
+      <FinishReviewCard changesetId={changesetId} selectRef={selectRef} />
+      <UnsentNotesBar
+        changesetId={changesetId}
+        onFinish={() => {
+          requestFinishFocus()
+          document.getElementById('finish-review')?.scrollIntoView({ block: 'nearest' })
+        }}
+      />
     </section>
   )
 }
@@ -242,6 +325,12 @@ function TagMutationGroup({
   zoomToAndSelect: (type: string, id: number) => void
   notesByObject: Map<string, ObjectNotes>
 }) {
+  const userKey = useNotesUserKey()
+  const seenMap = useSeenMap(userKey, changesetId)
+  const draft = useChangesetDraft(userKey, changesetId)
+  const { markAllSeen, toggleEditor } = useChangesetNotesActions()
+  const openEditor = useOpenEditor()
+  const currentUser = userKey === 'anonymous' ? undefined : userKey
   const mutations = tagMutationRows(changes[0].tags)
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
   const containsSelected = selectedInGroup != null
@@ -249,6 +338,33 @@ function TagMutationGroup({
   const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
   const groupNoteCountByKey = aggregateNoteCountByKey(changes, notesByObject)
   const highlightTagKey = revealInGroup && deepLinkReveal?.key ? deepLinkReveal.key : undefined
+  const memberStates = changes
+    .map((change) => ({
+      change,
+      ...reviewState(
+        change,
+        seenMap,
+        notesByObject.get(objectRefKey(change.type, change.id)),
+        draft,
+        currentUser,
+      ),
+    }))
+    .sort((left, right) => Number(right.hasNotes) - Number(left.hasNotes))
+  const editingNote =
+    openEditor?.changesetId === changesetId
+      ? draft?.notes.find((note) => note.id === openEditor.noteId)
+      : undefined
+  const editingInGroup =
+    editingNote?.ref != null &&
+    changes.some(
+      (change) => change.type === editingNote.ref?.type && change.id === editingNote.ref.id,
+    )
+  const forceOpen =
+    containsSelected ||
+    revealInGroup ||
+    memberStates.some((member) => member.hasNotes) ||
+    editingInGroup
+  const activeNoteKey = editingInGroup ? editingNote?.ref?.key : undefined
 
   function targetChangeForTag(key: string) {
     if (selectedInGroup) return selectedInGroup
@@ -265,37 +381,52 @@ function TagMutationGroup({
     if (nextRef) selectRef(nextRef)
   }
 
-  function scrollToGroupTagNotes(key: string) {
+  function addNoteOnGroupTag(key: string) {
     const target = targetChangeForTag(key)
-    selectGroupTag(key)
-    document.getElementById(noteThreadDomId(target.type, target.id, key))?.scrollIntoView({
-      block: 'nearest',
-    })
+    const nextRef = refParamFromElement(target.type, target.id, key)
+    if (!nextRef) return
+    selectRef(nextRef)
+    toggleEditor(userKey, changesetId, nextRef)
   }
 
   return (
     <li className="px-2 py-2">
       <Headless.Disclosure
-        key={`${disclosureKey}:${revealInGroup ? String(deepLinkEpoch ?? 0) : '0'}`}
-        defaultOpen={containsSelected || revealInGroup}
+        key={`${disclosureKey}:${forceOpen ? String(deepLinkEpoch ?? 0) : '0'}`}
+        defaultOpen={forceOpen}
       >
         {({ open }) => (
           <>
-            <Headless.DisclosureButton
-              aria-label={`${changes.length} elements with the same tag changes`}
-              className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none hover:bg-zinc-50 active:bg-zinc-950/5"
-            >
-              <motion.span
-                className="inline-flex origin-center"
-                initial={false}
-                animate={{ rotate: open ? 90 : 0 }}
-                transition={disclosureTransition}
+            <div className="flex items-center gap-2">
+              <Headless.DisclosureButton
+                aria-label={`${changes.length} elements with the same tag changes`}
+                className="flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none hover:bg-zinc-50 active:bg-zinc-950/5"
               >
-                <ChevronRightIcon className="size-4 flex-none" />
-              </motion.span>
-              <span>Same tag changes</span>
-              <Badge>{changes.length}</Badge>
-            </Headless.DisclosureButton>
+                <motion.span
+                  className="inline-flex origin-center"
+                  initial={false}
+                  animate={{ rotate: open ? 90 : 0 }}
+                  transition={disclosureTransition}
+                >
+                  <ChevronRightIcon className="size-4 flex-none" />
+                </motion.span>
+                <span>Same tag changes</span>
+                <Badge>{changes.length}</Badge>
+              </Headless.DisclosureButton>
+              <Button
+                type="button"
+                outline
+                onClick={() =>
+                  markAllSeen(
+                    userKey,
+                    changesetId,
+                    changes.map((change) => objectRefKey(change.type, change.id)),
+                  )
+                }
+              >
+                Mark all {changes.length} seen
+              </Button>
+            </div>
             <div className="mt-1 border-t font-mono">
               <TagRows
                 rows={mutations}
@@ -303,7 +434,9 @@ function TagMutationGroup({
                 highlightedKey={highlightTagKey}
                 onKeyClick={selectGroupTag}
                 noteCountByKey={groupNoteCountByKey}
-                onNoteCountClick={scrollToGroupTagNotes}
+                onNoteCountClick={addNoteOnGroupTag}
+                onAddNote={addNoteOnGroupTag}
+                activeNoteKey={activeNoteKey}
               />
             </div>
             <Headless.DisclosurePanel static>
@@ -315,7 +448,7 @@ function TagMutationGroup({
                 inert={!open}
               >
                 <ul>
-                  {changes.map((change) => (
+                  {memberStates.map(({ change }) => (
                     <ElementChangeRow
                       key={`${change.type}/${change.id}`}
                       change={change}
@@ -363,6 +496,24 @@ function ElementChangeRow({
   showTags?: boolean
   objectNotes?: ObjectNotes
 }) {
+  const userKey = useNotesUserKey()
+  const seenMap = useSeenMap(userKey, changesetId)
+  const draft = useChangesetDraft(userKey, changesetId)
+  const openEditor = useOpenEditor()
+  const { markSeen, markUnseen, toggleEditor, setFocusedObject } = useChangesetNotesActions()
+  const currentUser = userKey === 'anonymous' ? undefined : userKey
+  const { collapsed, hasNotes, drafts } = reviewState(
+    change,
+    seenMap,
+    objectNotes,
+    draft,
+    currentUser,
+  )
+  const editingNote =
+    openEditor?.changesetId === changesetId
+      ? drafts.find((note) => note.id === openEditor.noteId)
+      : undefined
+  const objectKey = objectRefKey(change.type, change.id)
   const Icon = ACTION_ICON[change.actionType]
   const currentSelect = isSelected(change, selected)
   const rowRef = useRef<HTMLLIElement>(null)
@@ -418,7 +569,18 @@ function ElementChangeRow({
     [flashKey, flashNonce],
   )
 
-  function scrollToTagNotes(key: string) {
+  function addNoteOnObject() {
+    const nextRef = refParamFromElement(change.type, change.id)
+    if (!nextRef) return
+    selectRef(nextRef)
+    toggleEditor(userKey, changesetId, nextRef)
+  }
+
+  function addNoteOnTag(key: string) {
+    const nextRef = refParamFromElement(change.type, change.id, key)
+    if (!nextRef) return
+    selectRef(nextRef)
+    toggleEditor(userKey, changesetId, nextRef)
     document.getElementById(noteThreadDomId(change.type, change.id, key))?.scrollIntoView({
       block: 'nearest',
     })
@@ -426,17 +588,67 @@ function ElementChangeRow({
     setFlashNonce((nonce) => nonce + 1)
   }
 
+  function toggleSeen() {
+    if (collapsed) markUnseen(userKey, changesetId, objectKey)
+    else markSeen(userKey, changesetId, objectKey)
+  }
+
+  const compact =
+    collapsed && !shouldReveal && !editingNote && !drafts.some((note) => note.body.trim())
+
+  const objectNoteOpen = editingNote != null && editingNote.ref?.key == null
+
+  if (compact) {
+    return (
+      <li
+        ref={rowRef}
+        tabIndex={0}
+        className={clsx(
+          'group relative flex min-h-11 w-full cursor-pointer items-center gap-2 rounded px-2 py-1',
+          currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
+          flash && 'ring-2 ring-yellow-400 ring-offset-1',
+        )}
+        onClick={() => zoomToAndSelect(change.type, change.id)}
+        onMouseEnter={() => setHighlight(change.type, change.id, true)}
+        onMouseLeave={() => setHighlight(change.type, change.id, false)}
+        onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
+      >
+        <Icon variant="fill" className="size-4 flex-none text-zinc-400" />
+        <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
+          {change.type}/{change.id}
+        </span>
+        {hasNotes ? (
+          <Badge>
+            {flattenObjectNotes(objectNotes).length +
+              drafts.filter((note) => note.body.trim()).length}
+          </Badge>
+        ) : null}
+        <div className="ml-auto">
+          <ObjectReviewActions
+            objectLabel={`${change.type}/${change.id}`}
+            notePressed={objectNoteOpen}
+            seen
+            onNoteClick={addNoteOnObject}
+            onSeenClick={toggleSeen}
+          />
+        </div>
+      </li>
+    )
+  }
+
   return (
     <li
       ref={rowRef}
+      tabIndex={0}
       className={clsx(
-        'relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-1 rounded px-2 py-2',
+        'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-1 rounded px-2 py-2',
         currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
         flash && 'ring-2 ring-yellow-400 ring-offset-1',
       )}
       onClick={() => zoomToAndSelect(change.type, change.id)}
       onMouseEnter={() => setHighlight(change.type, change.id, true)}
       onMouseLeave={() => setHighlight(change.type, change.id, false)}
+      onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
     >
       <div className="flex w-full items-center justify-between gap-1">
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
@@ -470,7 +682,12 @@ function ElementChangeRow({
               content={
                 Object.values(change.nodeStats).every((value) => value === 0)
                   ? 'Only tagging was changed; no changes to the geometry were made.'
-                  : `Changes to this way: ${change.nodeStats.added} nodes added, ${change.nodeStats.modified} nodes modified and ${change.nodeStats.deleted} nodes deleted.`
+                  : [
+                      'Changes to this way:',
+                      `${change.nodeStats.added} nodes added`,
+                      `${change.nodeStats.modified} nodes modified`,
+                      `${change.nodeStats.deleted} nodes deleted`,
+                    ].join('\n')
               }
               className="min-h-11"
             >
@@ -492,6 +709,13 @@ function ElementChangeRow({
             lat={change.lat}
             lon={change.lon}
           />
+          <ObjectReviewActions
+            objectLabel={`${change.type}/${change.id}`}
+            notePressed={objectNoteOpen}
+            seen={collapsed}
+            onNoteClick={addNoteOnObject}
+            onSeenClick={toggleSeen}
+          />
         </div>
       </div>
       {showTags ? (
@@ -505,10 +729,13 @@ function ElementChangeRow({
               if (nextRef) selectRef(nextRef)
             }}
             noteCountByKey={noteCountByKey(objectNotes)}
-            onNoteCountClick={scrollToTagNotes}
+            onNoteCountClick={addNoteOnTag}
+            onAddNote={addNoteOnTag}
+            activeNoteKey={editingNote?.ref?.key}
           />
         </div>
       ) : null}
+      {editingNote ? <NoteEditor changesetId={changesetId} note={editingNote} autoFocus /> : null}
       <NotesBlock
         type={change.type}
         id={change.id}

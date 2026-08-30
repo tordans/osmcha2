@@ -1,6 +1,7 @@
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { Fragment } from 'react'
+import { flyoutFrostedSurfaceClassName } from './flyout.ts'
 import { CheckIcon, ChevronsUpDownIcon } from './icons.ts'
 
 export function Listbox<T>({
@@ -26,7 +27,7 @@ export function Listbox<T>({
         className={clsx([
           className,
           // Basic layout
-          'group relative block w-full',
+          'group relative block w-full cursor-pointer',
           // Background color + shadow applied to inset pseudo element, so shadow blends with border
           'before:absolute before:inset-px before:rounded-[calc(var(--radius-lg)-1px)] before:bg-white before:shadow-sm',
           // Hide default focus styles
@@ -84,10 +85,7 @@ export function Listbox<T>({
           'outline outline-transparent focus:outline-hidden',
           // Handle scrolling when menu won't fit in viewport
           'overflow-y-scroll overscroll-contain',
-          // Popover background
-          'bg-white/75 backdrop-blur-xl',
-          // Shadows
-          'shadow-lg ring-1 ring-zinc-950/10',
+          flyoutFrostedSurfaceClassName,
           // Transitions
           'transition-opacity duration-100 ease-in data-closed:data-leave:opacity-0 data-transition:pointer-events-none',
         )}
@@ -128,7 +126,7 @@ export function ListboxOption<T>({
           <div
             className={clsx(
               // Basic layout
-              'group/option grid cursor-default grid-cols-[--spacing(5)_1fr] items-baseline gap-x-2 rounded-lg py-2.5 pr-3.5 pl-2 sm:grid-cols-[--spacing(4)_1fr] sm:py-1.5 sm:pr-3 sm:pl-1.5',
+              'group/option grid cursor-pointer grid-cols-[--spacing(5)_1fr] items-baseline gap-x-2 rounded-lg py-2.5 pr-3.5 pl-2 sm:grid-cols-[--spacing(4)_1fr] sm:py-1.5 sm:pr-3 sm:pl-1.5',
               // Typography
               'text-base/6 text-zinc-950 sm:text-sm/6 forced-colors:text-[CanvasText]',
               // Focus

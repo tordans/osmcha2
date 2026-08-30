@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
+import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
 
@@ -95,6 +96,8 @@ export function TagRows({
   onKeyClick,
   noteCountByKey,
   onNoteCountClick,
+  onAddNote,
+  activeNoteKey,
 }: {
   rows: TagRowsItem[]
   emptyLabel?: string
@@ -103,6 +106,8 @@ export function TagRows({
   onKeyClick?: (key: string) => void
   noteCountByKey?: Record<string, number>
   onNoteCountClick?: (key: string) => void
+  onAddNote?: (key: string) => void
+  activeNoteKey?: string
 }) {
   if (rows.length === 0) {
     return emptyLabel ? (
@@ -116,7 +121,7 @@ export function TagRows({
         <div
           key={row.key}
           className={clsx(
-            'flex flex-wrap items-start gap-x-2 gap-y-0.5 border-b border-zinc-950/5 py-1',
+            'group flex flex-wrap items-start gap-x-2 gap-y-0.5 border-b border-zinc-950/5 py-1',
             onKeyClick && 'min-h-11 cursor-pointer touch-manipulation hover:bg-zinc-50',
             highlightedKey === row.key && 'ring-2 ring-yellow-400 ring-offset-1',
           )}
@@ -144,6 +149,17 @@ export function TagRows({
               count={noteCountByKey?.[row.key] ?? 0}
               onNoteCountClick={onNoteCountClick}
             />
+            {onAddNote ? (
+              <AddNoteButton
+                label={
+                  activeNoteKey === row.key
+                    ? `Close note on ${row.key}`
+                    : `Add a note on ${row.key}`
+                }
+                pressed={activeNoteKey === row.key}
+                onClick={() => onAddNote(row.key)}
+              />
+            ) : null}
           </dd>
         </div>
       ))}

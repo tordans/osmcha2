@@ -1,5 +1,4 @@
 import clsx from 'clsx'
-import { useAuth } from '../../hooks/useAuth.ts'
 import {
   parseDiscussionNotes,
   type NoteTarget,
@@ -15,8 +14,7 @@ import { LinkifyText } from '../text/LinkifyText.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { typeScale } from '../ui/typography.ts'
-import { CommentForm } from './comment.tsx'
-import { SignInButton } from './sign_in_button.tsx'
+import { UnsentNotesBar } from './FinishReviewCard.tsx'
 import TranslateButton from './translate_button.tsx'
 import { UserOSMLink } from './user_osm_link.tsx'
 
@@ -24,18 +22,17 @@ type DiscussionsProps = {
   discussions: any[]
   changesetId: number
   changesetAuthor: string
-  changesetIsHarmful: boolean
   revealRef: (target: NoteTarget) => void
+  onFinishInChanges: () => void
 }
 
 function Discussions({
   discussions,
   changesetId,
   changesetAuthor,
-  changesetIsHarmful,
   revealRef,
+  onFinishInChanges,
 }: DiscussionsProps) {
-  const { token, user } = useAuth()
   const discussionRaw = useDiscussionRaw()
   const { setDiscussionRaw } = useChangesetNotesActions()
 
@@ -111,22 +108,7 @@ function Discussions({
         })
       )}
 
-      {token ? (
-        <div className="my-3">
-          <CommentForm
-            key={changesetId}
-            changesetId={changesetId}
-            changesetIsHarmful={changesetIsHarmful}
-            discussions={discussions}
-            token={token}
-            userDetails={user ?? {}}
-          />
-        </div>
-      ) : (
-        <div className="flex justify-center py-4">
-          <SignInButton text="Sign in to post a discussion" />
-        </div>
-      )}
+      <UnsentNotesBar changesetId={changesetId} onFinish={onFinishInChanges} />
     </section>
   )
 }

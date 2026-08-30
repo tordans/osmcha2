@@ -21,6 +21,13 @@ export function objectRefKey(type: string, id: number): string {
   return `${type}/${id}`
 }
 
+export function flattenObjectNotes(notes?: ObjectNotes): PublishedNote[] {
+  if (!notes) return []
+  const tagged: PublishedNote[] = []
+  for (const list of notes.byKey.values()) tagged.push(...list)
+  return [...notes.object, ...tagged]
+}
+
 function emptyLocated(): LocatedNotes {
   return { changesetNotes: [], byObject: new Map(), unmatched: [] }
 }

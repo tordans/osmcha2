@@ -23,11 +23,10 @@ export type UserNotesState = {
   drafts: Record<string, ChangesetDraft>
   seen: Record<string, SeenMap>
   seenTouchedAt: Record<string, number>
-  hideSeen: boolean
 }
 
 export function emptyUserNotes(): UserNotesState {
-  return { drafts: {}, seen: {}, seenTouchedAt: {}, hideSeen: false }
+  return { drafts: {}, seen: {}, seenTouchedAt: {} }
 }
 
 export function isObjectSeenCollapsed(args: {

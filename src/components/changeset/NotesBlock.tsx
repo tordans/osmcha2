@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import type { MouseEvent, ReactNode } from 'react'
 import type { ObjectNotes, PublishedNote } from '../../notes/locateNotes.ts'
+import type { DraftNote } from '../../notes/reviewSeen.ts'
 import { serializePinParam } from '../../routing/pinParam.ts'
 import { serializeRefParam } from '../../routing/refParam.ts'
 import { parseOsmDate } from '../../utils/datetime.ts'
@@ -114,6 +115,7 @@ export function NotesBlock({
   id,
   tags,
   notes,
+  drafts = [],
   flashKey,
   selectRef,
 }: {
@@ -121,28 +123,36 @@ export function NotesBlock({
   id: number
   tags: Array<{ key: string }>
   notes?: ObjectNotes
+  drafts?: DraftNote[]
   flashKey?: string | null
   selectRef: (ref: RefParam | null) => void
 }) {
-  if (!notes) return null
   const tagThreads = tags
-    .map((tag) => ({ key: tag.key, notes: notes.byKey.get(tag.key) ?? [] }))
+    .map((tag) => ({ key: tag.key, notes: notes?.byKey.get(tag.key) ?? [] }))
     .filter((thread) => thread.notes.length > 0)
-  if (notes.object.length === 0 && tagThreads.length === 0) return null
+  const objectNotes = notes?.object ?? []
+  const closedDrafts = drafts.filter((draft) => draft.body.trim())
+  if (objectNotes.length === 0 && tagThreads.length === 0 && closedDrafts.length === 0) return null
 
   return (
     <div className="w-full border-t border-zinc-950/10 pt-1" onClick={stopRowClick}>
-      {notes.object.length > 0 ? (
+      {objectNotes.length > 0 ? (
         <MiniThread
           id={noteThreadDomId(type, id)}
           header={`${type}/${id}`}
-          notes={notes.object}
+          notes={objectNotes}
           onHeaderClick={() => {
             const nextRef = refParamFromElement(type, id)
             if (nextRef) selectRef(nextRef)
           }}
         />
       ) : null}
+      {closedDrafts.map((draft) => (
+        <div key={draft.id} className={clsx(typeScale.small, 'rounded-sm bg-blue-50 px-1 py-1')}>
+          <p className="font-medium text-blue-800">Unsent</p>
+          <p className="break-words text-zinc-800">{draft.body}</p>
+        </div>
+      ))}
       {tagThreads.map((thread) => (
         <MiniThread
           key={thread.key}

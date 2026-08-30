@@ -48,7 +48,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     // other path (legacy filter migration used to bounce `/authorized` → `/`),
     // send them to the exchange route instead of leaving a dead code in the URL.
     const oauthCode = search.code?.trim()
-    if (oauthCode && pathname !== '/authorized') {
+    if (oauthCode && pathname !== '/authorized' && pathname !== '/osm-oauth') {
       throw redirect({
         href: `/authorized${searchStr}${hash ? `#${hash}` : ''}`,
         replace: true,

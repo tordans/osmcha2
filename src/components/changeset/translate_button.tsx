@@ -12,7 +12,7 @@ export default function TranslateButton({ text }: { text: string }) {
         rel="noopener noreferrer"
         placement="bottom-end"
         content="Translate this comment with Google Translate"
-        className="relative origin-top-right justify-center rounded text-zinc-400 transition-transform duration-150 hover-fine:scale-150 hover-fine:bg-zinc-950/5 hover-fine:text-zinc-950 active:bg-zinc-950/5 motion-reduce:transition-none"
+        className="relative origin-top-right justify-center rounded text-zinc-400 transition-transform duration-150 active:bg-zinc-950/5 motion-reduce:transition-none hover-fine:scale-150 hover-fine:bg-zinc-950/5 hover-fine:text-zinc-950"
       >
         <TouchTarget>
           <LanguageIcon className="size-4" />

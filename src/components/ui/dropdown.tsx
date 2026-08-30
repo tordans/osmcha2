@@ -2,6 +2,7 @@ import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import type React from 'react'
 import { Button } from './button'
+import { flyoutBackdropClassName, flyoutSurfaceClassName } from './flyout.ts'
 import { Link } from './link'
 
 /** Shared width for chrome Menu and list Filters; both open as compact drop panels. */
@@ -9,7 +10,7 @@ export const chromeDropdownMenuClassName =
   'w-72 max-w-[calc(100vw-1rem)] max-h-[min(32rem,calc(100dvh-5rem))]'
 
 export function Dropdown({
-  backdrop = false,
+  backdrop = true,
   children,
   ...props
 }: { backdrop?: boolean } & Headless.MenuProps) {
@@ -18,7 +19,7 @@ export function Dropdown({
       {(bag) => (
         <>
           {backdrop && bag.open ? (
-            <div aria-hidden className="fixed inset-0 z-[90] bg-black/20 min-[56rem]:hidden" />
+            <div aria-hidden className={flyoutBackdropClassName} onClick={() => bag.close()} />
           ) : null}
           {typeof children === 'function' ? children(bag) : children}
         </>
@@ -29,9 +30,16 @@ export function Dropdown({
 
 export function DropdownButton<T extends React.ElementType = typeof Button>({
   as = Button,
+  className,
   ...props
 }: { className?: string } & Omit<Headless.MenuButtonProps<T>, 'className'>) {
-  return <Headless.MenuButton as={as} {...props} />
+  return (
+    <Headless.MenuButton
+      as={as}
+      className={clsx('relative z-10 data-open:z-[110]', className)}
+      {...props}
+    />
+  )
 }
 
 export function DropdownMenu({
@@ -57,9 +65,7 @@ export function DropdownMenu({
         // Handle scrolling when menu won't fit in viewport
         'overflow-y-auto',
         // Opaque so list debug chips do not show through
-        'bg-white',
-        // Shadows
-        'shadow-lg ring-1 ring-zinc-950/10',
+        flyoutSurfaceClassName,
         // Shared icon/label/shortcut columns (Catalyst) so rows don't wrap to min-content
         'supports-[grid-template-columns:subgrid]:grid supports-[grid-template-columns:subgrid]:grid-cols-[auto_1fr_1.5rem_0.5rem_auto]',
         // Drop in from the trigger
@@ -79,7 +85,7 @@ export function DropdownItem({
   const classes = clsx(
     className,
     // Base styles
-    'group cursor-default rounded-lg px-3.5 py-2.5 focus:outline-hidden sm:px-3 sm:py-1.5',
+    'group cursor-pointer rounded-lg px-3.5 py-2.5 focus:outline-hidden sm:px-3 sm:py-1.5',
     // Text styles
     'text-left text-base/6 text-zinc-950 sm:text-sm/6 forced-colors:text-[CanvasText]',
     // Focus
@@ -122,9 +128,9 @@ export function DropdownSection({
     <Headless.MenuSection
       {...props}
       className={clsx(
-        className,
         // Define grid at the section level instead of the item level if subgrid is supported
         'col-span-full supports-[grid-template-columns:subgrid]:grid supports-[grid-template-columns:subgrid]:grid-cols-[auto_1fr_1.5rem_0.5rem_auto]',
+        className,
       )}
     />
   )

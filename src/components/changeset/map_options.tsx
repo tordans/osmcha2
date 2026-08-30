@@ -9,7 +9,13 @@ import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
 import { flyoutSurfaceClassName } from '../ui/flyout.ts'
-import { ChevronDownIcon, CircleCheckIcon, FunnelIcon, GlobeAltIcon, StarIcon } from '../ui/icons.ts'
+import {
+  ChevronDownIcon,
+  CircleCheckIcon,
+  FunnelIcon,
+  GlobeAltIcon,
+  StarIcon,
+} from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
 import {
@@ -241,11 +247,7 @@ function MapFilterOptions({
 function BestForAreaIcon() {
   return (
     <Tooltip as="span" content="Best for this area" className="inline-flex shrink-0">
-      <StarIcon
-        variant="fill"
-        className="size-4 text-yellow-500"
-        aria-hidden="true"
-      />
+      <StarIcon variant="fill" className="size-4 text-yellow-500" aria-hidden="true" />
     </Tooltip>
   )
 }
@@ -415,12 +417,7 @@ function ViewportEditorLayerList({
         {categoryGroups.map(({ category, label, layers: groupLayers }) => (
           <Headless.Disclosure key={category} defaultOpen={false}>
             {({ open }) => (
-              <div
-                className={clsx(
-                  'rounded-lg border border-zinc-950/10',
-                  open && 'bg-zinc-50',
-                )}
-              >
+              <div className={clsx('rounded-lg border border-zinc-950/10', open && 'bg-zinc-50')}>
                 <Headless.DisclosureButton className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-2.5 text-left text-sm font-medium text-zinc-700 select-none active:bg-zinc-950/5">
                   <span className="min-w-0 truncate">
                     {label}

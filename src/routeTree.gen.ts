@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthorizedRouteImport } from './routes/authorized'
 import { Route as FiltersRouteImport } from './routes/filters'
+import { Route as OsmOauthRouteImport } from './routes/osm-oauth'
 import { Route as SavedFiltersRouteImport } from './routes/saved-filters'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as TrustedUsersRouteImport } from './routes/trusted-users'
@@ -39,6 +40,11 @@ const AuthorizedRoute = AuthorizedRouteImport.update({
 const FiltersRoute = FiltersRouteImport.update({
   id: '/filters',
   path: '/filters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OsmOauthRoute = OsmOauthRouteImport.update({
+  id: '/osm-oauth',
+  path: '/osm-oauth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SavedFiltersRoute = SavedFiltersRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/authorized': typeof AuthorizedRoute
   '/filters': typeof FiltersRoute
+  '/osm-oauth': typeof OsmOauthRoute
   '/saved-filters': typeof SavedFiltersRoute
   '/teams': typeof TeamsRouteWithChildren
   '/trusted-users': typeof TrustedUsersRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/authorized': typeof AuthorizedRoute
   '/filters': typeof FiltersRoute
+  '/osm-oauth': typeof OsmOauthRoute
   '/saved-filters': typeof SavedFiltersRoute
   '/teams': typeof TeamsRouteWithChildren
   '/trusted-users': typeof TrustedUsersRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/authorized': typeof AuthorizedRoute
   '/filters': typeof FiltersRoute
+  '/osm-oauth': typeof OsmOauthRoute
   '/saved-filters': typeof SavedFiltersRoute
   '/teams': typeof TeamsRouteWithChildren
   '/trusted-users': typeof TrustedUsersRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/authorized'
     | '/filters'
+    | '/osm-oauth'
     | '/saved-filters'
     | '/teams'
     | '/trusted-users'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/authorized'
     | '/filters'
+    | '/osm-oauth'
     | '/saved-filters'
     | '/teams'
     | '/trusted-users'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/authorized'
     | '/filters'
+    | '/osm-oauth'
     | '/saved-filters'
     | '/teams'
     | '/trusted-users'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthorizedRoute: typeof AuthorizedRoute
   FiltersRoute: typeof FiltersRoute
+  OsmOauthRoute: typeof OsmOauthRoute
   SavedFiltersRoute: typeof SavedFiltersRoute
   TeamsRoute: typeof TeamsRouteWithChildren
   TrustedUsersRoute: typeof TrustedUsersRoute
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/filters'
       fullPath: '/filters'
       preLoaderRoute: typeof FiltersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/osm-oauth': {
+      id: '/osm-oauth'
+      path: '/osm-oauth'
+      fullPath: '/osm-oauth'
+      preLoaderRoute: typeof OsmOauthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/saved-filters': {
@@ -269,6 +289,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthorizedRoute: AuthorizedRoute,
   FiltersRoute: FiltersRoute,
+  OsmOauthRoute: OsmOauthRoute,
   SavedFiltersRoute: SavedFiltersRoute,
   TeamsRoute: TeamsRouteWithChildren,
   TrustedUsersRoute: TrustedUsersRoute,
