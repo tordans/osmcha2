@@ -320,9 +320,16 @@ function isSelected(change: ElementChange, selected?: AdiffAction | null) {
 }
 
 function elementRowHighlightClassName(selected: boolean, hovered: boolean) {
-  if (selected) return 'bg-yellow-100 ring-2 ring-yellow-400'
+  if (selected) {
+    return 'ring-2 ring-yellow-400 inset-ring-8 inset-ring-yellow-100'
+  }
   if (hovered) return 'bg-zinc-100'
   return 'hover:bg-zinc-50 active:bg-zinc-950/5'
+}
+
+function elementRowPaddingClassName(selected: boolean, compact: boolean) {
+  if (compact) return selected ? 'px-3 py-2' : 'px-2 py-0.5'
+  return selected ? 'px-3 py-2.5' : 'px-2 py-1'
 }
 
 function TagMutationGroup({
@@ -629,9 +636,9 @@ function ElementChangeRow({
         aria-selected={currentSelect}
         data-osm-element={`${change.type}/${change.id}`}
         className={clsx(
-          'group relative flex w-full cursor-pointer touch-manipulation items-center gap-1 rounded px-2 py-0.5',
+          'group relative flex w-full cursor-pointer touch-manipulation items-center gap-1 rounded',
+          elementRowPaddingClassName(currentSelect, true),
           elementRowHighlightClassName(currentSelect, hovered),
-          flash && 'ring-offset-1',
         )}
         onClick={() => zoomToAndSelect(change.type, change.id)}
         onMouseEnter={() => setHover({ type: change.type, id: change.id })}
@@ -669,9 +676,9 @@ function ElementChangeRow({
       aria-selected={currentSelect}
       data-osm-element={`${change.type}/${change.id}`}
       className={clsx(
-        'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-0.5 rounded px-2 py-1',
+        'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-0.5 rounded',
+        elementRowPaddingClassName(currentSelect, false),
         elementRowHighlightClassName(currentSelect, hovered),
-        flash && 'ring-offset-1',
       )}
       onClick={() => zoomToAndSelect(change.type, change.id)}
       onMouseEnter={() => setHover({ type: change.type, id: change.id })}
