@@ -81,8 +81,9 @@ const headerMenuButtonClassName = clsx(
 
 const headerMenuTitleRowClassName = 'flex min-w-0 items-center justify-between gap-x-2'
 
+/** Fixed height matches the review-count badges so both header meta rows align. */
 const headerMenuMetaClassName = clsx(
-  '-mt-0.5 flex flex-nowrap items-center gap-x-1 font-normal text-zinc-500',
+  '-mt-0.5 flex h-6 flex-nowrap items-center gap-x-1 font-normal text-zinc-500',
   typeScale.small,
 )
 
