@@ -142,6 +142,13 @@ const headerOpenItemsClassName = clsx(
 /** Override DropdownItem’s `col-span-full` so items can sit in the item grid. */
 const headerOpenItemClassName = 'col-span-1!'
 
+/** Two-up actions (watchlist / trusted) — tighter leading when labels wrap. */
+const headerOpenListItemsClassName = clsx(
+  'col-span-full grid grid-cols-1',
+  '@min-[20rem]/user-open:grid-cols-2',
+)
+const headerOpenListItemClassName = clsx(headerOpenItemClassName, 'text-sm/4! sm:text-sm/4!')
+
 export type ReviewUserDetails = {
   uid?: number | string
   name?: string
@@ -624,7 +631,7 @@ export function DetailsHeader({
               <>
                 <DropdownDivider />
                 <DropdownSection>
-                  <DropdownHeading>Lists</DropdownHeading>
+                  <DropdownHeading>Watchlist & trusted</DropdownHeading>
                   {isInWatchlist ? (
                     <DropdownItem onClick={() => removeFromWatchlistMutation.mutate(String(uid))}>
                       Remove from watchlist
@@ -634,20 +641,20 @@ export function DetailsHeader({
                       Remove from trusted users
                     </DropdownItem>
                   ) : (
-                    <div className={headerOpenItemsClassName}>
+                    <div className={headerOpenListItemsClassName}>
                       <DropdownItem
                         onClick={() =>
                           addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
                         }
-                        className={headerOpenItemClassName}
+                        className={headerOpenListItemClassName}
                       >
                         Add to watchlist
                       </DropdownItem>
                       <DropdownItem
                         onClick={() => addToTrustedlistMutation.mutate(osmUser)}
-                        className={headerOpenItemClassName}
+                        className={headerOpenListItemClassName}
                       >
-                        Add to trusted users
+                        Add to trusted
                       </DropdownItem>
                     </div>
                   )}
