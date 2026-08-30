@@ -92,6 +92,41 @@ describe('pickChangesetActionFromClick', () => {
     expect(result.nextFeatureId).toBe(3)
   })
 
+  test('picks a same-version way whose member coordinates changed', () => {
+    const way: AdiffAction = {
+      type: 'modify',
+      old: {
+        type: 'way',
+        id: 10,
+        version: 5,
+        nodes: [{ ref: 1, lon: 10, lat: 48 }],
+        tags: { building: 'yes' },
+      },
+      new: {
+        type: 'way',
+        id: 10,
+        version: 5,
+        nodes: [{ ref: 1, lon: 10.001, lat: 48 }],
+        tags: { building: 'yes' },
+      },
+    }
+    const result = pickChangesetActionFromClick({
+      map: stubMap([
+        {
+          id: 7,
+          layer: { id: 'changeset-way-new' },
+          properties: { action: 'modify', type: 'way', id: 10 },
+        },
+      ]),
+      point,
+      interactiveLayerIds: ['changeset-way-new'],
+      actions: [way],
+      previousFeatureId: null,
+    })
+    expect(result.action).toBe(way)
+    expect(result.nextFeatureId).toBe(7)
+  })
+
   test('skips features hidden by the review filter', () => {
     const create: AdiffAction = { type: 'create', new: { type: 'way', id: 20 } }
     const result = pickChangesetActionFromClick({

@@ -104,6 +104,95 @@ describe('buildElementChanges', () => {
     expect(changes[0].geometry).toBe('rewritten')
   })
 
+  test('lists a same-version way whose members moved and folds untagged members into it', () => {
+    const wayNodes = (lonShift: number) => [
+      { ref: 1, lon: 10 + lonShift, lat: 48 },
+      { ref: 2, lon: 11 + lonShift, lat: 48 },
+      { ref: 3, lon: 11 + lonShift, lat: 47 },
+      { ref: 4, lon: 10 + lonShift, lat: 47 },
+      { ref: 9, lon: 10 + lonShift, lat: 48 },
+      { ref: 1, lon: 10 + lonShift, lat: 48 },
+    ]
+    const changes = buildElementChanges([
+      {
+        type: 'modify',
+        old: {
+          type: 'way',
+          id: 10,
+          version: 5,
+          nodes: wayNodes(0),
+          tags: { building: 'yes', name: 'Wash' },
+        },
+        new: {
+          type: 'way',
+          id: 10,
+          version: 5,
+          nodes: wayNodes(0.001),
+          tags: { building: 'yes', name: 'Wash' },
+        },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 1, version: 1, lat: 48, lon: 10, tags: {} },
+        new: { type: 'node', id: 1, version: 2, lat: 48, lon: 10.001, tags: {} },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 2, version: 1, lat: 48, lon: 11, tags: {} },
+        new: { type: 'node', id: 2, version: 2, lat: 48, lon: 11.001, tags: {} },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 3, version: 1, lat: 47, lon: 11, tags: {} },
+        new: { type: 'node', id: 3, version: 2, lat: 47, lon: 11.001, tags: {} },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 4, version: 1, lat: 47, lon: 10, tags: {} },
+        new: { type: 'node', id: 4, version: 2, lat: 47, lon: 10.001, tags: {} },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 9, version: 1, lat: 48, lon: 10, tags: { entrance: 'yes' } },
+        new: { type: 'node', id: 9, version: 2, lat: 48, lon: 10.001, tags: { entrance: 'yes' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 99, version: 1, lat: 1, lon: 1, tags: {} },
+        new: { type: 'node', id: 99, version: 2, lat: 1.1, lon: 1, tags: {} },
+      },
+    ])
+    expect(changes.map((change) => `${change.type}/${change.id}`)).toEqual([
+      'way/10',
+      'node/9',
+      'node/99',
+    ])
+    expect(changes[0].geometry).toBe('moved')
+    expect(changes[0].nodeStats).toEqual({ added: 0, modified: 5, deleted: 0 })
+    expect(changes[1].geometry).toBe('moved')
+    expect(changes[2].geometry).toBe('moved')
+  })
+
+  test('still skips a same-version way whose member geometry did not change', () => {
+    const nodes = [
+      { ref: 1, lon: 10, lat: 48 },
+      { ref: 2, lon: 11, lat: 48 },
+    ]
+    const changes = buildElementChanges([
+      {
+        type: 'modify',
+        old: { type: 'way', id: 10, version: 3, nodes, tags: { highway: 'path' } },
+        new: { type: 'way', id: 10, version: 3, nodes, tags: { highway: 'path' } },
+      },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 8, version: 1, lat: 1, lon: 2, tags: { highway: 'crossing' } },
+        new: { type: 'node', id: 8, version: 2, lat: 1.2, lon: 2, tags: { highway: 'crossing' } },
+      },
+    ])
+    expect(changes.map((change) => `${change.type}/${change.id}`)).toEqual(['node/8'])
+  })
+
   test('marks moved nodes and matching flagged features', () => {
     const changes = buildElementChanges(
       [

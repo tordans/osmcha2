@@ -679,7 +679,11 @@ function ElementChangeRow({
             <Tooltip
               as="span"
               placement="bottom-end"
-              content="This node was moved to a new location."
+              content={
+                change.type === 'way'
+                  ? 'This way’s nodes were moved; membership and tags did not change.'
+                  : 'This node was moved to a new location.'
+              }
               className="inline-flex"
             >
               <Badge color="yellow">Moved</Badge>

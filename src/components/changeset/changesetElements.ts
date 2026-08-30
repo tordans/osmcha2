@@ -7,7 +7,7 @@ export type AdiffElement = {
   lat?: number
   lon?: number
   tags?: Record<string, string>
-  nodes?: Array<{ ref?: number } | number>
+  nodes?: Array<{ ref?: number; lon?: number; lat?: number } | number>
   members?: Array<Record<string, any>>
 }
 
@@ -77,12 +77,24 @@ export function currentElement(action: AdiffAction): AdiffElement | undefined {
 export function isNoopAction(action: AdiffAction): boolean {
   if (action.type === 'noop') return true
   if (action.type !== 'modify') return false
-  return action.old?.version === action.new?.version
+  if (action.old?.version !== action.new?.version) return false
+  // Same-version ways are still reviewable when member geometry changed
+  // (OSM does not bump a way’s version when only its nodes move).
+  return !wayMemberGeometryChanged(action)
 }
 
-function nodeRef(node: { ref?: number } | number): number | undefined {
-  if (typeof node === 'number') return node
-  return node.ref
+type WayNode = { ref?: number; lon?: number; lat?: number }
+
+function asWayNode(node: WayNode | number): WayNode {
+  return typeof node === 'number' ? { ref: node } : node
+}
+
+function nodeRef(node: WayNode | number): number | undefined {
+  return asWayNode(node).ref
+}
+
+function wayNodes(element?: AdiffElement): WayNode[] {
+  return (element?.nodes ?? []).map(asWayNode)
 }
 
 function wayNodeRefs(element?: AdiffElement): Set<number> {
@@ -134,9 +146,31 @@ export function wayRewritten(action: AdiffAction): boolean {
   return oldRefs.some((ref, index) => ref !== newRefs[index])
 }
 
+export function wayMemberGeometryChanged(action: AdiffAction): boolean {
+  if (action.new?.type !== 'way' && action.old?.type !== 'way') return false
+  if (wayRewritten(action)) return true
+  const oldNodes = wayNodes(action.old)
+  const newNodes = wayNodes(action.new)
+  if (oldNodes.length !== newNodes.length) return true
+  return oldNodes.some((node, index) => {
+    const next = newNodes[index]
+    return node.lon !== next?.lon || node.lat !== next?.lat
+  })
+}
+
+export function wayMoved(action: AdiffAction): boolean {
+  return (
+    action.type === 'modify' &&
+    action.new?.type === 'way' &&
+    !wayRewritten(action) &&
+    wayMemberGeometryChanged(action)
+  )
+}
+
 function geometryChip(action: AdiffAction): ElementChange['geometry'] {
   if (nodeMoved(action)) return 'moved'
   if (wayRewritten(action)) return 'rewritten'
+  if (wayMoved(action)) return 'moved'
   return null
 }
 
