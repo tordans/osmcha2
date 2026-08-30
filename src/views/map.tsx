@@ -14,8 +14,10 @@ import {
   type ViewStateChangeEvent,
 } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
+import { ACTION } from '../components/changeset/actionColors.ts'
 import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
 import type { AdiffAction } from '../components/changeset/changesetElements.ts'
+import { InspectKindSwatch } from '../components/changeset/InspectKindSwatch.tsx'
 import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
 import {
   actionMatchingRef,
@@ -667,8 +669,12 @@ function SpyglassInspectFlyoutItem({
   const { tags, moreCount } = inspectFlyoutTags(item.tags)
   return (
     <div className={isFirst ? undefined : 'mt-2'}>
-      <div className="text-sm font-medium text-zinc-950">
-        {item.type}/{item.id}
+      <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-950">
+        <InspectKindSwatch kind={item.kind} />
+        <span>
+          <span className="sr-only">{item.kind === 'noop' ? ACTION.noop.label : 'OSM'} </span>
+          {item.type}/{item.id}
+        </span>
       </div>
       {tags.length > 0 ? (
         <div className="mt-1 text-xs text-zinc-700">

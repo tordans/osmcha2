@@ -14,6 +14,8 @@ export const SPYGLASS_WAY_LAYER_ID = 'spyglass-ways-line'
 export const SPYGLASS_NODE_LAYER_ID = 'spyglass-nodes-circle'
 export const SPYGLASS_WAY_HIT_LAYER_ID = 'spyglass-ways-hit'
 export const SPYGLASS_NODE_HIT_LAYER_ID = 'spyglass-nodes-hit'
+/** Hover-legend swatch; overlay paint stays thin black. */
+export const SPYGLASS_SWATCH_CLASS = 'bg-zinc-800'
 /** Transparent hit targets used for hover; the thin paint layers stay out of picking. */
 export const SPYGLASS_LAYER_IDS: string[] = [SPYGLASS_WAY_HIT_LAYER_ID, SPYGLASS_NODE_HIT_LAYER_ID]
 export const CHANGESET_NOOP_LAYER_IDS: string[] = [

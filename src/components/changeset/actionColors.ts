@@ -54,6 +54,8 @@ export const ACTION = {
     tagText: 'text-zinc-500',
     checkbox:
       '[--checkbox-check:var(--color-violet-700)] [--checkbox-checked-bg:var(--color-violet-500)]/15 [--checkbox-checked-border:var(--color-violet-500)]/15',
+    /** Matches `hex` (Tailwind violet-400) for legend dots. */
+    swatchClass: 'bg-violet-400',
   },
 } as const
 

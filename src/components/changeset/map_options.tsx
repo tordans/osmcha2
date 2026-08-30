@@ -33,6 +33,7 @@ import { Tooltip } from '../ui/tooltip.tsx'
 import { ACTION } from './actionColors.ts'
 import { ActionIcon } from './ActionTypeLabel.tsx'
 import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
+import { InspectKindSwatch } from './InspectKindSwatch.tsx'
 import {
   isDuplicateOfBuiltinLayer,
   isImageryUsedMatch,
@@ -262,7 +263,10 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
               layers={layers}
               onToggle={toggleLayer}
             >
-              {ACTION.noop.filterLabel}
+              <span className="inline-flex items-center gap-1.5">
+                <InspectKindSwatch kind="noop" />
+                {ACTION.noop.filterLabel}
+              </span>
             </MapLayerCheckbox>
           </div>
         </section>
@@ -323,7 +327,10 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
                 ) : null
               }
             >
-              OSM context (Spyglass)
+              <span className="inline-flex items-center gap-1.5">
+                <InspectKindSwatch kind="spyglass" />
+                OSM context (Spyglass)
+              </span>
             </MapLayerCheckbox>
           </div>
         </section>

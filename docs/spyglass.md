@@ -52,7 +52,7 @@ Spyglass also comes up in passing on [#6641](https://github.com/openstreetmap/op
 ### Use
 
 - Opt-in overlay on the changeset map, current viewport only. On by default; off is `?layers=` without the `spyglass` token (omit `layers` when every changeset layer is on and spyglass is on).
-- Hover flyout (`flyoutSurfaceClassName`). Same hover for adiff `noop` (dedicated unchanged layers and halo layers with `action=noop`), and only while the overlay is on. Spyglass hover hits the transparent hit layers, not the thin paint. Lists up to 20 unique objects with tags; remaining objects are `+N more`.
+- Hover flyout (`flyoutSurfaceClassName`). Same hover for adiff `noop` (dedicated unchanged layers and halo layers with `action=noop`), and only while the overlay is on. Spyglass hover hits the transparent hit layers, not the thin paint. Lists up to 20 unique objects with tags; remaining objects are `+N more`. A violet dot marks unchanged (same as the overlay); a zinc dot marks Spyglass.
 - Cursor `help` on spyglass and noop. `pointer` wins if a clickable changeset feature is under the cursor.
 - Clicks never select spyglass or noop, including when the overlay is off. An inspect-only click does not clear the selected changeset `ref`.
 
