@@ -2,7 +2,6 @@ import { HotkeysProvider } from '@tanstack/react-hotkeys'
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet, redirect } from '@tanstack/react-router'
 import { MotionConfig } from 'motion/react'
-import { TanStackAppDevtools } from '../components/shared/devtools/TanStackAppDevtools.tsx'
 import { useAppHeight } from '../hooks/useAppHeight.ts'
 import { useBookmarkletAuthHandoff } from '../hooks/useBookmarkletAuthHandoff.ts'
 import { AppShell } from '../layout/AppShell.tsx'
@@ -116,7 +115,6 @@ function RootLayout() {
           <PanePresence>
             <Outlet />
           </PanePresence>
-          <TanStackAppDevtools />
         </AppShell>
       </HotkeysProvider>
     </MotionConfig>

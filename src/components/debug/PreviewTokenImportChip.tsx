@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { TokenImport } from '../token_import.tsx'
-import { adminChipClassName } from './adminChip.ts'
+import { adminChipSegmentClassName } from './adminChip.ts'
 
 const STORAGE_KEY = 'osmcha-preview-token-import'
 
@@ -42,7 +42,7 @@ export function PreviewTokenImportChip() {
             ? 'Hide GitHub Pages token-paste preview'
             : 'Show GitHub Pages token-paste preview'
         }
-        className={`${adminChipClassName} cursor-pointer ${enabled ? 'font-bold' : 'opacity-70'}`}
+        className={`${adminChipSegmentClassName} cursor-pointer ${enabled ? 'font-bold' : 'opacity-70'}`}
         onClick={togglePreview}
       >
         token UI {enabled ? 'on' : 'off'}

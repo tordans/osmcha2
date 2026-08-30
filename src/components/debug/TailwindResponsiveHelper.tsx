@@ -1,9 +1,9 @@
-import { adminChipClassName } from './adminChip.ts'
+import { adminChipSegmentClassName } from './adminChip.ts'
 
 export function TailwindResponsiveHelper() {
   return (
     <a
-      className={`space-x-1 hover:underline ${adminChipClassName}`}
+      className={`space-x-1 hover:underline ${adminChipSegmentClassName}`}
       href="https://tailwindcss.com/docs/responsive-design"
       target="_blank"
       rel="noreferrer"
