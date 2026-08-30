@@ -1,7 +1,6 @@
 import clsx from 'clsx'
-import { Badge } from '../ui/badge.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
-import { ACTION, ACTION_UI_COLOR, type ElementActionKey } from './actionColors.ts'
+import { ACTION, type ElementActionKey } from './actionColors.ts'
 
 export function ActionIcon({
   action,
@@ -24,9 +23,10 @@ export function ActionTypeLabel({
   const label = ACTION[actionType].label
   return (
     <Tooltip as="span" content={label} aria-label={label} className="inline-flex shrink-0">
-      <Badge color={muted ? 'zinc' : ACTION_UI_COLOR[actionType]} className="px-1">
-        <ActionIcon action={actionType} />
-      </Badge>
+      <ActionIcon
+        action={actionType}
+        className={clsx('size-3.5', muted ? 'text-zinc-400' : ACTION[actionType].tagText)}
+      />
     </Tooltip>
   )
 }

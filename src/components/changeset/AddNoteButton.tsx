@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import type { MouseEvent, ReactNode } from 'react'
 import { TouchTarget } from '../ui/button.tsx'
-import { ChatBubbleLeftIcon, EyeIcon } from '../ui/icons.ts'
+import { ChatBubbleLeftIcon, CircleCheckIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 
 const iconButtonClassName = clsx(
@@ -124,7 +124,7 @@ export function MarkSeenButton({
       rounded="md"
       onClick={onClick}
     >
-      <EyeIcon className="size-3.5" variant={pressed ? 'fill' : 'outline'} />
+      <CircleCheckIcon className="size-3.5" variant={pressed ? 'fill' : 'outline'} />
     </ReviewIconButton>
   )
 }
@@ -180,7 +180,10 @@ export function ObjectReviewActions({
         rounded="right"
         onClick={onSeenClick}
       >
-        <EyeIcon className={compact ? 'size-3' : 'size-3.5'} variant={seen ? 'fill' : 'outline'} />
+        <CircleCheckIcon
+          className={compact ? 'size-3' : 'size-3.5'}
+          variant={seen ? 'fill' : 'outline'}
+        />
       </ReviewIconButton>
     </div>
   )

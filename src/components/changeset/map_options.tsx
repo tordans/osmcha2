@@ -7,10 +7,13 @@ import { useMap } from 'react-map-gl/maplibre'
 import {
   mapLayerIsOn,
   parseLayersParam,
+  reviewFilterOf,
   searchWithLayers,
+  setReviewFilter,
   toggleMapLayer,
   type MapLayerToken,
   type MapLayers,
+  type ReviewFilter,
 } from '../../routing/layersParam.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
@@ -24,11 +27,11 @@ import { flyoutSurfaceClassName } from '../ui/flyout.ts'
 import {
   ChevronDownIcon,
   CircleCheckIcon,
-  EyeIcon,
   FunnelIcon,
   GlobeAltIcon,
   StarIcon,
 } from '../ui/icons.ts'
+import { Radio, RadioField } from '../ui/radio.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ACTION } from './actionColors.ts'
 import { ActionIcon } from './ActionTypeLabel.tsx'
@@ -204,6 +207,14 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
     })
   }
 
+  function setReview(filter: ReviewFilter) {
+    void navigate({
+      search: (prev) =>
+        searchWithLayers(prev, setReviewFilter(parseLayersParam(prev.layers), filter)),
+      replace: true,
+    })
+  }
+
   function zoomToSpyglass() {
     if (!mapLoaded) return
     mainMap?.getMap().easeTo({ zoom: SPYGLASS_MIN_ZOOM })
@@ -275,25 +286,31 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
 
         <section className="space-y-2">
           <h3 className="text-base font-medium text-zinc-700">Filter by review</h3>
-          <div className="space-y-1">
-            <MapLayerCheckbox token="unseen" layers={layers} onToggle={toggleLayer}>
-              <span className="inline-flex items-center gap-1.5">
-                <EyeIcon className="size-4 text-zinc-700" variant="outline" />
-                {SEEN_FILTER.unseenLabel}
-              </span>
-            </MapLayerCheckbox>
-            <MapLayerCheckbox
-              token="seen"
-              colorClass={SEEN_FILTER.checkbox}
-              layers={layers}
-              onToggle={toggleLayer}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <EyeIcon className="size-4 text-zinc-500" variant="fill" />
-                {SEEN_FILTER.label}
-              </span>
-            </MapLayerCheckbox>
-          </div>
+          <Headless.RadioGroup
+            value={reviewFilterOf(layers)}
+            onChange={(value) => setReview(value as ReviewFilter)}
+            className="space-y-0.5"
+            aria-label="Filter by review"
+          >
+            <RadioField>
+              <Radio value="unseen" />
+              <Label>
+                <span className="inline-flex items-center gap-1.5">
+                  <SeenLegendSwatch seen={false} />
+                  {SEEN_FILTER.unseenLabel}
+                </span>
+              </Label>
+            </RadioField>
+            <RadioField>
+              <Radio value="seen" color="zinc" />
+              <Label>
+                <span className="inline-flex items-center gap-1.5">
+                  <SeenLegendSwatch seen />
+                  {SEEN_FILTER.label}
+                </span>
+              </Label>
+            </RadioField>
+          </Headless.RadioGroup>
         </section>
 
         <Divider className="my-3" />
@@ -344,6 +361,21 @@ function BestForAreaIcon() {
     <Tooltip as="span" content="Best for this area" className="inline-flex shrink-0">
       <StarIcon variant="fill" className="size-4 text-yellow-500" aria-hidden="true" />
     </Tooltip>
+  )
+}
+
+/** Matches the compact mark-seen control: white+outline vs zinc+filled check. */
+function SeenLegendSwatch({ seen }: { seen: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={clsx(
+        'inline-flex size-4 shrink-0 items-center justify-center rounded border border-zinc-950/10',
+        seen ? 'bg-zinc-800 text-white' : 'bg-white text-zinc-700 shadow-sm',
+      )}
+    >
+      <CircleCheckIcon className="size-3" variant={seen ? 'fill' : 'outline'} />
+    </span>
   )
 }
 

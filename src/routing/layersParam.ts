@@ -13,7 +13,8 @@ const MAP_LAYER_TOKENS = [
 
 const REVIEW_TOKENS = ['seen', 'unseen'] as const
 
-/** Opt-out tokens so legacy `layers=` URLs keep showing seen and unseen geometry. */
+/** Opt-out tokens for the exclusive Seen/Unseen radio. `no-unseen` → Seen only;
+ * bare / `no-seen` → Unseen only (default). */
 const HIDE_SEEN_TOKEN = 'no-seen'
 const HIDE_UNSEEN_TOKEN = 'no-unseen'
 
@@ -31,11 +32,14 @@ const ELEMENT_TOKENS = ['node', 'way', 'relation'] as const
 const ACTION_TOKENS = ['create', 'modify', 'delete', 'noop'] as const
 const TOKEN_SET = new Set<string>(MAP_LAYER_TOKENS)
 
+/** Review map filter: exactly one side is visible (radio, not independent checkboxes). */
+export type ReviewFilter = 'unseen' | 'seen'
+
 export const DEFAULT_MAP_LAYERS: MapLayers = {
   showElements: [...ELEMENT_TOKENS],
   showActions: [...ACTION_TOKENS],
   spyglass: true,
-  showSeen: true,
+  showSeen: false,
   showUnseen: true,
 }
 
@@ -69,15 +73,19 @@ export function parseLayersParam(value: unknown): MapLayers {
     .split(',')
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
-  const showSeen = !raw.includes(HIDE_SEEN_TOKEN)
-  const showUnseen = !raw.includes(HIDE_UNSEEN_TOKEN)
+  const hasNoSeen = raw.includes(HIDE_SEEN_TOKEN)
+  const hasNoUnseen = raw.includes(HIDE_UNSEEN_TOKEN)
+  // Exclusive radio. Seen-only when `no-unseen` alone; everything else → Unseen
+  // (including legacy “both on” URLs with neither token).
+  const showSeen = hasNoUnseen && !hasNoSeen
+  const showUnseen = !showSeen
   const tokens = new Set(raw.filter(isStyleLayerToken))
   if (raw.length === 0) {
     return {
       showElements: [],
       showActions: [],
       spyglass: false,
-      showSeen: true,
+      showSeen: false,
       showUnseen: true,
     }
   }
@@ -96,9 +104,11 @@ export function parseLayersParam(value: unknown): MapLayers {
 export function serializeLayersParam(layers: MapLayers): string | undefined {
   if (isDefaultMapLayers(layers)) return undefined
   const hideTokens: string[] = []
-  if (!layers.showSeen) hideTokens.push(HIDE_SEEN_TOKEN)
-  if (!layers.showUnseen) hideTokens.push(HIDE_UNSEEN_TOKEN)
-  if (isDefaultStyleLayers(layers)) return hideTokens.join(',')
+  // Unseen is the default review side — only Seen-only needs a URL token.
+  if (layers.showSeen && !layers.showUnseen) hideTokens.push(HIDE_UNSEEN_TOKEN)
+  if (isDefaultStyleLayers(layers)) {
+    return hideTokens.length > 0 ? hideTokens.join(',') : undefined
+  }
   const tokens = MAP_LAYER_TOKENS.filter((token) => {
     if (token === 'spyglass') return layers.spyglass
     if (token === 'node' || token === 'way' || token === 'relation') {
@@ -118,9 +128,19 @@ export function searchWithLayers<T extends object>(search: T, layers: MapLayers)
   return { ...search, layers: serialized }
 }
 
+export function reviewFilterOf(layers: MapLayers): ReviewFilter {
+  if (layers.showSeen && !layers.showUnseen) return 'seen'
+  return 'unseen'
+}
+
+export function setReviewFilter(layers: MapLayers, filter: ReviewFilter): MapLayers {
+  if (filter === 'seen') return { ...layers, showSeen: true, showUnseen: false }
+  return { ...layers, showSeen: false, showUnseen: true }
+}
+
 export function toggleMapLayer(layers: MapLayers, token: MapLayerToken): MapLayers {
-  if (token === 'seen') return { ...layers, showSeen: !layers.showSeen }
-  if (token === 'unseen') return { ...layers, showUnseen: !layers.showUnseen }
+  if (token === 'seen') return setReviewFilter(layers, 'seen')
+  if (token === 'unseen') return setReviewFilter(layers, 'unseen')
   if (token === 'spyglass') return { ...layers, spyglass: !layers.spyglass }
   if (token === 'node' || token === 'way' || token === 'relation') {
     const has = layers.showElements.includes(token)

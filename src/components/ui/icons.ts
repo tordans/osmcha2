@@ -16,7 +16,6 @@ import {
   CircleNotch,
   Clipboard,
   ClipboardText,
-  Eye,
   FlagPennant,
   Funnel,
   Globe,
@@ -56,7 +55,6 @@ export const ChevronUpIcon = appIcon(CaretUp)
 export const ClipboardDocumentCheckIcon = appIcon(ClipboardText)
 export const ClipboardIcon = appIcon(Clipboard)
 export const ArrowTopRightOnSquareIcon = appIcon(ArrowSquareOut)
-export const EyeIcon = appIcon(Eye)
 export const FunnelIcon = appIcon(Funnel)
 export const GlobeAltIcon = appIcon(Globe)
 export const HandThumbDownIcon = appIcon(ThumbsDown)

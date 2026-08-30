@@ -10,8 +10,6 @@ export const SEEN_FILTER = {
   hex: SEEN_MAP_HEX,
   label: 'Seen',
   unseenLabel: 'Unseen',
-  checkbox:
-    '[--checkbox-check:var(--color-zinc-700)] [--checkbox-checked-bg:var(--color-zinc-400)]/25 [--checkbox-checked-border:var(--color-zinc-400)]/25',
 } as const
 
 const SEEN_DIM = 0.72
