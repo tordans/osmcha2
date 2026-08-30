@@ -157,7 +157,12 @@ function RefreshChangesetsButton({
   }
 
   const button = stale ? (
-    <Button color="orange" {...shared}>
+    <Button
+      color="orange"
+      {...shared}
+      // Keep icon as white (currentColor) instead of Catalyst’s orange-300 tint.
+      className={clsx(shared.className, '[--btn-icon:currentColor]')}
+    >
       {icon}
     </Button>
   ) : (
