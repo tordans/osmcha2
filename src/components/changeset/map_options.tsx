@@ -15,6 +15,7 @@ import {
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStore } from '../../stores/mapStore.ts'
+import { SEEN_FILTER } from '../../views/changesetSeenStyle.ts'
 import { SPYGLASS_MIN_ZOOM, spyglassEnabledAtZoom } from '../../views/spyglassOverlay.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
@@ -23,11 +24,14 @@ import { flyoutSurfaceClassName } from '../ui/flyout.ts'
 import {
   ChevronDownIcon,
   CircleCheckIcon,
+  EyeIcon,
   FunnelIcon,
   GlobeAltIcon,
   StarIcon,
 } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { ACTION } from './actionColors.ts'
+import { ActionIcon } from './ActionTypeLabel.tsx'
 import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
 import {
   isDuplicateOfBuiltinLayer,
@@ -147,7 +151,7 @@ function MapLayerCheckbox({
   token,
   layers,
   onToggle,
-  color,
+  colorClass,
   children,
   description,
   action,
@@ -155,7 +159,7 @@ function MapLayerCheckbox({
   token: MapLayerToken
   layers: MapLayers
   onToggle: (token: MapLayerToken) => void
-  color?: 'emerald' | 'amber' | 'red' | 'violet'
+  colorClass?: string
   children: React.ReactNode
   description?: string
   action?: React.ReactNode
@@ -163,7 +167,7 @@ function MapLayerCheckbox({
   return (
     <CheckboxField>
       <Checkbox
-        color={color}
+        colorClass={colorClass}
         checked={mapLayerIsOn(layers, token)}
         onChange={() => onToggle(token)}
       />
@@ -219,17 +223,71 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
         <section className="space-y-2">
           <h3 className="text-base font-medium text-zinc-700">Filter by actions</h3>
           <div className="space-y-1">
-            <MapLayerCheckbox token="create" color="emerald" layers={layers} onToggle={toggleLayer}>
-              Added
+            <MapLayerCheckbox
+              token="create"
+              colorClass={ACTION.create.checkbox}
+              layers={layers}
+              onToggle={toggleLayer}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <ActionIcon action="create" className={clsx('size-4', ACTION.create.tagText)} />
+                {ACTION.create.filterLabel}
+              </span>
             </MapLayerCheckbox>
-            <MapLayerCheckbox token="modify" color="amber" layers={layers} onToggle={toggleLayer}>
-              Modified
+            <MapLayerCheckbox
+              token="modify"
+              colorClass={ACTION.modify.checkbox}
+              layers={layers}
+              onToggle={toggleLayer}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <ActionIcon action="modify" className={clsx('size-4', ACTION.modify.tagText)} />
+                {ACTION.modify.filterLabel}
+              </span>
             </MapLayerCheckbox>
-            <MapLayerCheckbox token="delete" color="red" layers={layers} onToggle={toggleLayer}>
-              Deleted
+            <MapLayerCheckbox
+              token="delete"
+              colorClass={ACTION.delete.checkbox}
+              layers={layers}
+              onToggle={toggleLayer}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <ActionIcon action="delete" className={clsx('size-4', ACTION.delete.tagText)} />
+                {ACTION.delete.filterLabel}
+              </span>
             </MapLayerCheckbox>
-            <MapLayerCheckbox token="noop" color="violet" layers={layers} onToggle={toggleLayer}>
-              Unchanged
+            <MapLayerCheckbox
+              token="noop"
+              colorClass={ACTION.noop.checkbox}
+              layers={layers}
+              onToggle={toggleLayer}
+            >
+              {ACTION.noop.filterLabel}
+            </MapLayerCheckbox>
+          </div>
+        </section>
+
+        <Divider className="my-3" />
+
+        <section className="space-y-2">
+          <h3 className="text-base font-medium text-zinc-700">Filter by review</h3>
+          <div className="space-y-1">
+            <MapLayerCheckbox token="unseen" layers={layers} onToggle={toggleLayer}>
+              <span className="inline-flex items-center gap-1.5">
+                <EyeIcon className="size-4 text-zinc-700" variant="outline" />
+                {SEEN_FILTER.unseenLabel}
+              </span>
+            </MapLayerCheckbox>
+            <MapLayerCheckbox
+              token="seen"
+              colorClass={SEEN_FILTER.checkbox}
+              layers={layers}
+              onToggle={toggleLayer}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <EyeIcon className="size-4 text-zinc-500" variant="fill" />
+                {SEEN_FILTER.label}
+              </span>
             </MapLayerCheckbox>
           </div>
         </section>

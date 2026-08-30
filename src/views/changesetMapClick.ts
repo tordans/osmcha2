@@ -34,8 +34,9 @@ export function pickChangesetActionFromClick(options: {
   interactiveLayerIds: string[]
   actions: AdiffAction[]
   previousFeatureId: string | number | null
+  isFeatureVisible?: (feature: PickableFeature) => boolean
 }): { action: AdiffAction | null; nextFeatureId: string | number | null } {
-  const { map, point, interactiveLayerIds, actions, previousFeatureId } = options
+  const { map, point, interactiveLayerIds, actions, previousFeatureId, isFeatureVisible } = options
   const layerIds = interactiveLayerIds.filter((layerId) => Boolean(map.getLayer(layerId)))
   if (layerIds.length === 0) {
     return { action: null, nextFeatureId: null }
@@ -52,6 +53,7 @@ export function pickChangesetActionFromClick(options: {
       { layers: layerIds },
     )
     .filter((feature) => isClickableMapFeature(feature))
+    .filter((feature) => isFeatureVisible?.(feature) ?? true)
 
   const picked = rotateOverlappingFeatures(rendered, previousFeatureId)
   if (!picked) {

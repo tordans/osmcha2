@@ -40,7 +40,7 @@ _Avoid_: treating Flag as a review action
 ### Map
 
 **Map layers** (`layers`):
-Which changeset geometry and overlays the review map shows. Tokens: `create`, `modify`, `delete`, `noop`, `node`, `way`, `relation`, `spyglass`. Omit when every changeset layer is on and OSM context is on.
+Which changeset geometry and overlays the review map shows. Tokens: `create`, `modify`, `delete`, `noop`, `node`, `way`, `relation`, `spyglass`. Hide reviewed geometry with `no-seen` / `no-unseen`. Omit when every changeset layer is on, OSM context is on, and both seen and unseen are shown.
 _Avoid_: treating as a changeset list filter.
 
 **Spyglass overlay** / **OSM context**:

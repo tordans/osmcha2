@@ -5,7 +5,9 @@ import {
 
 export const SPYGLASS_MIN_ZOOM = 15
 export const SPYGLASS_MAX_ZOOM = 18
-/** Tag rows shown in the inspect flyout; the rest (and extra hits) are “+N more”. */
+/** Unique hovered objects shown in the inspect flyout; the rest are “+N more”. */
+const INSPECT_FLYOUT_MAX_ITEMS = 20
+/** Tag rows per object; the rest of that object’s tags are “+N more”. */
 const INSPECT_FLYOUT_MAX_TAGS = 20
 export const SPYGLASS_SOURCE_ID = 'spyglass'
 export const SPYGLASS_WAY_LAYER_ID = 'spyglass-ways-line'
@@ -60,11 +62,15 @@ const NON_TAG_KEYS = new Set([
 
 export type SpyglassOverlayState = 'off' | 'armed' | 'active'
 
-export type InspectHover = {
+export type InspectHoverItem = {
   kind: 'spyglass' | 'noop'
   type: string
   id: number | string
   tags: Array<[string, string]>
+}
+
+export type InspectHover = {
+  items: InspectHoverItem[]
   extraCount: number
 }
 
@@ -119,13 +125,12 @@ export function inspectTagsFromProperties(
 
 export function inspectFlyoutTags(
   tags: Array<[string, string]>,
-  extraCount: number,
   max = INSPECT_FLYOUT_MAX_TAGS,
 ): { tags: Array<[string, string]>; moreCount: number } {
   const visible = tags.slice(0, max)
   return {
     tags: visible,
-    moreCount: tags.length - visible.length + extraCount,
+    moreCount: tags.length - visible.length,
   }
 }
 
@@ -153,36 +158,32 @@ export function inspectHoverFromFeatures(
   const hits = features ?? []
   if (hits.some((feature) => isClickableMapFeature(feature))) return null
 
-  const parsed: Array<{
-    kind: InspectHover['kind']
-    type: string
-    id: number | string
-    tags: Array<[string, string]>
-    source: string
-  }> = []
+  const items: InspectHoverItem[] = []
+  const indexByKey = new Map<string, number>()
+  let extraCount = 0
+
   for (const feature of hits) {
     const next = parseInspectFeature(feature)
-    if (next) parsed.push(next)
+    if (!next) continue
+    const key = `${next.type}/${String(next.id)}`
+    const existingIndex = indexByKey.get(key)
+    if (existingIndex != null) {
+      if (existingIndex < 0) continue
+      const existing = items[existingIndex]
+      if (existing && next.tags.length > existing.tags.length) existing.tags = next.tags
+      continue
+    }
+    if (items.length >= INSPECT_FLYOUT_MAX_ITEMS) {
+      indexByKey.set(key, -1)
+      extraCount += 1
+      continue
+    }
+    indexByKey.set(key, items.length)
+    items.push({ kind: next.kind, type: next.type, id: next.id, tags: next.tags })
   }
-  const first = parsed[0]
-  if (!first) return null
 
-  const seen = new Set([inspectUniqueKey(first.source, first.id)])
-  let extraCount = 0
-  for (const item of parsed.slice(1)) {
-    const key = inspectUniqueKey(item.source, item.id)
-    if (seen.has(key)) continue
-    seen.add(key)
-    extraCount += 1
-  }
-
-  return {
-    kind: first.kind,
-    type: first.type,
-    id: first.id,
-    tags: first.tags,
-    extraCount,
-  }
+  if (items.length === 0) return null
+  return { items, extraCount }
 }
 
 function isNoopLayerId(id: string | undefined): boolean {
@@ -221,27 +222,16 @@ function layerIdOf(feature: InspectableMapFeature): string | undefined {
   return feature.layer?.id
 }
 
-function inspectUniqueKey(source: string, id: number | string): string {
-  return `${source}:${id}`
-}
-
-function parseInspectFeature(feature: InspectableMapFeature): {
-  kind: InspectHover['kind']
-  type: string
-  id: number | string
-  tags: Array<[string, string]>
-  source: string
-} | null {
+function parseInspectFeature(feature: InspectableMapFeature): InspectHoverItem | null {
   const layerId = layerIdOf(feature)
   const tags = inspectTagsFromProperties(feature.properties, {
     skipMetadataKeys: !isSpyglassLayerId(layerId),
   })
-  const source = feature.source ?? ''
 
   if (isSpyglassLayerId(layerId)) {
     const type = osmTypeFromSpyglassSourceLayer(feature.sourceLayer, layerId)
     if (type == null || feature.id == null) return null
-    return { kind: 'spyglass', type, id: feature.id, tags, source }
+    return { kind: 'spyglass', type, id: feature.id, tags }
   }
 
   if (isChangesetNoopFeature(feature)) {
@@ -249,7 +239,7 @@ function parseInspectFeature(feature: InspectableMapFeature): {
     const id = feature.properties?.id
     if (typeof type !== 'string' || type.length === 0 || id == null) return null
     if (typeof id !== 'string' && typeof id !== 'number') return null
-    return { kind: 'noop', type, id, tags, source }
+    return { kind: 'noop', type, id, tags }
   }
 
   return null

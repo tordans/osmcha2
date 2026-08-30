@@ -12,7 +12,7 @@ type TooltipAs = 'button' | 'span' | 'abbr'
 type TooltipPlacement = 'bottom' | 'bottom-end'
 
 type TooltipProps = {
-  content: string
+  content: ReactNode
   children: ReactNode
   className?: string
   onClick?: MouseEventHandler<HTMLElement>
@@ -111,7 +111,10 @@ export function Tooltip({
     '[interest-delay:0.2s_0.1s]',
     className,
   )
-  const triggerAriaLabel = as === 'button' || href ? (ariaLabel ?? content) : ariaLabel
+  const triggerAriaLabel =
+    as === 'button' || href
+      ? (ariaLabel ?? (typeof content === 'string' ? content : undefined))
+      : ariaLabel
 
   const triggerProps = {
     interestfor: id,

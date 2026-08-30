@@ -324,7 +324,7 @@ describe('inspectHoverFromFeatures', () => {
     ).toBeNull()
   })
 
-  test('uses the first spyglass hit and counts remaining unique source+id', () => {
+  test('uses the first spyglass hit and lists remaining unique objects', () => {
     expect(
       inspectHoverFromFeatures([
         {
@@ -350,11 +350,21 @@ describe('inspectHoverFromFeatures', () => {
         },
       ]),
     ).toEqual({
-      kind: 'spyglass',
-      type: 'way',
-      id: 123,
-      tags: [['highway', 'residential']],
-      extraCount: 1,
+      items: [
+        {
+          kind: 'spyglass',
+          type: 'way',
+          id: 123,
+          tags: [['highway', 'residential']],
+        },
+        {
+          kind: 'spyglass',
+          type: 'node',
+          id: 456,
+          tags: [['amenity', 'bench']],
+        },
+      ],
+      extraCount: 0,
     })
   })
 
@@ -369,10 +379,14 @@ describe('inspectHoverFromFeatures', () => {
         },
       ]),
     ).toEqual({
-      kind: 'noop',
-      type: 'way',
-      id: 42,
-      tags: [['highway', 'path']],
+      items: [
+        {
+          kind: 'noop',
+          type: 'way',
+          id: 42,
+          tags: [['highway', 'path']],
+        },
+      ],
       extraCount: 0,
     })
   })
@@ -389,13 +403,17 @@ describe('inspectHoverFromFeatures', () => {
         },
       ]),
     ).toEqual({
-      kind: 'spyglass',
-      type: 'node',
-      id: 7,
-      tags: [
-        ['action', 'store'],
-        ['type', 'amenity'],
-        ['name', 'Shop'],
+      items: [
+        {
+          kind: 'spyglass',
+          type: 'node',
+          id: 7,
+          tags: [
+            ['action', 'store'],
+            ['type', 'amenity'],
+            ['name', 'Shop'],
+          ],
+        },
       ],
       extraCount: 0,
     })
@@ -412,10 +430,82 @@ describe('inspectHoverFromFeatures', () => {
         },
       ]),
     ).toEqual({
-      kind: 'noop',
-      type: 'node',
-      id: 789,
-      tags: [['natural', 'tree']],
+      items: [
+        {
+          kind: 'noop',
+          type: 'node',
+          id: 789,
+          tags: [['natural', 'tree']],
+        },
+      ],
+      extraCount: 0,
+    })
+  })
+
+  test('lists each unique noop with its tags instead of +N more', () => {
+    expect(
+      inspectHoverFromFeatures([
+        {
+          id: 0,
+          source: 'changeset',
+          layer: { id: 'changeset-way-unchanged' },
+          properties: { type: 'way', id: 32029130, tags: { highway: 'residential' } },
+        },
+        {
+          id: 0,
+          source: 'changeset',
+          layer: { id: 'changeset-node-unchanged' },
+          properties: { type: 'node', id: 99, natural: 'tree' },
+        },
+      ]),
+    ).toEqual({
+      items: [
+        {
+          kind: 'noop',
+          type: 'way',
+          id: 32029130,
+          tags: [['highway', 'residential']],
+        },
+        {
+          kind: 'noop',
+          type: 'node',
+          id: 99,
+          tags: [['natural', 'tree']],
+        },
+      ],
+      extraCount: 0,
+    })
+  })
+
+  test('keeps the richer tags when the same object is hit twice', () => {
+    expect(
+      inspectHoverFromFeatures([
+        {
+          id: 0,
+          source: 'changeset',
+          layer: { id: 'changeset-way-unchanged' },
+          properties: { type: 'way', id: 1 },
+        },
+        {
+          id: 1,
+          source: 'spyglass',
+          sourceLayer: 'ways',
+          layer: { id: SPYGLASS_WAY_HIT_LAYER_ID },
+          properties: { highway: 'path', name: 'Lane' },
+        },
+      ]),
+    ).toEqual({
+      items: [
+        {
+          kind: 'noop',
+          type: 'way',
+          id: 1,
+          tags: [
+            ['highway', 'path'],
+            ['name', 'Lane'],
+          ],
+        },
+      ],
       extraCount: 0,
     })
   })
@@ -424,15 +514,8 @@ describe('inspectHoverFromFeatures', () => {
 describe('inspectFlyoutTags', () => {
   test('keeps up to 20 tag rows and folds the rest into +N more', () => {
     const tags = Array.from({ length: 21 }, (_, index) => [`k${index}`, 'v'] as [string, string])
-    expect(inspectFlyoutTags(tags, 1)).toEqual({
+    expect(inspectFlyoutTags(tags)).toEqual({
       tags: tags.slice(0, 20),
-      moreCount: 2,
-    })
-  })
-
-  test('still reports extra hovered objects when tags fit', () => {
-    expect(inspectFlyoutTags([['highway', 'path']], 1)).toEqual({
-      tags: [['highway', 'path']],
       moreCount: 1,
     })
   })

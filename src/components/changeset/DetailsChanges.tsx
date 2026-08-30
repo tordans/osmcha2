@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -34,15 +34,11 @@ import {
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
-import {
-  ChevronRightIcon,
-  ExclamationTriangleIcon,
-  PencilIcon,
-  PlusCircleIcon,
-  TrashIcon,
-} from '../ui/icons.ts'
+import { ChevronRightIcon, ExclamationTriangleIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
+import { ACTION, ACTION_UI_COLOR } from './actionColors.ts'
+import { ActionIcon, ActionTypeLabel } from './ActionTypeLabel.tsx'
 import { MarkSeenButton, ObjectReviewActions } from './AddNoteButton.tsx'
 import {
   buildElementChanges,
@@ -54,6 +50,7 @@ import {
   type ElementChange,
   type FlaggedFeature,
   type NamedReason,
+  type NodeStats,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
 import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
@@ -67,33 +64,6 @@ import {
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
 import { refParamFromElement, tagGroupContainsRef, type RefParam } from './refSelection.ts'
 import { changeRowDomId } from './scrollChildIntoScroller.ts'
-
-const ACTION_LABEL = {
-  create: 'Created',
-  modify: 'Modified',
-  delete: 'Deleted',
-} as const
-
-const ACTION_ICON = {
-  create: PlusCircleIcon,
-  modify: PencilIcon,
-  delete: TrashIcon,
-} as const
-
-function ActionTypeIcon({
-  actionType,
-  className,
-}: {
-  actionType: keyof typeof ACTION_ICON
-  className?: string
-}) {
-  const Icon = ACTION_ICON[actionType]
-  return (
-    <Tooltip as="span" content={ACTION_LABEL[actionType]} className="inline-flex shrink-0">
-      <Icon variant="fill" className={clsx('size-4 flex-none', className)} />
-    </Tooltip>
-  )
-}
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
@@ -173,6 +143,10 @@ function reviewState(
     latestForeignNoteAt: latestForeignNoteAt(notes, currentUser),
   })
   return { collapsed, hasNotes, drafts }
+}
+
+function isCompactReviewRow(collapsed: boolean, editing: boolean, drafts: Array<{ body: string }>) {
+  return collapsed && !editing && !drafts.some((note) => note.body.trim())
 }
 
 export function DetailsChanges({
@@ -255,52 +229,39 @@ export function DetailsChanges({
     <section className="flex flex-col gap-2.5 p-2.5">
       <ChangesNotesHeader count={totalNotes} />
       <ChangesetNotesSection notes={located.changesetNotes} />
-      {grouped.map(([actionType, actionChanges]) => {
-        const Icon = ACTION_ICON[actionType]
-        const groups = groupChangesByTagMutation(actionChanges)
-        return (
-          <Fragment key={actionType}>
-            <h2
-              className={clsx(
-                typeScale.heading,
-                'flex items-center gap-1 rounded-sm border border-zinc-950/10 bg-zinc-50 px-2 py-1',
-              )}
-            >
-              <Icon variant="fill" className="size-4 flex-none" /> {ACTION_LABEL[actionType]}
-            </h2>
-            <ul>
-              {groups.map((group) =>
-                group.length === 1 ? (
-                  <ElementChangeRow
-                    key={`${group[0].type}/${group[0].id}`}
-                    change={group[0]}
-                    changesetId={changesetId}
-                    selected={selected}
-                    selectedRef={selectedRef}
-                    selectRef={selectRef}
-                    deepLinkReveal={deepLinkReveal}
-                    zoomToAndSelect={zoomToAndSelect}
-                    objectNotes={located.byObject.get(objectRefKey(group[0].type, group[0].id))}
-                  />
-                ) : (
-                  <TagMutationGroup
-                    key={group.map((change) => `${change.type}/${change.id}`).join(',')}
-                    changes={group}
-                    changesetId={changesetId}
-                    selected={selected}
-                    selectedRef={selectedRef}
-                    selectRef={selectRef}
-                    deepLinkReveal={deepLinkReveal}
-                    deepLinkEpoch={deepLinkEpoch}
-                    zoomToAndSelect={zoomToAndSelect}
-                    notesByObject={located.byObject}
-                  />
-                ),
-              )}
-            </ul>
-          </Fragment>
-        )
-      })}
+      <ul>
+        {grouped.map(([, actionChanges]) => {
+          const groups = groupChangesByTagMutation(actionChanges)
+          return groups.map((group) =>
+            group.length === 1 ? (
+              <ElementChangeRow
+                key={`${group[0].type}/${group[0].id}`}
+                change={group[0]}
+                changesetId={changesetId}
+                selected={selected}
+                selectedRef={selectedRef}
+                selectRef={selectRef}
+                deepLinkReveal={deepLinkReveal}
+                zoomToAndSelect={zoomToAndSelect}
+                objectNotes={located.byObject.get(objectRefKey(group[0].type, group[0].id))}
+              />
+            ) : (
+              <TagMutationGroup
+                key={group.map((change) => `${change.type}/${change.id}`).join(',')}
+                changes={group}
+                changesetId={changesetId}
+                selected={selected}
+                selectedRef={selectedRef}
+                selectRef={selectRef}
+                deepLinkReveal={deepLinkReveal}
+                deepLinkEpoch={deepLinkEpoch}
+                zoomToAndSelect={zoomToAndSelect}
+                notesByObject={located.byObject}
+              />
+            ),
+          )
+        })}
+      </ul>
       <OtherNotesSection notes={located.unmatched} />
       <FinishReviewCard changesetId={changesetId} selectRef={selectRef} />
       <UnsentNotesBar
@@ -400,12 +361,13 @@ function TagMutationGroup({
     changes.some(
       (change) => change.type === editingNote.ref?.type && change.id === editingNote.ref.id,
     )
+  const allMembersCompact = memberStates.every((member) =>
+    isCompactReviewRow(member.collapsed, false, member.drafts),
+  )
   const forceOpen =
-    containsSelected ||
-    scrollTargetInGroup ||
-    revealInGroup ||
+    editingInGroup ||
     memberStates.some((member) => member.hasNotes) ||
-    editingInGroup
+    (!allMembersCompact && (containsSelected || scrollTargetInGroup || revealInGroup))
   const activeNoteKey = editingInGroup ? editingNote?.ref?.key : undefined
 
   function targetChangeForTag(key: string) {
@@ -454,6 +416,7 @@ function TagMutationGroup({
                 >
                   <ChevronRightIcon className="size-4 flex-none" />
                 </motion.span>
+                <ActionTypeLabel actionType={changes[0].actionType} />
                 <span>Same tag changes</span>
                 <Badge>{changes.length}</Badge>
               </Headless.DisclosureButton>
@@ -468,18 +431,20 @@ function TagMutationGroup({
                 }
               />
             </div>
-            <div className="mt-1 border-t font-mono">
-              <TagRows
-                rows={mutations}
-                emptyLabel="No tag changes"
-                highlightedKey={highlightTagKey}
-                onKeyClick={selectGroupTag}
-                noteCountByKey={groupNoteCountByKey}
-                onNoteCountClick={addNoteOnGroupTag}
-                onAddNote={addNoteOnGroupTag}
-                activeNoteKey={activeNoteKey}
-              />
-            </div>
+            {open ? (
+              <div className="mt-1 border-t font-mono">
+                <TagRows
+                  rows={mutations}
+                  emptyLabel="No tag changes"
+                  highlightedKey={highlightTagKey}
+                  onKeyClick={selectGroupTag}
+                  noteCountByKey={groupNoteCountByKey}
+                  onNoteCountClick={addNoteOnGroupTag}
+                  onAddNote={addNoteOnGroupTag}
+                  activeNoteKey={activeNoteKey}
+                />
+              </div>
+            ) : null}
             <Headless.DisclosurePanel static>
               <motion.div
                 initial={false}
@@ -623,8 +588,7 @@ function ElementChangeRow({
     else markSeen(userKey, changesetId, objectKey)
   }
 
-  const compact =
-    collapsed && !shouldReveal && !editingNote && !drafts.some((note) => note.body.trim())
+  const compact = isCompactReviewRow(collapsed, editingNote != null, drafts)
 
   const objectNoteOpen = editingNote != null && editingNote.ref?.key == null
 
@@ -645,7 +609,7 @@ function ElementChangeRow({
         onMouseLeave={() => setHover(null)}
         onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
       >
-        <ActionTypeIcon actionType={change.actionType} className="text-zinc-400" />
+        <ActionTypeLabel actionType={change.actionType} muted />
         <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
           {change.type}/{change.id}
         </span>
@@ -687,7 +651,7 @@ function ElementChangeRow({
     >
       <div className="flex w-full items-center justify-between gap-1">
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
-          <ActionTypeIcon actionType={change.actionType} />
+          <ActionTypeLabel actionType={change.actionType} />
           <span className="truncate">
             {change.type}/{change.id}
           </span>
@@ -735,25 +699,17 @@ function ElementChangeRow({
             <Tooltip
               as="span"
               placement="bottom-end"
-              content={
-                Object.values(change.nodeStats).every((value) => value === 0)
-                  ? 'Only tagging was changed; no changes to the geometry were made.'
-                  : [
-                      'Changes to this way:',
-                      `${change.nodeStats.added} nodes added`,
-                      `${change.nodeStats.modified} nodes modified`,
-                      `${change.nodeStats.deleted} nodes deleted`,
-                    ].join('\n')
-              }
+              aria-label={nodeStatsAriaLabel(change.nodeStats)}
+              content={<NodeStatsTooltip stats={change.nodeStats} />}
               className="inline-flex"
             >
-              <Badge color="blue" rounded="left">
+              <Badge color={ACTION_UI_COLOR.create} rounded="left">
                 {change.nodeStats.added}
               </Badge>
-              <Badge color="yellow" className="-my-1" rounded="none">
+              <Badge color={ACTION_UI_COLOR.modify} className="-my-1" rounded="none">
                 {change.nodeStats.modified}
               </Badge>
-              <Badge color="red" rounded="right">
+              <Badge color={ACTION_UI_COLOR.delete} rounded="right">
                 {change.nodeStats.deleted}
               </Badge>
             </Tooltip>
@@ -798,5 +754,46 @@ function ElementChangeRow({
         selectRef={selectRef}
       />
     </li>
+  )
+}
+
+function nodeStatsAriaLabel(stats: NodeStats) {
+  if (Object.values(stats).every((value) => value === 0)) {
+    return 'Only tagging was changed; no changes to the geometry were made.'
+  }
+  return [
+    'Changes to this way:',
+    `${stats.added} nodes added`,
+    `${stats.modified} nodes modified`,
+    `${stats.deleted} nodes deleted`,
+  ].join(' ')
+}
+
+function NodeStatsTooltip({ stats }: { stats: NodeStats }) {
+  if (Object.values(stats).every((value) => value === 0)) {
+    return 'Only tagging was changed; no changes to the geometry were made.'
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      <p>Changes to this way:</p>
+      <p className="flex items-center gap-1">
+        <span style={{ color: ACTION.create.hex }}>
+          <ActionIcon action="create" className="size-3" />
+        </span>
+        {stats.added} nodes added
+      </p>
+      <p className="flex items-center gap-1">
+        <span style={{ color: ACTION.modify.hex }}>
+          <ActionIcon action="modify" className="size-3" />
+        </span>
+        {stats.modified} nodes modified
+      </p>
+      <p className="flex items-center gap-1">
+        <span style={{ color: ACTION.delete.hex }}>
+          <ActionIcon action="delete" className="size-3" />
+        </span>
+        {stats.deleted} nodes deleted
+      </p>
+    </div>
   )
 }

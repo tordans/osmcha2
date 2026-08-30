@@ -59,7 +59,7 @@ img {
 }
 
 .cmap-bg-create {
-  background-color: #39dbc0;
+  background-color: #2dd4bf;
 }
 
 .cmap-bg-modify-old {
@@ -67,11 +67,11 @@ img {
 }
 
 .cmap-bg-modify-new {
-  background-color: #e8e845;
+  background-color: #facc15;
 }
 
 .cmap-bg-delete {
-  background-color: #cc2c47;
+  background-color: #f87171;
 }
 
 .cmap-bg-create-light {

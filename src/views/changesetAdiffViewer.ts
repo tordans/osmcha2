@@ -1,5 +1,6 @@
 import { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { useMemo } from 'react'
+import { remapAdiffActionLayers } from '../components/changeset/actionColors.ts'
 
 export const CHANGESET_MAP_ID = 'mainMap'
 export const CHANGESET_SOURCE_ID = 'changeset'
@@ -18,7 +19,7 @@ export type ChangesetAdiffViewer = {
   }
   geojson: GeoJSON.FeatureCollection
   options: Record<string, unknown>
-  layers: () => Array<{ id: string }>
+  layers: () => Array<{ id: string; type?: string; paint?: Record<string, unknown> }>
 }
 
 export function changesetInteractiveLayerIds(layers: Array<{ id: string }>): string[] {
@@ -58,9 +59,15 @@ export function useChangesetAdiffViewer(
 ): ChangesetAdiffViewer | null {
   return useMemo(() => {
     if (!adiff) return null
-    return new MapLibreAugmentedDiffViewer(
+    const viewer = new MapLibreAugmentedDiffViewer(
       { ...adiff, note: OSM_ADIFF_ATTRIBUTION },
       { showElements, showActions },
     ) as ChangesetAdiffViewer
+    return {
+      adiff: viewer.adiff,
+      geojson: viewer.geojson,
+      options: viewer.options,
+      layers: () => remapAdiffActionLayers(viewer.layers()),
+    }
   }, [adiff, showElements, showActions])
 }

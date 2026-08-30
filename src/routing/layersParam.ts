@@ -11,12 +11,20 @@ const MAP_LAYER_TOKENS = [
   'spyglass',
 ] as const
 
-export type MapLayerToken = (typeof MAP_LAYER_TOKENS)[number]
+const REVIEW_TOKENS = ['seen', 'unseen'] as const
+
+/** Opt-out tokens so legacy `layers=` URLs keep showing seen and unseen geometry. */
+const HIDE_SEEN_TOKEN = 'no-seen'
+const HIDE_UNSEEN_TOKEN = 'no-unseen'
+
+export type MapLayerToken = (typeof MAP_LAYER_TOKENS)[number] | (typeof REVIEW_TOKENS)[number]
 
 export type MapLayers = {
   showElements: string[]
   showActions: string[]
   spyglass: boolean
+  showSeen: boolean
+  showUnseen: boolean
 }
 
 const ELEMENT_TOKENS = ['node', 'way', 'relation'] as const
@@ -27,9 +35,11 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   showElements: [...ELEMENT_TOKENS],
   showActions: [...ACTION_TOKENS],
   spyglass: true,
+  showSeen: true,
+  showUnseen: true,
 }
 
-function isMapLayerToken(value: string): value is MapLayerToken {
+function isStyleLayerToken(value: string): value is (typeof MAP_LAYER_TOKENS)[number] {
   return TOKEN_SET.has(value)
 }
 
@@ -37,7 +47,7 @@ function sameMembers(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((token) => b.includes(token))
 }
 
-export function isDefaultMapLayers(layers: MapLayers): boolean {
+function isDefaultStyleLayers(layers: MapLayers): boolean {
   return (
     layers.spyglass === DEFAULT_MAP_LAYERS.spyglass &&
     sameMembers(layers.showElements, DEFAULT_MAP_LAYERS.showElements) &&
@@ -45,30 +55,58 @@ export function isDefaultMapLayers(layers: MapLayers): boolean {
   )
 }
 
+export function isDefaultMapLayers(layers: MapLayers): boolean {
+  return (
+    isDefaultStyleLayers(layers) &&
+    layers.showSeen === DEFAULT_MAP_LAYERS.showSeen &&
+    layers.showUnseen === DEFAULT_MAP_LAYERS.showUnseen
+  )
+}
+
 export function parseLayersParam(value: unknown): MapLayers {
   if (typeof value !== 'string') return DEFAULT_MAP_LAYERS
-  const tokens = new Set(
-    value
-      .split(',')
-      .map((token) => token.trim())
-      .filter(isMapLayerToken),
-  )
+  const raw = value
+    .split(',')
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+  const showSeen = !raw.includes(HIDE_SEEN_TOKEN)
+  const showUnseen = !raw.includes(HIDE_UNSEEN_TOKEN)
+  const tokens = new Set(raw.filter(isStyleLayerToken))
+  if (raw.length === 0) {
+    return {
+      showElements: [],
+      showActions: [],
+      spyglass: false,
+      showSeen: true,
+      showUnseen: true,
+    }
+  }
+  if (tokens.size === 0) {
+    return { ...DEFAULT_MAP_LAYERS, showSeen, showUnseen }
+  }
   return {
     showElements: ELEMENT_TOKENS.filter((token) => tokens.has(token)),
     showActions: ACTION_TOKENS.filter((token) => tokens.has(token)),
     spyglass: tokens.has('spyglass'),
+    showSeen,
+    showUnseen,
   }
 }
 
 export function serializeLayersParam(layers: MapLayers): string | undefined {
   if (isDefaultMapLayers(layers)) return undefined
-  return MAP_LAYER_TOKENS.filter((token) => {
+  const hideTokens: string[] = []
+  if (!layers.showSeen) hideTokens.push(HIDE_SEEN_TOKEN)
+  if (!layers.showUnseen) hideTokens.push(HIDE_UNSEEN_TOKEN)
+  if (isDefaultStyleLayers(layers)) return hideTokens.join(',')
+  const tokens = MAP_LAYER_TOKENS.filter((token) => {
     if (token === 'spyglass') return layers.spyglass
     if (token === 'node' || token === 'way' || token === 'relation') {
       return layers.showElements.includes(token)
     }
     return layers.showActions.includes(token)
-  }).join(',')
+  })
+  return [...tokens, ...hideTokens].join(',')
 }
 
 export function searchWithLayers<T extends object>(search: T, layers: MapLayers): T {
@@ -81,6 +119,8 @@ export function searchWithLayers<T extends object>(search: T, layers: MapLayers)
 }
 
 export function toggleMapLayer(layers: MapLayers, token: MapLayerToken): MapLayers {
+  if (token === 'seen') return { ...layers, showSeen: !layers.showSeen }
+  if (token === 'unseen') return { ...layers, showUnseen: !layers.showUnseen }
   if (token === 'spyglass') return { ...layers, spyglass: !layers.spyglass }
   if (token === 'node' || token === 'way' || token === 'relation') {
     const has = layers.showElements.includes(token)
@@ -101,6 +141,8 @@ export function toggleMapLayer(layers: MapLayers, token: MapLayerToken): MapLaye
 }
 
 export function mapLayerIsOn(layers: MapLayers, token: MapLayerToken): boolean {
+  if (token === 'seen') return layers.showSeen
+  if (token === 'unseen') return layers.showUnseen
   if (token === 'spyglass') return layers.spyglass
   if (token === 'node' || token === 'way' || token === 'relation') {
     return layers.showElements.includes(token)

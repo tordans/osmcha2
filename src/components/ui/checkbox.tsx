@@ -105,10 +105,13 @@ type Color = keyof typeof colors
 
 export function Checkbox({
   color = 'dark/zinc',
+  colorClass,
   className,
   ...props
 }: {
   color?: Color
+  /** Replaces the named `color` token, e.g. action-filter tints from `ACTION`. */
+  colorClass?: string
   className?: string
 } & Omit<Headless.CheckboxProps, 'as' | 'className'>) {
   return (
@@ -117,7 +120,7 @@ export function Checkbox({
       {...props}
       className={clsx(className, 'group inline-flex cursor-pointer focus:outline-hidden')}
     >
-      <span className={clsx([base, colors[color]])}>
+      <span className={clsx([base, colorClass ?? colors[color]])}>
         <svg
           className="size-4 stroke-(--checkbox-check) opacity-0 group-data-checked:opacity-100 sm:h-3.5 sm:w-3.5"
           viewBox="0 0 14 14"

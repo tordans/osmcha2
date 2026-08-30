@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
+import { ACTION } from './changeset/actionColors.ts'
 import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
@@ -40,11 +41,17 @@ function TagChange({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
-      <span className={clsx('min-w-0 text-orange-500', wrapClass(oldValue, rawOld))} dir="auto">
+      <span
+        className={clsx('min-w-0', ACTION.delete.tagText, wrapClass(oldValue, rawOld))}
+        dir="auto"
+      >
         {oldValue}
       </span>
       <ArrowRightIcon className="size-3 flex-none text-zinc-400" />
-      <span className={clsx('min-w-0 text-green-700', wrapClass(newValue, rawNew))} dir="auto">
+      <span
+        className={clsx('min-w-0', ACTION.create.tagText, wrapClass(newValue, rawNew))}
+        dir="auto"
+      >
         {newValue}
       </span>
     </div>
@@ -52,10 +59,16 @@ function TagChange({
 }
 
 function rowToneClass(kind: TagRowsItem['kind'], clickable: boolean) {
-  if (kind === 'added') return clsx('bg-blue-50', clickable && 'hover:bg-blue-100')
-  if (kind === 'removed') return clsx('bg-orange-50', clickable && 'hover:bg-orange-100')
-  if (kind === 'changed') return clsx('bg-yellow-50', clickable && 'hover:bg-yellow-100')
-  return clickable ? 'hover:bg-zinc-50' : undefined
+  if (kind === 'added') {
+    return clsx(ACTION.create.tagBg, clickable && ACTION.create.tagBgHover)
+  }
+  if (kind === 'removed') {
+    return clsx(ACTION.delete.tagBg, clickable && ACTION.delete.tagBgHover)
+  }
+  if (kind === 'changed') {
+    return clsx(ACTION.modify.tagBg, clickable && ACTION.modify.tagBgHover)
+  }
+  return clickable ? ACTION.noop.tagBgHover : undefined
 }
 
 function TagRowValue({ row }: { row: TagRowsItem }) {
@@ -82,10 +95,10 @@ function TagRowValue({ row }: { row: TagRowsItem }) {
   const wrap = wrapClass(row.value, row.rawValue)
   const tone =
     row.kind === 'added'
-      ? 'text-blue-700'
+      ? ACTION.create.tagText
       : row.kind === 'removed'
-        ? 'text-orange-600'
-        : 'text-zinc-500'
+        ? ACTION.delete.tagText
+        : ACTION.noop.tagText
 
   return (
     <div className={clsx(tone, wrap)} dir="auto">

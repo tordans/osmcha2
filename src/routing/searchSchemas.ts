@@ -11,7 +11,7 @@ export const osmchaSearchSchema = z
     ref: z.string().optional(),
     /** Note pin: `lat,lng` at five decimals. */
     pin: z.string().optional(),
-    /** Map layers: comma-separated tokens; omit when every changeset layer is on and spyglass is on. */
+    /** Map layers: comma-separated tokens; omit when every changeset layer is on, spyglass is on, and both seen and unseen are shown. */
     layers: z.string().optional(),
     /** List sort: `order=date,desc` (field,direction). */
     order: z.string().optional(),

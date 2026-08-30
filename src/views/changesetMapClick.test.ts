@@ -91,4 +91,23 @@ describe('pickChangesetActionFromClick', () => {
     expect(result.action).toBe(create)
     expect(result.nextFeatureId).toBe(3)
   })
+
+  test('skips features hidden by the review filter', () => {
+    const create: AdiffAction = { type: 'create', new: { type: 'way', id: 20 } }
+    const result = pickChangesetActionFromClick({
+      map: stubMap([
+        {
+          id: 3,
+          layer: { id: 'changeset-way-new' },
+          properties: { action: 'create', type: 'way', id: 20 },
+        },
+      ]),
+      point,
+      interactiveLayerIds: ['changeset-way-new'],
+      actions: [create],
+      previousFeatureId: null,
+      isFeatureVisible: () => false,
+    })
+    expect(result).toEqual({ action: null, nextFeatureId: null })
+  })
 })

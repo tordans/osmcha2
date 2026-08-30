@@ -18,11 +18,13 @@ describe('parseLayersParam', () => {
     expect(DEFAULT_MAP_LAYERS.spyglass).toBe(true)
   })
 
-  test('empty string is nothing visible', () => {
+  test('empty string is nothing visible, but still shows seen and unseen', () => {
     expect(parseLayersParam('')).toEqual({
       showElements: [],
       showActions: [],
       spyglass: false,
+      showSeen: true,
+      showUnseen: true,
     })
   })
 
@@ -31,7 +33,22 @@ describe('parseLayersParam', () => {
       showElements: ['way'],
       showActions: [],
       spyglass: true,
+      showSeen: true,
+      showUnseen: true,
     })
+  })
+
+  test('hides seen or unseen with opt-out tokens so legacy URLs stay visible', () => {
+    expect(parseLayersParam('no-seen')).toEqual({ ...DEFAULT_MAP_LAYERS, showSeen: false })
+    expect(parseLayersParam('no-unseen')).toEqual({ ...DEFAULT_MAP_LAYERS, showUnseen: false })
+    expect(parseLayersParam('create,modify,no-seen')).toEqual({
+      showElements: [],
+      showActions: ['create', 'modify'],
+      spyglass: false,
+      showSeen: false,
+      showUnseen: true,
+    })
+    expect(parseLayersParam('way,no-unseen')).toMatchObject({ showSeen: true, showUnseen: false })
   })
 
   test('keeps commas readable in the query string', () => {
@@ -55,15 +72,36 @@ describe('serializeLayersParam', () => {
         showElements: ['relation', 'node', 'way'],
         showActions: ['noop', 'create', 'delete', 'modify'],
         spyglass: false,
+        showSeen: true,
+        showUnseen: true,
       }),
     ).toBe('create,modify,delete,noop,node,way,relation')
   })
 
   test('writes an empty string when nothing is visible', () => {
-    expect(serializeLayersParam({ showElements: [], showActions: [], spyglass: false })).toBe('')
     expect(
-      searchWithLayers({ page: 1 }, { showElements: [], showActions: [], spyglass: false }),
+      serializeLayersParam({
+        showElements: [],
+        showActions: [],
+        spyglass: false,
+        showSeen: true,
+        showUnseen: true,
+      }),
+    ).toBe('')
+    expect(
+      searchWithLayers(
+        { page: 1 },
+        { showElements: [], showActions: [], spyglass: false, showSeen: true, showUnseen: true },
+      ),
     ).toEqual({ page: 1, layers: '' })
+  })
+
+  test('appends no-seen / no-unseen when a review side is hidden', () => {
+    expect(serializeLayersParam({ ...DEFAULT_MAP_LAYERS, showSeen: false })).toBe('no-seen')
+    expect(serializeLayersParam({ ...DEFAULT_MAP_LAYERS, showUnseen: false })).toBe('no-unseen')
+    expect(serializeLayersParam({ ...DEFAULT_MAP_LAYERS, spyglass: false, showSeen: false })).toBe(
+      'create,modify,delete,noop,node,way,relation,no-seen',
+    )
   })
 })
 
@@ -81,5 +119,12 @@ describe('toggleMapLayer', () => {
       'modify',
       'delete',
     ])
+  })
+
+  test('toggles seen and unseen independently', () => {
+    const hiddenSeen = toggleMapLayer(DEFAULT_MAP_LAYERS, 'seen')
+    expect(hiddenSeen).toEqual({ ...DEFAULT_MAP_LAYERS, showSeen: false })
+    expect(toggleMapLayer(hiddenSeen, 'seen')).toEqual(DEFAULT_MAP_LAYERS)
+    expect(toggleMapLayer(DEFAULT_MAP_LAYERS, 'unseen').showUnseen).toBe(false)
   })
 })

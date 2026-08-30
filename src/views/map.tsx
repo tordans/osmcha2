@@ -27,6 +27,7 @@ import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { flyoutSurfaceClassName } from '../components/ui/flyout.ts'
 import { useAuth } from '../hooks/useAuth.ts'
+import { useNotesUserKey } from '../notes/useNotesUserKey.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
@@ -37,6 +38,7 @@ import {
   getChangesetNotesActions,
   getPinPlacement,
   usePinPlacement,
+  useSeenMap,
 } from '../stores/changeset-notes-store.ts'
 import { useMapActions, useMapLoaded } from '../stores/map-loaded-store.ts'
 import { useMapStore } from '../stores/mapStore.ts'
@@ -63,6 +65,11 @@ import {
 } from './changesetFeatureState.ts'
 import { pickChangesetActionFromClick } from './changesetMapClick.ts'
 import { ChangesetMapUnavailable } from './ChangesetMapUnavailable.tsx'
+import {
+  applySeenMapStyle,
+  changesetFeaturePassesReviewFilter,
+  syncSeenFeatureState,
+} from './changesetSeenStyle.ts'
 import { changesetViewBounds } from './changesetViewBounds.ts'
 import {
   clearMainMapDebugExposure,
@@ -78,6 +85,7 @@ import {
   inspectFlyoutTags,
   spyglassEnabledAtZoom,
   type InspectHover,
+  type InspectHoverItem,
 } from './spyglassOverlay.ts'
 import { SpyglassOverlay } from './SpyglassOverlay.tsx'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
@@ -170,7 +178,10 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const [inspectHover, setInspectHover] = useState<InspectHover | null>(null)
   const [inspectPoint, setInspectPoint] = useState<{ x: number; y: number } | null>(null)
   const pinPlacement = usePinPlacement()
-  const spyglassEnabled = parseLayersParam(layersSearch).spyglass
+  const mapLayers = parseLayersParam(layersSearch)
+  const spyglassEnabled = mapLayers.spyglass
+  const userKey = useNotesUserKey()
+  const seenMap = useSeenMap(userKey, changesetId ?? 0)
   const hover = useChangesetHover()
   const { setHover, requestListScroll } = useChangesetHoverActions()
 
@@ -370,6 +381,21 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     [mapLoaded, mainMap, viewer, hover, styleEpoch],
   )
 
+  const applySeenFromNotes = useEffectEvent((map: MaplibreMap) => {
+    if (!viewer) return
+    syncSeenFeatureState(map, viewer.geojson as ChangesetGeoJSON, seenMap)
+  })
+
+  useEffect(
+    function syncSeenFeatureStateFromNotes() {
+      if (!mapLoaded) return
+      const map = mainMap?.getMap()
+      if (!map) return
+      applySeenFromNotes(map)
+    },
+    [mapLoaded, mainMap, viewer, seenMap, styleEpoch],
+  )
+
   useEffect(
     function zoomOnceForDeepLinkRef() {
       if (!mapLoaded) return
@@ -387,7 +413,16 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const parsedCamera = parseMapParam(mapSearch ?? '')
   const fitOptions = changesetFitOptions(containerSize.width, containerSize.height)
   const viewBounds = viewer ? changesetViewBounds(viewer.geojson.features) : null
-  const layers = viewer?.layers() ?? []
+  const layers = applySeenMapStyle(viewer?.layers() ?? [], {
+    showSeen: mapLayers.showSeen,
+    showUnseen: mapLayers.showUnseen,
+    graySeen: true,
+  })
+  const emphasisLayers = applySeenMapStyle(CHANGESET_EMPHASIS_LAYERS, {
+    showSeen: mapLayers.showSeen,
+    showUnseen: mapLayers.showUnseen,
+    graySeen: false,
+  })
   const { overlayBg, featureLayers } = splitChangesetLayers(layers)
   const { caseLayers, coreLayers } = splitChangesetFeatureLayers(featureLayers)
   const firstFeatureLayerId = (caseLayers[0] ?? coreLayers[0])?.id
@@ -408,6 +443,18 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const showError = changesetQuery.isError && !changesetQuery.isFetching
   const showLoading =
     !showError && (!canMountMap || changesetQuery.isLoading || changesetQuery.isFetching)
+
+  function isReviewVisible(feature: {
+    source?: string
+    properties?: { type?: string; id?: number } | null
+  }) {
+    return changesetFeaturePassesReviewFilter(
+      feature,
+      seenMap,
+      mapLayers.showSeen,
+      mapLayers.showUnseen,
+    )
+  }
 
   function handleLoad(event: MapLibreEvent) {
     const map = event.target
@@ -442,13 +489,15 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       interactiveLayerIds: clickableLayerIds,
       actions: viewer.adiff.actions,
       previousFeatureId: lastClickFeatureIdRef.current,
+      isFeatureVisible: isReviewVisible,
     })
 
     const geojson = viewer.geojson as ChangesetGeoJSON
+    const hoverFeatures = event.features?.filter(isReviewVisible)
 
     if (nextFeatureId == null) {
       // Spyglass / noop are inspect-only. Do not treat them as an empty-map deselect.
-      if (inspectHoverFromFeatures(event.features)) return
+      if (inspectHoverFromFeatures(hoverFeatures)) return
       lastClickFeatureIdRef.current = null
       selectRef(null)
       clearSelectedFeatureState(map, geojson)
@@ -468,8 +517,9 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
 
   function handleMouseMove(event: MapLayerMouseEvent) {
     const placingPin = Boolean(pinPlacement)
+    const hoverFeatures = event.features?.filter(isReviewVisible)
     setCursor(
-      cursorForMapHover(event.features, {
+      cursorForMapHover(hoverFeatures, {
         pinPlacement: placingPin,
         overlayActive,
       }),
@@ -480,10 +530,10 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       setHover(null)
       return
     }
-    const inspectHover = inspectHoverFromFeatures(event.features)
+    const inspectHover = inspectHoverFromFeatures(hoverFeatures)
     setInspectHover(inspectHover)
     setInspectPoint(inspectHover ? { x: event.point.x, y: event.point.y } : null)
-    setHover(changesetHoverFromFeatures(event.features))
+    setHover(changesetHoverFromFeatures(hoverFeatures))
   }
 
   function handleMouseLeave() {
@@ -528,7 +578,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
               {caseLayers.map((layer: { id: string }) => (
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
-              {CHANGESET_EMPHASIS_LAYERS.map((layer) => (
+              {emphasisLayers.map((layer) => (
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
               {coreLayers.map((layer: { id: string }) => (
@@ -588,14 +638,37 @@ function SpyglassInspectFlyout({
   hover: InspectHover
   point: { x: number; y: number }
 }) {
-  const { tags, moreCount } = inspectFlyoutTags(hover.tags, hover.extraCount)
   return (
     <div
       className={`pointer-events-none absolute z-20 max-w-xs rounded-lg px-2 py-1.5 ${flyoutSurfaceClassName}`}
       style={{ left: point.x + 12, top: point.y + 12 }}
     >
+      {hover.items.map((item, index) => (
+        <SpyglassInspectFlyoutItem
+          key={`${item.type}/${String(item.id)}`}
+          item={item}
+          isFirst={index === 0}
+        />
+      ))}
+      {hover.extraCount > 0 ? (
+        <div className="mt-1 text-xs text-zinc-500">+{hover.extraCount} more</div>
+      ) : null}
+    </div>
+  )
+}
+
+function SpyglassInspectFlyoutItem({
+  item,
+  isFirst,
+}: {
+  item: InspectHoverItem
+  isFirst: boolean
+}) {
+  const { tags, moreCount } = inspectFlyoutTags(item.tags)
+  return (
+    <div className={isFirst ? undefined : 'mt-2'}>
       <div className="text-sm font-medium text-zinc-950">
-        {hover.type}/{hover.id}
+        {item.type}/{item.id}
       </div>
       {tags.length > 0 ? (
         <div className="mt-1 text-xs text-zinc-700">
