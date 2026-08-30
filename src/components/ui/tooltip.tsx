@@ -139,8 +139,9 @@ export function Tooltip({
         popover="hint"
         role="tooltip"
         className={clsx(
-          'm-0 max-w-xs border-0 bg-zinc-950 px-2 py-1.5 text-xs/5 text-white',
+          'm-0 max-w-xs border-0 bg-zinc-950 px-2 py-1 text-xs/4 text-white',
           'rounded-md shadow-lg',
+          "before:pointer-events-none before:absolute before:bottom-full before:left-1/2 before:-translate-x-1/2 before:border-x-4 before:border-b-4 before:border-x-transparent before:border-b-zinc-950 before:content-['']",
           'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2',
           '[position-try-fallbacks:flip-block]',
           '[transition-behavior:allow-discrete]',

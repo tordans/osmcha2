@@ -1,4 +1,4 @@
-import { TZDate } from '@date-fns/tz'
+import { TZDate, tz } from '@date-fns/tz'
 import { format, isValid, parseISO, startOfDay } from 'date-fns'
 
 /** Browser IANA zone, falling back to UTC when unavailable (SSR / tests). */
@@ -10,14 +10,14 @@ function browserTimeZone(): string {
   }
 }
 
-/** Local wall-clock datetime for tooltips, e.g. `16 Aug 2026, 08:49:10 GMT+2`. */
+/** Local wall-clock datetime for tooltips, e.g. `16 Aug 2026, 08:49:10 Europe/Berlin`. */
 export function formatLocalDateTime(date: Date, timeZone: string = browserTimeZone()): string {
-  return format(new TZDate(date, timeZone), 'd MMM yyyy, HH:mm:ss zzz')
+  return `${format(date, 'd MMM yyyy, HH:mm:ss', { in: tz(timeZone) })} ${timeZone}`
 }
 
 /** Calendar `yyyy-MM-dd` in `timeZone` (not a UTC slice). */
 export function formatLocalDate(date: Date, timeZone: string = browserTimeZone()): string {
-  return format(new TZDate(date, timeZone), 'yyyy-MM-dd')
+  return format(date, 'yyyy-MM-dd', { in: tz(timeZone) })
 }
 
 /** Local midnight for a stored `yyyy-MM-dd` calendar day. */

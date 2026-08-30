@@ -20,12 +20,12 @@ describe('parseOsmDate', () => {
 
 describe('formatLocalDateTime', () => {
   test('formats the instant in UTC', () => {
-    expect(formatLocalDateTime(parseOsmDate(INSTANT), 'UTC')).toBe('16 Aug 2026, 06:49:10 GMT+0')
+    expect(formatLocalDateTime(parseOsmDate(INSTANT), 'UTC')).toBe('16 Aug 2026, 06:49:10 UTC')
   })
 
   test('formats the same instant in Europe/Berlin', () => {
     expect(formatLocalDateTime(parseOsmDate(INSTANT), 'Europe/Berlin')).toBe(
-      '16 Aug 2026, 08:49:10 GMT+2',
+      '16 Aug 2026, 08:49:10 Europe/Berlin',
     )
   })
 })
