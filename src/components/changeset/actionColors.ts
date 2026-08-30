@@ -4,7 +4,7 @@ export type ElementActionKey = 'create' | 'modify' | 'delete'
 
 /**
  * Single source for create/modify/delete/noop: Catalyst badge token, map paint hex
- * (Tailwind 400), icon, labels, tag-row/checkbox tints matching Badge fills.
+ * (Tailwind 400), icon, labels, tag text/checkbox tints matching Badge fills.
  */
 export const ACTION = {
   create: {
@@ -13,8 +13,6 @@ export const ACTION = {
     icon: PlusCircleIcon,
     label: 'Created',
     filterLabel: 'Added',
-    tagBg: 'bg-teal-500/15',
-    tagBgHover: 'hover:bg-teal-500/25',
     tagText: 'text-teal-700',
     checkbox:
       '[--checkbox-check:var(--color-teal-700)] [--checkbox-checked-bg:var(--color-teal-500)]/15 [--checkbox-checked-border:var(--color-teal-500)]/15',
@@ -25,8 +23,6 @@ export const ACTION = {
     icon: PencilIcon,
     label: 'Modified',
     filterLabel: 'Modified',
-    tagBg: 'bg-yellow-400/20',
-    tagBgHover: 'hover:bg-yellow-400/30',
     tagText: 'text-yellow-800',
     checkbox:
       '[--checkbox-check:var(--color-yellow-800)] [--checkbox-checked-bg:var(--color-yellow-400)]/20 [--checkbox-checked-border:var(--color-yellow-400)]/20',
@@ -37,8 +33,6 @@ export const ACTION = {
     icon: TrashIcon,
     label: 'Deleted',
     filterLabel: 'Deleted',
-    tagBg: 'bg-red-500/15',
-    tagBgHover: 'hover:bg-red-500/25',
     tagText: 'text-red-700',
     checkbox:
       '[--checkbox-check:var(--color-red-700)] [--checkbox-checked-bg:var(--color-red-500)]/15 [--checkbox-checked-border:var(--color-red-500)]/15',
@@ -49,8 +43,6 @@ export const ACTION = {
     icon: null,
     label: 'Unchanged',
     filterLabel: 'Unchanged',
-    tagBg: undefined,
-    tagBgHover: 'hover:bg-zinc-50',
     tagText: 'text-zinc-500',
     checkbox:
       '[--checkbox-check:var(--color-violet-700)] [--checkbox-checked-bg:var(--color-violet-500)]/15 [--checkbox-checked-border:var(--color-violet-500)]/15',

@@ -58,19 +58,6 @@ function TagChange({
   )
 }
 
-function rowToneClass(kind: TagRowsItem['kind'], clickable: boolean) {
-  if (kind === 'added') {
-    return clsx(ACTION.create.tagBg, clickable && ACTION.create.tagBgHover)
-  }
-  if (kind === 'removed') {
-    return clsx(ACTION.delete.tagBg, clickable && ACTION.delete.tagBgHover)
-  }
-  if (kind === 'changed') {
-    return clsx(ACTION.modify.tagBg, clickable && ACTION.modify.tagBgHover)
-  }
-  return clickable ? ACTION.noop.tagBgHover : undefined
-}
-
 function TagRowValue({ row }: { row: TagRowsItem }) {
   if (row.kind === 'changed') {
     return (
@@ -149,9 +136,8 @@ export function TagRows({
         <div
           key={row.key}
           className={clsx(
-            'group col-span-3 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
-            rowToneClass(row.kind, Boolean(onKeyClick)),
-            onKeyClick && 'cursor-pointer touch-manipulation',
+            'group/tag-row col-span-3 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
+            onKeyClick && 'cursor-pointer touch-manipulation hover:bg-zinc-50',
             highlightedKey === row.key && 'ring-2 ring-yellow-400 ring-offset-1',
           )}
           onClick={
@@ -186,7 +172,7 @@ export function TagRows({
                 className={clsx(
                   'inline-flex',
                   activeNoteKey !== row.key &&
-                    'pointer-fine:opacity-0 pointer-fine:group-focus-within:opacity-100 pointer-fine:group-hover:opacity-100',
+                    'pointer-fine:opacity-0 pointer-fine:group-focus-within/tag-row:opacity-100 pointer-fine:group-hover/tag-row:opacity-100',
                 )}
               >
                 <AddNoteButton
