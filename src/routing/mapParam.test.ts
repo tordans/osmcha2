@@ -50,7 +50,12 @@ describe('mapParam', () => {
         map: '12/52.5/13.4',
         ref: 'way/1',
         pin: '52.5,13.4',
+        layers: 'create,modify,delete,noop,node,way,relation,spyglass',
       }),
-    ).toEqual({ users: 'a', page: 2 })
+    ).toEqual({
+      users: 'a',
+      page: 2,
+      layers: 'create,modify,delete,noop,node,way,relation,spyglass',
+    })
   })
 })

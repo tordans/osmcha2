@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -19,6 +19,12 @@ import {
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import {
+  useChangesetHover,
+  useChangesetHoverActions,
+  useIsElementHovered,
+  useListScrollTarget,
+} from '../../stores/changeset-hover-store.ts'
+import {
   useChangesetDraft,
   useChangesetNotesActions,
   useFocusedObject,
@@ -28,7 +34,6 @@ import {
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
-import { Button } from '../ui/button.tsx'
 import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
@@ -38,7 +43,7 @@ import {
 } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
-import { ObjectReviewActions } from './AddNoteButton.tsx'
+import { MarkSeenButton, ObjectReviewActions } from './AddNoteButton.tsx'
 import {
   buildElementChanges,
   groupChangesByTagMutation,
@@ -61,6 +66,7 @@ import {
 } from './NotesBlock.tsx'
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
 import { refParamFromElement, tagGroupContainsRef, type RefParam } from './refSelection.ts'
+import { changeRowDomId } from './scrollChildIntoScroller.ts'
 
 const ACTION_LABEL = {
   create: 'Created',
@@ -73,6 +79,21 @@ const ACTION_ICON = {
   modify: PencilIcon,
   delete: TrashIcon,
 } as const
+
+function ActionTypeIcon({
+  actionType,
+  className,
+}: {
+  actionType: keyof typeof ACTION_ICON
+  className?: string
+}) {
+  const Icon = ACTION_ICON[actionType]
+  return (
+    <Tooltip as="span" content={ACTION_LABEL[actionType]} className="inline-flex shrink-0">
+      <Icon variant="fill" className={clsx('size-4 flex-none', className)} />
+    </Tooltip>
+  )
+}
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
@@ -90,8 +111,7 @@ type DetailsChangesProps = {
   selectRef: (ref: RefParam | null) => void
   deepLinkReveal?: RefParam | null
   deepLinkEpoch?: number
-  setHighlight: (type: string, id: number, isHighlighted: boolean) => void
-  zoomToAndSelect: (type: string, id: number) => void
+  zoomToAndSelect: (type: string, id: number, key?: string) => void
 }
 
 function listedObjectsFromChanges(changes: ElementChange[]) {
@@ -166,7 +186,6 @@ export function DetailsChanges({
   selectRef,
   deepLinkReveal,
   deepLinkEpoch = 0,
-  setHighlight,
   zoomToAndSelect,
 }: DetailsChangesProps) {
   const { data: discussion } = useChangesetDiscussion(changesetId, {
@@ -260,7 +279,6 @@ export function DetailsChanges({
                     selectedRef={selectedRef}
                     selectRef={selectRef}
                     deepLinkReveal={deepLinkReveal}
-                    setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
                     objectNotes={located.byObject.get(objectRefKey(group[0].type, group[0].id))}
                   />
@@ -274,7 +292,6 @@ export function DetailsChanges({
                     selectRef={selectRef}
                     deepLinkReveal={deepLinkReveal}
                     deepLinkEpoch={deepLinkEpoch}
-                    setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
                     notesByObject={located.byObject}
                   />
@@ -302,6 +319,12 @@ function isSelected(change: ElementChange, selected?: AdiffAction | null) {
   return element?.type === change.type && element?.id === change.id
 }
 
+function elementRowHighlightClassName(selected: boolean, hovered: boolean) {
+  if (selected) return 'bg-yellow-100 ring-2 ring-yellow-400'
+  if (hovered) return 'bg-zinc-100'
+  return 'hover:bg-zinc-50 active:bg-zinc-950/5'
+}
+
 function TagMutationGroup({
   changes,
   changesetId,
@@ -310,7 +333,6 @@ function TagMutationGroup({
   selectRef,
   deepLinkReveal,
   deepLinkEpoch,
-  setHighlight,
   zoomToAndSelect,
   notesByObject,
 }: {
@@ -321,8 +343,7 @@ function TagMutationGroup({
   selectRef: (ref: RefParam | null) => void
   deepLinkReveal?: RefParam | null
   deepLinkEpoch?: number
-  setHighlight: (type: string, id: number, isHighlighted: boolean) => void
-  zoomToAndSelect: (type: string, id: number) => void
+  zoomToAndSelect: (type: string, id: number, key?: string) => void
   notesByObject: Map<string, ObjectNotes>
 }) {
   const userKey = useNotesUserKey()
@@ -330,12 +351,25 @@ function TagMutationGroup({
   const draft = useChangesetDraft(userKey, changesetId)
   const { markAllSeen, toggleEditor } = useChangesetNotesActions()
   const openEditor = useOpenEditor()
+  const hover = useChangesetHover()
+  const listScrollTarget = useListScrollTarget()
   const currentUser = userKey === 'anonymous' ? undefined : userKey
   const mutations = tagMutationRows(changes[0].tags)
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
   const containsSelected = selectedInGroup != null
+  const hoveredInGroup =
+    hover != null && changes.some((change) => change.type === hover.type && change.id === hover.id)
+  const scrollTargetInGroup =
+    listScrollTarget != null &&
+    changes.some(
+      (change) => change.type === listScrollTarget.type && change.id === listScrollTarget.id,
+    )
   const revealInGroup = tagGroupContainsRef(changes, deepLinkReveal)
-  const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
+  const disclosureKey = selectedInGroup
+    ? `${selectedInGroup.type}/${selectedInGroup.id}`
+    : scrollTargetInGroup && listScrollTarget
+      ? `${listScrollTarget.type}/${listScrollTarget.id}`
+      : 'none'
   const groupNoteCountByKey = aggregateNoteCountByKey(changes, notesByObject)
   const highlightTagKey = revealInGroup && deepLinkReveal?.key ? deepLinkReveal.key : undefined
   const memberStates = changes
@@ -361,6 +395,7 @@ function TagMutationGroup({
     )
   const forceOpen =
     containsSelected ||
+    scrollTargetInGroup ||
     revealInGroup ||
     memberStates.some((member) => member.hasNotes) ||
     editingInGroup
@@ -377,8 +412,7 @@ function TagMutationGroup({
 
   function selectGroupTag(key: string) {
     const target = targetChangeForTag(key)
-    const nextRef = refParamFromElement(target.type, target.id, key)
-    if (nextRef) selectRef(nextRef)
+    zoomToAndSelect(target.type, target.id, key)
   }
 
   function addNoteOnGroupTag(key: string) {
@@ -392,7 +426,7 @@ function TagMutationGroup({
   return (
     <li className="px-2 py-2">
       <Headless.Disclosure
-        key={`${disclosureKey}:${forceOpen ? String(deepLinkEpoch ?? 0) : '0'}`}
+        key={`${disclosureKey}:${forceOpen ? 'open' : 'closed'}:${deepLinkEpoch ?? 0}`}
         defaultOpen={forceOpen}
       >
         {({ open }) => (
@@ -400,7 +434,10 @@ function TagMutationGroup({
             <div className="flex items-center gap-2">
               <Headless.DisclosureButton
                 aria-label={`${changes.length} elements with the same tag changes`}
-                className="flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none hover:bg-zinc-50 active:bg-zinc-950/5"
+                className={clsx(
+                  'flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none active:bg-zinc-950/5',
+                  !open && hoveredInGroup ? 'bg-zinc-100' : 'hover:bg-zinc-50',
+                )}
               >
                 <motion.span
                   className="inline-flex origin-center"
@@ -413,9 +450,8 @@ function TagMutationGroup({
                 <span>Same tag changes</span>
                 <Badge>{changes.length}</Badge>
               </Headless.DisclosureButton>
-              <Button
-                type="button"
-                outline
+              <MarkSeenButton
+                label={`Mark all ${changes.length} seen`}
                 onClick={() =>
                   markAllSeen(
                     userKey,
@@ -423,9 +459,7 @@ function TagMutationGroup({
                     changes.map((change) => objectRefKey(change.type, change.id)),
                   )
                 }
-              >
-                Mark all {changes.length} seen
-              </Button>
+              />
             </div>
             <div className="mt-1 border-t font-mono">
               <TagRows
@@ -457,7 +491,6 @@ function TagMutationGroup({
                       selectedRef={selectedRef}
                       selectRef={selectRef}
                       deepLinkReveal={deepLinkReveal}
-                      setHighlight={setHighlight}
                       zoomToAndSelect={zoomToAndSelect}
                       showTags={false}
                       objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
@@ -480,7 +513,6 @@ function ElementChangeRow({
   selectedRef,
   selectRef,
   deepLinkReveal,
-  setHighlight,
   zoomToAndSelect,
   showTags = true,
   objectNotes,
@@ -491,8 +523,7 @@ function ElementChangeRow({
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
   deepLinkReveal?: RefParam | null
-  setHighlight: (type: string, id: number, isHighlighted: boolean) => void
-  zoomToAndSelect: (type: string, id: number) => void
+  zoomToAndSelect: (type: string, id: number, key?: string) => void
   showTags?: boolean
   objectNotes?: ObjectNotes
 }) {
@@ -501,6 +532,8 @@ function ElementChangeRow({
   const draft = useChangesetDraft(userKey, changesetId)
   const openEditor = useOpenEditor()
   const { markSeen, markUnseen, toggleEditor, setFocusedObject } = useChangesetNotesActions()
+  const { setHover } = useChangesetHoverActions()
+  const hovered = useIsElementHovered(change.type, change.id)
   const currentUser = userKey === 'anonymous' ? undefined : userKey
   const { collapsed, hasNotes, drafts } = reviewState(
     change,
@@ -514,9 +547,7 @@ function ElementChangeRow({
       ? drafts.find((note) => note.id === openEditor.noteId)
       : undefined
   const objectKey = objectRefKey(change.type, change.id)
-  const Icon = ACTION_ICON[change.actionType]
   const currentSelect = isSelected(change, selected)
-  const rowRef = useRef<HTMLLIElement>(null)
   const [flash, setFlash] = useState(false)
   const [flashedReveal, setFlashedReveal] = useState<RefParam | null>(null)
   const [flashKey, setFlashKey] = useState<string | null>(null)
@@ -538,14 +569,6 @@ function ElementChangeRow({
   ]
     .filter(Boolean)
     .join(' · ')
-
-  useEffect(
-    function scrollDeepLinkedRowIntoView() {
-      if (!shouldReveal) return
-      rowRef.current?.scrollIntoView({ block: 'nearest' })
-    },
-    [shouldReveal, deepLinkReveal],
-  )
 
   useEffect(
     function clearDeepLinkFlash() {
@@ -601,19 +624,21 @@ function ElementChangeRow({
   if (compact) {
     return (
       <li
-        ref={rowRef}
+        id={changeRowDomId(change.type, change.id)}
         tabIndex={0}
+        aria-selected={currentSelect}
+        data-osm-element={`${change.type}/${change.id}`}
         className={clsx(
-          'group relative flex min-h-11 w-full cursor-pointer items-center gap-2 rounded px-2 py-1',
-          currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
-          flash && 'ring-2 ring-yellow-400 ring-offset-1',
+          'group relative flex w-full cursor-pointer touch-manipulation items-center gap-1 rounded px-2 py-0.5',
+          elementRowHighlightClassName(currentSelect, hovered),
+          flash && 'ring-offset-1',
         )}
         onClick={() => zoomToAndSelect(change.type, change.id)}
-        onMouseEnter={() => setHighlight(change.type, change.id, true)}
-        onMouseLeave={() => setHighlight(change.type, change.id, false)}
+        onMouseEnter={() => setHover({ type: change.type, id: change.id })}
+        onMouseLeave={() => setHover(null)}
         onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
       >
-        <Icon variant="fill" className="size-4 flex-none text-zinc-400" />
+        <ActionTypeIcon actionType={change.actionType} className="text-zinc-400" />
         <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
           {change.type}/{change.id}
         </span>
@@ -628,6 +653,7 @@ function ElementChangeRow({
             objectLabel={`${change.type}/${change.id}`}
             notePressed={objectNoteOpen}
             seen
+            compact
             onNoteClick={addNoteOnObject}
             onSeenClick={toggleSeen}
           />
@@ -638,21 +664,23 @@ function ElementChangeRow({
 
   return (
     <li
-      ref={rowRef}
+      id={changeRowDomId(change.type, change.id)}
       tabIndex={0}
+      aria-selected={currentSelect}
+      data-osm-element={`${change.type}/${change.id}`}
       className={clsx(
-        'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-1 rounded px-2 py-2',
-        currentSelect ? 'bg-yellow-50' : 'hover:bg-zinc-50 active:bg-zinc-950/5',
-        flash && 'ring-2 ring-yellow-400 ring-offset-1',
+        'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-0.5 rounded px-2 py-1',
+        elementRowHighlightClassName(currentSelect, hovered),
+        flash && 'ring-offset-1',
       )}
       onClick={() => zoomToAndSelect(change.type, change.id)}
-      onMouseEnter={() => setHighlight(change.type, change.id, true)}
-      onMouseLeave={() => setHighlight(change.type, change.id, false)}
+      onMouseEnter={() => setHover({ type: change.type, id: change.id })}
+      onMouseLeave={() => setHover(null)}
       onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
     >
       <div className="flex w-full items-center justify-between gap-1">
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
-          <Icon variant="fill" className="size-4 flex-none" />
+          <ActionTypeIcon actionType={change.actionType} />
           <span className="truncate">
             {change.type}/{change.id}
           </span>
@@ -667,7 +695,8 @@ function ElementChangeRow({
               content={flaggedLabel || 'Flagged feature'}
               aria-label={`Show flagged ${change.type}/${change.id} on map`}
               onClick={() => zoomToAndSelect(change.type, change.id)}
-              className="min-h-11 min-w-11 justify-center"
+              placement="bottom-end"
+              className="inline-flex justify-center"
             >
               <Badge color="orange">
                 <ExclamationTriangleIcon variant="fill" className="size-3.5" />
@@ -675,10 +704,30 @@ function ElementChangeRow({
               </Badge>
             </Tooltip>
           ) : null}
-          {change.geometry === 'moved' ? <Badge color="yellow">Moved</Badge> : null}
-          {change.geometry === 'rewritten' ? <Badge color="yellow">Rewritten</Badge> : null}
+          {change.geometry === 'moved' ? (
+            <Tooltip
+              as="span"
+              placement="bottom-end"
+              content="This node was moved to a new location."
+              className="inline-flex"
+            >
+              <Badge color="yellow">Moved</Badge>
+            </Tooltip>
+          ) : null}
+          {change.geometry === 'rewritten' ? (
+            <Tooltip
+              as="span"
+              placement="bottom-end"
+              content="This way’s member nodes changed (added, removed, or reordered), so its geometry was rewritten."
+              className="inline-flex"
+            >
+              <Badge color="yellow">Rewritten</Badge>
+            </Tooltip>
+          ) : null}
           {change.nodeStats ? (
             <Tooltip
+              as="span"
+              placement="bottom-end"
               content={
                 Object.values(change.nodeStats).every((value) => value === 0)
                   ? 'Only tagging was changed; no changes to the geometry were made.'
@@ -689,7 +738,7 @@ function ElementChangeRow({
                       `${change.nodeStats.deleted} nodes deleted`,
                     ].join('\n')
               }
-              className="min-h-11"
+              className="inline-flex"
             >
               <Badge color="blue" rounded="left">
                 {change.nodeStats.added}
@@ -724,10 +773,7 @@ function ElementChangeRow({
             rows={change.tags}
             emptyLabel="No tags"
             highlightedKey={flash && selectedRef?.key && shouldReveal ? selectedRef.key : undefined}
-            onKeyClick={(key) => {
-              const nextRef = refParamFromElement(change.type, change.id, key)
-              if (nextRef) selectRef(nextRef)
-            }}
+            onKeyClick={(key) => zoomToAndSelect(change.type, change.id, key)}
             noteCountByKey={noteCountByKey(objectNotes)}
             onNoteCountClick={addNoteOnTag}
             onAddNote={addNoteOnTag}

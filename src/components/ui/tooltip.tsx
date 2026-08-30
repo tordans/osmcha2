@@ -22,7 +22,10 @@ type TooltipProps = {
   'aria-label'?: string
   /** `span`/`abbr` for non-interactive labels (valid inside links/buttons). */
   as?: TooltipAs
-  /** Default centers under the trigger; `bottom-end` grows left from a right-edge control. */
+  /**
+   * Default centers under the trigger. `bottom-end` grows left from the trigger’s
+   * right edge from `min-[56rem]` (desktop split); stays centered in the mobile sheet.
+   */
   placement?: TooltipPlacement
 }
 
@@ -30,17 +33,19 @@ const panelPositionClassName = {
   bottom:
     'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2',
   'bottom-end':
-    'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [right:anchor(right)] [left:auto]',
+    'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2 min-[56rem]:[left:auto] min-[56rem]:[right:anchor(right)] min-[56rem]:translate-x-0',
 } as const
 
 const panelArrowClassName = {
   bottom: 'before:left-1/2 before:-translate-x-1/2',
-  'bottom-end': 'before:right-1.5 before:left-auto',
+  'bottom-end':
+    'before:left-1/2 before:-translate-x-1/2 min-[56rem]:before:right-1.5 min-[56rem]:before:left-auto min-[56rem]:before:translate-x-0',
 } as const
 
 const panelTryClassName = {
   bottom: '[position-try-fallbacks:flip-block,flip-inline]',
-  'bottom-end': '[position-try-fallbacks:flip-block]',
+  'bottom-end':
+    '[position-try-fallbacks:flip-block,flip-inline] min-[56rem]:[position-try-fallbacks:flip-block]',
 } as const
 
 const nativeInterestInvokers =

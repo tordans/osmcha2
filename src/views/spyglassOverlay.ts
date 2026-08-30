@@ -5,10 +5,15 @@ import {
 
 export const SPYGLASS_MIN_ZOOM = 15
 export const SPYGLASS_MAX_ZOOM = 18
+/** Tag rows shown in the inspect flyout; the rest (and extra hits) are “+N more”. */
+const INSPECT_FLYOUT_MAX_TAGS = 20
 export const SPYGLASS_SOURCE_ID = 'spyglass'
 export const SPYGLASS_WAY_LAYER_ID = 'spyglass-ways-line'
 export const SPYGLASS_NODE_LAYER_ID = 'spyglass-nodes-circle'
-export const SPYGLASS_LAYER_IDS: string[] = [SPYGLASS_WAY_LAYER_ID, SPYGLASS_NODE_LAYER_ID]
+export const SPYGLASS_WAY_HIT_LAYER_ID = 'spyglass-ways-hit'
+export const SPYGLASS_NODE_HIT_LAYER_ID = 'spyglass-nodes-hit'
+/** Transparent hit targets used for hover; the thin paint layers stay out of picking. */
+export const SPYGLASS_LAYER_IDS: string[] = [SPYGLASS_WAY_HIT_LAYER_ID, SPYGLASS_NODE_HIT_LAYER_ID]
 export const CHANGESET_NOOP_LAYER_IDS: string[] = [
   'changeset-way-unchanged',
   'changeset-node-unchanged',
@@ -17,13 +22,19 @@ export const CHANGESET_NOOP_LAYER_IDS: string[] = [
 export const SPYGLASS_ATTRIBUTION =
   '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://spyglass.jochentopf.com/">Spyglass</a>'
 
-/** Vite proxies `/spyglass` so tiles are same-origin (Spyglass CORS allows `localhost`, not `127.0.0.1`). */
-export function spyglassTileUrls(isDev: boolean): string[] {
-  if (isDev) return ['/spyglass/vector/osm/{z}/{x}/{y}.mvt']
+/** Vite proxies `/spyglass`. MapLibre fetches in a worker, so the template must be absolute. */
+export function spyglassTileUrls(isDev: boolean, origin: string): string[] {
+  if (isDev) {
+    const base = origin.replace(/\/$/, '')
+    return [`${base}/spyglass/vector/osm/{z}/{x}/{y}.mvt`]
+  }
   return ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
 }
 
-export const SPYGLASS_TILES = spyglassTileUrls(import.meta.env.DEV)
+export const SPYGLASS_TILES = spyglassTileUrls(
+  import.meta.env.DEV,
+  typeof window === 'undefined' ? '' : window.location.origin,
+)
 
 const NON_TAG_KEYS = new Set([
   'type',
@@ -70,15 +81,6 @@ export function spyglassEnabledAtZoom(enabled: boolean, zoom: number): SpyglassO
   return zoom >= SPYGLASS_MIN_ZOOM ? 'active' : 'armed'
 }
 
-/** Prefer the live map zoom; fall back to the URL camera before `onLoad`. */
-export function spyglassZoomForGate(
-  mapZoom: number | null,
-  urlZoom: number | null | undefined,
-): number {
-  if (mapZoom != null) return mapZoom
-  return urlZoom ?? 0
-}
-
 export function changesetClickableLayerIds(layers: Array<{ id: string }>): string[] {
   return changesetInteractiveLayerIds(layers).filter((id) => !isNoopLayerId(id))
 }
@@ -113,6 +115,36 @@ export function inspectTagsFromProperties(
   const nested = properties.tags
   if (isPlainObject(nested)) return tagEntries(nested, { skipMetadataKeys: false })
   return tagEntries(properties, { skipMetadataKeys: options?.skipMetadataKeys ?? true })
+}
+
+export function inspectFlyoutTags(
+  tags: Array<[string, string]>,
+  extraCount: number,
+  max = INSPECT_FLYOUT_MAX_TAGS,
+): { tags: Array<[string, string]>; moreCount: number } {
+  const visible = tags.slice(0, max)
+  return {
+    tags: visible,
+    moreCount: tags.length - visible.length + extraCount,
+  }
+}
+
+export type ChangesetMapHover = { type: string; id: number }
+
+/** First clickable changeset element under the cursor. Ignores spyglass / noop. */
+export function changesetHoverFromFeatures(
+  features: Array<InspectableMapFeature> | undefined,
+): ChangesetMapHover | null {
+  for (const feature of features ?? []) {
+    if (!isClickableMapFeature(feature)) continue
+    const type = feature.properties?.type
+    const rawId = feature.properties?.id
+    if (typeof type !== 'string' || type.length === 0) continue
+    const id = typeof rawId === 'number' ? rawId : typeof rawId === 'string' ? Number(rawId) : NaN
+    if (!Number.isInteger(id) || id <= 0) continue
+    return { type, id }
+  }
+  return null
 }
 
 export function inspectHoverFromFeatures(
@@ -162,7 +194,12 @@ function isSpyglassLayerId(id: string | undefined): boolean {
 }
 
 function isChangesetLayerId(id: string | undefined): boolean {
-  return id != null && id.startsWith('changeset-') && id !== CHANGESET_OVERLAY_BG_LAYER_ID
+  return (
+    id != null &&
+    id.startsWith('changeset-') &&
+    id !== CHANGESET_OVERLAY_BG_LAYER_ID &&
+    !id.startsWith('changeset-emphasis-')
+  )
 }
 
 function isChangesetNoopFeature(feature: InspectableMapFeature): boolean {
@@ -222,8 +259,8 @@ function osmTypeFromSpyglassSourceLayer(
   sourceLayer: string | undefined,
   layerId: string | undefined,
 ): string | null {
-  if (sourceLayer === 'nodes' || layerId === SPYGLASS_NODE_LAYER_ID) return 'node'
-  if (sourceLayer === 'ways' || layerId === SPYGLASS_WAY_LAYER_ID) return 'way'
+  if (sourceLayer === 'nodes' || layerId === SPYGLASS_NODE_HIT_LAYER_ID) return 'node'
+  if (sourceLayer === 'ways' || layerId === SPYGLASS_WAY_HIT_LAYER_ID) return 'way'
   return null
 }
 

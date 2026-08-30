@@ -51,17 +51,23 @@ function TagChange({
   )
 }
 
+function rowToneClass(kind: TagRowsItem['kind'], clickable: boolean) {
+  if (kind === 'added') return clsx('bg-blue-50', clickable && 'hover:bg-blue-100')
+  if (kind === 'removed') return clsx('bg-orange-50', clickable && 'hover:bg-orange-100')
+  if (kind === 'changed') return clsx('bg-yellow-50', clickable && 'hover:bg-yellow-100')
+  return clickable ? 'hover:bg-zinc-50' : undefined
+}
+
 function TagRowValue({ row }: { row: TagRowsItem }) {
   if (row.kind === 'changed') {
     return (
       <div
-        className={clsx(
-          'rounded-sm bg-yellow-100 px-1 py-0.5',
+        className={
           wrapClass(row.oldValue, row.rawOld) === 'break-all' ||
-            wrapClass(row.newValue, row.rawNew) === 'break-all'
+          wrapClass(row.newValue, row.rawNew) === 'break-all'
             ? 'break-all'
-            : 'break-words',
-        )}
+            : 'break-words'
+        }
       >
         <TagChange
           oldValue={row.oldValue}
@@ -76,13 +82,13 @@ function TagRowValue({ row }: { row: TagRowsItem }) {
   const wrap = wrapClass(row.value, row.rawValue)
   const tone =
     row.kind === 'added'
-      ? 'bg-blue-100 text-blue-700'
+      ? 'text-blue-700'
       : row.kind === 'removed'
-        ? 'bg-orange-100 text-orange-500'
+        ? 'text-orange-600'
         : 'text-zinc-500'
 
   return (
-    <div className={clsx('rounded-sm px-1 py-0.5', tone, wrap)} dir="auto">
+    <div className={clsx(tone, wrap)} dir="auto">
       {row.value}
     </div>
   )
@@ -116,13 +122,23 @@ export function TagRows({
   }
 
   return (
-    <dl className={clsx('w-full font-mono', typeScale.small, className)}>
+    <dl
+      className={clsx(
+        '@container/tags grid w-full grid-cols-[auto_auto_minmax(4.5rem,1fr)] font-mono',
+        '@min-[16rem]/tags:grid-cols-[auto_auto_minmax(7rem,1fr)]',
+        '@min-[20rem]/tags:grid-cols-[auto_auto_minmax(9rem,1fr)]',
+        '@min-[24rem]/tags:grid-cols-[auto_auto_minmax(11rem,1fr)]',
+        typeScale.small,
+        className,
+      )}
+    >
       {rows.map((row) => (
         <div
           key={row.key}
           className={clsx(
-            'group flex flex-wrap items-start gap-x-2 gap-y-0.5 border-b border-zinc-950/5 py-1',
-            onKeyClick && 'min-h-11 cursor-pointer touch-manipulation hover:bg-zinc-50',
+            'col-span-3 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
+            rowToneClass(row.kind, Boolean(onKeyClick)),
+            onKeyClick && 'cursor-pointer touch-manipulation',
             highlightedKey === row.key && 'ring-2 ring-yellow-400 ring-offset-1',
           )}
           onClick={
@@ -135,12 +151,15 @@ export function TagRows({
           }
         >
           <dt
-            className="max-w-full shrink-0 pt-0.5 font-medium break-all text-zinc-800"
+            className="max-w-[8rem] min-w-0 font-medium break-all text-zinc-800 @min-[20rem]/tags:max-w-[11rem]"
             title={row.key}
           >
             {row.key}
           </dt>
-          <dd className="flex min-w-0 flex-[1_1_6rem] items-start gap-1">
+          <span className="text-zinc-300 select-none" aria-hidden>
+            =
+          </span>
+          <dd className="flex min-w-0 items-center gap-1">
             <div className="min-w-0 flex-1">
               <TagRowValue row={row} />
             </div>
@@ -151,6 +170,7 @@ export function TagRows({
             />
             {onAddNote ? (
               <AddNoteButton
+                compact
                 label={
                   activeNoteKey === row.key
                     ? `Close note on ${row.key}`
@@ -180,7 +200,7 @@ function TagNoteCountBadge({
 
   const label = `${count} ${count === 1 ? 'note' : 'notes'} on ${tagKey}`
   const className = clsx(
-    'relative mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-md bg-zinc-600/10 px-1',
+    'relative inline-flex shrink-0 items-center gap-0.5 rounded-md bg-zinc-600/10 px-1',
     'text-[10px] leading-4 font-medium text-zinc-700',
     "after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-['']",
   )

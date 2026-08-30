@@ -40,7 +40,7 @@ export const serializeMapParam = ({ zoom, lat, lng }: MapParam) => {
   return `${roundedZoom}/${roundedLat}/${roundedLng}`
 }
 
-/** Drop per-changeset chrome (`map`, `ref`, `pin`) when opening a different changeset. */
+/** Drop per-changeset chrome (`map`, `ref`, `pin`) when opening a different changeset. Keep `layers`. */
 export function searchWithoutMap<T extends object>(search: T): Omit<T, 'map' | 'ref' | 'pin'> {
   const {
     map: _map,

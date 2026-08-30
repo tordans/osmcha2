@@ -11,6 +11,8 @@ export const osmchaSearchSchema = z
     ref: z.string().optional(),
     /** Note pin: `lat,lng` at five decimals. */
     pin: z.string().optional(),
+    /** Map layers: comma-separated tokens; omit when every changeset layer is on and spyglass is on. */
+    layers: z.string().optional(),
     /** List sort: `order=date,desc` (field,direction). */
     order: z.string().optional(),
     /** OSM OAuth callback (must not be treated as changeset filters). */
@@ -26,7 +28,16 @@ export type OsmchaSearch = z.infer<typeof osmchaSearchSchema>
 /** Stable empty object for “no filters in the URL” — never allocate `{}` during render. */
 export const EMPTY_FILTERS: Filters = {}
 
-export const searchParamsRegistry = ['aoi', 'page', 'token', 'map', 'order', 'ref', 'pin'] as const
+export const searchParamsRegistry = [
+  'aoi',
+  'page',
+  'token',
+  'map',
+  'order',
+  'ref',
+  'pin',
+  'layers',
+] as const
 
 /** OSM OAuth callback query keys — chrome, not changeset filters. */
 export const oauthSearchKeys = ['code', 'state'] as const

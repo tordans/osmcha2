@@ -38,6 +38,18 @@ export function splitChangesetLayers<T extends { id: string }>(
   }
 }
 
+/** Case/halo layers sit under the colored core; emphasis inserts between them. */
+export function isChangesetCaseLayerId(id: string) {
+  return id.endsWith('-bg') && id !== CHANGESET_OVERLAY_BG_LAYER_ID
+}
+
+export function splitChangesetFeatureLayers<T extends { id: string }>(layers: T[]) {
+  return {
+    caseLayers: layers.filter((layer) => isChangesetCaseLayerId(layer.id)),
+    coreLayers: layers.filter((layer) => !isChangesetCaseLayerId(layer.id)),
+  }
+}
+
 /** Construct the viewer as a GeoJSON + layer-spec factory. Never call addTo/refresh. */
 export function useChangesetAdiffViewer(
   adiff: object | null | undefined,

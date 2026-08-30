@@ -1,7 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/Changeset.tsx'
 import type { AdiffAction } from '../components/changeset/changesetElements.ts'
@@ -18,6 +18,7 @@ import { useFilters } from '../hooks/useFilters.ts'
 import type { NoteTarget } from '../notes/discussionNotes.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
+import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam } from '../routing/refParam.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
@@ -53,14 +54,12 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
 
-  const [showElements, setShowElements] = useState<Array<string>>(['node', 'way', 'relation'])
-  const [showActions, setShowActions] = useState<Array<string>>([
-    'create',
-    'modify',
-    'delete',
-    'noop',
-  ])
-  const viewer = useChangesetAdiffViewer(mapQuery.data?.adiff, showElements, showActions)
+  const mapLayers = useMemo(() => parseLayersParam(search.layers), [search.layers])
+  const viewer = useChangesetAdiffViewer(
+    mapQuery.data?.adiff,
+    mapLayers.showElements,
+    mapLayers.showActions,
+  )
   const selectedRef = parseRefParam(search.ref ?? '')
   const selected = actionMatchingRef((viewer?.adiff.actions ?? []) as AdiffAction[], selectedRef)
 
@@ -120,10 +119,6 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
       <ChangesetWorkspace
         changesetId={changesetId}
         currentChangeset={changeset}
-        showElements={showElements}
-        showActions={showActions}
-        setShowElements={setShowElements}
-        setShowActions={setShowActions}
         viewer={viewer}
         selected={selected}
         selectedRef={selectedRef}

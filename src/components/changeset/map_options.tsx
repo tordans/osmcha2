@@ -4,19 +4,18 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useMap } from 'react-map-gl/maplibre'
+import {
+  mapLayerIsOn,
+  parseLayersParam,
+  searchWithLayers,
+  toggleMapLayer,
+  type MapLayerToken,
+  type MapLayers,
+} from '../../routing/layersParam.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStore } from '../../stores/mapStore.ts'
-import {
-  useSpyglassActions,
-  useSpyglassEnabled,
-  useSpyglassMapZoom,
-} from '../../stores/spyglass-store.ts'
-import {
-  SPYGLASS_MIN_ZOOM,
-  spyglassEnabledAtZoom,
-  spyglassZoomForGate,
-} from '../../views/spyglassOverlay.ts'
+import { SPYGLASS_MIN_ZOOM, spyglassEnabledAtZoom } from '../../views/spyglassOverlay.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
@@ -26,7 +25,6 @@ import {
   CircleCheckIcon,
   FunnelIcon,
   GlobeAltIcon,
-  ScanSearchIcon,
   StarIcon,
 } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -130,22 +128,6 @@ function buildTopImageryRows(imageryUsed: string | null | undefined): TopImagery
   return rows
 }
 
-const add = (arr: string[], elem: string): string[] => {
-  const set = new Set(arr)
-  set.add(elem)
-  return Array.from(set)
-}
-
-const remove = (arr: string[], elem: string): string[] => {
-  const set = new Set(arr)
-  set.delete(elem)
-  return Array.from(set)
-}
-
-const toggle = (arr: string[], elem: string): string[] => {
-  return arr.indexOf(elem) === -1 ? add(arr, elem) : remove(arr, elem)
-}
-
 const mapControlButtonClassName =
   'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100'
 
@@ -161,21 +143,67 @@ function imageryLayerButtonClassName(active: boolean) {
   )
 }
 
+function MapLayerCheckbox({
+  token,
+  layers,
+  onToggle,
+  color,
+  children,
+  description,
+  action,
+}: {
+  token: MapLayerToken
+  layers: MapLayers
+  onToggle: (token: MapLayerToken) => void
+  color?: 'emerald' | 'amber' | 'red' | 'violet'
+  children: React.ReactNode
+  description?: string
+  action?: React.ReactNode
+}) {
+  return (
+    <CheckboxField>
+      <Checkbox
+        color={color}
+        checked={mapLayerIsOn(layers, token)}
+        onChange={() => onToggle(token)}
+      />
+      <Label>
+        {children}
+        {description ? (
+          <span className="-mt-0.5 block text-sm/4 font-normal text-zinc-500">{description}</span>
+        ) : null}
+      </Label>
+      {action}
+    </CheckboxField>
+  )
+}
+
 type MapFilterOptionsProps = {
-  showElements: Array<string>
-  showActions: Array<string>
-  setShowElements: (elements: Array<string>) => void
-  setShowActions: (actions: Array<string>) => void
   ref?: React.Ref<HTMLButtonElement>
 }
 
-function MapFilterOptions({
-  showElements,
-  showActions,
-  setShowElements,
-  setShowActions,
-  ref,
-}: MapFilterOptionsProps) {
+function MapFilterOptions({ ref }: MapFilterOptionsProps) {
+  const { layers: layersSearch, map: mapSearch } = changesetRouteApi.useSearch()
+  const navigate = changesetRouteApi.useNavigate()
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const layers = parseLayersParam(layersSearch)
+  const urlZoom = parseMapParam(mapSearch ?? '')?.zoom ?? 0
+  const spyglassArmed = spyglassEnabledAtZoom(layers.spyglass, urlZoom) === 'armed'
+
+  function toggleLayer(token: MapLayerToken) {
+    void navigate({
+      search: (prev) =>
+        searchWithLayers(prev, toggleMapLayer(parseLayersParam(prev.layers), token)),
+      replace: true,
+    })
+  }
+
+  function zoomToSpyglass() {
+    if (!mapLoaded) return
+    mainMap?.getMap().easeTo({ zoom: SPYGLASS_MIN_ZOOM })
+  }
+
   return (
     <Headless.Popover>
       <Headless.PopoverButton
@@ -191,67 +219,54 @@ function MapFilterOptions({
         <section className="space-y-2">
           <h3 className="text-base font-medium text-zinc-700">Filter by actions</h3>
           <div className="space-y-1">
-            <CheckboxField>
-              <Checkbox
-                color="emerald"
-                checked={showActions.includes('create')}
-                onChange={() => setShowActions(toggle(showActions, 'create'))}
-              />
-              <Label>Added</Label>
-            </CheckboxField>
-            <CheckboxField>
-              <Checkbox
-                color="amber"
-                checked={showActions.includes('modify')}
-                onChange={() => setShowActions(toggle(showActions, 'modify'))}
-              />
-              <Label>Modified</Label>
-            </CheckboxField>
-            <CheckboxField>
-              <Checkbox
-                color="red"
-                checked={showActions.includes('delete')}
-                onChange={() => setShowActions(toggle(showActions, 'delete'))}
-              />
-              <Label>Deleted</Label>
-            </CheckboxField>
-            <CheckboxField>
-              <Checkbox
-                color="violet"
-                checked={showActions.includes('noop')}
-                onChange={() => setShowActions(toggle(showActions, 'noop'))}
-              />
-              <Label>Unchanged</Label>
-            </CheckboxField>
+            <MapLayerCheckbox token="create" color="emerald" layers={layers} onToggle={toggleLayer}>
+              Added
+            </MapLayerCheckbox>
+            <MapLayerCheckbox token="modify" color="amber" layers={layers} onToggle={toggleLayer}>
+              Modified
+            </MapLayerCheckbox>
+            <MapLayerCheckbox token="delete" color="red" layers={layers} onToggle={toggleLayer}>
+              Deleted
+            </MapLayerCheckbox>
+            <MapLayerCheckbox token="noop" color="violet" layers={layers} onToggle={toggleLayer}>
+              Unchanged
+            </MapLayerCheckbox>
           </div>
         </section>
 
         <Divider className="my-3" />
 
         <section className="space-y-2">
-          <h3 className="text-base font-medium text-zinc-700">Filter by type</h3>
+          <h3 className="text-base font-medium text-zinc-700">Layers</h3>
           <div className="space-y-1">
-            <CheckboxField>
-              <Checkbox
-                checked={showElements.includes('node')}
-                onChange={() => setShowElements(toggle(showElements, 'node'))}
-              />
-              <Label>Nodes</Label>
-            </CheckboxField>
-            <CheckboxField>
-              <Checkbox
-                checked={showElements.includes('way')}
-                onChange={() => setShowElements(toggle(showElements, 'way'))}
-              />
-              <Label>Ways</Label>
-            </CheckboxField>
-            <CheckboxField>
-              <Checkbox
-                checked={showElements.includes('relation')}
-                onChange={() => setShowElements(toggle(showElements, 'relation'))}
-              />
-              <Label>Relations</Label>
-            </CheckboxField>
+            <MapLayerCheckbox token="node" layers={layers} onToggle={toggleLayer}>
+              Nodes
+            </MapLayerCheckbox>
+            <MapLayerCheckbox token="way" layers={layers} onToggle={toggleLayer}>
+              Ways
+            </MapLayerCheckbox>
+            <MapLayerCheckbox token="relation" layers={layers} onToggle={toggleLayer}>
+              Relations
+            </MapLayerCheckbox>
+            <MapLayerCheckbox
+              token="spyglass"
+              layers={layers}
+              onToggle={toggleLayer}
+              description="All OSM data around this changeset"
+              action={
+                spyglassArmed ? (
+                  <button
+                    type="button"
+                    className="col-start-2 row-start-2 -mt-0.5 cursor-pointer text-left text-sm/4 font-normal text-zinc-500 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-700 hover:decoration-zinc-600"
+                    onClick={zoomToSpyglass}
+                  >
+                    Zoom in to see all OSM data
+                  </button>
+                ) : null
+              }
+            >
+              OSM context (Spyglass)
+            </MapLayerCheckbox>
           </div>
         </section>
       </Headless.PopoverPanel>
@@ -465,105 +480,16 @@ function ViewportEditorLayerList({
   )
 }
 
-function spyglassToggleCopy(state: ReturnType<typeof spyglassEnabledAtZoom>): {
-  ariaLabel: string
-  tooltip: string
-  iconClassName: string
-} {
-  if (state === 'armed') {
-    return {
-      ariaLabel: 'Current OSM data armed — zoom in to inspect',
-      tooltip: 'Zoom in to inspect OSM data',
-      iconClassName: 'size-5 text-amber-600',
-    }
-  }
-  if (state === 'active') {
-    return {
-      ariaLabel: 'Hide current OSM data',
-      tooltip: 'Hide current OSM data',
-      iconClassName: 'size-5 text-emerald-600',
-    }
-  }
-  return {
-    ariaLabel: 'Show current OSM data',
-    tooltip: 'Show current OSM data',
-    iconClassName: 'size-5 text-zinc-700',
-  }
-}
-
-function SpyglassMapControl() {
-  const enabled = useSpyglassEnabled()
-  const mapZoom = useSpyglassMapZoom()
-  const { toggleEnabled } = useSpyglassActions()
-  const { map: mapSearch } = changesetRouteApi.useSearch()
-  const { mainMap } = useMap()
-  const mapLoaded = useMapLoaded()
-  const urlZoom = parseMapParam(mapSearch ?? '')?.zoom
-  const state = spyglassEnabledAtZoom(enabled, spyglassZoomForGate(mapZoom, urlZoom))
-  const copy = spyglassToggleCopy(state)
-
-  function zoomToSpyglass() {
-    if (!mapLoaded) return
-    mainMap?.getMap().easeTo({ zoom: SPYGLASS_MIN_ZOOM })
-  }
-
-  return (
-    <>
-      <Tooltip as="span" content={copy.tooltip} className="inline-flex">
-        <button
-          type="button"
-          aria-label={copy.ariaLabel}
-          aria-pressed={enabled}
-          className={mapControlButtonClassName}
-          onClick={toggleEnabled}
-        >
-          <ScanSearchIcon className={copy.iconClassName} />
-        </button>
-      </Tooltip>
-      {state === 'armed' ? (
-        <button
-          type="button"
-          className={clsx(
-            'min-h-11 cursor-pointer touch-manipulation rounded-lg px-3 text-sm font-medium text-zinc-950 select-none active:bg-zinc-100',
-            flyoutSurfaceClassName,
-          )}
-          onClick={zoomToSpyglass}
-        >
-          Zoom in to see OSM data
-        </button>
-      ) : null}
-    </>
-  )
-}
-
 type MapOptionsProps = {
-  showElements: Array<string>
-  showActions: Array<string>
-  setShowElements: (elements: Array<string>) => void
-  setShowActions: (actions: Array<string>) => void
   imageryUsed?: string | null
   ref?: React.Ref<HTMLButtonElement>
 }
 
-export function MapOptions({
-  showElements,
-  showActions,
-  setShowElements,
-  setShowActions,
-  imageryUsed,
-  ref,
-}: MapOptionsProps) {
+export function MapOptions({ imageryUsed, ref }: MapOptionsProps) {
   return (
     <Headless.PopoverGroup className="flex flex-col gap-2">
-      <MapFilterOptions
-        ref={ref}
-        showElements={showElements}
-        showActions={showActions}
-        setShowElements={setShowElements}
-        setShowActions={setShowActions}
-      />
+      <MapFilterOptions ref={ref} />
       <MapImageryOptions imageryUsed={imageryUsed} />
-      <SpyglassMapControl />
     </Headless.PopoverGroup>
   )
 }

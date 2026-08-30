@@ -42,16 +42,17 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
   )
 
   return (
-    <Dropdown>
+    <Dropdown className="inline-flex shrink-0">
       <Tooltip
         as="span"
-        content="Copy OSMCha link or open this object elsewhere"
-        className="inline-flex"
+        placement="bottom-end"
+        content="Copy a link to this object, or open it elsewhere"
+        className="inline-flex w-fit"
       >
         <DropdownButton
           outline
           aria-label={`Links for ${elementId}`}
-          className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
+          className="!size-6 !min-h-6 !min-w-6 cursor-pointer touch-manipulation !px-0 !py-0 select-none *:data-[slot=icon]:!size-3.5 sm:*:data-[slot=icon]:!my-0 sm:*:data-[slot=icon]:!size-3.5"
         >
           {copied ? <CheckIcon data-slot="icon" /> : <LinkIcon data-slot="icon" />}
         </DropdownButton>
@@ -61,9 +62,9 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
         className="flex! w-max max-w-[calc(100vw-1rem)] min-w-max grid-cols-none! flex-row items-stretch divide-x divide-zinc-950/5 overflow-x-auto"
       >
         <DropdownSection className="shrink-0 grid-cols-none!">
-          <DropdownHeading>OSMCha</DropdownHeading>
+          <DropdownHeading>Link</DropdownHeading>
           <DropdownItem
-            aria-label={`Copy OSMCha link to ${elementId}`}
+            aria-label={`Copy link to ${elementId}`}
             onClick={() => {
               if (!objectRef) return
               void navigator.clipboard

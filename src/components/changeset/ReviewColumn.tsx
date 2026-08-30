@@ -3,7 +3,14 @@ import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import {
+  useEffectEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from 'react'
 import {
   bindingKey,
   CHANGESET_DETAILS_DETAILS,
@@ -14,6 +21,7 @@ import type { NoteTarget } from '../../notes/discussionNotes.ts'
 import { isOsmSandboxAuth } from '../../notes/osmAuthConfig.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
+import { useListScrollNonce, useListScrollTarget } from '../../stores/changeset-hover-store.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -22,6 +30,7 @@ import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
 import type { RefParam } from './refSelection.ts'
+import { changeRowDomId, scrollChildIntoScroller } from './scrollChildIntoScroller.ts'
 
 const COLUMN_TABS = [
   {
@@ -50,8 +59,7 @@ type ReviewColumnProps = {
   revealRef: (target: NoteTarget) => void
   deepLinkReveal?: RefParam | null
   deepLinkEpoch?: number
-  setHighlight: (type: string, id: number, isHighlighted: boolean) => void
-  zoomToAndSelect: (type: string, id: number) => void
+  zoomToAndSelect: (type: string, id: number, key?: string) => void
 }
 
 export function ReviewColumn({
@@ -68,18 +76,28 @@ export function ReviewColumn({
   revealRef,
   deepLinkReveal,
   deepLinkEpoch = 0,
-  setHighlight,
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
   const [expanded, setExpanded] = useState(() => selectedRef != null)
   const [expandedForEpoch, setExpandedForEpoch] = useState(0)
+  const selectedObjectKey = selectedRef ? `${selectedRef.type}/${selectedRef.id}` : null
+  const [expandedForSelection, setExpandedForSelection] = useState<string | null>(null)
   if (deepLinkEpoch > 0 && deepLinkEpoch !== expandedForEpoch) {
     setExpandedForEpoch(deepLinkEpoch)
     setExpanded(true)
   }
+  if (selectedObjectKey != null && selectedObjectKey !== expandedForSelection) {
+    setExpandedForSelection(selectedObjectKey)
+    setExpanded(true)
+  }
   const dragStartY = useRef<number | null>(null)
   const dragged = useRef(false)
+  const changesScrollerRef = useRef<HTMLDivElement>(null)
+  const lastScrolledNonceRef = useRef(0)
+  const lastScrolledDeepLinkRef = useRef(0)
+  const listScrollTarget = useListScrollTarget()
+  const listScrollNonce = useListScrollNonce()
   const properties: Record<string, any> = currentChangeset.properties ?? {}
   const changesetCount =
     (properties.create ?? 0) + (properties.modify ?? 0) + (properties.delete ?? 0)
@@ -89,6 +107,47 @@ export function ReviewColumn({
     pollWhileActive: true,
   })
   const discussions = discussion?.changeset?.comments || []
+
+  const revealChangeRow = useEffectEvent((target: { type: string; id: number }) => {
+    if (!bindingsState[CHANGESET_DETAILS_DETAILS.label]) {
+      exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
+      setExpanded(true)
+    } else {
+      setExpanded(true)
+    }
+
+    const rowId = changeRowDomId(target.type, target.id)
+    let frame = 0
+
+    function attempt(remaining: number) {
+      const scroller = changesScrollerRef.current
+      const row = document.getElementById(rowId)
+      if (scroller && row instanceof HTMLElement && row.getBoundingClientRect().height > 0) {
+        scrollChildIntoScroller(scroller, row)
+      }
+      if (remaining <= 0) return
+      frame = requestAnimationFrame(() => attempt(remaining - 1))
+    }
+
+    attempt(40)
+    return function cancelRevealChangeRow() {
+      cancelAnimationFrame(frame)
+    }
+  })
+
+  useLayoutEffect(
+    function scrollSelectedChangeIntoView() {
+      if (listScrollNonce > lastScrolledNonceRef.current && listScrollTarget) {
+        lastScrolledNonceRef.current = listScrollNonce
+        return revealChangeRow(listScrollTarget)
+      }
+      if (deepLinkEpoch > lastScrolledDeepLinkRef.current && selectedRef) {
+        lastScrolledDeepLinkRef.current = deepLinkEpoch
+        return revealChangeRow({ type: selectedRef.type, id: selectedRef.id })
+      }
+    },
+    [listScrollNonce, listScrollTarget, deepLinkEpoch, selectedRef],
+  )
 
   function revealDiscussionNote(target: NoteTarget) {
     if (!changesActive) exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
@@ -222,7 +281,11 @@ export function ReviewColumn({
             </nav>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div
+            ref={changesScrollerRef}
+            data-changeset-changes-scroll
+            className="min-h-0 flex-1 overflow-y-auto"
+          >
             <AnimatePresence mode="wait" initial={false}>
               {changesActive ? (
                 <motion.div
@@ -243,7 +306,6 @@ export function ReviewColumn({
                     selectRef={selectRef}
                     deepLinkReveal={deepLinkReveal}
                     deepLinkEpoch={deepLinkEpoch}
-                    setHighlight={setHighlight}
                     zoomToAndSelect={zoomToAndSelect}
                   />
                 </motion.div>

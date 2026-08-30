@@ -2,17 +2,20 @@ import { describe, expect, test } from 'vitest'
 import {
   CHANGESET_NOOP_LAYER_IDS,
   SPYGLASS_LAYER_IDS,
+  SPYGLASS_NODE_HIT_LAYER_ID,
   SPYGLASS_NODE_LAYER_ID,
+  SPYGLASS_WAY_HIT_LAYER_ID,
   SPYGLASS_WAY_LAYER_ID,
   changesetClickableLayerIds,
+  changesetHoverFromFeatures,
   changesetInspectLayerIds,
   cursorForMapHover,
   inspectHoverFromFeatures,
   inspectTagsFromProperties,
+  inspectFlyoutTags,
   isClickableMapFeature,
   spyglassEnabledAtZoom,
   spyglassTileUrls,
-  spyglassZoomForGate,
 } from './spyglassOverlay.ts'
 
 const viewerLayers = [
@@ -24,23 +27,16 @@ const viewerLayers = [
 ]
 
 describe('spyglassTileUrls', () => {
-  test('uses a same-origin Vite proxy in dev and the Spyglass host in production', () => {
-    expect(spyglassTileUrls(true)).toEqual(['/spyglass/vector/osm/{z}/{x}/{y}.mvt'])
-    expect(spyglassTileUrls(false)).toEqual([
+  test('uses an absolute same-origin Vite proxy in dev and the Spyglass host in production', () => {
+    expect(spyglassTileUrls(true, 'http://127.0.0.1:3000')).toEqual([
+      'http://127.0.0.1:3000/spyglass/vector/osm/{z}/{x}/{y}.mvt',
+    ])
+    expect(spyglassTileUrls(true, 'http://127.0.0.1:3000/')).toEqual([
+      'http://127.0.0.1:3000/spyglass/vector/osm/{z}/{x}/{y}.mvt',
+    ])
+    expect(spyglassTileUrls(false, 'http://127.0.0.1:3000')).toEqual([
       'https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt',
     ])
-  })
-})
-
-describe('spyglassZoomForGate', () => {
-  test('prefers the live map zoom over the URL', () => {
-    expect(spyglassZoomForGate(12, 16)).toBe(12)
-    expect(spyglassZoomForGate(0, 16)).toBe(0)
-  })
-
-  test('falls back to the URL zoom before the map has reported', () => {
-    expect(spyglassZoomForGate(null, 16)).toBe(16)
-    expect(spyglassZoomForGate(null, undefined)).toBe(0)
   })
 })
 
@@ -71,6 +67,7 @@ describe('changesetClickableLayerIds', () => {
 
 describe('isClickableMapFeature', () => {
   test('rejects spyglass, dim overlay, and changeset noop', () => {
+    expect(isClickableMapFeature({ layer: { id: SPYGLASS_WAY_HIT_LAYER_ID } })).toBe(false)
     expect(isClickableMapFeature({ layer: { id: SPYGLASS_WAY_LAYER_ID } })).toBe(false)
     expect(isClickableMapFeature({ layer: { id: 'changeset-overlay-bg' } })).toBe(false)
     expect(
@@ -80,6 +77,7 @@ describe('isClickableMapFeature', () => {
       }),
     ).toBe(false)
     expect(isClickableMapFeature({ layer: { id: 'changeset-way-unchanged' } })).toBe(false)
+    expect(isClickableMapFeature({ layer: { id: 'changeset-emphasis-way' } })).toBe(false)
   })
 
   test('accepts create/modify/delete including halo hits', () => {
@@ -100,10 +98,11 @@ describe('changesetInspectLayerIds', () => {
     ).toEqual(['changeset-way-new', 'changeset-node-tagged'])
   })
 
-  test('adds spyglass layers when the overlay is active', () => {
-    expect(
-      changesetInspectLayerIds(viewerLayers, { overlayActive: true, showNoop: false }),
-    ).toEqual(['changeset-way-new', 'changeset-node-tagged', ...SPYGLASS_LAYER_IDS])
+  test('adds spyglass hit layers when the overlay is active, not the paint layers', () => {
+    const ids = changesetInspectLayerIds(viewerLayers, { overlayActive: true, showNoop: false })
+    expect(ids).toEqual(['changeset-way-new', 'changeset-node-tagged', ...SPYGLASS_LAYER_IDS])
+    expect(ids).not.toContain(SPYGLASS_WAY_LAYER_ID)
+    expect(ids).not.toContain(SPYGLASS_NODE_LAYER_ID)
   })
 
   test('adds noop and spyglass when overlay is active and noop is shown', () => {
@@ -131,7 +130,7 @@ describe('cursorForMapHover', () => {
   test('prefers pointer over help when a clickable feature is present', () => {
     expect(
       cursorForMapHover(
-        [{ layer: { id: SPYGLASS_WAY_LAYER_ID } }, { layer: { id: 'changeset-way-new' } }],
+        [{ layer: { id: SPYGLASS_WAY_HIT_LAYER_ID } }, { layer: { id: 'changeset-way-new' } }],
         { pinPlacement: false, overlayActive: true },
       ),
     ).toBe('pointer')
@@ -139,7 +138,7 @@ describe('cursorForMapHover', () => {
 
   test('uses help on spyglass or noop when nothing clickable is hit', () => {
     expect(
-      cursorForMapHover([{ layer: { id: SPYGLASS_NODE_LAYER_ID } }], {
+      cursorForMapHover([{ layer: { id: SPYGLASS_NODE_HIT_LAYER_ID } }], {
         pinPlacement: false,
         overlayActive: true,
       }),
@@ -242,8 +241,56 @@ describe('inspectTagsFromProperties', () => {
   })
 })
 
+describe('changesetHoverFromFeatures', () => {
+  test('returns the first clickable changeset element', () => {
+    expect(
+      changesetHoverFromFeatures([
+        {
+          id: 10,
+          source: 'spyglass',
+          sourceLayer: 'ways',
+          layer: { id: SPYGLASS_WAY_HIT_LAYER_ID },
+          properties: { highway: 'path' },
+        },
+        {
+          id: 1,
+          source: 'changeset',
+          layer: { id: 'changeset-way-new' },
+          properties: { type: 'way', id: 50 },
+        },
+      ]),
+    ).toEqual({ type: 'way', id: 50 })
+  })
+
+  test('ignores spyglass, noop, and emphasis layers', () => {
+    expect(
+      changesetHoverFromFeatures([
+        {
+          id: 7,
+          source: 'spyglass',
+          sourceLayer: 'nodes',
+          layer: { id: SPYGLASS_NODE_HIT_LAYER_ID },
+          properties: { name: 'Shop' },
+        },
+        {
+          id: 0,
+          source: 'changeset',
+          layer: { id: 'changeset-way-bg' },
+          properties: { action: 'noop', type: 'way', id: 42 },
+        },
+        {
+          id: 2,
+          source: 'changeset',
+          layer: { id: 'changeset-emphasis-way' },
+          properties: { type: 'way', id: 99 },
+        },
+      ]),
+    ).toBeNull()
+  })
+})
+
 describe('inspectHoverFromFeatures', () => {
-  test('returns null when a clickable changeset feature is present', () => {
+  test('ignores the thin spyglass paint layer', () => {
     expect(
       inspectHoverFromFeatures([
         {
@@ -251,6 +298,20 @@ describe('inspectHoverFromFeatures', () => {
           source: 'spyglass',
           sourceLayer: 'ways',
           layer: { id: SPYGLASS_WAY_LAYER_ID },
+          properties: { highway: 'path' },
+        },
+      ]),
+    ).toBeNull()
+  })
+
+  test('returns null when a clickable changeset feature is present', () => {
+    expect(
+      inspectHoverFromFeatures([
+        {
+          id: 10,
+          source: 'spyglass',
+          sourceLayer: 'ways',
+          layer: { id: SPYGLASS_WAY_HIT_LAYER_ID },
           properties: { highway: 'path' },
         },
         {
@@ -270,21 +331,21 @@ describe('inspectHoverFromFeatures', () => {
           id: 123,
           source: 'spyglass',
           sourceLayer: 'ways',
-          layer: { id: SPYGLASS_WAY_LAYER_ID },
+          layer: { id: SPYGLASS_WAY_HIT_LAYER_ID },
           properties: { highway: 'residential' },
         },
         {
           id: 123,
           source: 'spyglass',
           sourceLayer: 'ways',
-          layer: { id: SPYGLASS_WAY_LAYER_ID },
+          layer: { id: SPYGLASS_WAY_HIT_LAYER_ID },
           properties: { highway: 'residential' },
         },
         {
           id: 456,
           source: 'spyglass',
           sourceLayer: 'nodes',
-          layer: { id: SPYGLASS_NODE_LAYER_ID },
+          layer: { id: SPYGLASS_NODE_HIT_LAYER_ID },
           properties: { amenity: 'bench' },
         },
       ]),
@@ -323,7 +384,7 @@ describe('inspectHoverFromFeatures', () => {
           id: 7,
           source: 'spyglass',
           sourceLayer: 'nodes',
-          layer: { id: SPYGLASS_NODE_LAYER_ID },
+          layer: { id: SPYGLASS_NODE_HIT_LAYER_ID },
           properties: { action: 'store', type: 'amenity', name: 'Shop' },
         },
       ]),
@@ -356,6 +417,23 @@ describe('inspectHoverFromFeatures', () => {
       id: 789,
       tags: [['natural', 'tree']],
       extraCount: 0,
+    })
+  })
+})
+
+describe('inspectFlyoutTags', () => {
+  test('keeps up to 20 tag rows and folds the rest into +N more', () => {
+    const tags = Array.from({ length: 21 }, (_, index) => [`k${index}`, 'v'] as [string, string])
+    expect(inspectFlyoutTags(tags, 1)).toEqual({
+      tags: tags.slice(0, 20),
+      moreCount: 2,
+    })
+  })
+
+  test('still reports extra hovered objects when tags fit', () => {
+    expect(inspectFlyoutTags([['highway', 'path']], 1)).toEqual({
+      tags: [['highway', 'path']],
+      moreCount: 1,
     })
   })
 })

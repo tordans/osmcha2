@@ -63,12 +63,13 @@ describe('filtersFromSearch', () => {
     })
   })
 
-  it('ignores ref and pin chrome so they are not filter keys', () => {
+  it('ignores ref, pin, and layers chrome so they are not filter keys', () => {
     expect(
       filtersFromSearch({
         page: 1,
         ref: 'way/123',
         pin: '52.5,13.4',
+        layers: 'spyglass',
         uids: '11881',
       } as OsmchaSearch),
     ).toEqual({
@@ -244,13 +245,14 @@ describe('withFilters / stripFilterSearch', () => {
     expect(stripFilterSearch(current)).toEqual({ page: 2, order: 'date,desc' })
   })
 
-  it('keeps ref and pin as chrome like map and order', () => {
+  it('keeps ref, pin, and layers as chrome like map and order', () => {
     const current = {
       page: 2,
       map: '12/52.5/13.4',
       order: 'date,desc',
       ref: 'way/123',
       pin: '52.5,13.4',
+      layers: 'spyglass',
       uids: '11881',
     } as OsmchaSearch
     expect(stripFilterSearch(current)).toEqual({
@@ -259,6 +261,7 @@ describe('withFilters / stripFilterSearch', () => {
       order: 'date,desc',
       ref: 'way/123',
       pin: '52.5,13.4',
+      layers: 'spyglass',
     })
   })
 })

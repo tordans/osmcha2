@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { splitChangesetLayers } from './changesetAdiffViewer.ts'
+import { splitChangesetFeatureLayers, splitChangesetLayers } from './changesetAdiffViewer.ts'
 import { changesetMapErrorCopy } from './changesetMapError.ts'
 
 describe('changesetMapErrorCopy', () => {
@@ -29,6 +29,22 @@ describe('splitChangesetLayers', () => {
     expect(splitChangesetLayers(layers)).toEqual({
       overlayBg: { id: 'changeset-overlay-bg' },
       featureLayers: [{ id: 'changeset-way-new' }, { id: 'changeset-node-tagged' }],
+    })
+  })
+})
+
+describe('splitChangesetFeatureLayers', () => {
+  test('puts case/halo layers under the colored core', () => {
+    expect(
+      splitChangesetFeatureLayers([
+        { id: 'changeset-way-bg' },
+        { id: 'changeset-node-tagged-bg' },
+        { id: 'changeset-way-new' },
+        { id: 'changeset-node-tagged' },
+      ]),
+    ).toEqual({
+      caseLayers: [{ id: 'changeset-way-bg' }, { id: 'changeset-node-tagged-bg' }],
+      coreLayers: [{ id: 'changeset-way-new' }, { id: 'changeset-node-tagged' }],
     })
   })
 })

@@ -21,7 +21,6 @@ import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import { jumpMapToAdiffElement } from '../../views/changesetCamera.ts'
 import {
-  setHighlightedFeatureState,
   setSelectedFeatureState,
   type ChangesetGeoJSON,
 } from '../../views/changesetFeatureState.ts'
@@ -35,10 +34,6 @@ import { ReviewColumn } from './ReviewColumn.tsx'
 type ChangesetProps = {
   changesetId: number | null
   currentChangeset: any
-  showElements: Array<string>
-  showActions: Array<string>
-  setShowElements: (elements: Array<string>) => any
-  setShowActions: (actions: Array<string>) => any
   viewer: ChangesetAdiffViewer | null
   selected: AdiffAction | null
   selectedRef: RefParam | null
@@ -60,10 +55,6 @@ const columnToggleOptions = [CHANGESET_DETAILS_DETAILS, CHANGESET_DETAILS_DISCUS
 function Changeset({
   changesetId,
   currentChangeset,
-  showElements,
-  showActions,
-  setShowElements,
-  setShowActions,
   viewer,
   selected,
   selectedRef,
@@ -101,6 +92,20 @@ function Changeset({
 
   const urlDeepLinkKey =
     changesetId != null ? refDeepLinkKey(changesetId, selectedRef, pinSearch) : null
+  const selectedObjectKey = selectedRef ? `${selectedRef.type}/${selectedRef.id}` : null
+  const [revealedSelectionKey, setRevealedSelectionKey] = useState<string | null>(null)
+  if (selectedObjectKey != null && selectedObjectKey !== revealedSelectionKey) {
+    setRevealedSelectionKey(selectedObjectKey)
+    if (!bindingsState[CHANGESET_DETAILS_DETAILS.label]) {
+      setBindingsState({
+        [CHANGESET_DETAILS_DETAILS.label]: true,
+        [CHANGESET_DETAILS_DISCUSSIONS.label]: false,
+      })
+    }
+  }
+  if (selectedObjectKey == null && revealedSelectionKey != null) {
+    setRevealedSelectionKey(null)
+  }
   const revealPending = revealTarget != null && !refsEqual(revealTarget.ref, selectedRef)
   const applyKey =
     revealNonce > 0 && revealTarget && !revealPending
@@ -133,19 +138,8 @@ function Changeset({
     })),
   )
 
-  function setHighlight(type: string, id: number, isHighlighted: boolean) {
-    if (!mainMap || !mapLoaded || !viewer) return
-    setHighlightedFeatureState(
-      mainMap.getMap(),
-      viewer.geojson as ChangesetGeoJSON,
-      type,
-      id,
-      isHighlighted,
-    )
-  }
-
-  function zoomToAndSelect(type: string, id: number) {
-    const nextRef = refParamFromElement(type, id)
+  function zoomToAndSelect(type: string, id: number, key?: string) {
+    const nextRef = refParamFromElement(type, id, key)
     if (nextRef) selectRef(nextRef)
     if (!mainMap || !mapLoaded || !viewer) return
     const map = mainMap.getMap()
@@ -166,10 +160,6 @@ function Changeset({
                   ? currentChangeset.properties.imagery_used
                   : null
               }
-              showElements={showElements}
-              showActions={showActions}
-              setShowElements={setShowElements}
-              setShowActions={setShowActions}
             />
           )}
         </div>
@@ -211,7 +201,6 @@ function Changeset({
             revealRef={revealRef}
             deepLinkReveal={deepLinkReveal}
             deepLinkEpoch={deepLinkEpoch}
-            setHighlight={setHighlight}
             zoomToAndSelect={zoomToAndSelect}
           />
         </>

@@ -38,7 +38,14 @@ export function setSelectedFeatureState(
   }
 }
 
-export function setHighlightedFeatureState(
+function clearHighlightedFeatureState(map: Map, geojson: ChangesetGeoJSON) {
+  for (const feature of geojson.features) {
+    if (feature.id == null) continue
+    map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: feature.id }, { highlighted: false })
+  }
+}
+
+function setHighlightedFeatureState(
   map: Map,
   geojson: ChangesetGeoJSON,
   type: string,
@@ -48,4 +55,14 @@ export function setHighlightedFeatureState(
   for (const featureId of getFeatureIdsForElement(geojson, type, id)) {
     map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: featureId }, { highlighted })
   }
+}
+
+export function syncHighlightedFeatureState(
+  map: Map,
+  geojson: ChangesetGeoJSON,
+  hover: { type: string; id: number } | null,
+) {
+  clearHighlightedFeatureState(map, geojson)
+  if (!hover) return
+  setHighlightedFeatureState(map, geojson, hover.type, hover.id, true)
 }

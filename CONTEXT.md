@@ -39,8 +39,12 @@ _Avoid_: treating Flag as a review action
 
 ### Map
 
-**Spyglass overlay**:
-Live tagged OSM objects from Spyglass tiles; hover-inspect only.
+**Map layers** (`layers`):
+Which changeset geometry and overlays the review map shows. Tokens: `create`, `modify`, `delete`, `noop`, `node`, `way`, `relation`, `spyglass`. Omit when every changeset layer is on and OSM context is on.
+_Avoid_: treating as a changeset list filter.
+
+**Spyglass overlay** / **OSM context**:
+Live tagged OSM objects from Spyglass tiles; hover-inspect only. The `spyglass` map layer.
 _Avoid_: data layer, query tool, X-RAY.
 
 **Unchanged element**:

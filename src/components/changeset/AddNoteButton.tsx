@@ -5,7 +5,7 @@ import { ChatBubbleLeftIcon, EyeIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 
 const iconButtonClassName = clsx(
-  'relative isolate inline-flex size-6 shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none',
+  'relative isolate inline-flex shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none',
   'focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
 )
 
@@ -24,6 +24,7 @@ function ReviewIconButton({
   pressed,
   tone,
   grouped,
+  compact,
   rounded,
   onClick,
   children,
@@ -33,6 +34,7 @@ function ReviewIconButton({
   pressed: boolean
   tone: 'note' | 'seen'
   grouped?: boolean
+  compact?: boolean
   rounded: 'md' | 'left' | 'right'
   onClick: () => void
   children: ReactNode
@@ -43,15 +45,17 @@ function ReviewIconButton({
   }
 
   return (
-    <Tooltip as="span" content={tooltip} className="inline-flex">
+    <Tooltip as="span" placement="bottom-end" content={tooltip} className="inline-flex">
       <button
         type="button"
         aria-label={label}
         aria-pressed={pressed}
         className={clsx(
           iconButtonClassName,
+          compact ? 'size-4 rounded' : 'size-6',
           toneClassName(pressed, tone),
-          rounded === 'md' && 'rounded-md border border-zinc-950/10 shadow-sm',
+          rounded === 'md' && !compact && 'rounded-md border border-zinc-950/10 shadow-sm',
+          rounded === 'md' && compact && 'border border-zinc-950/10',
           rounded === 'left' && 'rounded-l-md',
           rounded === 'right' && 'rounded-r-md border-l border-zinc-950/10',
         )}
@@ -76,6 +80,35 @@ function ReviewIconButton({
 export function AddNoteButton({
   label,
   pressed = false,
+  compact = false,
+  onClick,
+}: {
+  label: string
+  pressed?: boolean
+  compact?: boolean
+  onClick: () => void
+}) {
+  return (
+    <ReviewIconButton
+      label={label}
+      tooltip={label}
+      pressed={pressed}
+      tone="note"
+      compact={compact}
+      rounded="md"
+      onClick={onClick}
+    >
+      <ChatBubbleLeftIcon
+        className={compact ? 'size-3' : 'size-3.5'}
+        variant={pressed ? 'fill' : 'outline'}
+      />
+    </ReviewIconButton>
+  )
+}
+
+export function MarkSeenButton({
+  label,
+  pressed = false,
   onClick,
 }: {
   label: string
@@ -87,11 +120,11 @@ export function AddNoteButton({
       label={label}
       tooltip={label}
       pressed={pressed}
-      tone="note"
+      tone="seen"
       rounded="md"
       onClick={onClick}
     >
-      <ChatBubbleLeftIcon className="size-3.5" variant={pressed ? 'fill' : 'outline'} />
+      <EyeIcon className="size-3.5" variant={pressed ? 'fill' : 'outline'} />
     </ReviewIconButton>
   )
 }
@@ -100,12 +133,14 @@ export function ObjectReviewActions({
   objectLabel,
   notePressed,
   seen,
+  compact = false,
   onNoteClick,
   onSeenClick,
 }: {
   objectLabel: string
   notePressed: boolean
   seen: boolean
+  compact?: boolean
   onNoteClick: () => void
   onSeenClick: () => void
 }) {
@@ -126,10 +161,14 @@ export function ObjectReviewActions({
         pressed={notePressed}
         tone="note"
         grouped
+        compact={compact}
         rounded="left"
         onClick={onNoteClick}
       >
-        <ChatBubbleLeftIcon className="size-3.5" variant={notePressed ? 'fill' : 'outline'} />
+        <ChatBubbleLeftIcon
+          className={compact ? 'size-3' : 'size-3.5'}
+          variant={notePressed ? 'fill' : 'outline'}
+        />
       </ReviewIconButton>
       <ReviewIconButton
         label={seen ? `Mark ${objectLabel} as not seen` : `Mark ${objectLabel} as seen`}
@@ -137,10 +176,11 @@ export function ObjectReviewActions({
         pressed={seen}
         tone="seen"
         grouped
+        compact={compact}
         rounded="right"
         onClick={onSeenClick}
       >
-        <EyeIcon className="size-3.5" variant={seen ? 'fill' : 'outline'} />
+        <EyeIcon className={compact ? 'size-3' : 'size-3.5'} variant={seen ? 'fill' : 'outline'} />
       </ReviewIconButton>
     </div>
   )
