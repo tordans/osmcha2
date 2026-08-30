@@ -22,12 +22,14 @@ import {
   Languages,
   Link,
   LoaderCircle,
+  MapPin,
   MessageCircle,
   MessageCircleWarning,
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
   Plus,
+  Quote,
   RefreshCw,
   Rss,
   SquarePen,
@@ -58,13 +60,15 @@ export const ClipboardDocumentCheckIcon = appIcon(ClipboardCheck)
 export const ClipboardIcon = appIcon(Clipboard)
 export const ArrowTopRightOnSquareIcon = appIcon(ExternalLink)
 export const EyeIcon = appIcon(Eye)
-export const FlagIcon = appIcon(Flag)
+/** Lucide Flag’s pole is stroke-drawn; fill alone collapses to a pennant. */
+export const FlagIcon = appIcon(Flag, { keepStrokeWhenFilled: true })
 export const FunnelIcon = appIcon(Funnel)
 export const GlobeAltIcon = appIcon(Globe)
 export const HandThumbDownIcon = appIcon(ThumbsDown)
 export const HandThumbUpIcon = appIcon(ThumbsUp)
 export const LanguageIcon = appIcon(Languages)
 export const LinkIcon = appIcon(Link)
+export const MapPinIcon = appIcon(MapPin)
 export const LoaderCircleIcon = appIcon(LoaderCircle)
 export const MessageCircleWarningIcon = appIcon(MessageCircleWarning)
 export const ExclamationTriangleIcon = appIcon(TriangleAlert)
@@ -74,6 +78,7 @@ export const PencilIcon = appIcon(Pencil)
 export const PencilSquareIcon = appIcon(SquarePen)
 export const PlusCircleIcon = appIcon(CirclePlus)
 export const PlusIcon = appIcon(Plus)
+export const QuoteIcon = appIcon(Quote)
 export const RssIcon = appIcon(Rss)
 export const StarIcon = appIcon(Star)
 export const TrashIcon = appIcon(Trash2)

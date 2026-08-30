@@ -1,6 +1,7 @@
 import { TZDate } from '@date-fns/tz'
 import { describe, expect, test } from 'vitest'
 import {
+  formatAccountAge,
   formatLocalDate,
   formatLocalDateTime,
   localDateFromIsoDate,
@@ -53,5 +54,21 @@ describe('startOfLocalDay', () => {
     expect(startOfLocalDay(lateUtc, 'Europe/Berlin').toISOString()).toBe(
       '2026-08-17T00:00:00.000+02:00',
     )
+  })
+})
+
+describe('formatAccountAge', () => {
+  const now = parseOsmDate('2026-08-30T12:00:00.000Z')
+
+  test('uses minutes until one hour, then date-fns units, then a 2-year cap', () => {
+    expect(formatAccountAge(now, now)).toBe('just now')
+    expect(formatAccountAge(parseOsmDate('2026-08-30T11:48:00.000Z'), now)).toBe('12 min old')
+    expect(formatAccountAge(parseOsmDate('2026-08-30T11:00:00.000Z'), now)).toBe('1 hour old')
+    expect(formatAccountAge(parseOsmDate('2026-08-30T07:00:00.000Z'), now)).toBe('5 hours old')
+    expect(formatAccountAge(parseOsmDate('2026-08-18T12:00:00.000Z'), now)).toBe('12 days old')
+    expect(formatAccountAge(parseOsmDate('2025-12-30T12:00:00.000Z'), now)).toBe('8 months old')
+    expect(formatAccountAge(parseOsmDate('2025-08-30T12:00:00.000Z'), now)).toBe('1 year old')
+    expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now)).toBe('>2 years old')
+    expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now)).toBe('>2 years old')
   })
 })

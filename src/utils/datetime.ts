@@ -1,5 +1,14 @@
 import { TZDate, tz } from '@date-fns/tz'
-import { format, isValid, parseISO, startOfDay } from 'date-fns'
+import {
+  differenceInHours,
+  differenceInMinutes,
+  differenceInYears,
+  format,
+  formatDistanceStrict,
+  isValid,
+  parseISO,
+  startOfDay,
+} from 'date-fns'
 
 /** Browser IANA zone, falling back to UTC when unavailable (SSR / tests). */
 function browserTimeZone(): string {
@@ -43,4 +52,17 @@ export function startOfLocalDay(
 export function parseOsmDate(value: string): Date {
   const parsed = parseISO(value)
   return isValid(parsed) ? parsed : new Date(value)
+}
+
+/**
+ * Compact mapper-account age for the review header.
+ * Minutes while younger than an hour; then date-fns’ largest unit; 2+ years cap.
+ */
+export function formatAccountAge(created: Date, now: Date = new Date()): string {
+  if (created >= now || differenceInMinutes(now, created) < 1) return 'just now'
+  if (differenceInHours(now, created) < 1) {
+    return `${differenceInMinutes(now, created)} min old`
+  }
+  if (differenceInYears(now, created) >= 2) return '>2 years old'
+  return `${formatDistanceStrict(created, now, { roundingMethod: 'floor' })} old`
 }

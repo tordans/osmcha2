@@ -1,7 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
@@ -30,7 +30,8 @@ import {
 } from '../../query/hooks/useWatchlistMutations.ts'
 import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
-import { parseOsmDate } from '../../utils/datetime.ts'
+import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
+import { formatCompactCount } from '../../utils/formatCount.ts'
 import { editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { RelativeTime } from '../relative_time.tsx'
@@ -55,6 +56,7 @@ import {
   CircleCheckIcon,
   ExclamationTriangleIcon,
   FlagIcon,
+  QuoteIcon,
   StarIcon,
   XMarkIcon,
 } from '../ui/icons.ts'
@@ -65,9 +67,75 @@ import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { type NamedTag, REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
 import { Tags } from './tags.tsx'
+import TranslateButton from './translate_button.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 const rootRouteApi = getRouteApi('__root__')
+
+/** Trigger chrome shared by the changeset and user header menus. */
+const headerMenuButtonClassName = clsx(
+  'h-full w-full cursor-pointer touch-manipulation px-2 py-1 text-left select-none',
+  // Stack title + meta; Chevron sits on the title row only so the meta line is full-width.
+  'flex! flex-col! items-stretch! justify-start! gap-x-0 gap-y-0',
+)
+
+const headerMenuTitleRowClassName = 'flex min-w-0 items-center justify-between gap-x-2'
+
+const headerMenuMetaClassName = clsx(
+  '-mt-0.5 flex flex-nowrap items-center gap-x-1 font-normal text-zinc-500',
+  typeScale.small,
+)
+
+/** Compact review counters in the user meta line (override Button’s `data-slot=icon` sizing). */
+const headerReviewCountBadgeClassName = 'gap-x-0.5 px-1 py-0 text-[0.625rem]/3 sm:text-[0.625rem]/3'
+const headerReviewCountIconClassName = 'inline size-3! my-0!'
+
+/** Full sidebar content width; cancel Headless’ default start/end nudge so the panel lines up. */
+const reviewHeaderMenuClassName = clsx(
+  'w-(--button-width) max-w-[calc(100vw-1.25rem)]',
+  '[--anchor-offset:0px]! data-[anchor~=start]:[--anchor-offset:0px]! data-[anchor~=end]:[--anchor-offset:0px]!',
+)
+
+const changesetOpenMenuClassName = clsx(
+  reviewHeaderMenuClassName,
+  '@container/changeset-open origin-top-left',
+)
+
+const userOpenMenuClassName = clsx(reviewHeaderMenuClassName, 'origin-top-right')
+
+function useReviewHeaderMenuWidth() {
+  const pairRef = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+
+  useLayoutEffect(function observeReviewHeaderPairWidth() {
+    const pair = pairRef.current
+    if (!pair) return
+
+    function measurePairWidth() {
+      const el = pairRef.current
+      if (!el) return
+      setWidth(el.getBoundingClientRect().width)
+    }
+
+    measurePairWidth()
+    const observer = new ResizeObserver(measurePairWidth)
+    observer.observe(pair)
+    return function disconnectPairWidthObserver() {
+      observer.disconnect()
+    }
+  }, [])
+
+  return { pairRef, menuStyle: width > 0 ? { width } : undefined }
+}
+
+/** Items under a group heading: up to three equal columns once the menu is wide enough. */
+const changesetOpenItemsClassName = clsx(
+  'col-span-full grid grid-cols-1',
+  '@min-[20rem]/changeset-open:grid-cols-3',
+)
+
+/** Override DropdownItem’s `col-span-full` so items can sit in the item grid. */
+const changesetOpenItemClassName = 'col-span-1!'
 
 export type ReviewUserDetails = {
   uid?: number | string
@@ -119,6 +187,7 @@ export function DetailsHeader({
   const username = user?.username
   const markHarmfulMutation = useMarkHarmful()
   const [leftoverAlertOpen, setLeftoverAlertOpen] = useState(false)
+  const { pairRef, menuStyle } = useReviewHeaderMenuWidth()
   const properties = currentChangeset.properties ?? {}
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
@@ -153,6 +222,7 @@ export function DetailsHeader({
   const visibleMetadata = changesetTagsForDisplay(properties.metadata)
   const pastNames = whosThat.length > 1 ? whosThat.slice(0, -1) : []
   const description = userDetails?.description?.trim() ?? ''
+  const comment = properties.comment?.trim() ?? ''
   const hasLeftoverTags = tags.length > 0
 
   function markLooksOk(clearTags: boolean) {
@@ -279,77 +349,117 @@ export function DetailsHeader({
 
   return (
     <header className="flex flex-col gap-2.5 bg-zinc-50 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] min-[56rem]:pb-2.5">
-      <div className="flex flex-col gap-2">
-        <Dropdown>
-          <DropdownButton
-            outline
-            className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
-          >
-            <span className="min-w-0 flex-1 text-left">
-              <h1 className={typeScale.heading}>Changeset #{changesetId}</h1>
-              <div
-                className={clsx(
-                  '-mt-0.5 flex flex-wrap items-center gap-x-1 font-normal text-zinc-500',
-                  typeScale.small,
-                )}
-              >
-                {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
-                {changesetIsOpen ? (
-                  <Tooltip
-                    as="span"
-                    content="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
-                  >
-                    <Badge color="amber">Open</Badge>
-                  </Tooltip>
-                ) : null}
-                {' | '}
-                <Tooltip
-                  as="abbr"
-                  content={`Editor ${properties.editor ?? 'unknown'}${
-                    properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
-                  }`}
-                >
-                  {editorLabel}
-                </Tooltip>
-              </div>
+      <div ref={pairRef} className="grid grid-cols-1 gap-2 @min-[28rem]/review:grid-cols-2">
+        <Dropdown className="min-w-0">
+          <DropdownButton outline className={headerMenuButtonClassName}>
+            <span className={headerMenuTitleRowClassName}>
+              <h1 className={clsx(typeScale.heading, 'min-w-0 flex-1 truncate')}>
+                Changeset #{changesetId}
+              </h1>
+              <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
             </span>
-            <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+            <div className={headerMenuMetaClassName}>
+              {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+              {changesetIsOpen ? (
+                <Tooltip
+                  as="span"
+                  content="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
+                >
+                  <Badge color="amber">Open</Badge>
+                </Tooltip>
+              ) : null}
+              {' | '}
+              <Tooltip
+                as="abbr"
+                content={`Editor ${properties.editor ?? 'unknown'}${
+                  properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
+                }`}
+              >
+                {editorLabel}
+              </Tooltip>
+            </div>
           </DropdownButton>
           <DropdownMenu
             anchor="bottom start"
-            className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
+            className={changesetOpenMenuClassName}
+            style={menuStyle}
           >
             <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
-              OSM Website
+              Changeset on OpenStreetMap.org
             </DropdownItem>
             <DropdownDivider />
             <DropdownSection>
-              <DropdownHeading>Tools</DropdownHeading>
-              <DropdownItem href={urls.achavi} target="_blank" rel="noopener noreferrer">
-                Achavi
-              </DropdownItem>
-              <DropdownItem href={urls.osmRevert} target="_blank" rel="noopener noreferrer">
-                osm-revert
-              </DropdownItem>
-              <DropdownItem href={urls.resultMaps} target="_blank" rel="noopener noreferrer">
-                ResultMaps
-              </DropdownItem>
+              <DropdownHeading>Changeset tools</DropdownHeading>
+              <div className={changesetOpenItemsClassName}>
+                <DropdownItem
+                  href={urls.achavi}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  Achavi
+                </DropdownItem>
+                <DropdownItem
+                  href={urls.osmRevert}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  osm-revert
+                </DropdownItem>
+                <DropdownItem
+                  href={urls.resultMaps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  ResultMaps
+                </DropdownItem>
+              </div>
             </DropdownSection>
             <DropdownDivider />
             <DropdownSection>
-              <DropdownHeading>Editor</DropdownHeading>
-              <DropdownItem href={urls.id} target="_blank" rel="noopener noreferrer">
-                iD
-              </DropdownItem>
-              <DropdownItem href={urls.josm} target="_blank" rel="noopener noreferrer">
-                JOSM
-              </DropdownItem>
-              <DropdownItem href={urls.level0} target="_blank" rel="noopener noreferrer">
-                Level0
-              </DropdownItem>
-              <DropdownItem href={urls.rapid} target="_blank" rel="noopener noreferrer">
-                Rapid
-              </DropdownItem>
+              <DropdownHeading>Open map location in editor</DropdownHeading>
+              <div className={changesetOpenItemsClassName}>
+                <DropdownItem
+                  href={urls.id}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  iD
+                </DropdownItem>
+                <DropdownItem
+                  href={urls.rapid}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  Rapid
+                </DropdownItem>
+              </div>
+            </DropdownSection>
+            <DropdownDivider />
+            <DropdownSection>
+              <DropdownHeading>Open changeset in editor</DropdownHeading>
+              <div className={changesetOpenItemsClassName}>
+                <DropdownItem
+                  href={urls.josm}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  JOSM
+                </DropdownItem>
+                <DropdownItem
+                  href={urls.level0}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={changesetOpenItemClassName}
+                >
+                  Level0
+                </DropdownItem>
+              </div>
             </DropdownSection>
             {visibleMetadata.length > 0 ? (
               <>
@@ -379,70 +489,75 @@ export function DetailsHeader({
           </DropdownMenu>
         </Dropdown>
 
-        <Dropdown>
-          <DropdownButton
-            outline
-            className="w-full cursor-pointer touch-manipulation justify-between! px-2 py-1 text-left select-none"
-          >
-            <span
-              className={clsx(
-                'min-w-0 flex-1 text-left font-normal text-zinc-500',
-                typeScale.small,
-              )}
-            >
-              {osmUser}
-              {isInTrustedlist && (
-                <StarIcon
-                  variant="fill"
-                  className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
-                />
-              )}
-              {isInWatchlist && (
-                <ExclamationTriangleIcon
-                  variant="fill"
-                  className="ml-1 inline-block size-4 align-text-bottom text-red-500"
-                />
-              )}
+        <Dropdown className="min-w-0">
+          <DropdownButton outline className={headerMenuButtonClassName}>
+            <span className={headerMenuTitleRowClassName}>
+              <span className={clsx(typeScale.heading, 'min-w-0 flex-1 truncate')}>
+                By {osmUser}
+                {isInTrustedlist && (
+                  <StarIcon
+                    variant="fill"
+                    className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
+                  />
+                )}
+                {isInWatchlist && (
+                  <ExclamationTriangleIcon
+                    variant="fill"
+                    className="ml-1 inline-block size-4 align-text-bottom text-red-500"
+                  />
+                )}
+              </span>
+              <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+            </span>
+            <div className={headerMenuMetaClassName}>
               {accountCreated ? (
+                <Tooltip as="span" content={formatLocalDateTime(accountCreated)}>
+                  <time dateTime={accountCreated.toISOString()}>
+                    {formatAccountAge(accountCreated)}
+                  </time>
+                </Tooltip>
+              ) : null}
+              {editCount > 0 ? (
                 <>
-                  {' '}
-                  created <RelativeTime datetime={accountCreated} />
+                  {accountCreated ? ' | ' : null}
+                  <Tooltip as="span" content={`${editCount.toLocaleString()} edits`}>
+                    {`${formatCompactCount(editCount)} edits`}
+                  </Tooltip>
                 </>
               ) : null}
-              {editCount > 0 ? ` | ${editCount.toLocaleString()} edits` : null}
-            </span>
-            <Tooltip
-              as="span"
-              content="Changesets of this user marked Looks OK or Needs a look in OSMCha"
-              className="isolate inline-flex shrink-0 rounded-md"
-            >
-              <Badge rounded="left">
-                {checkedGood.toLocaleString()}{' '}
-                <CircleCheckIcon
-                  variant="fill"
-                  className="inline size-4 text-zinc-600"
-                  aria-label="Looks OK changesets"
-                />
-              </Badge>
-              <Badge rounded="right" className="-ml-px">
-                <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
-                  {checkedBad.toLocaleString()}{' '}
-                </span>
-                <FlagIcon
-                  variant="fill"
-                  className={clsx(
-                    'inline size-4',
-                    checkedBad ? 'text-orange-500' : 'text-zinc-600',
-                  )}
-                  aria-label="Needs a look changesets"
-                />
-              </Badge>
-            </Tooltip>
-            <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+              <Tooltip
+                as="span"
+                content="Changesets of this user marked Looks OK or Needs a look in OSMCha"
+                className="isolate ml-auto inline-flex shrink-0 rounded-md"
+              >
+                <Badge rounded="left" className={headerReviewCountBadgeClassName}>
+                  {checkedGood.toLocaleString()}{' '}
+                  <CircleCheckIcon
+                    variant="fill"
+                    className={clsx(headerReviewCountIconClassName, 'text-zinc-600')}
+                    aria-label="Looks OK changesets"
+                  />
+                </Badge>
+                <Badge rounded="right" className={clsx('-ml-px', headerReviewCountBadgeClassName)}>
+                  <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
+                    {checkedBad.toLocaleString()}{' '}
+                  </span>
+                  <FlagIcon
+                    variant="fill"
+                    className={clsx(
+                      headerReviewCountIconClassName,
+                      checkedBad ? 'text-orange-500' : 'text-zinc-600',
+                    )}
+                    aria-label="Needs a look changesets"
+                  />
+                </Badge>
+              </Tooltip>
+            </div>
           </DropdownButton>
           <DropdownMenu
-            anchor="bottom start"
-            className="w-(--button-width) max-w-[min(24rem,calc(100vw-1.5rem))]"
+            anchor="bottom end"
+            className={userOpenMenuClassName}
+            style={menuStyle}
           >
             <DropdownSection>
               <DropdownHeading>
@@ -548,10 +663,20 @@ export function DetailsHeader({
       </div>
 
       <div className={clsx('flex flex-col gap-1', typeScale.body)}>
-        <p className="w-full leading-tight break-words hyphens-auto" lang="en">
-          <strong className="font-semibold">{osmUser}:</strong>{' '}
-          <LinkifyText text={properties.comment || 'NO COMMENT'} />
-        </p>
+        <blockquote
+          className={clsx(
+            'relative flex w-full items-start gap-1 leading-tight wrap-break-word hyphens-auto not-italic',
+            comment && 'min-h-11',
+          )}
+          lang="en"
+        >
+          <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
+          <p className={clsx('min-w-0 flex-1', comment && 'pr-11')}>
+            <span className="sr-only">Changeset comment: </span>
+            <LinkifyText text={comment || 'NO COMMENT'} />
+          </p>
+          {comment ? <TranslateButton text={comment} /> : null}
+        </blockquote>
         {reasons.length > 0 && (
           <div className="flex flex-wrap items-center gap-1">
             {reasons.map((reason) => (
