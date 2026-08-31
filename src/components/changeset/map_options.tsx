@@ -286,9 +286,9 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
 
         <section className="space-y-2">
           <h3 className="text-base font-medium text-zinc-700">Filter by review</h3>
-          <Headless.RadioGroup
+          <Headless.RadioGroup<'div', ReviewFilter>
             value={reviewFilterOf(layers)}
-            onChange={(value) => setReview(value as ReviewFilter)}
+            onChange={(value) => setReview(value)}
             className="space-y-0.5"
             aria-label="Filter by review"
           >

@@ -79,11 +79,11 @@ export function fetchOsmUsername(): Promise<string | null> {
   if (!auth?.authenticated()) return Promise.resolve(null)
   return new Promise((resolve) => {
     auth.xhr({ method: 'GET', path: '/api/0.6/user/details' }, (err: unknown, xml: unknown) => {
-      if (err || xml == null || typeof xml === 'string') {
+      if (err || xml == null || typeof xml === 'string' || !(xml instanceof Document)) {
         resolve(null)
         return
       }
-      const display = (xml as Document).querySelector('user')?.getAttribute('display_name')
+      const display = xml.querySelector('user')?.getAttribute('display_name')
       resolve(display ?? null)
     })
   })

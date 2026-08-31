@@ -13,11 +13,7 @@ let highlightedFeatureIds: Array<string | number> = []
 /** Last selected feature ids — same for selection. */
 let selectedFeatureIds: Array<string | number> = []
 
-export function getFeatureIdsForElement(
-  geojson: ChangesetGeoJSON,
-  type: string,
-  id: number,
-): Array<string | number> {
+export function getFeatureIdsForElement(geojson: ChangesetGeoJSON, type: string, id: number) {
   return geojson.features
     .filter((feature) => feature.properties?.type === type && feature.properties?.id === id)
     .map((feature) => feature.id)

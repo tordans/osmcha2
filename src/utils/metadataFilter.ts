@@ -104,8 +104,6 @@ function serializeMetadataRow(row: MetadataRow): string | null {
       return `${key}__exact=${row.value.trim()}`
     case 'contains':
       return `${key}=${row.value.trim()}`
-    default:
-      return null
   }
 }
 
@@ -152,8 +150,6 @@ export function validateMetadataRow(row: MetadataRow): string | null {
       if (trimmed.includes('=')) return 'Value cannot contain =.'
       return null
     }
-    default:
-      return 'Invalid match type.'
   }
 }
 

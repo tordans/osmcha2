@@ -535,7 +535,7 @@ function ElementChangeRow({
   }
   const flaggedLabel = [
     change.flagged?.name,
-    ...((change.flagged?.reasons ?? []) as string[]),
+    ...(change.flagged?.reasons ?? []),
     change.flagged?.userFlag,
     change.flagged?.note,
   ]

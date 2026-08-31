@@ -32,7 +32,7 @@ export function matchBuiltinStyleId(token: string): string | null {
   const normalized = normalizeImageryName(token)
   for (const option of BUILTIN_BASEMAP_OPTIONS) {
     if (
-      (option.aliases as readonly string[]).includes(normalized) ||
+      option.aliases.some((alias) => alias === normalized) ||
       normalizeImageryName(option.label) === normalized
     ) {
       return option.id

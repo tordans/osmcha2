@@ -51,11 +51,11 @@ function isStyleLayerToken(value: string): value is (typeof MAP_LAYER_TOKENS)[nu
   return styleLayerTokenSchema.safeParse(value).success
 }
 
-function sameMembers(a: readonly string[], b: readonly string[]): boolean {
+function sameMembers(a: readonly string[], b: readonly string[]) {
   return a.length === b.length && a.every((token) => b.includes(token))
 }
 
-function isDefaultStyleLayers(layers: MapLayers): boolean {
+function isDefaultStyleLayers(layers: MapLayers) {
   return (
     layers.spyglass === DEFAULT_MAP_LAYERS.spyglass &&
     sameMembers(layers.showElements, DEFAULT_MAP_LAYERS.showElements) &&
@@ -63,7 +63,7 @@ function isDefaultStyleLayers(layers: MapLayers): boolean {
   )
 }
 
-export function isDefaultMapLayers(layers: MapLayers): boolean {
+export function isDefaultMapLayers(layers: MapLayers) {
   return (
     isDefaultStyleLayers(layers) &&
     layers.showSeen === DEFAULT_MAP_LAYERS.showSeen &&
@@ -71,7 +71,7 @@ export function isDefaultMapLayers(layers: MapLayers): boolean {
   )
 }
 
-export function parseLayersParam(value: unknown): MapLayers {
+export function parseLayersParam(value: unknown) {
   const asString = z.string().safeParse(value)
   if (!asString.success) return DEFAULT_MAP_LAYERS
   const raw = asString.data
@@ -110,7 +110,7 @@ export function parseLayersParam(value: unknown): MapLayers {
   }
 }
 
-export function serializeLayersParam(layers: MapLayers): string | undefined {
+export function serializeLayersParam(layers: MapLayers) {
   if (isDefaultMapLayers(layers)) return undefined
   const hideTokens: string[] = []
   // Unseen is the default review side — only Seen-only needs a URL token.
@@ -118,12 +118,23 @@ export function serializeLayersParam(layers: MapLayers): string | undefined {
   if (isDefaultStyleLayers(layers)) {
     return hideTokens.length > 0 ? hideTokens.join(',') : undefined
   }
-  const tokens = MAP_LAYER_TOKENS.filter((token) => {
-    if (token === 'spyglass') return layers.spyglass
-    if (token === 'node' || token === 'way' || token === 'relation') {
-      return layers.showElements.includes(token)
+  const tokens = MAP_LAYER_TOKENS.filter((token: MapLayerToken) => {
+    switch (token) {
+      case 'seen':
+      case 'unseen':
+        return false
+      case 'spyglass':
+        return layers.spyglass
+      case 'node':
+      case 'way':
+      case 'relation':
+        return layers.showElements.includes(token)
+      case 'create':
+      case 'modify':
+      case 'delete':
+      case 'noop':
+        return layers.showActions.includes(token)
     }
-    return layers.showActions.includes(token)
   })
   return [...tokens, ...hideTokens].join(',')
 }
@@ -137,44 +148,66 @@ export function searchWithLayers<T extends object>(search: T, layers: MapLayers)
   return { ...search, layers: serialized }
 }
 
-export function reviewFilterOf(layers: MapLayers): ReviewFilter {
+export function reviewFilterOf(layers: MapLayers) {
   if (layers.showSeen && !layers.showUnseen) return 'seen'
   return 'unseen'
 }
 
-export function setReviewFilter(layers: MapLayers, filter: ReviewFilter): MapLayers {
+export function setReviewFilter(layers: MapLayers, filter: ReviewFilter) {
   if (filter === 'seen') return { ...layers, showSeen: true, showUnseen: false }
   return { ...layers, showSeen: false, showUnseen: true }
 }
 
-export function toggleMapLayer(layers: MapLayers, token: MapLayerToken): MapLayers {
-  if (token === 'seen') return setReviewFilter(layers, 'seen')
-  if (token === 'unseen') return setReviewFilter(layers, 'unseen')
-  if (token === 'spyglass') return { ...layers, spyglass: !layers.spyglass }
-  if (token === 'node' || token === 'way' || token === 'relation') {
-    const has = layers.showElements.includes(token)
-    return {
-      ...layers,
-      showElements: has
-        ? layers.showElements.filter((item) => item !== token)
-        : [...layers.showElements, token],
+export function toggleMapLayer(layers: MapLayers, token: MapLayerToken) {
+  switch (token) {
+    case 'seen':
+      return setReviewFilter(layers, 'seen')
+    case 'unseen':
+      return setReviewFilter(layers, 'unseen')
+    case 'spyglass':
+      return { ...layers, spyglass: !layers.spyglass }
+    case 'node':
+    case 'way':
+    case 'relation': {
+      const has = layers.showElements.includes(token)
+      return {
+        ...layers,
+        showElements: has
+          ? layers.showElements.filter((item) => item !== token)
+          : [...layers.showElements, token],
+      }
     }
-  }
-  const has = layers.showActions.includes(token)
-  return {
-    ...layers,
-    showActions: has
-      ? layers.showActions.filter((item) => item !== token)
-      : [...layers.showActions, token],
+    case 'create':
+    case 'modify':
+    case 'delete':
+    case 'noop': {
+      const has = layers.showActions.includes(token)
+      return {
+        ...layers,
+        showActions: has
+          ? layers.showActions.filter((item) => item !== token)
+          : [...layers.showActions, token],
+      }
+    }
   }
 }
 
-export function mapLayerIsOn(layers: MapLayers, token: MapLayerToken): boolean {
-  if (token === 'seen') return layers.showSeen
-  if (token === 'unseen') return layers.showUnseen
-  if (token === 'spyglass') return layers.spyglass
-  if (token === 'node' || token === 'way' || token === 'relation') {
-    return layers.showElements.includes(token)
+export function mapLayerIsOn(layers: MapLayers, token: MapLayerToken) {
+  switch (token) {
+    case 'seen':
+      return layers.showSeen
+    case 'unseen':
+      return layers.showUnseen
+    case 'spyglass':
+      return layers.spyglass
+    case 'node':
+    case 'way':
+    case 'relation':
+      return layers.showElements.includes(token)
+    case 'create':
+    case 'modify':
+    case 'delete':
+    case 'noop':
+      return layers.showActions.includes(token)
   }
-  return layers.showActions.includes(token)
 }

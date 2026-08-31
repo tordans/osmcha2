@@ -4,7 +4,6 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/Changeset.tsx'
-import type { AdiffAction } from '../components/changeset/changesetElements.ts'
 import {
   actionMatchingRef,
   refDeepLinkKey,
@@ -53,7 +52,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     mapLayers.showActions,
   )
   const selectedRef = parseRefParam(search.ref ?? '')
-  const selected = actionMatchingRef((viewer?.adiff.actions ?? []) as AdiffAction[], selectedRef)
+  const selected = actionMatchingRef(viewer?.adiff.actions ?? [], selectedRef)
 
   function selectRef(ref: RefParam | null) {
     setRevealTarget(null)

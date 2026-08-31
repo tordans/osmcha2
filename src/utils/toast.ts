@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 
 interface ShowToastOptions {
-  kind?: 'error' | 'success' | 'warning' | 'info'
+  kind?: 'error' | 'success' | 'warning'
   error?: Error
   title?: string
   description?: string
@@ -52,13 +52,5 @@ export function showToast({
         ...options,
       })
       break
-    case 'info': {
-      throw new Error('Not implemented yet: "info" case')
-    }
-    default:
-      toast.info(finalTitle || 'Info', {
-        description: finalDescription,
-        ...options,
-      })
   }
 }

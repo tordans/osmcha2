@@ -60,7 +60,17 @@ export type ElementChange = {
 
 export const ACTION_ORDER = ['create', 'modify', 'delete'] as const
 
-const ACTION_TYPES = new Set<string>(ACTION_ORDER)
+function isOsmElementType(value: string): value is OsmElementType {
+  return value === 'node' || value === 'way' || value === 'relation'
+}
+
+function isElementActionType(value: string | undefined): value is ElementChange['actionType'] {
+  return value === 'create' || value === 'modify' || value === 'delete'
+}
+
+function isNumberReasons(reasons: number[] | NamedReason[]): reasons is number[] {
+  return typeof reasons[0] === 'number'
+}
 
 function tagsOf(element?: AdiffElement): Record<string, string> {
   return element?.tags ?? {}
@@ -196,14 +206,14 @@ export function matchFlaggedFeature(
 function reasonNames(feature: FlaggedFeature, changesetReasons: NamedReason[]): string[] {
   const names: string[] = []
   if (!feature.reasons?.length) return names
-  if (typeof feature.reasons[0] === 'number') {
-    const ids = new Set(feature.reasons as number[])
+  if (isNumberReasons(feature.reasons)) {
+    const ids = new Set(feature.reasons)
     for (const reason of changesetReasons) {
       if (reason.id != null && ids.has(reason.id) && reason.name) names.push(reason.name)
     }
     return names
   }
-  for (const reason of feature.reasons as NamedReason[]) {
+  for (const reason of feature.reasons) {
     if (reason.name) names.push(reason.name)
   }
   return names
@@ -213,12 +223,12 @@ export function mergeFlaggedFeatures(
   features: FlaggedFeature[],
   reviewedFeatures: Array<{ id?: string; user?: string }> = [],
 ): FlaggedFeature[] {
-  const reviewed = reviewedFeatures.map((feature) => ({
+  const reviewed: FlaggedFeature[] = reviewedFeatures.map((feature) => ({
     url: feature.id,
     user_flag: feature.user ? `Flagged by ${feature.user}` : undefined,
     osm_id: feature.id ? Number.parseInt(feature.id.split('-')[1] ?? '', 10) : undefined,
     type: feature.id?.split('-')[0],
-    reasons: [] as number[],
+    reasons: [],
   }))
   const byUrl = new Map(features.map((feature) => [feature.url, { ...feature }]))
   for (const extra of reviewed) {
@@ -243,12 +253,20 @@ function countWayNodeStats(wayAction: AdiffAction, actions: AdiffAction[]): Node
   if (refs.size === 0) return stats
 
   for (const action of actions) {
-    if (isNoopAction(action) || !ACTION_TYPES.has(action.type ?? '')) continue
+    if (isNoopAction(action) || !isElementActionType(action.type)) continue
     const element = currentElement(action)
     if (element?.type !== 'node' || element.id == null || !refs.has(element.id)) continue
-    if (action.type === 'create') stats.added += 1
-    else if (action.type === 'modify') stats.modified += 1
-    else if (action.type === 'delete') stats.deleted += 1
+    switch (action.type) {
+      case 'create':
+        stats.added += 1
+        break
+      case 'modify':
+        stats.modified += 1
+        break
+      case 'delete':
+        stats.deleted += 1
+        break
+    }
   }
   return stats
 }
@@ -256,7 +274,7 @@ function countWayNodeStats(wayAction: AdiffAction, actions: AdiffAction[]): Node
 function wayMemberNodeIds(actions: AdiffAction[]): Set<number> {
   const ids = new Set<number>()
   for (const action of actions) {
-    if (isNoopAction(action) || !ACTION_TYPES.has(action.type ?? '')) continue
+    if (isNoopAction(action) || !isElementActionType(action.type)) continue
     if (action.new?.type !== 'way' && action.old?.type !== 'way') continue
     for (const ref of wayNodeRefs(action.old)) ids.add(ref)
     for (const ref of wayNodeRefs(action.new)) ids.add(ref)
@@ -265,7 +283,7 @@ function wayMemberNodeIds(actions: AdiffAction[]): Set<number> {
 }
 
 function shouldListAction(action: AdiffAction, wayMemberNodes: Set<number>): boolean {
-  if (isNoopAction(action) || !ACTION_TYPES.has(action.type ?? '')) return false
+  if (isNoopAction(action) || !isElementActionType(action.type)) return false
   const element = currentElement(action)
   if (!element?.type || element.id == null) return false
   if (element.type === 'node' && wayMemberNodes.has(element.id) && !hasOwnTags(action)) {
@@ -286,12 +304,13 @@ export function buildElementChanges(
     if (!shouldListAction(action, wayMemberNodes)) continue
     const element = currentElement(action)
     if (!element?.type || element.id == null) continue
-    const type = element.type as OsmElementType
+    if (!isOsmElementType(element.type) || !isElementActionType(action.type)) continue
+    const type = element.type
     const flagged = matchFlaggedFeature(type, element.id, flaggedFeatures)
     const nodeStats = type === 'way' ? countWayNodeStats(action, actions) : undefined
 
     changes.push({
-      actionType: action.type as ElementChange['actionType'],
+      actionType: action.type,
       type,
       id: element.id,
       version: element.version,

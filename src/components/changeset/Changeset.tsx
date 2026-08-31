@@ -20,10 +20,7 @@ import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import { flyMapToAdiffElement } from '../../views/changesetCamera.ts'
-import {
-  setSelectedFeatureState,
-  type ChangesetGeoJSON,
-} from '../../views/changesetFeatureState.ts'
+import { setSelectedFeatureState } from '../../views/changesetFeatureState.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import type { AdiffAction } from './changesetElements.ts'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
@@ -143,7 +140,7 @@ function Changeset({
     if (nextRef) selectRef(nextRef)
     if (!mainMap || !mapLoaded || !viewer) return
     const map = mainMap.getMap()
-    setSelectedFeatureState(map, viewer.geojson as ChangesetGeoJSON, type, id)
+    setSelectedFeatureState(map, viewer.geojson, type, id)
     flyMapToAdiffElement(map, viewer, type, id, null, { staged: true })
   }
 
