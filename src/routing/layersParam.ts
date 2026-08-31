@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 /** Visible map layers. Omit `layers` when every changeset layer is on and spyglass is on. */
 
 const MAP_LAYER_TOKENS = [
@@ -18,6 +20,9 @@ const REVIEW_TOKENS = ['seen', 'unseen'] as const
 const HIDE_SEEN_TOKEN = 'no-seen'
 const HIDE_UNSEEN_TOKEN = 'no-unseen'
 
+const styleLayerTokenSchema = z.enum(MAP_LAYER_TOKENS)
+const hideReviewTokenSchema = z.enum([HIDE_SEEN_TOKEN, HIDE_UNSEEN_TOKEN])
+
 export type MapLayerToken = (typeof MAP_LAYER_TOKENS)[number] | (typeof REVIEW_TOKENS)[number]
 
 export type MapLayers = {
@@ -30,7 +35,6 @@ export type MapLayers = {
 
 const ELEMENT_TOKENS = ['node', 'way', 'relation'] as const
 const ACTION_TOKENS = ['create', 'modify', 'delete', 'noop'] as const
-const TOKEN_SET = new Set<string>(MAP_LAYER_TOKENS)
 
 /** Review map filter: exactly one side is visible (radio, not independent checkboxes). */
 export type ReviewFilter = 'unseen' | 'seen'
@@ -44,7 +48,7 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
 }
 
 function isStyleLayerToken(value: string): value is (typeof MAP_LAYER_TOKENS)[number] {
-  return TOKEN_SET.has(value)
+  return styleLayerTokenSchema.safeParse(value).success
 }
 
 function sameMembers(a: readonly string[], b: readonly string[]): boolean {
@@ -68,13 +72,18 @@ export function isDefaultMapLayers(layers: MapLayers): boolean {
 }
 
 export function parseLayersParam(value: unknown): MapLayers {
-  if (typeof value !== 'string') return DEFAULT_MAP_LAYERS
-  const raw = value
+  const asString = z.string().safeParse(value)
+  if (!asString.success) return DEFAULT_MAP_LAYERS
+  const raw = asString.data
     .split(',')
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
-  const hasNoSeen = raw.includes(HIDE_SEEN_TOKEN)
-  const hasNoUnseen = raw.includes(HIDE_UNSEEN_TOKEN)
+  const hideTokens = raw.flatMap((token) => {
+    const parsed = hideReviewTokenSchema.safeParse(token)
+    return parsed.success ? [parsed.data] : []
+  })
+  const hasNoSeen = hideTokens.includes(HIDE_SEEN_TOKEN)
+  const hasNoUnseen = hideTokens.includes(HIDE_UNSEEN_TOKEN)
   // Exclusive radio. Seen-only when `no-unseen` alone; everything else → Unseen
   // (including legacy “both on” URLs with neither token).
   const showSeen = hasNoUnseen && !hasNoSeen

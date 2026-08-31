@@ -22,8 +22,8 @@ const mappingTeamListSchema = z.object({
   results: z.array(mappingTeamSchema),
 })
 
-export function createMappingTeam(name: string, users: object) {
-  return api.post('/mapping-team/', { name, users })
+export function createMappingTeam(name: string, users: object): Promise<MappingTeam> {
+  return api.post('/mapping-team/', { name, users }).then((data) => mappingTeamSchema.parse(data))
 }
 
 export function fetchMappingTeam(id: number): Promise<MappingTeam> {
@@ -40,6 +40,8 @@ export function fetchUserMappingTeams(owner: string): Promise<MappingTeam[]> {
     .then((data) => mappingTeamListSchema.parse(data).results)
 }
 
-export function updateMappingTeam(id: number, name: string, users: object) {
-  return api.put(`/mapping-team/${id}`, { name, users })
+export function updateMappingTeam(id: number, name: string, users: object): Promise<MappingTeam> {
+  return api
+    .put(`/mapping-team/${id}`, { name, users })
+    .then((data) => mappingTeamSchema.parse(data))
 }

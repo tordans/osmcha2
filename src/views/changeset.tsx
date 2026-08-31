@@ -27,14 +27,6 @@ import { CMap } from './map.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
-interface ChangesetData {
-  properties?: {
-    user?: string
-    [key: string]: unknown
-  }
-  [key: string]: unknown
-}
-
 function Changeset() {
   const { id } = changesetRouteApi.useParams()
   const token = useAuthStore((state) => state.token)
@@ -49,7 +41,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const navigate = changesetRouteApi.useNavigate()
   const changesetQuery = useQuery(changesetQueryOptions(changesetId))
   const mapQuery = useChangesetMap(changesetId)
-  const changeset = changesetQuery.data as ChangesetData | undefined
+  const changeset = changesetQuery.data
   const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)

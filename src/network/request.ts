@@ -16,18 +16,18 @@ export function makeApiRequest(endpoint: string, options: RequestInit = {}): Req
   })
 }
 
+const apiErrorBodySchema = z.object({
+  detail: z.string().optional(),
+  message: z.string().optional(),
+})
+
 function errorMessageFromBody(data: unknown): string | undefined {
   const asString = z.string().safeParse(data)
   if (asString.success && asString.data) return asString.data
-  const obj = z
-    .object({
-      detail: z.unknown().optional(),
-      message: z.unknown().optional(),
-    })
-    .safeParse(data)
+  const obj = apiErrorBodySchema.safeParse(data)
   if (!obj.success) return undefined
-  if (typeof obj.data.detail === 'string' && obj.data.detail) return obj.data.detail
-  if (typeof obj.data.message === 'string' && obj.data.message) return obj.data.message
+  if (obj.data.detail) return obj.data.detail
+  if (obj.data.message) return obj.data.message
   return undefined
 }
 
@@ -37,13 +37,13 @@ export function isMissingCredentialsError(error: unknown): boolean {
   return error instanceof Error && error.message === MISSING_CREDENTIALS_MESSAGE
 }
 
-export async function handleResponse<T>(response: Response): Promise<T> {
+export async function handleResponse(response: Response): Promise<unknown> {
   if (!response.ok) {
     // Try to extract error message from server response
     let errorMessage = response.statusText
 
     try {
-      const data = await response.json()
+      const data: unknown = await response.json()
       errorMessage = errorMessageFromBody(data) ?? errorMessage
     } catch {
       // If JSON parsing fails, use statusText
@@ -54,45 +54,46 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 
   // Handle 204 No Content
   if (response.status === 204) {
-    return undefined as T
+    return undefined
   }
 
-  return response.json()
+  const data: unknown = await response.json()
+  return data
 }
 
 // Convenience wrapper for common case
-export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export async function apiFetch(endpoint: string, options?: RequestInit): Promise<unknown> {
   const req = makeApiRequest(endpoint, options)
   const res = await fetch(req)
-  return handleResponse<T>(res)
+  return handleResponse(res)
 }
 
 // Convenience methods
 export const api = {
-  get: <T>(endpoint: string, options?: RequestInit) =>
-    apiFetch<T>(endpoint, { ...options, method: 'GET' }),
+  get: (endpoint: string, options?: RequestInit) =>
+    apiFetch(endpoint, { ...options, method: 'GET' }),
 
-  post: <T>(endpoint: string, body?: any, options?: RequestInit) =>
-    apiFetch<T>(endpoint, {
+  post: (endpoint: string, body?: unknown, options?: RequestInit) =>
+    apiFetch(endpoint, {
       ...options,
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
-  put: <T>(endpoint: string, body?: any, options?: RequestInit) =>
-    apiFetch<T>(endpoint, {
+  put: (endpoint: string, body?: unknown, options?: RequestInit) =>
+    apiFetch(endpoint, {
       ...options,
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
-  patch: <T>(endpoint: string, body?: any, options?: RequestInit) =>
-    apiFetch<T>(endpoint, {
+  patch: (endpoint: string, body?: unknown, options?: RequestInit) =>
+    apiFetch(endpoint, {
       ...options,
       method: 'PATCH',
       body: body ? JSON.stringify(body) : undefined,
     }),
 
-  delete: <T>(endpoint: string, options?: RequestInit) =>
-    apiFetch<T>(endpoint, { ...options, method: 'DELETE' }),
+  delete: (endpoint: string, options?: RequestInit) =>
+    apiFetch(endpoint, { ...options, method: 'DELETE' }),
 }

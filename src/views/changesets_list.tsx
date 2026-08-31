@@ -19,12 +19,6 @@ import { searchWithoutMap } from '../routing/mapParam.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 
-interface ChangesetsPageData {
-  features: Array<{ id: number; properties: any }>
-  count: number
-  [key: string]: any
-}
-
 function ChangesetsList() {
   const changesetMatch = useMatch({ from: '/changesets/$id', shouldThrow: false })
   const filtersRouteMatch = useMatch({ from: '/filters', shouldThrow: false })
@@ -51,7 +45,7 @@ function ChangesetsList() {
   })
   const listIsStale = useStaleAfter(dataUpdatedAt, LIST_REFRESH_HINT_MS)
 
-  const changesetsPage = currentPage as ChangesetsPageData | undefined
+  const changesetsPage = currentPage
 
   function goUpDownToChangeset(direction: number) {
     if (!changesetsPage?.features) return

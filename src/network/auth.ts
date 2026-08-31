@@ -51,10 +51,12 @@ export function updateUserDetails(
   message_good: string,
   message_bad: string,
   comment_feature: boolean,
-) {
-  return api.patch('/users/', {
-    message_good,
-    message_bad,
-    comment_feature,
-  })
+): Promise<UserDetails> {
+  return api
+    .patch('/users/', {
+      message_good,
+      message_bad,
+      comment_feature,
+    })
+    .then((data) => userDetailsSchema.parse(data))
 }

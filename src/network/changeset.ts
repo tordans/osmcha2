@@ -1,12 +1,57 @@
 import adiffParser from '@osmcha/osm-adiff-parser'
 import { subSeconds } from 'date-fns'
+import { z } from 'zod'
 import { adiffServiceUrl, apiOSM, overpassBase } from '../config/constants.ts'
 import { parseOsmDate } from '../utils/datetime.ts'
 import { osmChangesetPayloadSchema } from './openstreetmap.ts'
 import { api } from './request.ts'
 
-export function fetchChangeset(id: number) {
-  return api.get(`/changesets/${id}/`)
+const namedTagSchema = z.object({
+  id: z.union([z.string(), z.number()]).optional(),
+  name: z.string(),
+})
+
+const changesetPropertiesSchema = z.object({
+  user: z.string(),
+  uid: z.union([z.string(), z.number(), z.null()]).optional(),
+  editor: z.string().nullable().optional(),
+  comment: z.string().nullable().optional(),
+  comments_count: z.number().nullable().optional(),
+  source: z.string().nullable().optional(),
+  imagery_used: z.string().nullable().optional(),
+  date: z.string().nullable().optional(),
+  reasons: z.array(namedTagSchema),
+  tags: z.array(namedTagSchema),
+  features: z.array(z.unknown()),
+  reviewed_features: z.array(z.unknown()),
+  tag_changes: z.record(z.string(), z.unknown()).optional(),
+  create: z.number().nullable().optional(),
+  modify: z.number().nullable().optional(),
+  delete: z.number().nullable().optional(),
+  area: z.number().nullable().optional(),
+  is_suspect: z.boolean(),
+  harmful: z.boolean().nullable(),
+  checked: z.boolean(),
+  check_user: z.string().nullable().optional(),
+  check_date: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+})
+
+export const changesetFeatureSchema = z.object({
+  id: z.number(),
+  type: z.string().optional(),
+  geometry: z.unknown().nullable(),
+  properties: changesetPropertiesSchema,
+})
+
+type ChangesetFeature = z.infer<typeof changesetFeatureSchema>
+
+const drfDetailSchema = z.object({
+  detail: z.string(),
+})
+
+export function fetchChangeset(id: number): Promise<ChangesetFeature> {
+  return api.get(`/changesets/${id}/`).then((data) => changesetFeatureSchema.parse(data))
 }
 
 export async function fetchAndParseAugmentedDiff(id: number) {
@@ -100,14 +145,19 @@ export function setHarmful(id: number, harmful: boolean | -1, tags?: number[]) {
   // -1 is for unsetting
   const action = harmful === -1 ? 'uncheck' : harmful ? 'set-harmful' : 'set-good'
   const body = tags !== undefined ? { tags } : undefined
-  return api.put(`/changesets/${id}/${action}/`, body)
+  return api.put(`/changesets/${id}/${action}/`, body).then((data) => drfDetailSchema.parse(data))
 }
 
-export function setTag(id: number, tag: any, remove: boolean = false) {
-  if (Number.isNaN(parseInt(tag.value, 10))) {
+export function setTag(
+  id: number,
+  tag: { value: string | number; label?: string },
+  remove: boolean = false,
+) {
+  if (Number.isNaN(parseInt(String(tag.value), 10))) {
     throw new Error('tag is not a valid number')
   }
 
   const endpoint = `/changesets/${id}/tags/${tag.value}/`
-  return remove ? api.delete(endpoint) : api.post(endpoint, { tag_pk: tag, id })
+  const request = remove ? api.delete(endpoint) : api.post(endpoint, { tag_pk: tag, id })
+  return request.then((data) => drfDetailSchema.parse(data))
 }

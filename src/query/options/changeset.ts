@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
-import { fetchAndParseAugmentedDiff } from '../../network/changeset.ts'
+import { changesetFeatureSchema, fetchAndParseAugmentedDiff } from '../../network/changeset.ts'
 import { fetchChangesetMetadata } from '../../network/openstreetmap.ts'
 import { handleResponse, isMissingCredentialsError, makeApiRequest } from '../../network/request.ts'
 import { cacheChangesetMap, cacheDiscussion, cacheForever } from '../cachePolicy.ts'
@@ -13,7 +13,7 @@ export function changesetQueryOptions(changesetId: number) {
       if (res.status === 404) {
         throw new Error('Changeset not found')
       }
-      return handleResponse(res)
+      return changesetFeatureSchema.parse(await handleResponse(res))
     },
     ...cacheForever,
     retry: (failureCount, error) => {

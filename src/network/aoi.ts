@@ -65,5 +65,7 @@ export function updateAOI(aoiId: string, name: string, filters: any): Promise<Ao
 }
 
 export function deleteAOI(aoiId: string): Promise<void> {
-  return api.delete(`/aoi/${aoiId}/`)
+  return api.delete(`/aoi/${aoiId}/`).then((data) => {
+    z.undefined().parse(data)
+  })
 }
