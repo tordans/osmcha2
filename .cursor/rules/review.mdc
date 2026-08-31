@@ -8,4 +8,4 @@ alwaysApply: false
 
 When you change review verdicts, tag exclusivity, icon precedence, leftover-tag Alert behavior, or `set-good` / `set-harmful` tag payloads, update [`docs/review.md`](docs/review.md) in the same change.
 
-That page is the human map of Looks OK / Needs a look and how tags enhance the binary API state.
+That page is the human map of Looks OK / Needs a look and of tags on harmful.

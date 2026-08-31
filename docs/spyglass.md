@@ -34,7 +34,7 @@ README: the Go server sets CORS `*`. Live nginx on spyglass.jochentopf.com restr
 
 ## How osm.org discusses it
 
-These four issues are the load-bearing ones:
+These four issues decide how osm.org uses Spyglass:
 
 | Issue                                                                                                                                                                             | What it says                                                                                |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -85,9 +85,9 @@ On/off is the `spyglass` map layer in URL chrome. Default (omit `layers`) is eve
 
 v1 draws ways and nodes only. Relations are out.
 
-Paint: thin solid black lines (0.5–1px), small black nodes. Hover uses a separate transparent hit layer (~8px) — not the thin paint, and not a coloured halo. Stack above the changeset dim (`changeset-overlay-bg`), below changeset features.
+Paint: thin solid black lines (0.5–1px), small black nodes. Hover uses a separate transparent hit layer (~8px), not the thin paint, and not a coloured halo. Stack above the changeset dim (`changeset-overlay-bg`), below changeset features.
 
-Hover is inspect only. The flyout uses `flyoutSurfaceClassName`. While the overlay is on, adiff noop geometry gets that same hover — not a second flyout. Halo layers such as `changeset-way-bg` include noop via `ACTION_TYPE_FILTER`; treat a hit as noop when the layer is a dedicated unchanged layer **or** `properties.action === 'noop'` on a `changeset-*` layer. Do not treat a Spyglass OSM tag `action=*` as changeset noop.
+Hover is inspect only. The flyout uses `flyoutSurfaceClassName`. While the overlay is on, adiff noop geometry gets that same hover, not a second flyout. Halo layers such as `changeset-way-bg` include noop via `ACTION_TYPE_FILTER`; treat a hit as noop when the layer is a dedicated unchanged layer **or** `properties.action === 'noop'` on a `changeset-*` layer. Do not treat a Spyglass OSM tag `action=*` as changeset noop.
 
 Clicks never select a spyglass or noop object as the changeset `ref`, overlay on or off. Clicking inspect-only geometry must not clear the current selection. If a clickable changeset feature (create / modify / delete) is under the cursor, the cursor is `pointer` and that feature wins.
 

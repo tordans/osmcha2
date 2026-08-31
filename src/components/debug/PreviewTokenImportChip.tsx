@@ -62,7 +62,7 @@ export function PreviewTokenImportChip() {
                 className="relative flex h-full max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-zinc-950/10"
               >
                 <p className="shrink-0 border-b border-zinc-950/10 bg-pink-300 px-3 py-1.5 text-xs font-medium text-zinc-950">
-                  token UI on — GitHub Pages paste preview
+                  token UI on. GitHub Pages paste preview
                 </p>
                 <TokenImport layout="sheet" />
               </div>

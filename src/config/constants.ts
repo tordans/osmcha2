@@ -30,7 +30,7 @@ export const DEFAULT_TO_DATE = 5
 
 /**
  * Public site root emitted in posted See URLs (no trailing slash).
- * Includes the GitHub Pages base path. Never localhost — posted OSM text is public.
+ * Includes the GitHub Pages base path. Never localhost. Posted OSM text is public.
  */
 export const NOTE_PUBLIC_ORIGIN = 'https://tordans.github.io/osmcha2'
 

@@ -5,7 +5,6 @@ export type SubmitDiscussionResult =
   | { ok: true }
   | { ok: false; reason: 'not-configured' | 'error'; message?: string }
 
-/** Post a changeset discussion comment via the user’s OpenStreetMap OAuth session. */
 export async function submitDiscussionPost(options: {
   changesetId: number
   text: string

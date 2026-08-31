@@ -112,7 +112,7 @@ restrictions, land use classification etc.
   warning. See [docs/review.md](docs/review.md).
 
 - This data is collected to help improve the compare functions in OSM-Compare
-  project. Thus helping it become more efficient and robust by testing it
+  project. Thus helping it become more efficient by testing it
   against a verified database of reviewed changesets.
 
 - Consistent categorisation of changesets also helps to build an open source
@@ -174,7 +174,7 @@ what a problematic edit is on OSM, please refer to our guide on
 
 - Similarly, if there are comments on the changeset on OpenStreetMap, OSMCha presents the discussion under the discussion tab.
 
-- User's can automatically post OSM changeset discussion comments directly from OSMCha. You can define comment templates on your [user page](https://osmcha.org/user), so you will have a base message to send to a user after reviewing the changeset as Looks OK or Needs a look. Right after your review, the comment form will be filled with your saved text. We suggest you to communicate with other mappers to alert them of errors, aspects to improve or simply to welcome a new user or praise a good edit.
+- User's can automatically post OSM changeset discussion comments directly from OSMCha. You can define comment templates on your [user page](https://osmcha.org/user), so you will have a base message to send to a user after reviewing the changeset as Looks OK or Needs a look. Right after your review, the comment form will be filled with your saved text. We suggest you to communicate with other mappers to alert them of errors, aspects to improve or to welcome a new user or praise a good edit.
 
 <img width="300" alt="osmcha-users" src="https://user-images.githubusercontent.com/8921295/35940051-ee1c8dce-0c1b-11e8-924a-4c1bcc31fcce.png">
 
@@ -380,11 +380,11 @@ The **Highlight** control appears after you mark a changeset **Needs a look**.
 Tags describe what you want discussed; they enhance the binary review, they do
 not replace it. Full model: [docs/review.md](docs/review.md).
 
-- **Severity**: **Critical**, **High** or **Low** — how serious the issues are.
+- **Severity**: **Critical**, **High** or **Low**, how serious the issues are.
   High and Critical escalate the review icon.
 - **Unresolved** / **Resolved**: still needs work, or the issues were addressed
   (Resolved turns the badge green again).
-- **Intent**: **Intentional** or **Unintentional** — deliberate vs mistake.
+- **Intent**: **Intentional** or **Unintentional**, deliberate vs mistake.
 - **DWG**: escalate to the Data Working Group (also escalates the icon).
 
 ### What if I want to change my review for a changeset?

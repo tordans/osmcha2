@@ -138,7 +138,7 @@ async function fetchAugmentedDiffFromOverpass(id: number) {
 
 /**
  * Mark a changeset as Looks OK (`set-good`), Needs a look (`set-harmful`), or clear.
- * Optional `tags` is sent as `{ tags: number[] }` — use `[]` to clear leftover tags on Looks OK.
+ * Optional `tags` is sent as `{ tags: number[] }`. Use `[]` to clear leftover tags on Looks OK.
  * Keep review model docs in sync: docs/review.md
  */
 export function setHarmful(id: number, harmful: boolean | -1, tags?: number[]) {

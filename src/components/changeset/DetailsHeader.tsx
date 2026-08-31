@@ -87,11 +87,11 @@ const headerMenuMetaClassName = clsx(
   typeScale.small,
 )
 
-/** Compact review counters in the user meta line (override Button’s `data-slot=icon` sizing). */
+/** Compact review counters in the user meta line (override Button's `data-slot=icon` sizing). */
 const headerReviewCountBadgeClassName = 'gap-x-0.5 px-1 py-0 text-[0.625rem]/3 sm:text-[0.625rem]/3'
 const headerReviewCountIconClassName = 'inline size-3.5! my-0!'
 
-/** Full sidebar content width; cancel Headless’ default start/end nudge so the panel lines up. */
+/** Full sidebar content width; cancel Headless' default start/end nudge so the panel lines up. */
 const reviewHeaderMenuClassName = clsx(
   'w-(--button-width) max-w-[calc(100vw-1.25rem)]',
   '[--anchor-offset:0px]! data-[anchor~=end]:[--anchor-offset:0px]! data-[anchor~=start]:[--anchor-offset:0px]!',
@@ -139,10 +139,10 @@ const headerOpenItemsClassName = clsx(
   '@min-[20rem]/user-open:grid-cols-3',
 )
 
-/** Override DropdownItem’s `col-span-full` so items can sit in the item grid. */
+/** Override DropdownItem's `col-span-full` so items can sit in the item grid. */
 const headerOpenItemClassName = 'col-span-1!'
 
-/** Two-up actions (watchlist / trusted) — tighter leading when labels wrap. */
+/** Two-up actions (watchlist / trusted). Tighter leading when labels wrap. */
 const headerOpenListItemsClassName = clsx(
   'col-span-full grid grid-cols-1',
   '@min-[20rem]/user-open:grid-cols-2',
@@ -255,7 +255,7 @@ export function DetailsHeader({
     setLeftoverAlertOpen(false)
   }
 
-  /** Looks OK — alert when leftover issue tags remain. Keep docs/review.md in sync. */
+  /** Looks OK. Alert when leftover issue tags remain. Keep docs/review.md in sync. */
   function requestLooksOk() {
     if (!token) {
       toast.error('You must be logged in to mark changesets')

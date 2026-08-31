@@ -9,7 +9,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
  * TanStack devtools panel (Query, Router).
  *
  * - `@tanstack/devtools-vite` strips `<TanStackDevtools>` and its panel imports from
- *   production builds, leaving an empty `<ClientOnly>` — so no devtools ship to prod.
+ *   production builds, leaving an empty `<ClientOnly>`, so no devtools ship to prod.
  * - `<ClientOnly>` mounts the panel after hydration.
  * - The floating trigger is visually hidden; DebugOverlay's "TanStack" segment opens it.
  *

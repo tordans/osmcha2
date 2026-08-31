@@ -5,9 +5,9 @@ import {
 
 export const SPYGLASS_MIN_ZOOM = 15
 export const SPYGLASS_MAX_ZOOM = 18
-/** Unique hovered objects shown in the inspect flyout; the rest are “+N more”. */
+/** Unique hovered objects shown in the inspect flyout; the rest are "+N more". */
 const INSPECT_FLYOUT_MAX_ITEMS = 20
-/** Tag rows per object; the rest of that object’s tags are “+N more”. */
+/** Tag rows per object; the rest of that object's tags are "+N more". */
 const INSPECT_FLYOUT_MAX_TAGS = 20
 export const SPYGLASS_SOURCE_ID = 'spyglass'
 export const SPYGLASS_WAY_LAYER_ID = 'spyglass-ways-line'

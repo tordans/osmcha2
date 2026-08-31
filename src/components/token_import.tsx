@@ -94,7 +94,7 @@ function TokenImportHelp() {
       <Heading level={2}>Sign in with an osmcha.org token</Heading>
       <Text>
         This site cannot complete OpenStreetMap sign-in. osmcha.org already issued you a token for
-        the same account. Copy it there, paste it in the last step — reviews and saved filters come
+        the same account. Copy it there, paste it in the last step. Reviews and saved filters come
         with it.
       </Text>
 
@@ -140,7 +140,7 @@ function TokenImportHelp() {
       <MethodSection title="Use a bookmarklet">
         <Text>
           One-time setup: drag a link onto your bookmarks bar. Then, on osmcha.org while signed in,
-          click that bookmark — it opens this app already signed in. Use only this link; a
+          click that bookmark. It opens this app already signed in. Use only this link; a
           bookmarklet from anywhere else can steal your token.
         </Text>
         <StepList>
@@ -223,7 +223,7 @@ function TokenImportHelp() {
                 Click the <Code>auth</Code> key
               </li>
               <li>
-                Copy <Strong>Value</Strong> — double-click the value cell, then copy
+                Copy <Strong>Value</Strong>. Double-click the value cell, then copy
               </li>
             </ul>
           </Step>

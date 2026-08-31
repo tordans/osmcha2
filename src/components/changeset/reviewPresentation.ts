@@ -1,6 +1,6 @@
 /**
  * Review verdict presentation (Looks OK / Needs a look + tags).
- * Keep in sync with docs/review.md — change that page in the same PR.
+ * Keep in sync with docs/review.md. Change that page in the same PR.
  */
 
 export type NamedTag = { id?: number; name: string }

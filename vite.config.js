@@ -108,7 +108,7 @@ export default defineConfig(({ mode }) => {
         'Cache-Control': 'no-store',
       },
       // Bun globalStore (bunfig.toml) symlinks realpath outside the project.
-      // Extend Vite defaults — do not replace the project/workspace root.
+      // Extend Vite defaults. Do not replace the project/workspace root.
       fs: {
         allow: [
           searchForWorkspaceRoot(process.cwd()),

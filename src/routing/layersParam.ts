@@ -15,8 +15,6 @@ const MAP_LAYER_TOKENS = [
 
 const REVIEW_TOKENS = ['seen', 'unseen'] as const
 
-/** Opt-out tokens for the exclusive Seen/Unseen radio. `no-unseen` → Seen only;
- * bare / `no-seen` → Unseen only (default). */
 const HIDE_SEEN_TOKEN = 'no-seen'
 const HIDE_UNSEEN_TOKEN = 'no-unseen'
 
@@ -36,7 +34,6 @@ export type MapLayers = {
 const ELEMENT_TOKENS = ['node', 'way', 'relation'] as const
 const ACTION_TOKENS = ['create', 'modify', 'delete', 'noop'] as const
 
-/** Review map filter: exactly one side is visible (radio, not independent checkboxes). */
 export type ReviewFilter = 'unseen' | 'seen'
 
 export const DEFAULT_MAP_LAYERS: MapLayers = {
@@ -85,7 +82,7 @@ export function parseLayersParam(value: unknown) {
   const hasNoSeen = hideTokens.includes(HIDE_SEEN_TOKEN)
   const hasNoUnseen = hideTokens.includes(HIDE_UNSEEN_TOKEN)
   // Exclusive radio. Seen-only when `no-unseen` alone; everything else → Unseen
-  // (including legacy “both on” URLs with neither token).
+  // (including legacy "both on" URLs with neither token).
   const showSeen = hasNoUnseen && !hasNoSeen
   const showUnseen = !showSeen
   const tokens = new Set(raw.filter(isStyleLayerToken))
@@ -113,7 +110,7 @@ export function parseLayersParam(value: unknown) {
 export function serializeLayersParam(layers: MapLayers) {
   if (isDefaultMapLayers(layers)) return undefined
   const hideTokens: string[] = []
-  // Unseen is the default review side — only Seen-only needs a URL token.
+  // Unseen is the default review side. Only Seen-only needs a URL token.
   if (layers.showSeen && !layers.showUnseen) hideTokens.push(HIDE_UNSEEN_TOKEN)
   if (isDefaultStyleLayers(layers)) {
     return hideTokens.length > 0 ? hideTokens.join(',') : undefined

@@ -8,9 +8,9 @@ export type ChangesetGeoJSON = {
   }>
 }
 
-/** Last highlighted feature ids — avoid clearing every feature on each hover. */
+/** Last highlighted feature ids. Avoid clearing every feature on each hover. */
 let highlightedFeatureIds: Array<string | number> = []
-/** Last selected feature ids — same for selection. */
+/** Last selected feature ids. Same for selection. */
 let selectedFeatureIds: Array<string | number> = []
 
 export function getFeatureIdsForElement(geojson: ChangesetGeoJSON, type: string, id: number) {

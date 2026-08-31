@@ -15,7 +15,6 @@ const RefParamSchema = z.object({
   key: z.string().min(1).optional(),
 })
 
-/** Parse `type/id` or `type/id/key`. Returns null on empty or invalid input. */
 export const parseRefParam = (query: string): RefParam | null => {
   if (!query) return null
   const typeEnd = query.indexOf('/')
@@ -35,6 +34,5 @@ export const parseRefParam = (query: string): RefParam | null => {
   return parsed.data
 }
 
-/** Serialize to `type/id` or `type/id/key`. */
 export const serializeRefParam = ({ type, id, key }: RefParam): string =>
   key ? `${type}/${id}/${key}` : `${type}/${id}`

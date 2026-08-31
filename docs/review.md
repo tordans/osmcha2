@@ -72,9 +72,9 @@ Stacked tags: badge follows precedence; tooltip lists the reviewer and tag names
 
 Uncheck does not clear tags. Choosing **Looks OK** while tags remain opens an Alert:
 
-- **Remove tags and mark Looks OK** — `set-good` with `{ tags: [] }`
-- **Keep tags** — `set-good` without clearing; leftover chips stay in a separate zinc cluster
-- **Cancel** — no change
+- **Remove tags and mark Looks OK.** `set-good` with `{ tags: [] }`
+- **Keep tags.** `set-good` without clearing; leftover chips stay in a separate zinc cluster
+- **Cancel.** No change
 
 Leftover chips are not part of the Looks OK verdict icon.
 

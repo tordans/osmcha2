@@ -18,7 +18,7 @@ export function isOsmOAuthHost(hostname: string = window.location.hostname): boo
 }
 
 /**
- * Paste this on osmcha.org’s DevTools Console to copy the persisted auth JSON.
+ * Paste this on osmcha.org's DevTools Console to copy the persisted auth JSON.
  * `copy()` is a Chrome/Edge/Firefox DevTools helper (not a page API).
  */
 export const OSMCHA_ORG_AUTH_CONSOLE_SNIPPET = "copy(localStorage.getItem('auth'))"
@@ -34,7 +34,7 @@ const persistAuthJsonSchema = z.object({
 /**
  * Accepts anything a user might paste from osmcha.org: a raw DRF token,
  * `Token <token>` (Account copy button), or Zustand persist JSON
- * `{"state":{"token":"…"},"version":0}` from DevTools Local Storage.
+ * `{"state":{"token":"..."},"version":0}` from DevTools Local Storage.
  */
 export function parseTokenPaste(raw: string): string | null {
   const trimmed = raw.trim()

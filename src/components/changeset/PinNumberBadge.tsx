@@ -25,7 +25,6 @@ export function PinNumberBadge({
   )
 }
 
-/** Number + remove, one pill — same pattern as dismissible review tags. */
 export function RemovablePinBadge({ number, onRemove }: { number?: number; onRemove: () => void }) {
   const label = number != null ? `Draft pin ${number}` : 'Draft pin'
   return (

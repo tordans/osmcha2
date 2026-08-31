@@ -23,17 +23,17 @@ token for list and changeset requests.
 
 On the Sign in screen you can:
 
-1. **Bookmarklet** — drag “Open osmcha2 signed in” (or “Copy auth JSON”) onto
+1. **Bookmarklet.** Drag "Open osmcha2 signed in" (or "Copy auth JSON") onto
    your bookmarks bar. On [osmcha.org](https://osmcha.org) while signed in,
    click the bookmark. The open variant uses `postMessage` from osmcha.org
-   only; the token never goes in the URL (avoid `?token=` — it leaks via
+   only; the token never goes in the URL (avoid `?token=`. It leaks via
    history, Pages logs, and referrers).
-2. **Paste** — Account → API key, Chrome Local Storage key `auth`, or a
+2. **Paste.** Account → API key, Chrome Local Storage key `auth`, or a
    Console snippet.
 
-Caveats: Chrome often blocks clicking `javascript:` links on the page —
-drag to the bookmarks bar (or use Copy code). osmcha.org CSP may block some
-bookmarklets; then use paste. Only install the bookmarklets from this app’s
+Caveats: Chrome often blocks clicking `javascript:` links on the page.
+Drag to the bookmarks bar (or use Copy code). osmcha.org CSP may block some
+bookmarklets; then use paste. Only install the bookmarklets from this app's
 Sign in screen, and only run them on osmcha.org.
 
 ### Preview the GitHub Pages login UI locally
@@ -44,7 +44,7 @@ screen without a flag. In `bun run dev`:
 1. Sign out if you are already signed in.
 2. Click the pink **token UI** chip next to the breakpoint helper (bottom
    center).
-3. The Sign in screen and menu switch to token paste — the same flow as
+3. The Sign in screen and menu switch to token paste, the same flow as
    [tordans.github.io/osmcha2](https://tordans.github.io/osmcha2/).
 
 The chip is a `sessionStorage` flag (`osmcha-preview-token-import`). It is

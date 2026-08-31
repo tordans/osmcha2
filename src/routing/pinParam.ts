@@ -9,7 +9,6 @@ const PinParamSchema = z.tuple([
   coordSchema.pipe(z.number().min(-180).max(180)),
 ])
 
-/** Parse `lat,lng`. Returns null on empty or invalid input. */
 export const parsePinParam = (query: string): PinParam | null => {
   if (!query) return null
   const parsed = PinParamSchema.safeParse(query.split(','))
@@ -18,6 +17,5 @@ export const parsePinParam = (query: string): PinParam | null => {
   return { lat, lng }
 }
 
-/** Serialize to five-decimal `lat,lng`. */
 export const serializePinParam = ({ lat, lng }: PinParam): string =>
   `${lat.toFixed(5)},${lng.toFixed(5)}`

@@ -101,7 +101,7 @@ export function FinishReviewCard({
 
   const identity = !canPost
     ? import.meta.env.DEV
-      ? 'Local builds post only to the OSM sandbox — set VITE_OSM_OAUTH_CLIENT_ID and sandbox auth URLs.'
+      ? 'Local builds post only to the OSM sandbox. Set VITE_OSM_OAUTH_CLIENT_ID and sandbox auth URLs.'
       : 'OpenStreetMap posting is not configured.'
     : signedInToOsm
       ? `Will post as ${osmUser ?? 'you'} on OpenStreetMap`
@@ -221,7 +221,7 @@ export function UnsentNotesBar({
         onClick={onFinish}
       >
         <span>
-          {count} unsent {count === 1 ? 'note' : 'notes'} — post them in Changes
+          {count} unsent {count === 1 ? 'note' : 'notes'}. Post them in Changes
         </span>
         <span className="font-medium">Post notes</span>
       </button>

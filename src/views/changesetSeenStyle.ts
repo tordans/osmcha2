@@ -3,7 +3,7 @@ import { objectRefKey } from '../notes/locateNotes.ts'
 import { CHANGESET_OVERLAY_BG_LAYER_ID, CHANGESET_SOURCE_ID } from './changesetAdiffViewer.ts'
 import type { ChangesetGeoJSON } from './changesetFeatureState.ts'
 
-/** Zinc-400 — grayed-out map paint for objects marked seen. */
+/** Zinc-400. Grayed-out map paint for objects marked seen. */
 export const SEEN_MAP_HEX = '#a1a1aa'
 
 export const SEEN_FILTER = {

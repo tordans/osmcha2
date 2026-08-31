@@ -3,7 +3,7 @@ import { serializePinParam, type PinParam } from '../routing/pinParam.ts'
 export type PinSource = {
   pin: PinParam
   draft?: boolean
-  /** Draft note id — keeps the number stable when the pin is dragged. */
+  /** Draft note id. Keeps the number stable when the pin is dragged. */
   id?: string
 }
 

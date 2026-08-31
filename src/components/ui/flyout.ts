@@ -1,6 +1,6 @@
 /** Floating menus: Catalyst overlay hairline + an even glow (not only a drop shadow). */
 
-/** 10% zinc ring — Catalyst overlay / dialog edge on a dimmed or white surface. */
+/** 10% zinc ring. Catalyst overlay / dialog edge on a dimmed or white surface. */
 export const flyoutRingClassName = 'ring-1 ring-zinc-950/10'
 
 /**

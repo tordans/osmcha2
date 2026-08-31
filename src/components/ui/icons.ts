@@ -40,7 +40,7 @@ import {
 } from '@phosphor-icons/react'
 import { appIcon } from './icon.tsx'
 
-/** Action / control icons — Phosphor `regular` (outline). */
+/** Action / control icons. Phosphor `regular` (outline). */
 export const ArrowDownWideNarrowIcon = appIcon(SortAscending)
 export const ArrowLeftIcon = appIcon(ArrowLeft)
 export const ArrowRightIcon = appIcon(ArrowRight)
@@ -78,7 +78,7 @@ export const ChatBubbleLeftIcon = appIcon(ChatCircleText)
 export const CircleCheckIcon = appIcon(CheckCircle)
 export const FlagIcon = appIcon(FlagPennant)
 
-/** Status-only — Phosphor `duotone` by default (`variant="fill"`). */
+/** Status-only. Phosphor `duotone` by default (`variant="fill"`). */
 export const BugAntIcon = appIcon(BugBeetle, { status: true })
 export const MessageCircleWarningIcon = appIcon(WarningCircle, { status: true })
 export const ExclamationTriangleIcon = appIcon(Warning, { status: true })

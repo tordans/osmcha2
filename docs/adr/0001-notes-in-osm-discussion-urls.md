@@ -1,8 +1,8 @@
 # Notes in OSM discussion URLs
 
-OSMCha has no store for per-object discussion; the only durable write is an OSM discussion post, which cannot be edited after it is sent. We encode notes as working OSMCha deep links inside those posts — the URL is the schema — and freeze that encoding here, because posted text is irreversible.
+OSMCha has no store for per-object discussion; the only durable write is an OSM discussion post, which cannot be edited after it is sent. We encode notes as working OSMCha deep links inside those posts. The URL is the schema. We freeze that encoding here, because posted text is irreversible.
 
-## Considered Options
+## Considered options
 
 - **OSM discussion posts containing OSMCha deep links** (chosen). No OSMCha-side storage. No Django change in this slice.
 - **Django / OSMCha storage for notes.** Would need a backend and would not appear on osm.org.

@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 
 const CHANNEL_ID = 'osm-api-auth-complete'
 
-/** Popup landing page for osm-auth (BroadcastChannel, then close). */
 export function OsmOauthLanding() {
   useEffect(function completeOsmAuthPopup() {
     const bc = new BroadcastChannel(CHANNEL_ID)
