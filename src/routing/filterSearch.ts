@@ -74,9 +74,6 @@ export function filtersFromSearch(search: OsmchaSearch): Filters {
   const strings: Record<string, string> = {}
   const objects: Filters = {}
 
-  const fromBlob = parseLegacyFiltersBlob(search.filters)
-  if (fromBlob) return fromBlob
-
   for (const [key, value] of Object.entries(search)) {
     if (!isFilterSearchKey(key) || value == null) continue
     if (typeof value === 'object') {

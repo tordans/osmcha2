@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { parseTokenPaste } from '../utils/auth.ts'
 
 const persistedAuthSchema = z.object({
   token: z.union([z.string(), z.null()]),
@@ -29,20 +28,6 @@ export const useAuthStore = create<AuthState>()(
         const parsed = persistedAuthSchema.safeParse(persistedState)
         if (!parsed.success) return currentState
         return { ...currentState, token: parsed.data.token }
-      },
-      // One-time migration from Redux localStorage
-      onRehydrateStorage: () => (state) => {
-        if (state && !state.token) {
-          const legacyRaw = localStorage.getItem('token')
-          if (legacyRaw) {
-            const token = parseTokenPaste(legacyRaw)
-            if (token) state.setToken(token)
-            // Clean up old Redux keys
-            localStorage.removeItem('token')
-            localStorage.removeItem('oauth_token')
-            localStorage.removeItem('oauth_token_secret')
-          }
-        }
       },
     },
   ),

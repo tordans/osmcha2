@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  isOsmOAuthHost,
-  OSMCHA_ORG_AUTH_CONSOLE_SNIPPET,
-  parseTokenPaste,
-  takeAuthTokenFromSearch,
-} from './auth.ts'
+import { isOsmOAuthHost, OSMCHA_ORG_AUTH_CONSOLE_SNIPPET, parseTokenPaste } from './auth.ts'
 
 describe('isOsmOAuthHost', () => {
   it('allows OSM OAuth on localhost and osmcha.org', () => {
@@ -60,42 +55,5 @@ describe('parseTokenPaste', () => {
 describe('OSMCHA_ORG_AUTH_CONSOLE_SNIPPET', () => {
   it('copies the persist JSON from localStorage', () => {
     expect(OSMCHA_ORG_AUTH_CONSOLE_SNIPPET).toBe("copy(localStorage.getItem('auth'))")
-  })
-})
-
-describe('takeAuthTokenFromSearch', () => {
-  it('returns null when token is absent or empty', () => {
-    expect(takeAuthTokenFromSearch('')).toBeNull()
-    expect(takeAuthTokenFromSearch('?filters=%7B%7D')).toBeNull()
-    expect(takeAuthTokenFromSearch('?token=')).toBeNull()
-    expect(takeAuthTokenFromSearch('?token=%20')).toBeNull()
-  })
-
-  it('returns the token and strips it from the query', () => {
-    expect(takeAuthTokenFromSearch('?token=abc&filters=%7B%7D')).toEqual({
-      token: 'abc',
-      nextSearch: '?filters=%7B%7D',
-    })
-    expect(takeAuthTokenFromSearch('token=abc')).toEqual({
-      token: 'abc',
-      nextSearch: '',
-    })
-    expect(takeAuthTokenFromSearch('?token=Token%20abc')).toEqual({
-      token: 'abc',
-      nextSearch: '',
-    })
-    expect(
-      takeAuthTokenFromSearch('?token=%7B%22state%22%3A%7B%22token%22%3A%22abc%22%7D%7D'),
-    ).toEqual({
-      token: 'abc',
-      nextSearch: '',
-    })
-  })
-
-  it('keeps unencoded JSON filters when stripping token', () => {
-    expect(takeAuthTokenFromSearch('?filters={"uids":[]}&token=abc')).toEqual({
-      token: 'abc',
-      nextSearch: '?filters={"uids":[]}',
-    })
   })
 })

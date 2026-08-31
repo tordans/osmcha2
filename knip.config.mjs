@@ -7,12 +7,9 @@ export default {
   entry: ['src/**/*.test.ts'],
   ignore: ['src/components/ui/**'],
   ignoreFiles: [
-    'src/components/loading_enhancer.tsx',
-    'src/components/user/block_markup.tsx',
     // Aliased as `stream` in vite.config.js; knip does not follow Vite aliases.
     'src/shims/empty-node-stream.ts',
     'src/utils/isMobile.ts',
-    'src/utils/toast.ts',
   ],
   ignoreIssues: {
     'src/components/changeset/**': ['exports', 'types'],
