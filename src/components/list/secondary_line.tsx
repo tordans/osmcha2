@@ -1,5 +1,5 @@
+import { hasResolvedTag } from '../changeset/reviewPresentation.ts'
 import { Badge } from '../ui/badge.tsx'
-import { hasResolvedTag } from './ReviewStatusBadge.tsx'
 
 type NamedTag = { id?: number; name: string }
 

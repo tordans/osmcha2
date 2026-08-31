@@ -23,7 +23,6 @@ import {
   actionMatchingRef,
   refDeepLinkKey,
   refParamFromElement,
-  type RefParam,
 } from '../components/changeset/refSelection.ts'
 import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
@@ -34,7 +33,7 @@ import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { parsePinParam } from '../routing/pinParam.ts'
-import { parseRefParam } from '../routing/refParam.ts'
+import { parseRefParam, type RefParam } from '../routing/refParam.ts'
 import { useChangesetHover, useChangesetHoverActions } from '../stores/changeset-hover-store.ts'
 import {
   getChangesetNotesActions,

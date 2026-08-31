@@ -12,6 +12,7 @@ import { canUseOsmAuthFromThisBuild, isOsmSandboxAuth } from '../../notes/osmAut
 import { submitDiscussionPost } from '../../notes/submitDiscussionPost.ts'
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
+import type { RefParam } from '../../routing/refParam.ts'
 import {
   draftHasUnsentNotes,
   postableDraftNotes,
@@ -23,7 +24,6 @@ import { Button } from '../ui/button.tsx'
 import { Textarea } from '../ui/textarea.tsx'
 import { typeScale } from '../ui/typography.ts'
 import { noteTargetLabel } from './NoteEditor.tsx'
-import type { RefParam } from './refSelection.ts'
 
 export function FinishReviewCard({
   changesetId,

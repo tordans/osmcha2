@@ -3,8 +3,6 @@ import { serializePinParam, type PinParam } from '../../routing/pinParam.ts'
 import { serializeRefParam, type RefParam } from '../../routing/refParam.ts'
 import type { AdiffAction } from './changesetElements.ts'
 
-export type { RefParam }
-
 export function actionMatchingRef(
   actions: AdiffAction[],
   ref: RefParam | null,

@@ -18,6 +18,7 @@ import {
 } from '../../notes/reviewSeen.ts'
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
+import type { RefParam } from '../../routing/refParam.ts'
 import {
   useChangesetHover,
   useChangesetHoverActions,
@@ -62,7 +63,7 @@ import {
   OtherNotesSection,
 } from './NotesBlock.tsx'
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
-import { refParamFromElement, tagGroupContainsRef, type RefParam } from './refSelection.ts'
+import { refParamFromElement, tagGroupContainsRef } from './refSelection.ts'
 import { changeRowDomId } from './scrollChildIntoScroller.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }

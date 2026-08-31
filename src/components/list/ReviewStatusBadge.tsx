@@ -1,5 +1,4 @@
 import {
-  hasResolvedTag,
   type NamedTag,
   type ReviewIconKind,
   reviewPresentation,
@@ -7,8 +6,6 @@ import {
 import { Badge } from '../ui/badge.tsx'
 import { CircleCheckIcon, FlagIcon, MessageCircleWarningIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
-
-export { hasResolvedTag }
 
 export function ReviewVerdictIcon({
   kind,

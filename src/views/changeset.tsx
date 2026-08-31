@@ -9,7 +9,6 @@ import {
   refDeepLinkKey,
   searchWithRef,
   searchWithRefAndPin,
-  type RefParam,
 } from '../components/changeset/refSelection.ts'
 import { SignIn } from '../components/sign_in.tsx'
 import { FILTER_BY_USER } from '../config/bindings.ts'
@@ -18,7 +17,7 @@ import type { NoteTarget } from '../notes/discussionNotes.ts'
 import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
-import { parseRefParam } from '../routing/refParam.ts'
+import { parseRefParam, type RefParam } from '../routing/refParam.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import { ChangesetLoadError, ChangesetPending } from './changesetLoadStates.tsx'
