@@ -3,7 +3,12 @@ import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { DebugOverlay } from '../components/debug/DebugOverlay.tsx'
 import { useListPaneOpen } from '../stores/list-pane-store.ts'
-import { usePaneLayoutStore } from '../stores/paneLayoutStore.ts'
+import {
+  getListWidth,
+  getPaneLayoutActions,
+  getReviewWidth,
+  usePaneLayoutActions,
+} from '../stores/pane-layout-store.ts'
 import { ChangesetsList } from '../views/changesets_list.tsx'
 import { BackToListButton } from './BackToListButton.tsx'
 import { ChromeHeader, CollapsedListChrome } from './NavigationFlyout.tsx'
@@ -25,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const desktop = useDesktopLayout()
 
   const { rowRef, available, displayed, paneVars } = usePaneLayout(hasReview)
-  const resetListWidth = usePaneLayoutStore((state) => state.resetListWidth)
+  const { resetListWidth } = usePaneLayoutActions()
 
   useFullBleedLock(fullBleed)
 
@@ -91,8 +96,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 min={LIST_MIN}
                 max={LIST_MAX}
                 onDragDelta={(delta) => {
-                  const { listWidth, reviewWidth, setListWidth } = usePaneLayoutStore.getState()
-                  setListWidth(
+                  const listWidth = getListWidth()
+                  const reviewWidth = getReviewWidth()
+                  getPaneLayoutActions().setListWidth(
                     resizeSidePane({
                       side: 'list',
                       delta,

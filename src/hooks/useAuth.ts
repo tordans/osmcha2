@@ -2,14 +2,14 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { useStatus } from '../query/hooks/useStatus.ts'
 import { useUserDetails } from '../query/hooks/useUserDetails.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { useAuthToken } from '../stores/auth-store.ts'
 
 /**
  * Hook for accessing auth state and user details.
  * Uses Zustand for token storage and TanStack Query for user data.
  */
 export function useAuth() {
-  const token = useAuthStore((s) => s.token)
+  const token = useAuthToken()
   const userQuery = useUserDetails()
   const statusQuery = useStatus()
 

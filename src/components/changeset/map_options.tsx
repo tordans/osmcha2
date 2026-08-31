@@ -17,7 +17,7 @@ import {
 } from '../../routing/layersParam.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
-import { useMapStore } from '../../stores/mapStore.ts'
+import { useMapStyle, useMapStyleActions } from '../../stores/map-style-store.ts'
 import { SEEN_FILTER } from '../../views/changesetSeenStyle.ts'
 import { SPYGLASS_MIN_ZOOM, spyglassEnabledAtZoom } from '../../views/spyglassOverlay.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
@@ -397,8 +397,8 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
   const map = mapLoaded ? (mainMap?.getMap() ?? null) : null
-  const style = useMapStore((state) => state.style)
-  const setStyle = useMapStore((state) => state.setStyle)
+  const style = useMapStyle()
+  const { setStyle } = useMapStyleActions()
   const imageryTokens = parseImageryUsed(imageryUsed)
   const appliedMatch = matchImageryUsedSelection(imageryUsed)
   const isAppliedFromChangeset = appliedMatch !== null && style === appliedMatch.styleId

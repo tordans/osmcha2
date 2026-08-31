@@ -13,7 +13,7 @@ import './assets/index.css'
 import { queryClient } from './query/client.ts'
 import { persistQueryOptions } from './query/persist.ts'
 import { router } from './router.tsx'
-import { waitForAuthHydration } from './stores/authStore.ts'
+import { waitForAuthHydration } from './stores/auth-store.ts'
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element not found')

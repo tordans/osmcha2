@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 import { useChangesetTagOptions } from '../../query/hooks/useChangesetTagOptions.ts'
 import { useSetTag } from '../../query/hooks/useSetTag.ts'
-import { useAuthStore } from '../../stores/authStore.ts'
+import { useAuthToken } from '../../stores/auth-store.ts'
 import { Badge, BadgeButton } from '../ui/badge.tsx'
 import {
   Dropdown,
@@ -41,7 +41,7 @@ export function Tags({
   leftover = false,
 }: TagsProps) {
   const { data: options = [] } = useChangesetTagOptions()
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
   const setTagMutation = useSetTag()
   const tags = currentChangeset.properties?.tags ?? []
   const selectedIds = new Set(tags.map((tag) => tag.id).filter((id) => id != null))

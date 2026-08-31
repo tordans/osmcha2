@@ -1,12 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useFilters } from '../../hooks/useFilters.ts'
-import { useAuthStore } from '../../stores/authStore.ts'
+import { useAuthToken } from '../../stores/auth-store.ts'
 import { aoiQueryOptions } from '../options/aoi.ts'
 import { changesetsPageQueryOptions } from '../options/changesetsPage.ts'
 
 export function usePrefetchChangesetsPage() {
   const queryClient = useQueryClient()
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
   const { filters, aoiId, page } = useFilters()
 
   return function prefetchChangesetsPage() {

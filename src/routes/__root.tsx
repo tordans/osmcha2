@@ -11,7 +11,7 @@ import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
 import { filtersFromSearch, migrateLegacyFilterSearch } from '../routing/filterSearch.ts'
 import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { getAuthActions, getAuthToken } from '../stores/auth-store.ts'
 import { getListPaneOpen } from '../stores/list-pane-store.ts'
 import { parseTokenPaste } from '../utils/auth.ts'
 
@@ -36,7 +36,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     if (rawToken) {
       const token = parseTokenPaste(rawToken)
       if (token) {
-        useAuthStore.getState().setToken(token)
+        getAuthActions().setToken(token)
       }
       throw redirect({
         search: (prev) => ({ ...prev, token: undefined }),
@@ -66,7 +66,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     }
   },
   loader: ({ context, deps }) => {
-    const token = useAuthStore.getState().token
+    const token = getAuthToken()
     if (!token) return
     // List/AOI queries are for the sidebar. Skip while it is collapsed (changeset
     // deep links start that way); hover-prefetch on the expand control warms them.

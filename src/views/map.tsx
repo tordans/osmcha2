@@ -43,8 +43,13 @@ import {
   usePinPlacement,
   useSeenMap,
 } from '../stores/changeset-notes-store.ts'
-import { useMapActions, useMapLoaded } from '../stores/map-loaded-store.ts'
-import { useMapStore } from '../stores/mapStore.ts'
+import { useMapLoaded, useMapLoadedActions } from '../stores/map-loaded-store.ts'
+import {
+  getMapStyle,
+  getMapStyleActions,
+  useMapStyle,
+  waitForMapStyleHydration,
+} from '../stores/map-style-store.ts'
 import {
   CHANGESET_MAP_ID,
   CHANGESET_SOURCE_ID,
@@ -113,16 +118,6 @@ function runWhileApplyingCamera(flag: { current: boolean }, apply: () => void) {
   }
 }
 
-function waitForMapStoreHydration(): Promise<void> {
-  if (useMapStore.persist.hasHydrated()) return Promise.resolve()
-  return new Promise((resolve) => {
-    const unsub = useMapStore.persist.onFinishHydration(() => {
-      unsub()
-      resolve()
-    })
-  })
-}
-
 /**
  * MapLibre `compact` is the ⓘ toggle, not "start closed". On add it still sets
  * `.maplibregl-compact-show` (expanded); it only collapses later on pan. Render this
@@ -163,11 +158,11 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   } = changesetRouteApi.useSearch()
   const navigate = changesetRouteApi.useNavigate()
   const zoomedDeepLinkKeyRef = useRef<string | null>(null)
-  const styleId = useMapStore((state) => state.style)
+  const styleId = useMapStyle()
   const changesetQuery = useChangesetMap(changesetId)
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
-  const { markMapLoaded, resetMapLoaded } = useMapActions()
+  const { markMapLoaded, resetMapLoaded } = useMapLoadedActions()
   const containerRef = useRef<HTMLDivElement>(null)
   const applyingCameraRef = useRef(false)
   const urlWritesEnabledRef = useRef(false)
@@ -239,19 +234,19 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       let cancelled = false
 
       async function loadBasemap() {
-        await waitForMapStoreHydration()
+        await waitForMapStyleHydration()
         if (cancelled) return
 
         if (matchedImageryUsedRef.current !== imageryUsed) {
           matchedImageryUsedRef.current = imageryUsed
           const matchedStyleId = matchImageryUsedStyleId(imageryUsed)
-          if (matchedStyleId && matchedStyleId !== useMapStore.getState().style) {
-            useMapStore.getState().setStyle(matchedStyleId)
+          if (matchedStyleId && matchedStyleId !== getMapStyle()) {
+            getMapStyleActions().setStyle(matchedStyleId)
             return
           }
         }
 
-        const spec = await resolveBasemapStyle(useMapStore.getState().style)
+        const spec = await resolveBasemapStyle(getMapStyle())
         if (!cancelled) setMapStyle(spec)
       }
 

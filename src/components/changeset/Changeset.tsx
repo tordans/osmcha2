@@ -18,7 +18,12 @@ import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import { getListPaneOpen } from '../../stores/list-pane-store.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
-import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
+import {
+  getListWidth,
+  getPaneLayoutActions,
+  getReviewWidth,
+  usePaneLayoutActions,
+} from '../../stores/pane-layout-store.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import { flyMapToAdiffElement } from '../../views/changesetCamera.ts'
 import { setSelectedFeatureState } from '../../views/changesetFeatureState.ts'
@@ -66,7 +71,7 @@ function Changeset({
 }: ChangesetProps) {
   const { token } = useAuth()
   const { available, displayed } = useDisplayedPaneWidths(true)
-  const resetReviewWidth = usePaneLayoutStore((state) => state.resetReviewWidth)
+  const { resetReviewWidth } = usePaneLayoutActions()
   const { data: osmInfo } = useChangesetMap(changesetId)
   const { userDetails, whosThat } = useChangesetMapper(
     currentChangeset?.properties?.uid,
@@ -170,8 +175,9 @@ function Changeset({
             min={REVIEW_MIN}
             max={REVIEW_MAX}
             onDragDelta={(delta) => {
-              const { listWidth, reviewWidth, setReviewWidth } = usePaneLayoutStore.getState()
-              setReviewWidth(
+              const listWidth = getListWidth()
+              const reviewWidth = getReviewWidth()
+              getPaneLayoutActions().setReviewWidth(
                 resizeSidePane({
                   side: 'review',
                   delta: -delta,

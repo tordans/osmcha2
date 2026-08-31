@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { API_URL } from '../config/constants.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { getAuthToken } from '../stores/auth-store.ts'
 
 export function makeApiRequest(endpoint: string, options: RequestInit = {}): Request {
-  const token = useAuthStore.getState().token
+  const token = getAuthToken()
   const headers = new Headers(options.headers)
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')

@@ -5,11 +5,11 @@ import {
   deleteMappingTeam,
   updateMappingTeam,
 } from '../../network/mapping_team.ts'
-import { useAuthStore } from '../../stores/authStore.ts'
+import { useAuthToken } from '../../stores/auth-store.ts'
 import { mappingTeamQueryOptions, mappingTeamsQueryOptions } from '../options/account.ts'
 
 export function useMappingTeams(username: string | undefined) {
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
 
   return useQuery({
     ...mappingTeamsQueryOptions(username!),
@@ -18,7 +18,7 @@ export function useMappingTeams(username: string | undefined) {
 }
 
 export function useMappingTeam(teamId: number | null) {
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
 
   return useQuery({
     ...mappingTeamQueryOptions(teamId!),

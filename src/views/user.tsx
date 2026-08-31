@@ -15,7 +15,7 @@ import { CheckIcon, ClipboardIcon } from '../components/ui/icons.ts'
 import { Code } from '../components/ui/text.tsx'
 import { EditUserDetails } from '../components/user/details.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { useAuthActions } from '../stores/auth-store.ts'
 
 function CopyTokenButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false)
@@ -41,7 +41,7 @@ function CopyTokenButton({ token }: { token: string }) {
 
 export function User() {
   const { token, user } = useAuth()
-  const clearAuth = useAuthStore((state) => state.clearAuth)
+  const { clearAuth } = useAuthActions()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const initials = user?.username?.slice(0, 2).toUpperCase()

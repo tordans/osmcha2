@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '../../stores/authStore.ts'
+import { useAuthToken } from '../../stores/auth-store.ts'
 import { aoiQueryOptions, allAoisQueryOptions } from '../options/aoi.ts'
 
 export function useAOI(aoiId: string | null) {
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
 
   return useQuery({
     ...aoiQueryOptions(aoiId!),
@@ -12,7 +12,7 @@ export function useAOI(aoiId: string | null) {
 }
 
 export function useAllAOIs() {
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
 
   return useQuery({
     ...allAoisQueryOptions(),

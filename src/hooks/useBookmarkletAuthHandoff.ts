@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-import { useAuthStore } from '../stores/authStore.ts'
+import { getAuthActions } from '../stores/auth-store.ts'
 import {
   ALLOWED_HANDOFF_ORIGINS,
   authReadyPayload,
@@ -17,7 +17,7 @@ export function useBookmarkletAuthHandoff() {
       if (!isAllowedHandoffOrigin(event.origin)) return
       const token = parseBookmarkletAuthMessage(event.data)
       if (!token) return
-      useAuthStore.getState().setToken(token)
+      getAuthActions().setToken(token)
       toast.success('Signed in from osmcha.org')
     }
 

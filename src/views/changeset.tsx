@@ -18,7 +18,7 @@ import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { useAuthToken } from '../stores/auth-store.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import { CMap } from './map.tsx'
 
@@ -26,7 +26,7 @@ const changesetRouteApi = getRouteApi('/changesets/$id')
 
 function Changeset() {
   const { id } = changesetRouteApi.useParams()
-  const token = useAuthStore((state) => state.token)
+  const token = useAuthToken()
   if (!token) return <SignIn />
 
   return <ChangesetSession key={id} changesetId={id} />

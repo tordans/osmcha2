@@ -18,4 +18,4 @@ const useMapLoadedStore = create<MapLoadedStore>()((set) => ({
 
 export const useMapLoaded = () => useMapLoadedStore((state) => state.mapLoaded)
 
-export const useMapActions = () => useMapLoadedStore((state) => state.actions)
+export const useMapLoadedActions = () => useMapLoadedStore((state) => state.actions)

@@ -7,7 +7,7 @@ import {
   changesetQueryOptions,
 } from '../query/options/changeset.ts'
 import { osmchaSearchSchema } from '../routing/searchSchemas.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { getAuthToken } from '../stores/auth-store.ts'
 import { Changeset } from '../views/changeset.tsx'
 import {
   ChangesetLoadError,
@@ -22,7 +22,7 @@ export const Route = createFileRoute('/changesets/$id')({
   },
   validateSearch: osmchaSearchSchema,
   loader: async ({ context, params }) => {
-    if (!useAuthStore.getState().token) return
+    if (!getAuthToken()) return
 
     try {
       await context.queryClient.ensureQueryData(changesetQueryOptions(params.id))

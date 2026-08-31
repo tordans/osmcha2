@@ -7,16 +7,20 @@ const persistedMapSchema = z.object({
   style: z.string(),
 })
 
-interface MapState {
+interface MapStyleStore {
   style: string
-  setStyle: (style: string) => void
+  actions: {
+    setStyle: (style: string) => void
+  }
 }
 
-export const useMapStore = create<MapState>()(
+const useMapStyleStore = create<MapStyleStore>()(
   persist(
     (set) => ({
       style: DEFAULT_BASEMAP_ID,
-      setStyle: (style) => set({ style }),
+      actions: {
+        setStyle: (style) => set({ style }),
+      },
     }),
     {
       name: 'map-controls',
@@ -32,3 +36,25 @@ export const useMapStore = create<MapState>()(
     },
   ),
 )
+
+export const useMapStyle = () => useMapStyleStore((state) => state.style)
+
+export const useMapStyleActions = () => useMapStyleStore((state) => state.actions)
+
+export function getMapStyle() {
+  return useMapStyleStore.getState().style
+}
+
+export function getMapStyleActions() {
+  return useMapStyleStore.getState().actions
+}
+
+export function waitForMapStyleHydration(): Promise<void> {
+  if (useMapStyleStore.persist.hasHydrated()) return Promise.resolve()
+  return new Promise((resolve) => {
+    const unsub = useMapStyleStore.persist.onFinishHydration(() => {
+      unsub()
+      resolve()
+    })
+  })
+}

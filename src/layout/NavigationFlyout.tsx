@@ -23,7 +23,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { usePrefetchChangesetsPage } from '../query/hooks/usePrefetchChangesetsPage.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
-import { useAuthStore } from '../stores/authStore.ts'
+import { useAuthActions } from '../stores/auth-store.ts'
 import { useListPaneActions, useListPaneCanCollapse } from '../stores/list-pane-store.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
 import { Logo } from './Logo.tsx'
@@ -111,7 +111,7 @@ function ExpandListButton() {
 
 function NavigationMenu() {
   const { token, user } = useAuth()
-  const clearAuth = useAuthStore((state) => state.clearAuth)
+  const { clearAuth } = useAuthActions()
   const queryClient = useQueryClient()
   const navigate = rootRouteApi.useNavigate()
   const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'

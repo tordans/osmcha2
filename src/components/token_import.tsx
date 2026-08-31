@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useAuthStore } from '../stores/authStore.ts'
+import { getAuthActions } from '../stores/auth-store.ts'
 import { OSMCHA_ORG_AUTH_CONSOLE_SNIPPET, parseTokenPaste } from '../utils/auth.ts'
 import { appEntryUrl, buildOpenSignedInBookmarklet } from '../utils/bookmarkletAuthHandoff.ts'
 import {
@@ -51,7 +51,7 @@ function TokenPasteField() {
       return
     }
     setError(null)
-    useAuthStore.getState().setToken(token)
+    getAuthActions().setToken(token)
   }
 
   return (
