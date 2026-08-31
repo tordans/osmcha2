@@ -38,7 +38,7 @@ export function splitChangesetLayers<T extends { id: string }>(
 }
 
 /** Case/halo layers sit under the colored core; emphasis inserts between them. */
-export function isChangesetCaseLayerId(id: string) {
+function isChangesetCaseLayerId(id: string) {
   return id.endsWith('-bg') && id !== CHANGESET_OVERLAY_BG_LAYER_ID
 }
 

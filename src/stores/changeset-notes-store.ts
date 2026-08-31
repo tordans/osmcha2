@@ -15,8 +15,8 @@ import type { RefParam } from '../routing/refParam.ts'
 
 export const ANONYMOUS_NOTES_USER = 'anonymous'
 
-export type OpenEditor = { changesetId: number; noteId: string }
-export type PinPlacement = { changesetId: number; noteId: string; userKey: string }
+type OpenEditor = { changesetId: number; noteId: string }
+type PinPlacement = { changesetId: number; noteId: string; userKey: string }
 
 const refSchema = z.object({
   type: z.enum(['node', 'way', 'relation']),

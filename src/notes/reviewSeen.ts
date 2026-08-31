@@ -17,7 +17,7 @@ export type ChangesetDraft = {
   updatedAt: number
 }
 
-export type SeenMap = Record<string, string>
+type SeenMap = Record<string, string>
 
 export type UserNotesState = {
   drafts: Record<string, ChangesetDraft>

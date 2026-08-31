@@ -9,7 +9,6 @@ export default {
   ignoreFiles: [
     // Aliased as `stream` in vite.config.js; knip does not follow Vite aliases.
     'src/shims/empty-node-stream.ts',
-    'src/utils/isMobile.ts',
   ],
   ignoreIssues: {
     'src/components/changeset/**': ['exports', 'types'],

@@ -14,7 +14,7 @@ export function osmApiUrl() {
   return (import.meta.env.VITE_OSM_API_URL?.trim() || DEFAULT_API_URL).replace(/\/$/, '')
 }
 
-export function isOsmAuthConfigured() {
+function isOsmAuthConfigured() {
   return osmOAuthClientId().length > 0
 }
 

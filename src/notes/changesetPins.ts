@@ -5,7 +5,7 @@ import { parseDiscussionNotes } from './discussionNotes.ts'
 import { numberPins, type PinSource } from './pinNumbers.ts'
 import { useNotesUserKey } from './useNotesUserKey.ts'
 
-export function collectChangesetPinSources(options: {
+function collectChangesetPinSources(options: {
   changesetId: number
   comments: Array<{ text?: string }>
   draftNotes?: Array<{ id: string; pin?: PinParam }>

@@ -11,7 +11,7 @@ type OsmAuthClient = InstanceType<typeof osmAuth>
 
 let client: OsmAuthClient | null = null
 
-export function getOsmAuth(): OsmAuthClient | null {
+function getOsmAuth(): OsmAuthClient | null {
   if (!canUseOsmAuthFromThisBuild()) return null
   if (!client) {
     client = new osmAuth({
@@ -28,10 +28,6 @@ export function getOsmAuth(): OsmAuthClient | null {
 
 export function osmAuthAuthenticated() {
   return getOsmAuth()?.authenticated() ?? false
-}
-
-export function logoutOsmAuth() {
-  getOsmAuth()?.logout()
 }
 
 function errorFromUnknown(err: unknown) {

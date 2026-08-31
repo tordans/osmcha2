@@ -1,7 +1,7 @@
 import { CHANGESET_SOURCE_ID } from './changesetAdiffViewer.ts'
 
 export const CHANGESET_EMPHASIS_WAY_LAYER_ID = 'changeset-emphasis-way'
-export const CHANGESET_EMPHASIS_RELATION_LAYER_ID = 'changeset-emphasis-relation'
+const CHANGESET_EMPHASIS_RELATION_LAYER_ID = 'changeset-emphasis-relation'
 export const CHANGESET_EMPHASIS_NODE_LAYER_ID = 'changeset-emphasis-node'
 
 export const CHANGESET_EMPHASIS_LAYER_IDS = [

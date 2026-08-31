@@ -5,7 +5,7 @@ import type { PinParam } from '../routing/pinParam.ts'
 import type { ChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import type { LngLatBoundsTuple } from './changesetViewBounds.ts'
 
-export type ChangesetCameraIntent = { type: 'restore'; camera: MapParam } | { type: 'fit' }
+type ChangesetCameraIntent = { type: 'restore'; camera: MapParam } | { type: 'fit' }
 
 const MIN_PADDING_PX = 16
 const MAX_PADDING_PX = 80
@@ -60,7 +60,7 @@ const STAGED_ZOOM_DELTA = 2
 /** Slight zoom during the pan stage so the transition still feels continuous. */
 const STAGE1_ZOOM_IN = 1
 
-export type StagedFlyPlan = { type: 'direct' } | { type: 'staged'; stage1Zoom: number }
+type StagedFlyPlan = { type: 'direct' } | { type: 'staged'; stage1Zoom: number }
 
 /**
  * When zooming in a lot, pan first (with one zoom step), then zoom in —
