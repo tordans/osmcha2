@@ -4,8 +4,10 @@ import bboxPolygon from '@turf/bbox-polygon'
 import simplify from '@turf/simplify'
 import truncate from '@turf/truncate'
 import clsx from 'clsx'
-import maplibre from 'maplibre-gl'
+import type { MapLibreEvent } from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { Layer, Map, MapProvider, Source, useMap } from 'react-map-gl/maplibre'
 import {
   TerraDraw,
   TerraDrawPolygonMode,
@@ -24,6 +26,8 @@ import { filterOptionLabel, type Filter } from './filterTypes.ts'
 import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
 type QueryTypeOption = { value: string; label: string }
+
+const LOCATION_MAP_ID = 'locationFilterMap'
 
 const queryTypeOptions: QueryTypeOption[] = [
   { value: 'q', label: 'Any' },
@@ -68,53 +72,20 @@ function geometryFromValue(value?: Filter) {
   return null
 }
 
-function ensureLocationLayers(map: maplibre.Map) {
-  if (!map.getSource('feature')) {
-    map.addSource('feature', { type: 'geojson', data: emptyFeatureCollection })
-  }
-  if (!map.getSource('area-lt-bound')) {
-    map.addSource('area-lt-bound', { type: 'geojson', data: emptyFeatureCollection })
-  }
-
-  if (map.getLayer('area-lt-fill') === undefined) {
-    map.addLayer({
-      id: 'area-lt-fill',
-      type: 'fill',
-      source: 'area-lt-bound',
-      paint: {
-        'fill-color': '#d97706',
-        'fill-opacity': 0.08,
-      },
-    })
-  }
-
-  if (map.getLayer('area-lt-line') === undefined) {
-    map.addLayer({
-      id: 'area-lt-line',
-      type: 'line',
-      source: 'area-lt-bound',
-      paint: {
-        'line-color': '#d97706',
-        'line-width': 2,
-        'line-dasharray': [2, 2],
-      },
-    })
-  }
-
-  if (map.getLayer('geometry') === undefined) {
-    map.addLayer({
-      id: 'geometry',
-      type: 'fill',
-      source: 'feature',
-      paint: {
-        'fill-color': '#088',
-        'fill-opacity': 0.3,
-      },
-    })
-  }
+function sourceData(data: GeoJSON.Geometry | GeoJSON.GeoJSON | null): GeoJSON.GeoJSON {
+  if (!data) return emptyFeatureCollection
+  return data as GeoJSON.GeoJSON
 }
 
-export function LocationSelect({
+export function LocationSelect(props: LocationSelectProps) {
+  return (
+    <MapProvider>
+      <LocationSelectInner {...props} />
+    </MapProvider>
+  )
+}
+
+function LocationSelectInner({
   name,
   value,
   placeholder,
@@ -128,10 +99,12 @@ export function LocationSelect({
   const [placeQuery, setPlaceQuery] = useState('')
   const [debouncedPlaceQuery, setDebouncedPlaceQuery] = useState('')
   const [activeMode, setActiveMode] = useState('render')
+  const [mapLoaded, setMapLoaded] = useState(false)
+  const [featureData, setFeatureData] = useState<GeoJSON.GeoJSON>(emptyFeatureCollection)
+  const [boundData, setBoundData] = useState<GeoJSON.GeoJSON>(emptyFeatureCollection)
 
-  const mapRef = useRef<maplibre.Map | null>(null)
   const drawRef = useRef<TerraDraw | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const { [LOCATION_MAP_ID]: locationMap } = useMap()
 
   const locationGeometry = geometryFromValue(value)
   const hasLocation = locationGeometry != null
@@ -153,30 +126,21 @@ export function LocationSelect({
       }))
     : []
 
-  function setSourceData(sourceId: string, data: GeoJSON.GeoJSON) {
-    const map = mapRef.current
-    if (!map) return
-    ensureLocationLayers(map)
-    ;(map.getSource(sourceId) as maplibre.GeoJSONSource).setData(data)
-  }
-
   function updateMap(data: GeoJSON.Geometry | null, nextAreaLt: number | null = areaLtNumber) {
-    const map = mapRef.current
-    if (!map) return
-
-    ensureLocationLayers(map)
+    const map = locationMap?.getMap()
 
     if (data) {
-      setSourceData('feature', data as unknown as GeoJSON.GeoJSON)
+      setFeatureData(sourceData(data))
     } else {
-      setSourceData('feature', emptyFeatureCollection)
+      setFeatureData(emptyFeatureCollection)
     }
 
     const bound =
       data && nextAreaLt != null ? areaLtBoundPolygon(data as GeoJSON.Geometry, nextAreaLt) : null
 
     if (bound) {
-      setSourceData('area-lt-bound', bound)
+      setBoundData(bound)
+      if (!map) return
       const bounds = bbox(bound)
       map.fitBounds(
         [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
@@ -185,9 +149,9 @@ export function LocationSelect({
       return
     }
 
-    setSourceData('area-lt-bound', emptyFeatureCollection)
+    setBoundData(emptyFeatureCollection)
 
-    if (data) {
+    if (data && map) {
       const bounds = bbox(data as unknown as GeoJSON.Feature)
       map.fitBounds(
         [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
@@ -220,10 +184,6 @@ export function LocationSelect({
     updateMap(feature.geometry)
   })
 
-  const onMapStyleReady = useEffectEvent(() => {
-    updateMap(locationGeometry as GeoJSON.Geometry | null, areaLtNumber)
-  })
-
   useEffect(
     function debouncePlaceQuery() {
       const handle = window.setTimeout(function publishDebouncedPlaceQuery() {
@@ -236,55 +196,45 @@ export function LocationSelect({
     [placeQuery],
   )
 
-  useEffect(function initializeLocationMap() {
-    const container = containerRef.current
-    if (!container) return
+  useEffect(
+    function startLocationTerraDraw() {
+      if (!mapLoaded) return
+      const map = locationMap?.getMap()
+      if (!map) return
 
-    const map = new maplibre.Map({
-      container,
-      style: '/positron.json',
-    })
+      const draw = new TerraDraw({
+        adapter: new TerraDrawMapLibreGLAdapter({ map }),
+        modes: [
+          new TerraDrawRectangleMode(),
+          new TerraDrawPolygonMode(),
+          new TerraDrawRenderMode({ modeName: 'render', styles: {} }),
+        ],
+      })
 
-    map.setMaxPitch(0)
-    map.dragRotate.disable()
-    map.boxZoom.disable()
-    map.touchZoomRotate.disableRotation()
-    map.keyboard.disableRotation()
-
-    const draw = new TerraDraw({
-      adapter: new TerraDrawMapLibreGLAdapter({ map }),
-      modes: [
-        new TerraDrawRectangleMode(),
-        new TerraDrawPolygonMode(),
-        new TerraDrawRenderMode({ modeName: 'render', styles: {} }),
-      ],
-    })
-
-    mapRef.current = map
-    drawRef.current = draw
-
-    map.on('load', () => {
       draw.start()
       draw.on('finish', onDrawFinished)
-    })
+      drawRef.current = draw
 
-    map.on('style.load', () => {
-      map.setProjection({ type: 'globe' })
-      onMapStyleReady()
-    })
+      return function stopLocationTerraDraw() {
+        draw.stop()
+        drawRef.current = null
+      }
+    },
+    [mapLoaded, locationMap],
+  )
 
-    return function removeLocationMap() {
-      map.remove()
-      mapRef.current = null
-      drawRef.current = null
-    }
-  }, [])
+  const applyLocationGeometryToMap = useEffectEvent(function applyLocationGeometryToMap(
+    data: GeoJSON.Geometry | null,
+    nextAreaLt: number | null,
+  ) {
+    updateMap(data, nextAreaLt)
+  })
 
   useEffect(
     function synchronizeLocationGeometryToMap() {
-      updateMap(locationGeometry as GeoJSON.Geometry | null, areaLtNumber)
+      applyLocationGeometryToMap(locationGeometry as GeoJSON.Geometry | null, areaLtNumber)
     },
-    [value, areaLt, areaLtNumber, locationGeometry],
+    [value, areaLt, areaLtNumber, locationGeometry, mapLoaded, locationMap],
   )
 
   const handlePlaceSelect = (option: SearchOption) => {
@@ -329,6 +279,14 @@ export function LocationSelect({
     }
     onChange('area_lt', [{ label: next, value: next }])
     updateMap(locationGeometry as GeoJSON.Geometry | null, parseAreaLt(next))
+  }
+
+  function handleLoad(event: MapLibreEvent) {
+    const map = event.target
+    map.setProjection({ type: 'globe' })
+    map.touchZoomRotate.disableRotation()
+    map.keyboard.disableRotation()
+    setMapLoaded(true)
   }
 
   return (
@@ -395,7 +353,49 @@ export function LocationSelect({
       </div>
 
       <div className="relative">
-        <div id="geometry-map" ref={containerRef} className="h-[300px] w-full touch-manipulation" />
+        <div id="geometry-map" className="h-[300px] w-full touch-manipulation">
+          <Map
+            id={LOCATION_MAP_ID}
+            mapStyle="/positron.json"
+            maxPitch={0}
+            dragRotate={false}
+            pitchWithRotate={false}
+            touchPitch={false}
+            boxZoom={false}
+            style={{ width: '100%', height: '100%' }}
+            onLoad={handleLoad}
+          >
+            <Source id="feature" type="geojson" data={featureData}>
+              <Layer
+                id="geometry"
+                type="fill"
+                paint={{
+                  'fill-color': '#088',
+                  'fill-opacity': 0.3,
+                }}
+              />
+            </Source>
+            <Source id="area-lt-bound" type="geojson" data={boundData}>
+              <Layer
+                id="area-lt-fill"
+                type="fill"
+                paint={{
+                  'fill-color': '#d97706',
+                  'fill-opacity': 0.08,
+                }}
+              />
+              <Layer
+                id="area-lt-line"
+                type="line"
+                paint={{
+                  'line-color': '#d97706',
+                  'line-width': 2,
+                  'line-dasharray': [2, 2],
+                }}
+              />
+            </Source>
+          </Map>
+        </div>
         {hasLocation ? (
           <div className="pointer-events-none absolute top-2 right-2 rounded-md bg-white/90 px-2 py-1.5 text-xs text-zinc-700 shadow-sm ring-1 ring-zinc-950/10">
             <div className="flex items-center gap-2">
