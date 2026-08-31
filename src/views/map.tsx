@@ -24,6 +24,8 @@ import {
   refDeepLinkKey,
   refParamFromElement,
 } from '../components/changeset/refSelection.ts'
+import { onViewportEditorLayersMoveEnd } from '../components/changeset/useViewportEditorLayers.ts'
+import { onDebugMapInspectorMoveEnd } from '../components/debug/DebugDataHelper.tsx'
 import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { flyoutSurfaceClassName } from '../components/ui/flyout.ts'
@@ -465,6 +467,8 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   }
 
   function handleMoveEnd(event: ViewStateChangeEvent) {
+    onViewportEditorLayersMoveEnd()
+    onDebugMapInspectorMoveEnd()
     if (applyingCameraRef.current) return
     const { latitude, longitude, zoom } = event.viewState
     writeMapToUrl(serializeMapParam({ zoom, lat: latitude, lng: longitude }))

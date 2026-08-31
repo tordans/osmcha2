@@ -68,6 +68,13 @@ export function DebugDataHelper(props: Props) {
 
 const rootRouteApi = getRouteApi('__root__')
 
+let onMoveEndCallback: (() => void) | undefined
+
+/** Invoked from the changeset Map `onMoveEnd` — do not attach a second MapLibre listener. */
+export function onDebugMapInspectorMoveEnd() {
+  onMoveEndCallback?.()
+}
+
 function DebugDataHelperActive({ changesetId, selected }: Props) {
   const [show, setShow] = useState(false)
   const [mapSnapshot, setMapSnapshot] = useState<unknown>(undefined)
@@ -83,7 +90,10 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
 
   useEffect(
     function subscribeToMapInspector() {
-      if (!show || !mapLoaded) return
+      if (!show || !mapLoaded) {
+        onMoveEndCallback = undefined
+        return
+      }
       const map = mainMap?.getMap()
       if (!map) return
 
@@ -91,10 +101,10 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
         setMapSnapshot(snapshotMap(map, adiffActionCount))
       }
       update()
-      map.on('moveend', update)
+      onMoveEndCallback = update
       map.on('styledata', update)
       return function unsubscribeFromMapInspector() {
-        map.off('moveend', update)
+        if (onMoveEndCallback === update) onMoveEndCallback = undefined
         map.off('styledata', update)
       }
     },

@@ -6,13 +6,21 @@ const VIEWPORT_LAYER_FILTER = {
   excludeOverlays: true,
 } as const
 
+let onMoveEndCallback: (() => void) | undefined
+
+/** Invoked from the changeset Map `onMoveEnd` — do not attach a second MapLibre listener. */
+export function onViewportEditorLayersMoveEnd() {
+  onMoveEndCallback?.()
+}
+
 export function useViewportEditorLayers(map: maplibre.Map | null, enabled: boolean) {
   const [layers, setLayers] = useState<EliLayer[]>([])
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready'>('idle')
 
   useEffect(
-    function subscribeViewportEditorLayers() {
+    function bindViewportEditorLayers() {
       if (!enabled || !map) {
+        onMoveEndCallback = undefined
         return
       }
 
@@ -35,16 +43,16 @@ export function useViewportEditorLayers(map: maplibre.Map | null, enabled: boole
         timer = setTimeout(recompute, 150)
       }
 
+      onMoveEndCallback = onMoveEnd
       recompute()
-      map.on('moveend', onMoveEnd)
-      return function unsubscribeViewportEditorLayers() {
+      return function unbindViewportEditorLayers() {
         generation = generation + 1
         clearTimeout(timer)
-        map.off('moveend', onMoveEnd)
+        if (onMoveEndCallback === onMoveEnd) onMoveEndCallback = undefined
       }
     },
     [enabled, map],
   )
 
-  return { layers, status }
+  return { layers, status, onMoveEnd: onViewportEditorLayersMoveEnd }
 }
