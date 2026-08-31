@@ -90,9 +90,9 @@ describe('applySeenMapStyle', () => {
     )
   })
 
-  test('does not gray emphasis colors, but still hides filtered features', () => {
+  test('does not gray colors when graySeen is off; still hides filtered geometry', () => {
     const halo = {
-      id: 'changeset-emphasis-way',
+      id: 'changeset-halo',
       type: 'line' as const,
       paint: { 'line-color': 'hsl(45 93% 47%)', 'line-opacity': 0.92 },
     }

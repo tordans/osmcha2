@@ -8,6 +8,11 @@ export type ChangesetGeoJSON = {
   }>
 }
 
+/** Last highlighted feature ids — avoid clearing every feature on each hover. */
+let highlightedFeatureIds: Array<string | number> = []
+/** Last selected feature ids — same for selection. */
+let selectedFeatureIds: Array<string | number> = []
+
 export function getFeatureIdsForElement(
   geojson: ChangesetGeoJSON,
   type: string,
@@ -19,11 +24,19 @@ export function getFeatureIdsForElement(
     .filter((featureId): featureId is string | number => featureId != null)
 }
 
-export function clearSelectedFeatureState(map: Map, geojson: ChangesetGeoJSON) {
-  for (const feature of geojson.features) {
-    if (feature.id == null) continue
-    map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: feature.id }, { selected: false })
+function setFeatureStates(
+  map: Map,
+  featureIds: Array<string | number>,
+  state: Record<string, boolean>,
+) {
+  for (const featureId of featureIds) {
+    map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: featureId }, state)
   }
+}
+
+export function clearSelectedFeatureState(map: Map, _geojson?: ChangesetGeoJSON) {
+  setFeatureStates(map, selectedFeatureIds, { selected: false })
+  selectedFeatureIds = []
 }
 
 export function setSelectedFeatureState(
@@ -32,29 +45,12 @@ export function setSelectedFeatureState(
   type: string,
   id: number,
 ) {
-  clearSelectedFeatureState(map, geojson)
-  for (const featureId of getFeatureIdsForElement(geojson, type, id)) {
-    map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: featureId }, { selected: true })
-  }
-}
-
-function clearHighlightedFeatureState(map: Map, geojson: ChangesetGeoJSON) {
-  for (const feature of geojson.features) {
-    if (feature.id == null) continue
-    map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: feature.id }, { highlighted: false })
-  }
-}
-
-function setHighlightedFeatureState(
-  map: Map,
-  geojson: ChangesetGeoJSON,
-  type: string,
-  id: number,
-  highlighted: boolean,
-) {
-  for (const featureId of getFeatureIdsForElement(geojson, type, id)) {
-    map.setFeatureState({ source: CHANGESET_SOURCE_ID, id: featureId }, { highlighted })
-  }
+  const nextIds = getFeatureIdsForElement(geojson, type, id)
+  const nextSet = new Set(nextIds)
+  const clearIds = selectedFeatureIds.filter((featureId) => !nextSet.has(featureId))
+  setFeatureStates(map, clearIds, { selected: false })
+  setFeatureStates(map, nextIds, { selected: true })
+  selectedFeatureIds = nextIds
 }
 
 export function syncHighlightedFeatureState(
@@ -62,7 +58,10 @@ export function syncHighlightedFeatureState(
   geojson: ChangesetGeoJSON,
   hover: { type: string; id: number } | null,
 ) {
-  clearHighlightedFeatureState(map, geojson)
-  if (!hover) return
-  setHighlightedFeatureState(map, geojson, hover.type, hover.id, true)
+  const nextIds = hover ? getFeatureIdsForElement(geojson, hover.type, hover.id) : []
+  const nextSet = new Set(nextIds)
+  const clearIds = highlightedFeatureIds.filter((featureId) => !nextSet.has(featureId))
+  setFeatureStates(map, clearIds, { highlighted: false })
+  setFeatureStates(map, nextIds, { highlighted: true })
+  highlightedFeatureIds = nextIds
 }

@@ -55,7 +55,35 @@ function pinPointFeature(pin: PinParam): GeoJSON.Feature {
   }
 }
 
-function jumpMapToFitFeatures(map: Map, features: GeoJSON.Feature[]): boolean {
+/** Min zoom gain before list selection uses move-then-zoom instead of one fly. */
+const STAGED_ZOOM_DELTA = 2
+/** Slight zoom during the pan stage so the transition still feels continuous. */
+const STAGE1_ZOOM_IN = 1
+
+export type StagedFlyPlan = { type: 'direct' } | { type: 'staged'; stage1Zoom: number }
+
+/**
+ * When zooming in a lot, pan first (with one zoom step), then zoom in —
+ * simultaneous pan+zoom loses continuity from a zoomed-out overview.
+ */
+export function stagedFlyPlan(fromZoom: number, toZoom: number): StagedFlyPlan {
+  if (toZoom - fromZoom < STAGED_ZOOM_DELTA) return { type: 'direct' }
+  return { type: 'staged', stage1Zoom: Math.min(fromZoom + STAGE1_ZOOM_IN, toZoom) }
+}
+
+/** Bumps when a new fly starts so a pending stage-2 from an older flight is skipped. */
+let stagedFlyGeneration = 0
+
+type FlyFitOptions = {
+  /** List clicks from a zoomed-out view: pan (+1 zoom), then zoom in. */
+  staged?: boolean
+}
+
+function flyMapToFitFeatures(
+  map: Map,
+  features: GeoJSON.Feature[],
+  options: FlyFitOptions = {},
+): boolean {
   if (features.length === 0) return false
   let bounds = bbox({ type: 'FeatureCollection', features })
   if (bounds.length === 6) {
@@ -66,7 +94,32 @@ function jumpMapToFitFeatures(map: Map, features: GeoJSON.Feature[]): boolean {
     maxZoom: 18,
   })
   if (!nextCamera) return false
-  map.jumpTo(nextCamera)
+
+  const generation = ++stagedFlyGeneration
+  // Do not map.stop() here — it re-enters MapLibre's render loop ("already running").
+  // A new flyTo replaces any in-flight camera animation.
+
+  const toZoom = typeof nextCamera.zoom === 'number' ? nextCamera.zoom : map.getZoom()
+  const plan = options.staged ? stagedFlyPlan(map.getZoom(), toZoom) : { type: 'direct' as const }
+
+  if (plan.type === 'staged' && nextCamera.center != null) {
+    map.flyTo({
+      center: nextCamera.center,
+      zoom: plan.stage1Zoom,
+      bearing: nextCamera.bearing,
+    })
+    void map.once('moveend', () => {
+      if (generation !== stagedFlyGeneration) return
+      // Defer past moveend's internal _update so flyTo does not nest run().
+      requestAnimationFrame(() => {
+        if (generation !== stagedFlyGeneration) return
+        map.flyTo(nextCamera)
+      })
+    })
+    return true
+  }
+
+  map.flyTo(nextCamera)
   return true
 }
 
@@ -84,18 +137,19 @@ export function featuresToFitForNote(
   return pin ? [...features, pinPointFeature(pin)] : features
 }
 
-/** Fit the camera to an element's features, optionally including a note pin. */
-export function jumpMapToAdiffElement(
+/** Fly the camera to an element's features, optionally including a note pin. */
+export function flyMapToAdiffElement(
   map: Map,
   viewer: ChangesetAdiffViewer,
   type: string,
   id: number,
   pin?: PinParam | null,
+  options?: FlyFitOptions,
 ): boolean {
-  return jumpMapToFitFeatures(map, featuresToFitForNote(viewer, { type, id }, pin))
+  return flyMapToFitFeatures(map, featuresToFitForNote(viewer, { type, id }, pin), options)
 }
 
-/** Fit the camera to a pin-only note (no object `ref`). */
-export function jumpMapToPin(map: Map, pin: PinParam): boolean {
-  return jumpMapToFitFeatures(map, [pinPointFeature(pin)])
+/** Fly the camera to a pin-only note (no object `ref`). */
+export function flyMapToPin(map: Map, pin: PinParam): boolean {
+  return flyMapToFitFeatures(map, [pinPointFeature(pin)])
 }

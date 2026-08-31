@@ -217,7 +217,7 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
 
   function zoomToSpyglass() {
     if (!mapLoaded) return
-    mainMap?.getMap().easeTo({ zoom: SPYGLASS_MIN_ZOOM })
+    mainMap?.getMap().flyTo({ zoom: SPYGLASS_MIN_ZOOM })
   }
 
   return (

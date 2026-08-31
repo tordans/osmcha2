@@ -3,6 +3,7 @@ import {
   changesetCameraIntent,
   changesetFitPadding,
   featuresToFitForNote,
+  stagedFlyPlan,
 } from './changesetCamera.ts'
 
 describe('changesetCameraIntent', () => {
@@ -34,6 +35,18 @@ describe('changesetFitPadding', () => {
 
   test('uses a modest padding on a large pane instead of 200px', () => {
     expect(changesetFitPadding(1200, 900)).toBe(80)
+  })
+})
+
+describe('stagedFlyPlan', () => {
+  test('uses a single fly when the zoom change is small', () => {
+    expect(stagedFlyPlan(14, 15)).toEqual({ type: 'direct' })
+    expect(stagedFlyPlan(16, 15)).toEqual({ type: 'direct' })
+  })
+
+  test('pans with one zoom step before the final zoom-in', () => {
+    expect(stagedFlyPlan(10, 16)).toEqual({ type: 'staged', stage1Zoom: 11 })
+    expect(stagedFlyPlan(12, 14)).toEqual({ type: 'staged', stage1Zoom: 13 })
   })
 })
 

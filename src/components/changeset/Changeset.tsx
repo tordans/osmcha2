@@ -19,7 +19,7 @@ import { getListPaneOpen } from '../../stores/list-pane-store.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { usePaneLayoutStore } from '../../stores/paneLayoutStore.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
-import { jumpMapToAdiffElement } from '../../views/changesetCamera.ts'
+import { flyMapToAdiffElement } from '../../views/changesetCamera.ts'
 import {
   setSelectedFeatureState,
   type ChangesetGeoJSON,
@@ -143,8 +143,8 @@ function Changeset({
     if (nextRef) selectRef(nextRef)
     if (!mainMap || !mapLoaded || !viewer) return
     const map = mainMap.getMap()
-    jumpMapToAdiffElement(map, viewer, type, id)
     setSelectedFeatureState(map, viewer.geojson as ChangesetGeoJSON, type, id)
+    flyMapToAdiffElement(map, viewer, type, id, null, { staged: true })
   }
 
   return (

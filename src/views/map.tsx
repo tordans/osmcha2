@@ -54,9 +54,9 @@ import {
 import {
   changesetCameraIntent,
   changesetFitOptions,
-  jumpMapToAdiffElement,
+  flyMapToAdiffElement,
+  flyMapToPin,
   jumpMapToChangesetBounds,
-  jumpMapToPin,
 } from './changesetCamera.ts'
 import { CHANGESET_EMPHASIS_LAYERS } from './changesetEmphasisLayers.ts'
 import {
@@ -346,7 +346,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       }
       zoomedDeepLinkKeyRef.current = key
       runWhileApplyingCamera(applyingCameraRef, () => {
-        jumpMapToPin(map, pin)
+        flyMapToPin(map, pin)
       })
       return
     }
@@ -354,7 +354,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     if (!action) return
     zoomedDeepLinkKeyRef.current = key
     runWhileApplyingCamera(applyingCameraRef, () => {
-      jumpMapToAdiffElement(map, viewer, parsed.type, parsed.id, pin)
+      flyMapToAdiffElement(map, viewer, parsed.type, parsed.id, pin)
     })
   })
 
@@ -420,11 +420,8 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     showUnseen: mapLayers.showUnseen,
     graySeen: true,
   })
-  const emphasisLayers = applySeenMapStyle(CHANGESET_EMPHASIS_LAYERS, {
-    showSeen: mapLayers.showSeen,
-    showUnseen: mapLayers.showUnseen,
-    graySeen: false,
-  })
+  // Hover/selection halo stays visible for seen objects even when the map hides them.
+  const emphasisLayers = CHANGESET_EMPHASIS_LAYERS
   const { overlayBg, featureLayers } = splitChangesetLayers(layers)
   const { caseLayers, coreLayers } = splitChangesetFeatureLayers(featureLayers)
   const firstFeatureLayerId = (caseLayers[0] ?? coreLayers[0])?.id
