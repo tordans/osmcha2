@@ -1,7 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/Changeset.tsx'
 import {
@@ -44,7 +44,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
 
-  const mapLayers = useMemo(() => parseLayersParam(search.layers), [search.layers])
+  const mapLayers = parseLayersParam(search.layers)
   const viewer = useChangesetAdiffViewer(
     mapQuery.data?.adiff,
     mapLayers.showElements,

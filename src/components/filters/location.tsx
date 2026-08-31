@@ -2,7 +2,6 @@ import area from '@turf/area'
 import bbox from '@turf/bbox'
 import bboxPolygon from '@turf/bbox-polygon'
 import simplify from '@turf/simplify'
-import truncate from '@turf/truncate'
 import clsx from 'clsx'
 import type { MapLibreEvent } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -100,8 +99,6 @@ function LocationSelectInner({
   const [debouncedPlaceQuery, setDebouncedPlaceQuery] = useState('')
   const [activeMode, setActiveMode] = useState('render')
   const [mapLoaded, setMapLoaded] = useState(false)
-  const [featureData, setFeatureData] = useState<GeoJSON.GeoJSON>(emptyFeatureCollection)
-  const [boundData, setBoundData] = useState<GeoJSON.GeoJSON>(emptyFeatureCollection)
 
   const drawRef = useRef<TerraDraw | null>(null)
   const { [LOCATION_MAP_ID]: locationMap } = useMap()
@@ -109,6 +106,12 @@ function LocationSelectInner({
   const locationGeometry = geometryFromValue(value)
   const hasLocation = locationGeometry != null
   const areaLtNumber = parseAreaLt(areaLt?.[0]?.value)
+  const featureData = sourceData(locationGeometry as GeoJSON.Geometry | null)
+  const areaLtBound =
+    locationGeometry && areaLtNumber != null
+      ? areaLtBoundPolygon(locationGeometry as GeoJSON.Geometry, areaLtNumber)
+      : null
+  const boundData = areaLtBound ?? emptyFeatureCollection
   const areaLtInputValue =
     areaLt?.[0]?.value == null || areaLt[0].value === '' ? '' : filterOptionLabel(areaLt[0].value)
 
@@ -125,40 +128,6 @@ function LocationSelectInner({
         value: place.geojson,
       }))
     : []
-
-  function updateMap(data: GeoJSON.Geometry | null, nextAreaLt: number | null = areaLtNumber) {
-    const map = locationMap?.getMap()
-
-    if (data) {
-      setFeatureData(sourceData(data))
-    } else {
-      setFeatureData(emptyFeatureCollection)
-    }
-
-    const bound =
-      data && nextAreaLt != null ? areaLtBoundPolygon(data as GeoJSON.Geometry, nextAreaLt) : null
-
-    if (bound) {
-      setBoundData(bound)
-      if (!map) return
-      const bounds = bbox(bound)
-      map.fitBounds(
-        [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
-        { padding: 28 },
-      )
-      return
-    }
-
-    setBoundData(emptyFeatureCollection)
-
-    if (data && map) {
-      const bounds = bbox(data as unknown as GeoJSON.Feature)
-      map.fitBounds(
-        [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
-        { padding: 20 },
-      )
-    }
-  }
 
   const onDrawFinished = useEffectEvent((id: string | number) => {
     const draw = drawRef.current
@@ -181,7 +150,6 @@ function LocationSelectInner({
 
     draw.setMode('render')
     setActiveMode('render')
-    updateMap(feature.geometry)
   })
 
   useEffect(
@@ -223,18 +191,29 @@ function LocationSelectInner({
     [mapLoaded, locationMap],
   )
 
-  const applyLocationGeometryToMap = useEffectEvent(function applyLocationGeometryToMap(
-    data: GeoJSON.Geometry | null,
-    nextAreaLt: number | null,
-  ) {
-    updateMap(data, nextAreaLt)
-  })
-
   useEffect(
-    function synchronizeLocationGeometryToMap() {
-      applyLocationGeometryToMap(locationGeometry as GeoJSON.Geometry | null, areaLtNumber)
+    function fitMapToLocationGeometry() {
+      const map = locationMap?.getMap()
+      if (!map || !mapLoaded) return
+
+      if (areaLtBound) {
+        const bounds = bbox(areaLtBound)
+        map.fitBounds(
+          [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
+          { padding: 28 },
+        )
+        return
+      }
+
+      if (locationGeometry) {
+        const bounds = bbox(locationGeometry as unknown as GeoJSON.Feature)
+        map.fitBounds(
+          [bounds.slice(0, 2) as [number, number], bounds.slice(2, 4) as [number, number]],
+          { padding: 20 },
+        )
+      }
     },
-    [value, areaLt, areaLtNumber, locationGeometry, mapLoaded, locationMap],
+    [areaLtBound, locationGeometry, mapLoaded, locationMap],
   )
 
   const handlePlaceSelect = (option: SearchOption) => {
@@ -250,7 +229,6 @@ function LocationSelectInner({
 
     onChange('geometry', [{ label: simplified, value: simplified }])
     onChange('in_bbox', null)
-    updateMap(truncate(simplified, { precision: 6, coordinates: 2 }) as GeoJSON.Geometry)
   }
 
   const handleModeChange = (mode: string) => {
@@ -266,7 +244,6 @@ function LocationSelectInner({
     draw?.clear()
     draw?.setMode('render')
     setActiveMode('render')
-    updateMap(null, null)
     onChange('geometry', null)
     onChange('in_bbox', null)
   }
@@ -274,11 +251,9 @@ function LocationSelectInner({
   const handleAreaLtChange = (next: string) => {
     if (!next) {
       onChange('area_lt')
-      updateMap(locationGeometry as GeoJSON.Geometry | null, null)
       return
     }
     onChange('area_lt', [{ label: next, value: next }])
-    updateMap(locationGeometry as GeoJSON.Geometry | null, parseAreaLt(next))
   }
 
   function handleLoad(event: MapLibreEvent) {

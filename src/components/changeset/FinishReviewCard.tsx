@@ -1,17 +1,14 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { composeDiscussionPost, parseDiscussionNotes } from '../../notes/discussionNotes.ts'
-import {
-  authenticateOsm,
-  fetchOsmUsername,
-  osmAuthAuthenticated,
-} from '../../notes/osmAuthClient.ts'
+import { authenticateOsm, osmAuthAuthenticated } from '../../notes/osmAuthClient.ts'
 import { canUseOsmAuthFromThisBuild, isOsmSandboxAuth } from '../../notes/osmAuthConfig.ts'
 import { submitDiscussionPost } from '../../notes/submitDiscussionPost.ts'
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
+import { osmUsernameQueryOptions } from '../../query/options/osmAuth.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import {
   draftHasUnsentNotes,
@@ -40,7 +37,6 @@ export function FinishReviewCard({
   const queryClient = useQueryClient()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [posting, setPosting] = useState(false)
-  const [osmUser, setOsmUser] = useState<string | null>(null)
   const notes = postableDraftNotes(draft)
   const intro = draft?.intro ?? ''
   const composed = composeDiscussionPost({
@@ -51,6 +47,8 @@ export function FinishReviewCard({
   const parsed = parseDiscussionNotes(composed, { changesetId })
   const canPost = canUseOsmAuthFromThisBuild()
   const signedInToOsm = canPost && osmAuthAuthenticated()
+  const osmUsernameQuery = useQuery(osmUsernameQueryOptions(signedInToOsm))
+  const osmUser = osmUsernameQuery.data ?? null
 
   useEffect(
     function scrollFinishIntoView() {
@@ -58,20 +56,6 @@ export function FinishReviewCard({
       cardRef.current?.scrollIntoView({ block: 'nearest' })
     },
     [finishFocusNonce],
-  )
-
-  useEffect(
-    function loadOsmUsername() {
-      if (!signedInToOsm) return
-      let cancelled = false
-      void fetchOsmUsername().then((name) => {
-        if (!cancelled) setOsmUser(name)
-      })
-      return function cancelOsmUsername() {
-        cancelled = true
-      }
-    },
-    [signedInToOsm],
   )
 
   async function postToOsm() {
@@ -111,8 +95,7 @@ export function FinishReviewCard({
       },
     )
     if (!authResult) return
-    const name = await fetchOsmUsername()
-    setOsmUser(name)
+    await queryClient.fetchQuery(osmUsernameQueryOptions(true))
     await postToOsm()
   }
 
