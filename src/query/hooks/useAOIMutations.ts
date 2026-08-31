@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { createAOI, deleteAOI, updateAOI } from '../../network/aoi.ts'
+import { stripFilterSearch } from '../../routing/filterSearch.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -16,7 +17,11 @@ export function useCreateAOI() {
       toast.success('AOI created')
       void navigate({
         to: '/',
-        search: { aoi: String(data.id) },
+        search: (prev) => ({
+          ...stripFilterSearch(prev),
+          aoi: String(data.id),
+          page: undefined,
+        }),
         replace: true,
       })
     },

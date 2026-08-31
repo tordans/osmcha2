@@ -87,6 +87,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
     void navigate({
       to: '/',
       search: stripFilterSearch({ ...search, aoi: undefined, page: undefined }),
+      replace: true,
     })
   }
 
@@ -101,6 +102,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
           date__gte: [{ label: '', value: '' }],
         },
       ),
+      replace: true,
     })
   }
 
@@ -115,6 +117,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
           date__gte: [{ label: '', value: '' }],
         },
       ),
+      replace: true,
     })
   }
 
@@ -122,6 +125,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
     void navigate({
       to: '/filters',
       search: stripFilterSearch({ ...search, aoi: undefined, page: undefined }),
+      replace: true,
     })
   }
 
@@ -129,6 +133,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
     void navigate({
       to: '/',
       search: stripFilterSearch({ ...search, aoi: id, page: undefined }),
+      replace: true,
     })
   }
 

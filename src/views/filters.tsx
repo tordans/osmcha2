@@ -55,7 +55,12 @@ export function Filters() {
     const hasFilters = localFilters && Object.keys(localFilters).length > 0
     void navigate({
       to: '/',
-      search: withFilters({ aoi: aoiId ?? undefined }, hasFilters ? localFilters : undefined),
+      search: (prev) =>
+        withFilters(
+          { ...prev, aoi: aoiId ?? undefined, page: undefined },
+          hasFilters ? localFilters : undefined,
+        ),
+      replace: true,
     })
   }
 

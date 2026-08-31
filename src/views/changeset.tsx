@@ -1,5 +1,5 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
@@ -20,7 +20,6 @@ import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
 import { useAuthStore } from '../stores/authStore.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
-import { ChangesetLoadError, ChangesetPending } from './changesetLoadStates.tsx'
 import { CMap } from './map.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
@@ -37,9 +36,8 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const { setFilters } = useFilters()
   const search = changesetRouteApi.useSearch()
   const navigate = changesetRouteApi.useNavigate()
-  const changesetQuery = useQuery(changesetQueryOptions(changesetId))
+  const { data: changeset } = useSuspenseQuery(changesetQueryOptions(changesetId))
   const mapQuery = useChangesetMap(changesetId)
-  const changeset = changesetQuery.data
   const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
@@ -74,7 +72,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   }
 
   function filterChangesetsByUser() {
-    if (changeset?.properties) {
+    if (changeset.properties) {
       const userName = changeset.properties.user
       setFilters({
         users: [
@@ -94,16 +92,6 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     })),
   )
 
-  if (changesetQuery.isPending) return <ChangesetPending />
-  if (changesetQuery.isError) {
-    return (
-      <ChangesetLoadError
-        error={changesetQuery.error}
-        reset={() => void changesetQuery.refetch()}
-      />
-    )
-  }
-
   return (
     <MapProvider>
       <ChangesetWorkspace
@@ -122,7 +110,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
         <CMap
           changesetId={changesetId}
           imageryUsed={
-            typeof changeset?.properties?.imagery_used === 'string'
+            typeof changeset.properties?.imagery_used === 'string'
               ? changeset.properties.imagery_used
               : null
           }

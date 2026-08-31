@@ -160,6 +160,7 @@ export function FiltersHeader({
                 void navigate({
                   to: '/filters',
                   search: (prev) => ({ ...stripFilterSearch(prev), aoi: option.value }),
+                  replace: true,
                 })
               }}
             >

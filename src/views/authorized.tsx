@@ -1,18 +1,18 @@
-import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { getRouteApi } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { withoutOAuthCallbackSearch } from '../routing/searchSchemas.ts'
 import { completeOAuthLogin } from '../utils/auth.ts'
 
+const authorizedRouteApi = getRouteApi('/authorized')
 const oauthCodesStarted = new Set<string>()
 
 export function Authorized() {
-  const navigate = useNavigate()
-  const searchStr = useRouterState({ select: (state) => state.location.searchStr })
+  const navigate = authorizedRouteApi.useNavigate()
+  const { code } = authorizedRouteApi.useSearch()
 
   useEffect(
     function completeOAuthFromRedirect() {
-      const params = new URLSearchParams(searchStr)
-      const authCode = params.get('code')
+      const authCode = code?.trim()
 
       const goHome = () => {
         void navigate({
@@ -37,7 +37,7 @@ export function Authorized() {
           goHome()
         })
     },
-    [searchStr, navigate],
+    [code, navigate],
   )
 
   return <div className="center">Logging in...</div>
