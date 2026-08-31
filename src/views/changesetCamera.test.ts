@@ -44,9 +44,9 @@ describe('stagedFlyPlan', () => {
     expect(stagedFlyPlan(16, 15)).toEqual({ type: 'direct' })
   })
 
-  test('pans with one zoom step before the final zoom-in', () => {
-    expect(stagedFlyPlan(10, 16)).toEqual({ type: 'staged', stage1Zoom: 11 })
-    expect(stagedFlyPlan(12, 14)).toEqual({ type: 'staged', stage1Zoom: 13 })
+  test('uses a continuous pan-then-zoom path for large zoom-ins', () => {
+    expect(stagedFlyPlan(10, 16)).toEqual({ type: 'staged' })
+    expect(stagedFlyPlan(12, 14)).toEqual({ type: 'staged' })
   })
 })
 

@@ -16,7 +16,6 @@ import {
 import { toast } from 'sonner'
 import { ACTION } from '../components/changeset/actionColors.ts'
 import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
-import type { AdiffAction } from '../components/changeset/changesetElements.ts'
 import { InspectKindSwatch } from '../components/changeset/InspectKindSwatch.tsx'
 import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
 import {
@@ -62,6 +61,7 @@ import {
   changesetFitOptions,
   flyMapToAdiffElement,
   flyMapToPin,
+  isChangesetCameraAnimating,
   jumpMapToChangesetBounds,
 } from './changesetCamera.ts'
 import { CHANGESET_EMPHASIS_LAYERS } from './changesetEmphasisLayers.ts'
@@ -69,7 +69,6 @@ import {
   clearSelectedFeatureState,
   setSelectedFeatureState,
   syncHighlightedFeatureState,
-  type ChangesetGeoJSON,
 } from './changesetFeatureState.ts'
 import { pickChangesetActionFromClick } from './changesetMapClick.ts'
 import { ChangesetMapUnavailable } from './ChangesetMapUnavailable.tsx'
@@ -312,8 +311,8 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const applyFeatureStateFromRef = useEffectEvent((map: MaplibreMap) => {
     if (!viewer) return
     const parsed = parseRefParam(refSearch ?? '')
-    const geojson = viewer.geojson as ChangesetGeoJSON
-    const action = actionMatchingRef(viewer.adiff.actions as AdiffAction[], parsed)
+    const geojson = viewer.geojson
+    const action = actionMatchingRef(viewer.adiff.actions, parsed)
     if (!parsed || !action) {
       clearSelectedFeatureState(map, geojson)
       return
@@ -346,7 +345,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       })
       return
     }
-    const action = actionMatchingRef(viewer.adiff.actions as AdiffAction[], parsed)
+    const action = actionMatchingRef(viewer.adiff.actions, parsed)
     if (!action) return
     zoomedDeepLinkKeyRef.current = key
     runWhileApplyingCamera(applyingCameraRef, () => {
@@ -366,7 +365,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
 
   const applyHighlightFromHover = useEffectEvent((map: MaplibreMap) => {
     if (!viewer) return
-    syncHighlightedFeatureState(map, viewer.geojson as ChangesetGeoJSON, hover)
+    syncHighlightedFeatureState(map, viewer.geojson, hover)
   })
 
   useEffect(
@@ -381,7 +380,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
 
   const applySeenFromNotes = useEffectEvent((map: MaplibreMap) => {
     if (!viewer) return
-    syncSeenFeatureState(map, viewer.geojson as ChangesetGeoJSON, seenMap)
+    syncSeenFeatureState(map, viewer.geojson, seenMap)
   })
 
   useEffect(
@@ -465,6 +464,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
     onViewportEditorLayersMoveEnd()
     onDebugMapInspectorMoveEnd()
     if (applyingCameraRef.current) return
+    if (isChangesetCameraAnimating()) return
     const { latitude, longitude, zoom } = event.viewState
     writeMapToUrl(serializeMapParam({ zoom, lat: latitude, lng: longitude }))
   }
@@ -489,7 +489,7 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       isFeatureVisible: isReviewVisible,
     })
 
-    const geojson = viewer.geojson as ChangesetGeoJSON
+    const geojson = viewer.geojson
     const hoverFeatures = event.features?.filter(isReviewVisible)
 
     if (nextFeatureId == null) {
@@ -572,13 +572,13 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
             >
               {/* Nested so vis.gl only mounts layers after addSource. Sibling Layers can
                   no-op when styledata fires before the GeoJSON source exists. */}
-              {caseLayers.map((layer: { id: string }) => (
+              {caseLayers.map((layer) => (
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
               {emphasisLayers.map((layer) => (
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
-              {coreLayers.map((layer: { id: string }) => (
+              {coreLayers.map((layer) => (
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
             </Source>
