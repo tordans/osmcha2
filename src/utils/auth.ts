@@ -7,6 +7,7 @@ import { getAuthActions } from '../stores/auth-store.ts'
  * OSM OAuth only completes when this origin is a registered redirect:
  * localhost / 127.0.0.1 (Django origin override) or osmcha.org.
  * Other public hosts (e.g. github.io) must paste an API token.
+ * Asked upstream to lift this: https://github.com/OSMCha/osmcha-frontend/issues/931
  */
 export function isOsmOAuthHost(hostname: string = window.location.hostname): boolean {
   return (

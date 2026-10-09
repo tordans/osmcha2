@@ -19,6 +19,11 @@ OAuth sign-in works on **localhost / 127.0.0.1** against production Django
 import**: reuse the API token from osmcha.org. The production API requires a
 token for list and changeset requests.
 
+A request to let this app sign in directly is open upstream:
+[OSMCha/osmcha-frontend#931](https://github.com/OSMCha/osmcha-frontend/issues/931)
+(an extra redirect URI, or accepting an OSM identity token). Until that is
+answered, token import stays the only way on GitHub Pages.
+
 ### Token import (GitHub Pages and custom hosts)
 
 On the Sign in screen you can:
