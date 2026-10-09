@@ -120,6 +120,8 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@osmcha/osm-adiff-parser'],
+      // The worker must stay out of the dep cache; see src/utils/maplibreWorker.ts.
+      exclude: ['maplibre-gl/dist/maplibre-gl-worker.mjs'],
       rolldownOptions: {
         resolve: {
           alias: {

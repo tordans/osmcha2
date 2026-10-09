@@ -5,6 +5,7 @@ import simplify from '@turf/simplify'
 import clsx from 'clsx'
 import type { MapLibreEvent } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import '../../utils/maplibreWorker.ts'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { Layer, Map, MapProvider, Source, useMap } from 'react-map-gl/maplibre'
 import {

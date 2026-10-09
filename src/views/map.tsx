@@ -2,6 +2,7 @@ import { useThrottledCallback } from '@tanstack/react-pacer'
 import { getRouteApi } from '@tanstack/react-router'
 import type { Map as MaplibreMap, MapLibreEvent, StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import '../utils/maplibreWorker.ts'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import {
   AttributionControl,
