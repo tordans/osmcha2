@@ -4,6 +4,8 @@ How OSMCha v2 shows live tagged OSM objects on the changeset map: an opt-in over
 
 Canonical code: [`src/views/spyglassOverlay.ts`](../src/views/spyglassOverlay.ts), [`src/views/SpyglassOverlay.tsx`](../src/views/SpyglassOverlay.tsx), [`src/views/map.tsx`](../src/views/map.tsx), [`src/routing/layersParam.ts`](../src/routing/layersParam.ts), [`src/components/changeset/map_options.tsx`](../src/components/changeset/map_options.tsx). **Update this page when overlay toggle, zoom floor, hover flyout, tile source, or noop hover changes.**
 
+> **Status: switched off.** Spyglass serves its tiles to allow-listed origins only (localhost, see Tile probe), so the overlay cannot load on GitHub Pages. `SPYGLASS_OVERLAY_AVAILABLE` in `spyglassOverlay.ts` is `false`: nothing is mounted, the Vite proxy is gone, and the Filter map panel shows a note with a link that opens the current map view in Spyglass. Unchanged-element hover still works. We would like the overlay back; it needs this site's origin on the Spyglass allow-list. The rest of this page describes the overlay as built, for the day the flag is flipped.
+
 ---
 
 ## Glossary
@@ -121,7 +123,7 @@ MapLibre: one source. Native vector tiles exist z2–18 (`invalid tile` at z0, z
 
 Sibling `<Source>` / `<Layer>` (not nested). vis.gl `Layer` retries `addLayer` until the vector source and `beforeId` exist — do not wrap this in `useEffect` + `styledata`.
 
-In Vite, tiles are `window.location.origin + '/spyglass/vector/osm/{z}/{x}/{y}.mvt'` (absolute — MapLibre `Request` in a worker cannot parse a leading-slash path). Production still uses `https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt`.
+Tiles are always `https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt` (no dev proxy any more).
 
 Berlin check: `15/17603/10749` → 200.
 
@@ -140,4 +142,4 @@ Headers: `Content-Type: application/vnd.mapbox-vector-tile`. gzip. `Cache-Contro
 - Origin `https://osmcha.org` → no ACAO
 - `/status.json` is ACAO `*` (different endpoint)
 
-Local Vite uses a same-origin proxy (`/spyglass` → spyglass.jochentopf.com) so tiles load. osmcha.org still cannot load tiles until Spyglass nginx allows that origin or the app is served through a proxy.
+Local Vite used a same-origin proxy (`/spyglass` → spyglass.jochentopf.com) so tiles loaded in dev. That proxy is removed: GitHub Pages has no proxy, so the deployed app could never load tiles. The overlay stays off until Spyglass nginx allows the deployed origin.

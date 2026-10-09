@@ -26,19 +26,15 @@ export const CHANGESET_NOOP_LAYER_IDS: string[] = [
 export const SPYGLASS_ATTRIBUTION =
   '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://spyglass.jochentopf.com/">Spyglass</a>'
 
-/** Vite proxies `/spyglass`. MapLibre fetches in a worker, so the template must be absolute. */
-export function spyglassTileUrls(isDev: boolean, origin: string): string[] {
-  if (isDev) {
-    const base = origin.replace(/\/$/, '')
-    return [`${base}/spyglass/vector/osm/{z}/{x}/{y}.mvt`]
-  }
-  return ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
-}
+/**
+ * Off until spyglass.jochentopf.com allow-lists this site. Its tile CORS covers
+ * localhost only, so the overlay loads in dev (through a proxy) but never on
+ * GitHub Pages. The Filter map panel links to Spyglass instead. Set to `true`
+ * once the origin is allow-listed; the overlay code is kept for that day.
+ */
+export const SPYGLASS_OVERLAY_AVAILABLE: boolean = false
 
-export const SPYGLASS_TILES = spyglassTileUrls(
-  import.meta.env.DEV,
-  typeof window === 'undefined' ? '' : window.location.origin,
-)
+export const SPYGLASS_TILES = ['https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt']
 
 const NON_TAG_KEYS = new Set([
   'type',
@@ -95,12 +91,12 @@ export function changesetClickableLayerIds(layers: Array<{ id: string }>): strin
 
 export function changesetInspectLayerIds(
   layers: Array<{ id: string }>,
-  options: { overlayActive: boolean; showNoop: boolean },
+  options: { overlayActive: boolean; showNoop: boolean; spyglassMounted: boolean },
 ): string[] {
   const ids = changesetClickableLayerIds(layers)
   if (!options.overlayActive) return ids
   if (options.showNoop) ids.push(...CHANGESET_NOOP_LAYER_IDS)
-  ids.push(...SPYGLASS_LAYER_IDS)
+  if (options.spyglassMounted) ids.push(...SPYGLASS_LAYER_IDS)
   return ids
 }
 

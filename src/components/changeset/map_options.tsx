@@ -19,7 +19,6 @@ import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStyle, useMapStyleActions } from '../../stores/map-style-store.ts'
 import { SEEN_FILTER } from '../../views/changesetSeenStyle.ts'
-import { SPYGLASS_MIN_ZOOM, spyglassEnabledAtZoom } from '../../views/spyglassOverlay.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
@@ -44,6 +43,7 @@ import {
   matchImageryUsedSelection,
   parseImageryUsed,
 } from './matchImageryUsed.ts'
+import { openInUrls } from './openInUrls.ts'
 import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
@@ -193,11 +193,17 @@ type MapFilterOptionsProps = {
 function MapFilterOptions({ ref }: MapFilterOptionsProps) {
   const { layers: layersSearch, map: mapSearch } = changesetRouteApi.useSearch()
   const navigate = changesetRouteApi.useNavigate()
+  const { id: changesetId } = changesetRouteApi.useParams()
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
   const layers = parseLayersParam(layersSearch)
-  const urlZoom = parseMapParam(mapSearch ?? '')?.zoom ?? 0
-  const spyglassArmed = spyglassEnabledAtZoom(layers.spyglass, urlZoom) === 'armed'
+  // `?map=` is missing until the first pan; fall back to the live camera for the Spyglass link.
+  const liveCenter = mapLoaded ? mainMap?.getCenter() : undefined
+  const camera =
+    parseMapParam(mapSearch ?? '') ??
+    (mainMap && liveCenter
+      ? { zoom: mainMap.getZoom(), lat: liveCenter.lat, lng: liveCenter.lng }
+      : null)
 
   function toggleLayer(token: MapLayerToken) {
     void navigate({
@@ -213,11 +219,6 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
         searchWithLayers(prev, setReviewFilter(parseLayersParam(prev.layers), filter)),
       replace: true,
     })
-  }
-
-  function zoomToSpyglass() {
-    if (!mapLoaded) return
-    mainMap?.getMap().flyTo({ zoom: SPYGLASS_MIN_ZOOM })
   }
 
   return (
@@ -327,28 +328,24 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
             <MapLayerCheckbox token="relation" layers={layers} onToggle={toggleLayer}>
               Relations
             </MapLayerCheckbox>
-            <MapLayerCheckbox
-              token="spyglass"
-              layers={layers}
-              onToggle={toggleLayer}
-              description="All OSM data around this changeset"
-              action={
-                spyglassArmed ? (
-                  <button
-                    type="button"
-                    className="col-start-2 row-start-2 -mt-0.5 cursor-pointer text-left text-sm/4 font-normal text-zinc-500 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-700 hover:decoration-zinc-600"
-                    onClick={zoomToSpyglass}
-                  >
-                    Zoom in to see all OSM data
-                  </button>
-                ) : null
-              }
-            >
-              <span className="inline-flex items-center gap-1.5">
+            <div className="pt-1 text-sm/5 text-zinc-500">
+              <span className="inline-flex items-center gap-1.5 font-medium text-zinc-700">
                 <InspectKindSwatch kind="spyglass" />
                 OSM context (Spyglass)
               </span>
-            </MapLayerCheckbox>
+              <p>
+                Not available here yet. Spyglass serves its tiles to allow-listed sites only, and
+                OSMCha2 is not one of them.
+              </p>
+              <a
+                href={openInUrls(changesetId, camera).spyglass}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-zinc-400 underline-offset-2 hover:text-zinc-700 hover:decoration-zinc-600"
+              >
+                Open this map view in Spyglass
+              </a>
+            </div>
           </div>
         </section>
       </Headless.PopoverPanel>

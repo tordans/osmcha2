@@ -15,7 +15,6 @@ import {
   inspectFlyoutTags,
   isClickableMapFeature,
   spyglassEnabledAtZoom,
-  spyglassTileUrls,
 } from './spyglassOverlay.ts'
 
 const viewerLayers = [
@@ -25,20 +24,6 @@ const viewerLayers = [
   { id: 'changeset-way-unchanged' },
   { id: 'changeset-node-unchanged' },
 ]
-
-describe('spyglassTileUrls', () => {
-  test('uses an absolute same-origin Vite proxy in dev and the Spyglass host in production', () => {
-    expect(spyglassTileUrls(true, 'http://127.0.0.1:3000')).toEqual([
-      'http://127.0.0.1:3000/spyglass/vector/osm/{z}/{x}/{y}.mvt',
-    ])
-    expect(spyglassTileUrls(true, 'http://127.0.0.1:3000/')).toEqual([
-      'http://127.0.0.1:3000/spyglass/vector/osm/{z}/{x}/{y}.mvt',
-    ])
-    expect(spyglassTileUrls(false, 'http://127.0.0.1:3000')).toEqual([
-      'https://spyglass.jochentopf.com/vector/osm/{z}/{x}/{y}.mvt',
-    ])
-  })
-})
 
 describe('spyglassEnabledAtZoom', () => {
   test('is off when the toggle is off at any zoom', () => {
@@ -94,26 +79,48 @@ describe('isClickableMapFeature', () => {
 describe('changesetInspectLayerIds', () => {
   test('matches clickable when the overlay is off', () => {
     expect(
-      changesetInspectLayerIds(viewerLayers, { overlayActive: false, showNoop: true }),
+      changesetInspectLayerIds(viewerLayers, {
+        overlayActive: false,
+        showNoop: true,
+        spyglassMounted: true,
+      }),
     ).toEqual(['changeset-way-new', 'changeset-node-tagged'])
   })
 
   test('adds spyglass hit layers when the overlay is active, not the paint layers', () => {
-    const ids = changesetInspectLayerIds(viewerLayers, { overlayActive: true, showNoop: false })
+    const ids = changesetInspectLayerIds(viewerLayers, {
+      overlayActive: true,
+      showNoop: false,
+      spyglassMounted: true,
+    })
     expect(ids).toEqual(['changeset-way-new', 'changeset-node-tagged', ...SPYGLASS_LAYER_IDS])
     expect(ids).not.toContain(SPYGLASS_WAY_LAYER_ID)
     expect(ids).not.toContain(SPYGLASS_NODE_LAYER_ID)
   })
 
   test('adds noop and spyglass when overlay is active and noop is shown', () => {
-    expect(changesetInspectLayerIds(viewerLayers, { overlayActive: true, showNoop: true })).toEqual(
-      [
-        'changeset-way-new',
-        'changeset-node-tagged',
-        ...CHANGESET_NOOP_LAYER_IDS,
-        ...SPYGLASS_LAYER_IDS,
-      ],
-    )
+    expect(
+      changesetInspectLayerIds(viewerLayers, {
+        overlayActive: true,
+        showNoop: true,
+        spyglassMounted: true,
+      }),
+    ).toEqual([
+      'changeset-way-new',
+      'changeset-node-tagged',
+      ...CHANGESET_NOOP_LAYER_IDS,
+      ...SPYGLASS_LAYER_IDS,
+    ])
+  })
+
+  test('keeps noop hover but no spyglass layers while Spyglass tiles are unavailable', () => {
+    expect(
+      changesetInspectLayerIds(viewerLayers, {
+        overlayActive: true,
+        showNoop: true,
+        spyglassMounted: false,
+      }),
+    ).toEqual(['changeset-way-new', 'changeset-node-tagged', ...CHANGESET_NOOP_LAYER_IDS])
   })
 })
 

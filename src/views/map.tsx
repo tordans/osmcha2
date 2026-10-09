@@ -90,6 +90,7 @@ import {
   cursorForMapHover,
   inspectHoverFromFeatures,
   inspectFlyoutTags,
+  SPYGLASS_OVERLAY_AVAILABLE,
   spyglassEnabledAtZoom,
   type InspectHover,
   type InspectHoverItem,
@@ -436,7 +437,11 @@ function CMap({
   const showActions = viewer?.options.showActions
   const showNoop = Array.isArray(showActions) && showActions.includes('noop')
   const clickableLayerIds = changesetClickableLayerIds(layers)
-  const interactiveLayerIds = changesetInspectLayerIds(layers, { overlayActive, showNoop })
+  const interactiveLayerIds = changesetInspectLayerIds(layers, {
+    overlayActive,
+    showNoop,
+    spyglassMounted: SPYGLASS_OVERLAY_AVAILABLE,
+  })
   const initialViewState = parsedCamera
     ? { longitude: parsedCamera.lng, latitude: parsedCamera.lat, zoom: parsedCamera.zoom }
     : viewBounds && fitOptions
@@ -599,7 +604,7 @@ function CMap({
                 beforeId={firstFeatureLayerId}
               />
             ) : null}
-            {overlayActive && firstFeatureLayerId ? (
+            {SPYGLASS_OVERLAY_AVAILABLE && overlayActive && firstFeatureLayerId ? (
               <SpyglassOverlay beforeId={firstFeatureLayerId} />
             ) : null}
             {workAreas.length > 1 ? (
