@@ -77,7 +77,7 @@ import {
   changesetFeaturePassesReviewFilter,
   syncSeenFeatureState,
 } from './changesetSeenStyle.ts'
-import { changesetViewBounds } from './changesetViewBounds.ts'
+import type { WorkArea } from './changesetWorkAreas.ts'
 import {
   clearMainMapDebugExposure,
   exposeMainMapForDebugging,
@@ -96,6 +96,8 @@ import {
 } from './spyglassOverlay.ts'
 import { SpyglassOverlay } from './SpyglassOverlay.tsx'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
+import { useJumpToWorkArea } from './useWorkAreaMap.ts'
+import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -143,11 +145,20 @@ interface CMapProps {
   changesetId: number | null
   imageryUsed?: string | null
   viewer: ChangesetAdiffViewer | null
+  /** The first area is the initial view; far-apart edits make a whole-changeset fit unreadable. */
+  workAreas: WorkArea[]
   selectRef: (ref: RefParam | null) => void
   inAppDeepLinkKey: string | null
 }
 
-function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }: CMapProps) {
+function CMap({
+  changesetId,
+  imageryUsed,
+  viewer,
+  workAreas,
+  selectRef,
+  inAppDeepLinkKey,
+}: CMapProps) {
   const { token } = useAuth()
   const {
     map: mapSearch,
@@ -181,6 +192,8 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
   const seenMap = useSeenMap(userKey, changesetId ?? 0)
   const hover = useChangesetHover()
   const { setHover, requestListScroll } = useChangesetHoverActions()
+  const jumpToWorkArea = useJumpToWorkArea(workAreas)
+  const viewBounds = workAreas[0]?.bounds ?? null
 
   const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
@@ -297,15 +310,14 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
       if (!map) return
       if (changesetCameraIntent(mapSearch).type !== 'fit') return
 
-      const bounds = changesetViewBounds(viewer.geojson.features)
-      if (!bounds) return
+      if (!viewBounds) return
 
       runWhileApplyingCamera(applyingCameraRef, () => {
         map.resize()
-        jumpMapToChangesetBounds(map, bounds)
+        jumpMapToChangesetBounds(map, viewBounds)
       })
     },
-    [mapLoaded, mainMap, viewer, mapSearch, containerSize.width, containerSize.height],
+    [mapLoaded, mainMap, viewer, viewBounds, mapSearch, containerSize.width, containerSize.height],
   )
 
   const applyFeatureStateFromRef = useEffectEvent((map: MaplibreMap) => {
@@ -409,7 +421,6 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
 
   const parsedCamera = parseMapParam(mapSearch ?? '')
   const fitOptions = changesetFitOptions(containerSize.width, containerSize.height)
-  const viewBounds = viewer ? changesetViewBounds(viewer.geojson.features) : null
   const layers = applySeenMapStyle(viewer?.layers() ?? [], {
     showSeen: mapLayers.showSeen,
     showUnseen: mapLayers.showUnseen,
@@ -590,6 +601,13 @@ function CMap({ changesetId, imageryUsed, viewer, selectRef, inAppDeepLinkKey }:
             ) : null}
             {overlayActive && firstFeatureLayerId ? (
               <SpyglassOverlay beforeId={firstFeatureLayerId} />
+            ) : null}
+            {workAreas.length > 1 ? (
+              <WorkAreaOutlines
+                areas={workAreas}
+                beforeId={firstFeatureLayerId}
+                onJump={jumpToWorkArea}
+              />
             ) : null}
             {/* compact = ⓘ toggle (also collapses on pan). MapLibre still starts expanded. */}
             <AttributionControl compact position="bottom-left" />

@@ -85,6 +85,8 @@ export function isChangesetCameraAnimating() {
 type FlyFitOptions = {
   /** List clicks from a zoomed-out view: continuous pan, then zoom (no mid stop). */
   staged?: boolean
+  /** Fixed time for a direct fly; MapLibre otherwise scales it with distance. */
+  duration?: number
 }
 
 function easeInOutCubic(t: number) {
@@ -156,19 +158,11 @@ function animatePanThenZoom(
   requestAnimationFrame(frame)
 }
 
-function flyMapToFitFeatures(map: Map, features: GeoJSON.Feature[], options: FlyFitOptions = {}) {
-  if (features.length === 0) return false
-  const raw = bbox({ type: 'FeatureCollection', features })
-  const west = raw[0]
-  const south = raw[1]
-  const east = raw.length === 6 ? raw[3] : raw[2]
-  const north = raw.length === 6 ? raw[4] : raw[3]
-  if (![west, south, east, north].every(Number.isFinite)) return false
-  const bounds: LngLatBoundsTuple = [west, south, east, north]
-  const nextCamera = map.cameraForBounds(bounds, {
-    padding: 50,
-    maxZoom: 18,
-  })
+function flyMapToCamera(
+  map: Map,
+  nextCamera: ReturnType<Map['cameraForBounds']>,
+  options: FlyFitOptions = {},
+) {
   if (!nextCamera || nextCamera.center == null) return false
 
   const generation = ++stagedFlyGeneration
@@ -192,8 +186,35 @@ function flyMapToFitFeatures(map: Map, features: GeoJSON.Feature[], options: Fly
     return true
   }
 
-  map.flyTo(nextCamera)
+  map.flyTo(options.duration == null ? nextCamera : { ...nextCamera, duration: options.duration })
   return true
+}
+
+function flyMapToFitFeatures(map: Map, features: GeoJSON.Feature[], options: FlyFitOptions = {}) {
+  if (features.length === 0) return false
+  const raw = bbox({ type: 'FeatureCollection', features })
+  const west = raw[0]
+  const south = raw[1]
+  const east = raw.length === 6 ? raw[3] : raw[2]
+  const north = raw.length === 6 ? raw[4] : raw[3]
+  if (![west, south, east, north].every(Number.isFinite)) return false
+  const bounds: LngLatBoundsTuple = [west, south, east, north]
+  return flyMapToCamera(map, map.cameraForBounds(bounds, { padding: 50, maxZoom: 18 }), options)
+}
+
+/** Fly to a work area or the whole changeset, padded like the initial fit. */
+export function flyMapToChangesetBounds(map: Map, bounds: LngLatBoundsTuple) {
+  const container = map.getContainer()
+  const fit = changesetFitOptions(container.clientWidth, container.clientHeight)
+  if (!fit) return false
+  const nextCamera = map.cameraForBounds(bounds, fit)
+  if (!nextCamera || nextCamera.center == null) return false
+  // Pan-then-zoom only reads well for a nearby target; let flyTo arc to a distant one.
+  const target = map.project(nextCamera.center)
+  const staged =
+    Math.abs(target.x - container.clientWidth / 2) < container.clientWidth &&
+    Math.abs(target.y - container.clientHeight / 2) < container.clientHeight
+  return flyMapToCamera(map, nextCamera, { staged, duration: 1800 })
 }
 
 /** Features to fit for an object `ref` and/or a pin. Pin-only notes have no ref. */

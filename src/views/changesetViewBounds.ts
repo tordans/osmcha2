@@ -20,7 +20,7 @@ function versionOnSide(group: readonly ChangesetViewFeature[], side: string): nu
   return group.find((feature) => feature.properties?.side === side)?.properties?.version
 }
 
-function elementKey(feature: ChangesetViewFeature): string | null {
+export function elementKey(feature: ChangesetViewFeature): string | null {
   const type = feature.properties?.type
   const id = feature.properties?.id
   if (type == null || id == null) return null
@@ -58,23 +58,29 @@ function isChangedEdit(feature: ChangesetViewFeature, unchanged: ReadonlySet<str
   return !key || !unchanged.has(key)
 }
 
-/** Fit the review map to local node/way edits; skip relation envelopes unless they are the only change. */
-export function changesetViewBounds(
-  features: readonly ChangesetViewFeature[],
-): LngLatBoundsTuple | null {
+/** Edited features that have geometry; context members and same-version modifies are dropped. */
+export function changedEditFeatures(features: readonly ChangesetViewFeature[]) {
   const unchanged = unchangedElementKeys(features)
-  const withGeometry = features.filter(
-    (feature): feature is ChangesetViewFeature & { geometry: GeoJSON.Geometry } =>
+  return features
+    .filter((feature): feature is ChangesetViewFeature & { geometry: GeoJSON.Geometry } =>
       Boolean(feature.geometry),
-  )
-  const changed = withGeometry.filter((feature) => isChangedEdit(feature, unchanged))
-  const withoutRelations = changed.filter((feature) => feature.properties?.type !== 'relation')
-  const selected = withoutRelations.length > 0 ? withoutRelations : changed
-  if (selected.length === 0) return null
+    )
+    .filter((feature) => isChangedEdit(feature, unchanged))
+}
 
+/** Relation envelopes can span continents; keep them only when they are the only change. */
+export function withoutRelationEnvelopes<T extends ChangesetViewFeature>(changed: readonly T[]) {
+  const withoutRelations = changed.filter((feature) => feature.properties?.type !== 'relation')
+  return withoutRelations.length > 0 ? withoutRelations : [...changed]
+}
+
+export function featureBounds(
+  features: ReadonlyArray<ChangesetViewFeature & { geometry: GeoJSON.Geometry }>,
+): LngLatBoundsTuple | null {
+  if (features.length === 0) return null
   const raw = bbox({
     type: 'FeatureCollection',
-    features: selected.map((feature) => ({
+    features: features.map((feature) => ({
       type: 'Feature' as const,
       geometry: feature.geometry,
       properties: feature.properties ?? {},
@@ -85,16 +91,26 @@ export function changesetViewBounds(
   const east = raw.length === 6 ? raw[3] : raw[2]
   const north = raw.length === 6 ? raw[4] : raw[3]
   if (![west, south, east, north].every(Number.isFinite)) return null
-
-  if (west === east || south === north) {
-    const cosLat = Math.cos((south * Math.PI) / 180)
-    return [
-      west - EPSILON_DEG,
-      south - EPSILON_DEG * cosLat,
-      east + EPSILON_DEG,
-      north + EPSILON_DEG * cosLat,
-    ]
-  }
-
   return [west, south, east, north]
+}
+
+/** A single point has no extent to fit; widen it to a small square. */
+export function padDegenerateBounds(bounds: LngLatBoundsTuple): LngLatBoundsTuple {
+  const [west, south, east, north] = bounds
+  if (west !== east && south !== north) return bounds
+  const cosLat = Math.cos((south * Math.PI) / 180)
+  return [
+    west - EPSILON_DEG,
+    south - EPSILON_DEG * cosLat,
+    east + EPSILON_DEG,
+    north + EPSILON_DEG * cosLat,
+  ]
+}
+
+/** Fit the review map to local node/way edits; skip relation envelopes unless they are the only change. */
+export function changesetViewBounds(
+  features: readonly ChangesetViewFeature[],
+): LngLatBoundsTuple | null {
+  const bounds = featureBounds(withoutRelationEnvelopes(changedEditFeatures(features)))
+  return bounds ? padDegenerateBounds(bounds) : null
 }

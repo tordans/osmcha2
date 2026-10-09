@@ -1,7 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/Changeset.tsx'
 import {
@@ -20,6 +20,7 @@ import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
 import { useAuthToken } from '../stores/auth-store.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
+import { changesetWorkAreas } from './changesetWorkAreas.ts'
 import { CMap } from './map.tsx'
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
@@ -47,6 +48,11 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
     mapQuery.data?.adiff,
     mapLayers.showElements,
     mapLayers.showActions,
+  )
+  // Stable identity: the map refits to the first area whenever it changes.
+  const workAreas = useMemo(
+    () => (viewer ? changesetWorkAreas(viewer.geojson.features) : []),
+    [viewer],
   )
   const selectedRef = parseRefParam(search.ref ?? '')
   const selected = actionMatchingRef(viewer?.adiff.actions ?? [], selectedRef)
@@ -98,6 +104,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
         changesetId={changesetId}
         currentChangeset={changeset}
         viewer={viewer}
+        workAreas={workAreas}
         selected={selected}
         selectedRef={selectedRef}
         selectRef={selectRef}
@@ -115,6 +122,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
               : null
           }
           viewer={viewer}
+          workAreas={workAreas}
           selectRef={selectRef}
           inAppDeepLinkKey={inAppDeepLinkKey}
         />

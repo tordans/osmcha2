@@ -32,10 +32,11 @@ import {
   useOpenEditor,
   useSeenMap,
 } from '../../stores/changeset-notes-store.ts'
+import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
-import { ChevronRightIcon, ExclamationTriangleIcon } from '../ui/icons.ts'
+import { ChevronRightIcon, ExclamationTriangleIcon, MapPinIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
 import { ACTION, ACTION_UI_COLOR } from './actionColors.ts'
@@ -65,6 +66,7 @@ import {
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
 import { refParamFromElement, tagGroupContainsRef } from './refSelection.ts'
 import { changeRowDomId } from './scrollChildIntoScroller.ts'
+import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
@@ -74,6 +76,9 @@ type ReviewedFeature = { id?: string; user?: string }
 type DetailsChangesProps = {
   changesetId: number
   adiff?: { actions?: AdiffAction[] } | null
+  workAreas?: WorkArea[]
+  activeWorkArea?: ActiveWorkArea
+  jumpToWorkArea?: (area: WorkArea | null) => void
   features?: FlaggedFeature[]
   reviewedFeatures?: ReviewedFeature[]
   reasons?: NamedReason[]
@@ -153,6 +158,9 @@ function isCompactReviewRow(collapsed: boolean, editing: boolean, drafts: Array<
 export function DetailsChanges({
   changesetId,
   adiff,
+  workAreas = [],
+  activeWorkArea = null,
+  jumpToWorkArea,
   features = [],
   reviewedFeatures = [],
   reasons = [],
@@ -173,7 +181,6 @@ export function DetailsChanges({
   const { markSeen, markUnseen, toggleEditor, requestFinishFocus } = useChangesetNotesActions()
   const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
   const changes = buildElementChanges(adiff?.actions ?? [], flagged, reasons)
-  const grouped = groupElementChanges(changes)
   const { listedObjects, keysByObject } = listedObjectsFromChanges(changes)
   const located = locateNotes(discussion?.changeset?.comments ?? [], {
     changesetId,
@@ -218,7 +225,7 @@ export function DetailsChanges({
     return <Loading className="pt-10" />
   }
 
-  if (grouped.length === 0 && totalNotes === 0) {
+  if (changes.length === 0 && totalNotes === 0) {
     return (
       <p className={clsx('px-2.5 py-6 text-center text-zinc-500', typeScale.body)}>
         No element changes in this changeset.
@@ -230,39 +237,41 @@ export function DetailsChanges({
     <section className="flex flex-col gap-2.5 p-2.5">
       <ChangesNotesHeader count={totalNotes} />
       <ChangesetNotesSection notes={located.changesetNotes} />
-      <ul>
-        {grouped.map(([, actionChanges]) => {
-          const groups = groupChangesByTagMutation(actionChanges)
-          return groups.map((group) =>
-            group.length === 1 ? (
-              <ElementChangeRow
-                key={`${group[0].type}/${group[0].id}`}
-                change={group[0]}
-                changesetId={changesetId}
-                selected={selected}
-                selectedRef={selectedRef}
-                selectRef={selectRef}
-                deepLinkReveal={deepLinkReveal}
-                zoomToAndSelect={zoomToAndSelect}
-                objectNotes={located.byObject.get(objectRefKey(group[0].type, group[0].id))}
-              />
-            ) : (
-              <TagMutationGroup
-                key={group.map((change) => `${change.type}/${change.id}`).join(',')}
-                changes={group}
-                changesetId={changesetId}
-                selected={selected}
-                selectedRef={selectedRef}
-                selectRef={selectRef}
-                deepLinkReveal={deepLinkReveal}
-                deepLinkEpoch={deepLinkEpoch}
-                zoomToAndSelect={zoomToAndSelect}
-                notesByObject={located.byObject}
-              />
-            ),
-          )
-        })}
-      </ul>
+      {workAreas.length > 1 ? (
+        groupChangesByWorkArea(changes, workAreas).map(({ area, changes: areaChanges }) => (
+          <section key={area?.id ?? 'elsewhere'} aria-label={area ? `Area ${area.id}` : 'Other'}>
+            <WorkAreaHeading
+              area={area}
+              count={areaChanges.length}
+              current={area != null && activeWorkArea === area.id}
+              onJump={jumpToWorkArea}
+            />
+            <ChangeList
+              changes={areaChanges}
+              changesetId={changesetId}
+              selected={selected}
+              selectedRef={selectedRef}
+              selectRef={selectRef}
+              deepLinkReveal={deepLinkReveal}
+              deepLinkEpoch={deepLinkEpoch}
+              zoomToAndSelect={zoomToAndSelect}
+              notesByObject={located.byObject}
+            />
+          </section>
+        ))
+      ) : (
+        <ChangeList
+          changes={changes}
+          changesetId={changesetId}
+          selected={selected}
+          selectedRef={selectedRef}
+          selectRef={selectRef}
+          deepLinkReveal={deepLinkReveal}
+          deepLinkEpoch={deepLinkEpoch}
+          zoomToAndSelect={zoomToAndSelect}
+          notesByObject={located.byObject}
+        />
+      )}
       <OtherNotesSection notes={located.unmatched} />
       <FinishReviewCard changesetId={changesetId} selectRef={selectRef} />
       <UnsentNotesBar
@@ -273,6 +282,113 @@ export function DetailsChanges({
         }}
       />
     </section>
+  )
+}
+
+/** Section title in the Changes list; jumps the map to that work area. */
+function WorkAreaHeading({
+  area,
+  count,
+  current,
+  onJump,
+}: {
+  area: WorkArea | null
+  count: number
+  current: boolean
+  onJump?: (area: WorkArea | null) => void
+}) {
+  const stickyClassName = 'sticky top-0 z-10 border-b border-zinc-200 bg-white'
+  const rowClassName = clsx(
+    typeScale.body,
+    'flex min-h-9 w-full items-center gap-2 px-2 font-medium',
+  )
+  if (!area) {
+    return (
+      <h3 className={clsx(stickyClassName, rowClassName, 'text-zinc-500')}>
+        Other changes <Badge>{count}</Badge>
+      </h3>
+    )
+  }
+  return (
+    <h3 className={stickyClassName}>
+      <button
+        type="button"
+        aria-label={`Show area ${area.id} on map`}
+        aria-pressed={current}
+        onClick={() => onJump?.(area)}
+        className={clsx(
+          rowClassName,
+          'cursor-pointer touch-manipulation text-left select-none hover:bg-zinc-50 active:bg-zinc-950/5',
+          current ? 'text-blue-700' : 'text-zinc-950',
+        )}
+      >
+        {/* Same look as the outline on the map. */}
+        <span
+          aria-hidden
+          className="size-3 flex-none rounded-xs ring-2 ring-fuchsia-600/25 outline-1 outline-fuchsia-600"
+        />
+        Area {area.id}
+        <Badge color={current ? 'blue' : 'zinc'}>{count}</Badge>
+        <MapPinIcon className="ml-auto size-4 flex-none text-zinc-400" />
+      </button>
+    </h3>
+  )
+}
+
+function ChangeList({
+  changes,
+  changesetId,
+  selected,
+  selectedRef,
+  selectRef,
+  deepLinkReveal,
+  deepLinkEpoch,
+  zoomToAndSelect,
+  notesByObject,
+}: {
+  changes: ElementChange[]
+  changesetId: number
+  selected?: AdiffAction | null
+  selectedRef?: RefParam | null
+  selectRef: (ref: RefParam | null) => void
+  deepLinkReveal?: RefParam | null
+  deepLinkEpoch?: number
+  zoomToAndSelect: (type: string, id: number, key?: string) => void
+  notesByObject: Map<string, ObjectNotes>
+}) {
+  return (
+    <ul>
+      {groupElementChanges(changes).map(([, actionChanges]) =>
+        groupChangesByTagMutation(actionChanges).map((group) =>
+          group.length === 1 ? (
+            <ElementChangeRow
+              key={`${group[0].type}/${group[0].id}`}
+              change={group[0]}
+              changesetId={changesetId}
+              selected={selected}
+              selectedRef={selectedRef}
+              selectRef={selectRef}
+              deepLinkReveal={deepLinkReveal}
+              zoomToAndSelect={zoomToAndSelect}
+              objectNotes={notesByObject.get(objectRefKey(group[0].type, group[0].id))}
+            />
+          ) : (
+            <TagMutationGroup
+              key={group.map((change) => `${change.type}/${change.id}`).join(',')}
+              changes={group}
+              changesetId={changesetId}
+              selected={selected}
+              selectedRef={selectedRef}
+              selectRef={selectRef}
+              deepLinkReveal={deepLinkReveal}
+              deepLinkEpoch={deepLinkEpoch}
+              zoomToAndSelect={zoomToAndSelect}
+              notesByObject={notesByObject}
+            />
+          ),
+        ),
+      )}
+    </ul>
   )
 }
 

@@ -23,6 +23,7 @@ import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import { useListScrollNonce, useListScrollTarget } from '../../stores/changeset-hover-store.ts'
+import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -53,6 +54,9 @@ type ReviewColumnProps = {
   bindingsState: Record<string, boolean>
   exclusiveKeyToggle: (label: string) => void
   osmInfo?: { adiff?: { actions?: AdiffAction[] } }
+  workAreas: WorkArea[]
+  activeWorkArea: ActiveWorkArea
+  jumpToWorkArea: (area: WorkArea | null) => void
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -70,6 +74,9 @@ export function ReviewColumn({
   bindingsState,
   exclusiveKeyToggle,
   osmInfo,
+  workAreas,
+  activeWorkArea,
+  jumpToWorkArea,
   selected,
   selectedRef,
   selectRef,
@@ -298,6 +305,9 @@ export function ReviewColumn({
                   <DetailsChanges
                     changesetId={changesetId}
                     adiff={osmInfo?.adiff}
+                    workAreas={workAreas}
+                    activeWorkArea={activeWorkArea}
+                    jumpToWorkArea={jumpToWorkArea}
                     features={properties.features ?? []}
                     reviewedFeatures={properties.reviewed_features ?? []}
                     reasons={properties.reasons ?? []}

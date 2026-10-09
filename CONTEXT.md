@@ -47,5 +47,9 @@ _Avoid_: treating as a changeset list filter.
 Live tagged OSM objects from Spyglass tiles; hover-inspect only. The `spyglass` map layer.
 _Avoid_: data layer, query tool, X-RAY.
 
+**Work area**:
+One place where a changeset's edits cluster. A changeset that reads well in one view is one work area; far-apart edits get one each, numbered by size ("Area 1" has the most edited elements). The review map opens on the first, outlines every area, and the Changes list is sectioned by them.
+_Avoid_: bbox group, cluster, region.
+
 **Unchanged element**:
 An object in the changeset payload that was not edited (adiff `noop`). Shown as purple context. Distinct from **unchanged tags** on an edited object.

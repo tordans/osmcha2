@@ -27,17 +27,22 @@ import {
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import { flyMapToAdiffElement } from '../../views/changesetCamera.ts'
 import { setSelectedFeatureState } from '../../views/changesetFeatureState.ts'
+import type { WorkArea } from '../../views/changesetWorkAreas.ts'
+import { useActiveWorkArea, useJumpToWorkArea } from '../../views/useWorkAreaMap.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
-import type { AdiffAction } from './changesetElements.ts'
+import { buildElementChanges, type AdiffAction } from './changesetElements.ts'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
 import { refDeepLinkKey, refParamFromElement, refsEqual } from './refSelection.ts'
 import { ReviewColumn } from './ReviewColumn.tsx'
+import { WorkAreaBar } from './WorkAreaBar.tsx'
+import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 type ChangesetProps = {
   changesetId: number | null
   currentChangeset: any
   viewer: ChangesetAdiffViewer | null
+  workAreas: WorkArea[]
   selected: AdiffAction | null
   selectedRef: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -59,6 +64,7 @@ function Changeset({
   changesetId,
   currentChangeset,
   viewer,
+  workAreas,
   selected,
   selectedRef,
   selectRef,
@@ -81,6 +87,9 @@ function Changeset({
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null)
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
+  const activeWorkArea = useActiveWorkArea(workAreas)
+  const jumpToWorkArea = useJumpToWorkArea(workAreas)
+  const showWorkAreas = ready && workAreas.length > 1
   const [appliedDeepLinkKey, setAppliedDeepLinkKey] = useState<string | null>(null)
   const [deepLinkReveal, setDeepLinkReveal] = useState<RefParam | null>(null)
   const [deepLinkEpoch, setDeepLinkEpoch] = useState(0)
@@ -154,6 +163,19 @@ function Changeset({
     <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row">
       <div className={clsx('relative min-h-0 min-w-0 flex-1', paneCardClassName)}>
         <div className={clsx('h-full', paneCardClipClassName)}>{children}</div>
+        {/* Narrow: below the List button, left of the map buttons. Wide: top center. */}
+        {showWorkAreas ? (
+          <div className="pointer-events-none absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] right-16 left-[max(0.75rem,env(safe-area-inset-left))] z-10 flex min-[56rem]:top-[max(0.75rem,env(safe-area-inset-top))] min-[56rem]:right-[max(0.75rem,env(safe-area-inset-right))] min-[56rem]:left-44 min-[56rem]:justify-center">
+            <WorkAreaBar
+              groups={groupChangesByWorkArea(
+                buildElementChanges(osmInfo?.adiff?.actions ?? []),
+                workAreas,
+              )}
+              active={activeWorkArea}
+              onJump={jumpToWorkArea}
+            />
+          </div>
+        ) : null}
         <div className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-10 flex flex-col-reverse items-end gap-2 min-[56rem]:top-auto min-[56rem]:bottom-[max(0.75rem,env(safe-area-inset-bottom))] min-[56rem]:flex-col">
           {ready && (
             <MapOptions
@@ -199,6 +221,9 @@ function Changeset({
             bindingsState={bindingsState}
             exclusiveKeyToggle={exclusiveKeyToggle}
             osmInfo={osmInfo}
+            workAreas={workAreas}
+            activeWorkArea={activeWorkArea}
+            jumpToWorkArea={jumpToWorkArea}
             selected={selected}
             selectedRef={selectedRef}
             selectRef={selectRef}
