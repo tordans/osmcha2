@@ -75,6 +75,36 @@ VITE_BASE=/osmcha2/ bun run build
 bun run preview
 ```
 
+## RSS feeds
+
+The RSS links of saved filters are rewritten by a small service hosted by
+[TILDA](https://tilda-geo.de), so feed entries open in OSMCha2. This is the
+easy way to follow changesets on a phone: subscribe in any RSS reader and tap
+an entry.
+
+```
+https://tilda-geo.de/api/osmcha2-rss-rewrite?url=<URL-encoded source feed>
+```
+
+Accepted source feeds:
+
+- OSMCha saved filter: `https://osmcha.org/api/v1/aoi/<id>/changesets/feed/`
+- [WhoDidIt](https://simon04.dev.openstreetmap.org/whodidit/) area feed:
+  `https://simon04.dev.openstreetmap.org/whodidit/scripts/rss.php?bbox=<left,bottom,right,top>`
+
+Each entry links to the changeset in OSMCha2 and lists what the source feed
+provides (comment, user, editor, change counts) plus the links of the "Open
+in" menu (OSMCha, OpenStreetMap, Achavi, WhoDidIt, ResultMaps, OSM Revert,
+Level0, JOSM, iD, Rapid, Spyglass) and of the user (profile, HDYC). The
+entry IDs (`guid`) are taken over unchanged, so a reader that already knows
+the source feed does not show entries twice. Nothing is stored; the source
+feed is fetched and converted on each request.
+
+Its URL is `RSS_REWRITE_URL` in
+[`src/config/constants.ts`](./src/config/constants.ts); its code is
+[`app/src/routes/api/osmcha2-rss-rewrite.ts`](https://github.com/FixMyBerlin/tilda-geo/blob/develop/app/src/routes/api/osmcha2-rss-rewrite.ts)
+in tilda-geo.
+
 ## Related
 
 - [`osmcha-django`](https://github.com/OSMCha/osmcha-django) — production API

@@ -16,13 +16,13 @@ import {
   TableRow,
 } from '../components/ui/table.tsx'
 import { Text } from '../components/ui/text.tsx'
-import { API_URL } from '../config/constants.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import type { AoiFeature } from '../network/aoi.ts'
 import { useAllAOIs } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI } from '../query/hooks/useAOIMutations.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
+import { aoiFeedUrl } from '../utils/aoiFeedUrl.ts'
 
 function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
   const [editing, setEditing] = useState(false)
@@ -144,7 +144,7 @@ export function SavedFilters() {
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
                           outline
-                          href={`${API_URL}/aoi/${aoi.id}/changesets/feed/`}
+                          href={aoiFeedUrl(aoi.id)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="min-h-11"

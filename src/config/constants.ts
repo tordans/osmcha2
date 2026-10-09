@@ -10,6 +10,11 @@ export const donateUrl = 'https://openstreetmap.app.neoncrm.com/forms/osmcha'
 
 export const API_URL = 'https://osmcha.org/api/v1'
 export const PAGE_SIZE = 25
+/**
+ * Rewrites an OSMCha or WhoDidIt changeset RSS feed (`?url=`) so entries link here.
+ * Hosted by TILDA (`app/src/routes/api/osmcha2-rss-rewrite.ts` in FixMyBerlin/tilda-geo).
+ */
+export const RSS_REWRITE_URL = 'https://tilda-geo.de/api/osmcha2-rss-rewrite'
 export const overpassBase = 'https://overpass-api.de/api/interpreter'
 export const statusUrl =
   'https://raw.githubusercontent.com/osmcha/osmcha-frontend/status/status.json'

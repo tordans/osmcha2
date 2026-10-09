@@ -6,6 +6,7 @@ import { API_URL } from '../../config/constants.ts'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { stripFilterSearch } from '../../routing/filterSearch.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
+import { aoiFeedUrl } from '../../utils/aoiFeedUrl.ts'
 import { Button } from '../ui/button.tsx'
 import { Heading } from '../ui/heading.tsx'
 import { LinkIcon, RssIcon, XMarkIcon } from '../ui/icons.ts'
@@ -191,7 +192,7 @@ export function FiltersHeader({
             <Tooltip as="span" content="RSS Feed" className="inline-flex">
               <Button
                 plain
-                href={`${API_URL}/aoi/${aoiId}/changesets/feed/`}
+                href={aoiFeedUrl(aoiId)}
                 aria-label="RSS Feed"
                 className="min-h-11 min-w-11 cursor-pointer touch-manipulation p-0 select-none"
               >
