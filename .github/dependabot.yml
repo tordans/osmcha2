@@ -78,7 +78,7 @@ updates:
           - '@osmcha/*'
           - '@osm-editor-kit/*'
           - 'terra-draw*'
-          - 'lucide-react'
+          - '@phosphor-icons/*'
           - 'zod'
           - 'zustand'
         update-types:
@@ -105,7 +105,7 @@ updates:
           - '@osmcha/*'
           - '@osm-editor-kit/*'
           - 'terra-draw*'
-          - 'lucide-react'
+          - '@phosphor-icons/*'
           - 'zod'
           - 'zustand'
 
