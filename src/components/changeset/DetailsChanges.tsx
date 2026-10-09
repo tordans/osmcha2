@@ -65,7 +65,7 @@ import {
 } from './NotesBlock.tsx'
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
 import { refParamFromElement, tagGroupContainsRef } from './refSelection.ts'
-import { changeRowDomId } from './scrollChildIntoScroller.ts'
+import { changeRowDomId, workAreaSectionDomId } from './scrollChildIntoScroller.ts'
 import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
@@ -239,7 +239,11 @@ export function DetailsChanges({
       <ChangesetNotesSection notes={located.changesetNotes} />
       {workAreas.length > 1 ? (
         groupChangesByWorkArea(changes, workAreas).map(({ area, changes: areaChanges }) => (
-          <section key={area?.id ?? 'elsewhere'} aria-label={area ? `Area ${area.id}` : 'Other'}>
+          <section
+            key={area?.id ?? 'elsewhere'}
+            id={area ? workAreaSectionDomId(area.id) : undefined}
+            aria-label={area ? `Area ${area.id}` : 'Other'}
+          >
             <WorkAreaHeading
               area={area}
               count={areaChanges.length}

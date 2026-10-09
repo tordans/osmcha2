@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { useMap } from 'react-map-gl/maplibre'
+import { scrollChangesToWorkArea } from '../components/changeset/scrollChildIntoScroller.ts'
 import { useMapLoaded } from '../stores/map-loaded-store.ts'
 import { flyMapToChangesetBounds } from './changesetCamera.ts'
 import type { LngLatBoundsTuple } from './changesetViewBounds.ts'
@@ -28,12 +29,13 @@ export function useActiveWorkArea(areas: readonly WorkArea[]) {
   return useSyncExternalStore(subscribe, getSnapshot)
 }
 
-/** Fly the review map to one work area, or to all of them with `null`. */
+/** Fly the review map to one work area and scroll the Changes list to it; `null` shows all areas. */
 export function useJumpToWorkArea(areas: readonly WorkArea[]) {
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
 
   return function jumpToWorkArea(area: WorkArea | null) {
+    if (area) scrollChangesToWorkArea(area.id)
     if (!mainMap || !mapLoaded) return
     const bounds = area
       ? area.bounds

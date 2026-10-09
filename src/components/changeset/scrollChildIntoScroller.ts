@@ -22,3 +22,16 @@ export function scrollChildIntoScroller(scroller: HTMLElement, child: HTMLElemen
 export function changeRowDomId(type: string, id: number) {
   return `change-row-${type}-${id}`
 }
+
+export function workAreaSectionDomId(areaId: number) {
+  return `work-area-${areaId}`
+}
+
+/** Bring a work area's section to the top of the Changes list; no-op while another tab is open. */
+export function scrollChangesToWorkArea(areaId: number) {
+  const section = document.getElementById(workAreaSectionDomId(areaId))
+  const scroller = section?.closest('[data-changeset-changes-scroll]')
+  if (!section || !(scroller instanceof HTMLElement)) return
+  const delta = section.getBoundingClientRect().top - scroller.getBoundingClientRect().top
+  scroller.scrollBy({ top: delta, behavior: 'smooth' })
+}
