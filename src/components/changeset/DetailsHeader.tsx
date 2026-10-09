@@ -199,6 +199,8 @@ export function DetailsHeader({
   const username = user?.username
   const markHarmfulMutation = useMarkHarmful()
   const [leftoverAlertOpen, setLeftoverAlertOpen] = useState(false)
+  // Read the clock once: account age is in days, and render has to stay pure.
+  const [now] = useState(() => new Date())
   const { pairRef, menuStyle } = useReviewHeaderMenuWidth()
   const properties = currentChangeset.properties ?? {}
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
@@ -538,11 +540,11 @@ export function DetailsHeader({
                   as="span"
                   content={[
                     formatLocalDateTime(accountCreated),
-                    formatAccountAge(accountCreated, new Date(), { full: true }),
+                    formatAccountAge(accountCreated, now, { full: true }),
                   ].join('\n')}
                 >
                   <time dateTime={accountCreated.toISOString()}>
-                    {formatAccountAge(accountCreated, new Date(), { compact: true })}
+                    {formatAccountAge(accountCreated, now, { compact: true })}
                   </time>
                 </Tooltip>
               ) : null}
