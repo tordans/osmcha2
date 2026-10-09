@@ -20,6 +20,13 @@ describe('openInUrls', () => {
     expect(urls.rapid).toBe('https://rapideditor.org/edit#map=15/52.5/13.4')
   })
 
+  test('opens Spyglass at the MapLibre viewport', () => {
+    expect(openInUrls(9, { lng: 13.4, lat: 52.5, zoom: 14 }).spyglass).toBe(
+      'https://spyglass.jochentopf.com/#p=14/52.5/13.4',
+    )
+    expect(openInUrls(9).spyglass).toBe('https://spyglass.jochentopf.com/')
+  })
+
   test('omits the editor hash when the camera is missing', () => {
     expect(editorMapHash(undefined)).toBe('')
     expect(openInUrls(1).id).toBe('https://www.openstreetmap.org/edit?editor=id')

@@ -18,6 +18,8 @@ export function openInUrls(changesetId: number | string, map?: MapParam | null) 
     level0: `http://level0.osmz.ru/?url=changeset/${changesetId}`,
     osmRevert: `https://revert.monicz.dev/?changesets=${changesetId}`,
     rapid: `https://rapideditor.org/edit${hash}`,
+    // Spyglass is a MapLibre map, so it takes the viewport zoom as is.
+    spyglass: `https://spyglass.jochentopf.com/${map ? `#p=${map.zoom}/${map.lat}/${map.lng}` : ''}`,
     resultMaps: `https://resultmaps.neis-one.org/osm-change-viz?c=${changesetId}`,
   } as const
 }

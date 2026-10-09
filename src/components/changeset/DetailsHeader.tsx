@@ -434,7 +434,7 @@ export function DetailsHeader({
             </DropdownSection>
             <DropdownDivider />
             <DropdownSection>
-              <DropdownHeading>Open map location in editor</DropdownHeading>
+              <DropdownHeading>Open map location</DropdownHeading>
               <div className={headerOpenItemsClassName}>
                 <DropdownItem
                   href={urls.id}
@@ -451,6 +451,14 @@ export function DetailsHeader({
                   className={headerOpenItemClassName}
                 >
                   Rapid
+                </DropdownItem>
+                <DropdownItem
+                  href={urls.spyglass}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={headerOpenItemClassName}
+                >
+                  Spyglass
                 </DropdownItem>
               </div>
             </DropdownSection>
