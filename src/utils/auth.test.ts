@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isOsmOAuthHost, OSMCHA_ORG_AUTH_CONSOLE_SNIPPET, parseTokenPaste } from './auth.ts'
+import { isOsmOAuthHost, parseTokenPaste } from './auth.ts'
 
 describe('isOsmOAuthHost', () => {
   it('allows OSM OAuth on localhost and osmcha.org', () => {
@@ -49,11 +49,5 @@ describe('parseTokenPaste', () => {
     expect(parseTokenPaste('{"state":{}}')).toBeNull()
     expect(parseTokenPaste('{"state":{"token":null}}')).toBeNull()
     expect(parseTokenPaste('{not json')).toBeNull()
-  })
-})
-
-describe('OSMCHA_ORG_AUTH_CONSOLE_SNIPPET', () => {
-  it('copies the persist JSON from localStorage', () => {
-    expect(OSMCHA_ORG_AUTH_CONSOLE_SNIPPET).toBe("copy(localStorage.getItem('auth'))")
   })
 })

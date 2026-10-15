@@ -43,7 +43,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
 
   if (!token && location && ['/about', '/filters', '/user', '/'].includes(location)) {
     return (
-      <div className="flex flex-1 flex-col items-center overflow-y-auto px-4 py-9">
+      <div className="flex flex-1 flex-col items-center overflow-y-auto bg-white px-4 py-9">
         <BrandMark className="text-xl font-semibold text-zinc-600" />
         <div className="mt-9 flex w-full justify-center">
           {localOAuth ? <SignInButton text="Sign in with OpenStreetMap" /> : <TokenImport />}

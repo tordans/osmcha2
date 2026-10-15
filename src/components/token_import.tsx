@@ -1,21 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { getAuthActions } from '../stores/auth-store.ts'
-import { OSMCHA_ORG_AUTH_CONSOLE_SNIPPET, parseTokenPaste } from '../utils/auth.ts'
+import { parseTokenPaste } from '../utils/auth.ts'
 import { appEntryUrl, buildOpenSignedInBookmarklet } from '../utils/bookmarkletAuthHandoff.ts'
-import {
-  bookmarksBarShortcut,
-  consoleShortcut,
-  devToolsShortcut,
-  inspectorOs,
-} from '../utils/inspectorOs.ts'
+import { bookmarksBarShortcut, inspectorOs } from '../utils/inspectorOs.ts'
 import { Button } from './ui/button.tsx'
-import { ErrorMessage } from './ui/fieldset.tsx'
+import { ErrorMessage, Field } from './ui/fieldset.tsx'
 import { Heading } from './ui/heading.tsx'
 import { CheckIcon, ChevronDownIcon, ClipboardIcon } from './ui/icons.ts'
 import { Input } from './ui/input.tsx'
 import { Code, Strong, Text } from './ui/text.tsx'
 
 const OSMCHA_ORG_URL = 'https://osmcha.org'
+/** osmcha.org's account page shows the API key with a Copy button. */
+const OSMCHA_ORG_ACCOUNT_URL = 'https://osmcha.org/user'
 
 interface TokenImportProps {
   compact?: boolean
@@ -43,11 +40,10 @@ function TokenPasteField() {
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  function applyPaste(raw: string) {
+  function signIn(raw: string) {
     const token = parseTokenPaste(raw)
     if (!token) {
-      setValue(raw)
-      setError('Could not find a token in that paste')
+      setError('Could not find a token. Paste the API key from osmcha.org/user.')
       return
     }
     setError(null)
@@ -55,92 +51,92 @@ function TokenPasteField() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <Input
-        type="text"
-        name="osmcha-api-token"
-        placeholder="Paste token"
-        value={value}
-        onChange={(event) => {
-          setValue(event.target.value)
-          setError(null)
-        }}
-        onPaste={(event: React.ClipboardEvent<HTMLInputElement>) => {
-          event.preventDefault()
-          applyPaste(event.clipboardData.getData('text'))
-        }}
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-        aria-label="Paste OSMCha API token"
-        aria-invalid={error ? true : undefined}
-        className="font-mono"
-      />
-      {error ? <ErrorMessage>{error}</ErrorMessage> : null}
-    </div>
+    <form
+      className="flex min-w-0 flex-col gap-2"
+      onSubmit={(event) => {
+        event.preventDefault()
+        signIn(value)
+      }}
+    >
+      {/* Field gives ErrorMessage its Headless context; without it the error crashes the page. */}
+      <Field>
+        <Input
+          type="text"
+          name="osmcha-api-token"
+          placeholder="Token …"
+          value={value}
+          onChange={(event) => {
+            setValue(event.target.value)
+            setError(null)
+          }}
+          onPaste={(event: React.ClipboardEvent<HTMLInputElement>) => {
+            // Sign in straight away when the clipboard holds a token. Otherwise let the
+            // browser paste as usual; on iOS Safari a paste could land in the error branch.
+            const pasted = event.clipboardData.getData('text/plain')
+            if (!parseTokenPaste(pasted)) return
+            event.preventDefault()
+            signIn(pasted)
+          }}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          aria-label="OSMCha API key"
+          aria-invalid={error ? true : undefined}
+          className="font-mono"
+        />
+        {error ? <ErrorMessage>{error}</ErrorMessage> : null}
+      </Field>
+      <Button type="submit" className="min-h-11 self-start">
+        Sign in
+      </Button>
+    </form>
   )
 }
 
 function TokenImportHelp() {
   const os = inspectorOs()
-  const consoleKeys = consoleShortcut(os)
-  const devToolsKeys = devToolsShortcut(os)
   const bookmarksKeys = bookmarksBarShortcut(os)
   const entryUrl = appEntryUrl()
   const openHref = buildOpenSignedInBookmarklet(entryUrl, window.location.origin)
 
   return (
     <div className="flex flex-col gap-4 text-left">
-      <Heading level={2}>Sign in with an osmcha.org token</Heading>
+      <Heading level={2}>Sign in with your OSMCha API key</Heading>
       <Text>
-        This site cannot complete OpenStreetMap sign-in. osmcha.org already issued you a token for
-        the same account. Copy it there, paste it in the last step. Reviews and saved filters come
-        with it.
+        This site cannot complete OpenStreetMap sign-in yet. osmcha.org shows an API key for your
+        account; paste it here. Reviews and saved filters come with it.
       </Text>
 
-      <MethodSection title="Run a Console snippet">
-        <Text>
-          Fastest one-off: osmcha.org keeps the token in this browser. A one-line Console command
-          copies it. It only runs in that tab.
-        </Text>
-        <StepList>
-          <Step n={1}>
-            <Strong>Copy this snippet</Strong>
-            <CopyableSnippet
-              text={OSMCHA_ORG_AUTH_CONSOLE_SNIPPET}
-              ariaLabel="Copy console snippet"
-            />
-          </Step>
-          <Step n={2}>
-            <Strong>Open osmcha.org</Strong>
-            <Text className="mt-1">Sign in there if you are asked.</Text>
-            <div className="mt-2">
-              <Button href={OSMCHA_ORG_URL} target="_blank" rel="noreferrer" outline>
-                Open osmcha.org
-              </Button>
-            </div>
-          </Step>
-          <Step n={3}>
-            <Strong>Open the Console</Strong>
-            <Text className="mt-1">
-              In Chrome or Edge, press{' '}
-              <Shortcut keys={consoleKeys.keys} ariaLabel={consoleKeys.ariaLabel} />.
-            </Text>
-          </Step>
-          <Step n={4}>
-            <Strong>Paste the snippet and press Enter</Strong>
-            <Text className="mt-1">That copies the token to your clipboard.</Text>
-          </Step>
-          <Step n={5}>
+      <StepList>
+        <Step n={1}>
+          <Strong>Open your account page on osmcha.org</Strong>
+          <Text className="mt-1">Sign in there with OpenStreetMap if you are asked.</Text>
+          <div className="mt-2">
+            <Button href={OSMCHA_ORG_ACCOUNT_URL} target="_blank" rel="noreferrer" outline>
+              Open osmcha.org/user
+            </Button>
+          </div>
+        </Step>
+        <Step n={2}>
+          <Strong>Copy the API key</Strong>
+          <Text className="mt-1">
+            Next to <Strong>API key</Strong>, use the copy button. It copies <Code>Token …</Code>;
+            paste it as it is.
+          </Text>
+        </Step>
+        <Step n={3}>
+          <Strong>Paste it here</Strong>
+          <div className="mt-2">
             <TokenPasteField />
-          </Step>
-        </StepList>
-      </MethodSection>
+          </div>
+        </Step>
+      </StepList>
 
-      <MethodSection title="Use a bookmarklet">
+      <MethodSection title="On a computer: sign in with one click">
         <Text>
-          One-time setup: drag a link onto your bookmarks bar. Then, on osmcha.org while signed in,
-          click that bookmark. It opens this app already signed in. Use only this link; a
+          Optional one-time setup: drag a link onto your bookmarks bar. Then, on osmcha.org while
+          signed in, click that bookmark. It opens this app already signed in. Use only this link; a
           bookmarklet from anywhere else can steal your token.
         </Text>
         <StepList>
@@ -177,58 +173,6 @@ function TokenImportHelp() {
                 Open osmcha.org
               </Button>
             </div>
-          </Step>
-        </StepList>
-      </MethodSection>
-
-      <MethodSection title="Copy from Local Storage">
-        <Text>
-          Use this when the Console snippet or bookmarklets are blocked. You copy the stored{' '}
-          <Code>auth</Code> value by hand in Chrome or Edge.
-        </Text>
-        <StepList>
-          <Step n={1}>
-            <Strong>Open osmcha.org and sign in</Strong>
-            <div className="mt-2">
-              <Button href={OSMCHA_ORG_URL} target="_blank" rel="noreferrer" outline>
-                Open osmcha.org
-              </Button>
-            </div>
-          </Step>
-          <Step n={2}>
-            <Strong>Open DevTools</Strong>
-            <Text className="mt-1">
-              Press <Shortcut keys={devToolsKeys.keys} ariaLabel={devToolsKeys.ariaLabel} />.
-            </Text>
-          </Step>
-          <Step n={3}>
-            <Strong>Open the Application tab</Strong>
-            <Text className="mt-1">
-              If it is hidden, click the <Code>»</Code> overflow on the DevTools tab bar.
-            </Text>
-          </Step>
-          <Step n={4}>
-            <Strong>Copy the auth value</Strong>
-            <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-base/6 text-zinc-500 sm:text-sm/6">
-              <li>
-                Left sidebar: open <Strong>Storage</Strong>
-              </li>
-              <li>
-                Open <Strong>Local Storage</Strong>
-              </li>
-              <li>
-                Click <Code>https://osmcha.org</Code>
-              </li>
-              <li>
-                Click the <Code>auth</Code> key
-              </li>
-              <li>
-                Copy <Strong>Value</Strong>. Double-click the value cell, then copy
-              </li>
-            </ul>
-          </Step>
-          <Step n={5}>
-            <TokenPasteField />
           </Step>
         </StepList>
       </MethodSection>
@@ -311,17 +255,6 @@ function BookmarkletDragLink({ href, label }: { href: string; label: string }) {
     >
       {label}
     </a>
-  )
-}
-
-function CopyableSnippet({ text, ariaLabel }: { text: string; ariaLabel: string }) {
-  return (
-    <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-start">
-      <pre className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-zinc-950/10 bg-zinc-50 px-3 py-2 text-sm">
-        <code>{text}</code>
-      </pre>
-      <CopyButton text={text} ariaLabel={ariaLabel} />
-    </div>
   )
 }
 

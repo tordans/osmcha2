@@ -6,19 +6,6 @@ type NavigatorHints = {
   userAgentDataPlatform?: string
 }
 
-/** Chrome / Edge shortcut to focus the Console. */
-export function consoleShortcut(os: InspectorOs): { keys: string[]; ariaLabel: string } {
-  if (os === 'mac') return { keys: ['⌥', '⌘', 'J'], ariaLabel: 'Option-Command-J' }
-  return { keys: ['Ctrl', 'Shift', 'J'], ariaLabel: 'Control-Shift-J' }
-}
-
-/** Chrome / Edge shortcut to open DevTools. */
-export function devToolsShortcut(os: InspectorOs): { keys: string[]; ariaLabel: string } {
-  if (os === 'mac') return { keys: ['⌥', '⌘', 'I'], ariaLabel: 'Option-Command-I' }
-  if (os === 'windows') return { keys: ['F12'], ariaLabel: 'F12' }
-  return { keys: ['Ctrl', 'Shift', 'I'], ariaLabel: 'Control-Shift-I' }
-}
-
 /** Chrome / Edge shortcut to show the bookmarks bar. */
 export function bookmarksBarShortcut(os: InspectorOs): { keys: string[]; ariaLabel: string } {
   if (os === 'mac') return { keys: ['⌘', '⇧', 'B'], ariaLabel: 'Command-Shift-B' }

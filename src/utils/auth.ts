@@ -18,12 +18,6 @@ export function isOsmOAuthHost(hostname: string = window.location.hostname): boo
   )
 }
 
-/**
- * Paste this on osmcha.org's DevTools Console to copy the persisted auth JSON.
- * `copy()` is a Chrome/Edge/Firefox DevTools helper (not a page API).
- */
-export const OSMCHA_ORG_AUTH_CONSOLE_SNIPPET = "copy(localStorage.getItem('auth'))"
-
 const TOKEN_PREFIX = /^token\s+/i
 
 const persistAuthJsonSchema = z.object({

@@ -28,13 +28,14 @@ answered, token import stays the only way on GitHub Pages.
 
 On the Sign in screen you can:
 
-1. **Bookmarklet.** Drag "Open osmcha2 signed in" (or "Copy auth JSON") onto
-   your bookmarks bar. On [osmcha.org](https://osmcha.org) while signed in,
-   click the bookmark. The open variant uses `postMessage` from osmcha.org
-   only; the token never goes in the URL (avoid `?token=`. It leaks via
-   history, Pages logs, and referrers).
-2. **Paste.** Account → API key, Chrome Local Storage key `auth`, or a
-   Console snippet.
+1. **Paste the API key.** [osmcha.org/user](https://osmcha.org/user) shows
+   "API key" with a copy button; it copies `Token …`, which the paste field
+   takes as it is. This works on phones too.
+2. **Bookmarklet (computer only).** Drag "OSMCha2 sign-in" onto your bookmarks
+   bar. On [osmcha.org](https://osmcha.org) while signed in, click the
+   bookmark. It uses `postMessage` from osmcha.org only; the token never goes
+   in the URL (avoid `?token=`. It leaks via history, Pages logs, and
+   referrers).
 
 Caveats: Chrome often blocks clicking `javascript:` links on the page.
 Drag to the bookmarks bar (or use Copy code). osmcha.org CSP may block some
