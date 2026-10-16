@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AccountPage } from '../components/secondary_pages_header.tsx'
 import { Avatar } from '../components/ui/avatar.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -19,6 +19,19 @@ import { useAuthActions } from '../stores/auth-store.ts'
 
 function CopyTokenButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false)
+
+  useEffect(
+    function resetCopiedLabel() {
+      if (!copied) return
+      const timeoutId = window.setTimeout(() => {
+        setCopied(false)
+      }, 2000)
+      return function clearCopiedReset() {
+        window.clearTimeout(timeoutId)
+      }
+    },
+    [copied],
+  )
 
   return (
     <Button
