@@ -20,6 +20,8 @@ function convertSourceData(input: Tag2LinkItem[]): Record<string, string> {
     const bestDefinition = input
       .filter((item) => item.key === key)
       .sort((a, b) => RANKS.indexOf(b.rank) - RANKS.indexOf(a.rank))[0]
+    // Every key comes from `input`, so a definition always exists.
+    if (!bestDefinition) continue
 
     output[key.replace('Key:', '')] = bestDefinition.url
   }

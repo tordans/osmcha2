@@ -68,9 +68,10 @@ describe('changesetFeaturePassesReviewFilter', () => {
 })
 
 describe('applySeenMapStyle', () => {
-  const way = {
+  // Typed as a loose paint record: the seen style adds `line-opacity` at runtime.
+  const way: { id: string; type: 'line'; paint: Record<string, unknown> } = {
     id: 'changeset-way-new',
-    type: 'line' as const,
+    type: 'line',
     paint: { 'line-color': '#2dd4bf', 'line-width': 2 },
   }
 

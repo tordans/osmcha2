@@ -54,8 +54,9 @@ export function apiOrderFromUnknown(value: unknown): string | undefined {
   }
   const parsed = orderFilterItemsSchema.safeParse(value)
   if (parsed.success) {
-    const apiValue = parsed.data[0].value
-    return parseApiOrder(apiValue) ? apiValue : undefined
+    const [first] = parsed.data
+    if (!first) return undefined
+    return parseApiOrder(first.value) ? first.value : undefined
   }
   return undefined
 }

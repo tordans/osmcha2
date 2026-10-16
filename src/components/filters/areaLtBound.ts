@@ -7,13 +7,22 @@
 
 export type Bbox = [west: number, south: number, east: number, north: number]
 
+/**
+ * Longitude and latitude of a position. A missing coordinate becomes NaN, which
+ * every caller already treats as "no usable point".
+ */
+function coordinatesOf(position: GeoJSON.Position | undefined): [number, number] {
+  const [x = Number.NaN, y = Number.NaN] = position ?? []
+  return [x, y]
+}
+
 /** Absolute planar area of a closed ring in degree² (shoelace). */
 function ringAreaDegree2(ring: GeoJSON.Position[]): number {
   if (ring.length < 4) return 0
   let sum = 0
   for (let i = 0; i < ring.length - 1; i++) {
-    const [x1, y1] = ring[i]!
-    const [x2, y2] = ring[i + 1]!
+    const [x1, y1] = coordinatesOf(ring[i])
+    const [x2, y2] = coordinatesOf(ring[i + 1])
     sum += x1 * y2 - x2 * y1
   }
   return Math.abs(sum) / 2
@@ -33,7 +42,8 @@ export function planarAreaDegree2(geometry: GeoJSON.Geometry): number {
 function polygonAreaDegree2(coordinates: GeoJSON.Position[][]): number {
   if (coordinates.length === 0) return 0
   const [outer, ...holes] = coordinates
-  let area = ringAreaDegree2(outer!)
+  if (outer === undefined) return 0
+  let area = ringAreaDegree2(outer)
   for (const hole of holes) {
     area -= ringAreaDegree2(hole)
   }
@@ -50,7 +60,7 @@ export function bboxOfGeometry(geometry: GeoJSON.Geometry): Bbox | null {
     coords: GeoJSON.Position | GeoJSON.Position[] | GeoJSON.Position[][] | GeoJSON.Position[][][],
   ) {
     if (typeof coords[0] === 'number') {
-      const [x, y] = coords as GeoJSON.Position
+      const [x, y] = coordinatesOf(coords as GeoJSON.Position)
       if (Number.isFinite(x) && Number.isFinite(y)) {
         minX = Math.min(minX, x)
         minY = Math.min(minY, y)

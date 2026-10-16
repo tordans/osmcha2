@@ -46,19 +46,20 @@ function parseMetadataToken(token: string, id: string): { row: MetadataRow; unsu
     return { row: { id, key: keyPart, operator: 'exists', value: '' }, unsupported }
   }
 
-  const minMatch = keyPart.match(/^(.+)__min$/)
-  if (minMatch) {
-    return { row: { id, key: minMatch[1], operator: 'min', value: valuePart }, unsupported }
+  // The capture group is required and non-empty, so a match always yields a key.
+  const minKey = keyPart.match(/^(.+)__min$/)?.[1]
+  if (minKey !== undefined) {
+    return { row: { id, key: minKey, operator: 'min', value: valuePart }, unsupported }
   }
 
-  const maxMatch = keyPart.match(/^(.+)__max$/)
-  if (maxMatch) {
-    return { row: { id, key: maxMatch[1], operator: 'max', value: valuePart }, unsupported }
+  const maxKey = keyPart.match(/^(.+)__max$/)?.[1]
+  if (maxKey !== undefined) {
+    return { row: { id, key: maxKey, operator: 'max', value: valuePart }, unsupported }
   }
 
-  const exactMatch = keyPart.match(/^(.+)__exact$/)
-  if (exactMatch) {
-    return { row: { id, key: exactMatch[1], operator: 'equals', value: valuePart }, unsupported }
+  const exactKey = keyPart.match(/^(.+)__exact$/)?.[1]
+  if (exactKey !== undefined) {
+    return { row: { id, key: exactKey, operator: 'equals', value: valuePart }, unsupported }
   }
 
   const key = unsupported ? (keyPart.split('__')[0] ?? keyPart) : keyPart

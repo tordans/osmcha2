@@ -5,7 +5,7 @@ export function elementPath(type: string, id: number | string): string {
 }
 
 export function idToMinimalForm(id: string): string {
-  const [type, num] = id.split('/')
+  const [type = '', num] = id.split('/')
   return `${type[0]}${num}`
 }
 

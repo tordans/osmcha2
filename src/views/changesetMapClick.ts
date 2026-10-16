@@ -24,7 +24,7 @@ export function rotateOverlappingFeatures<T extends PickableFeature>(
   const selectedIndex = sorted.findIndex((feature) => feature.id === previousId)
   const nextIndex = (((selectedIndex + 1) % sorted.length) + sorted.length) % sorted.length
   const feature = sorted[nextIndex]
-  if (feature.id == null) return null
+  if (!feature || feature.id == null) return null
   return { feature, nextId: feature.id }
 }
 

@@ -8,7 +8,16 @@ const HashtagToken = createTokenClass('hashtag', {
 const osmHashtag: Plugin = ({ scanner, parser }) => {
   const { POUND, UNDERSCORE, HYPHEN, FULLWIDTHMIDDLEDOT, ASCIINUMERICAL, ALPHANUMERICAL } =
     scanner.tokens
-  const { alpha, numeric, alphanumeric, emoji } = scanner.tokens.groups
+  // linkify always defines these groups; a missing one means the library changed.
+  const group = (name: string): string[] => {
+    const tokens = scanner.tokens.groups[name]
+    if (!tokens) throw new Error(`linkify token group "${name}" is missing`)
+    return tokens
+  }
+  const alpha = group('alpha')
+  const numeric = group('numeric')
+  const alphanumeric = group('alphanumeric')
+  const emoji = group('emoji')
 
   const Hash = parser.start.tt(POUND)
   const HashPrefix = Hash.tt(UNDERSCORE)
