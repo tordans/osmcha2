@@ -6,6 +6,7 @@ import {
   type EliLayer,
 } from '@osm-editor-kit/maplibre-editor-layer-index'
 import type * as maplibre from 'maplibre-gl'
+import { isBuiltinBasemapId, type BuiltinBasemapId } from '../../map/basemapIds.ts'
 
 const BING_AERIAL_IMAGERY_STYLE: maplibre.StyleSpecification = {
   version: 8,
@@ -106,36 +107,6 @@ const OPENSTREETMAP_CARTO_STYLE: maplibre.StyleSpecification = {
   ],
 }
 
-export const BUILTIN_BASEMAP_OPTIONS = [
-  {
-    id: 'bing',
-    label: 'Bing Maps Aerial',
-    aliases: ['bing', 'bing maps aerial', 'bing aerial', 'bing maps'],
-  },
-  {
-    id: 'esri',
-    label: 'Esri World Imagery',
-    aliases: ['esri', 'esri world imagery', 'esriworldimagery'],
-  },
-  {
-    id: 'esri-clarity',
-    label: 'Esri World Imagery (Clarity) Beta',
-    aliases: [
-      'esri world imagery (clarity)',
-      'esri world imagery (clarity) beta',
-      'esri clarity',
-      'esriworldimageryclarity',
-    ],
-  },
-  {
-    id: 'carto',
-    label: 'OpenStreetMap Carto',
-    aliases: ['openstreetmap carto', 'openstreetmap', 'osm carto', 'standard', 'mapnik', 'carto'],
-  },
-] as const
-
-export type BuiltinBasemapId = (typeof BUILTIN_BASEMAP_OPTIONS)[number]['id']
-
 export const BASEMAP_STYLES: Record<BuiltinBasemapId, maplibre.StyleSpecification> = {
   bing: BING_AERIAL_IMAGERY_STYLE,
   esri: ESRI_WORLD_IMAGERY_STYLE,
@@ -144,13 +115,8 @@ export const BASEMAP_STYLES: Record<BuiltinBasemapId, maplibre.StyleSpecificatio
 }
 
 export const DEFAULT_BASEMAP_STYLE = BING_AERIAL_IMAGERY_STYLE
-export const DEFAULT_BASEMAP_ID: BuiltinBasemapId = 'bing'
 
 const ELI_STYLE_PREFIX = 'eli:'
-
-export function isBuiltinBasemapId(styleId: string): styleId is BuiltinBasemapId {
-  return styleId in BASEMAP_STYLES
-}
 
 export function toEliStyleId(layerId: string): string {
   return `${ELI_STYLE_PREFIX}${layerId}`

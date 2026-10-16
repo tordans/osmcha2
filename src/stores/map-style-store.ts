@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { DEFAULT_BASEMAP_ID, isBuiltinBasemapId } from '../components/changeset/basemapStyles.ts'
+import { DEFAULT_BASEMAP_ID, isBuiltinBasemapId } from '../map/basemapIds.ts'
 
 const persistedMapSchema = z.object({
   style: z.string(),

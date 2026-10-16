@@ -4,6 +4,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
 import { useMap } from 'react-map-gl/maplibre'
+import { BUILTIN_BASEMAP_OPTIONS } from '../../map/basemapIds.ts'
 import {
   mapLayerIsOn,
   parseLayersParam,
@@ -34,7 +35,7 @@ import { Radio, RadioField } from '../ui/radio.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ACTION } from './actionColors.ts'
 import { ActionIcon } from './ActionTypeLabel.tsx'
-import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
+import { toEliStyleId } from './basemapStyles.ts'
 import { InspectKindSwatch } from './InspectKindSwatch.tsx'
 import {
   isDuplicateOfBuiltinLayer,

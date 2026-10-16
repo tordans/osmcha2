@@ -3,7 +3,8 @@ import {
   getLayers,
   type EliLocatorLayer,
 } from '@osm-editor-kit/maplibre-editor-layer-index'
-import { BUILTIN_BASEMAP_OPTIONS, toEliStyleId } from './basemapStyles.ts'
+import { BUILTIN_BASEMAP_OPTIONS } from '../../map/basemapIds.ts'
+import { toEliStyleId } from './basemapStyles.ts'
 
 const SKIP_TOKENS = new Set(['', 'not reported', 'none', 'unknown', 'custom'])
 
