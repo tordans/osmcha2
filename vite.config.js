@@ -74,6 +74,9 @@ export default defineConfig(({ mode }) => {
       target: 'react',
       routesDirectory: './src/routes',
       generatedRouteTree: './src/routeTree.gen.ts',
+      // Each route's component loads as its own chunk, so the list and sign-in
+      // screens do not download MapLibre and the changeset map up front.
+      autoCodeSplitting: true,
     }),
     tailwindcss(),
     viteReact({ compiler: true }),
