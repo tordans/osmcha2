@@ -300,7 +300,7 @@ function WorkAreaHeading({
   const stickyClassName = 'sticky top-0 z-10 border-b border-zinc-200 bg-white'
   const rowClassName = clsx(
     typeScale.body,
-    'flex min-h-9 w-full items-center gap-2 px-2 font-medium',
+    'flex min-h-11 w-full items-center gap-2 px-2 font-medium sm:min-h-9',
   )
   if (!area) {
     return (

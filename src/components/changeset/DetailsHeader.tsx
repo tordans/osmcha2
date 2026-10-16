@@ -147,7 +147,10 @@ const headerOpenListItemsClassName = clsx(
   'col-span-full grid grid-cols-1',
   '@min-[20rem]/user-open:grid-cols-2',
 )
-const headerOpenListItemClassName = clsx(headerOpenItemClassName, 'text-sm/4! sm:text-sm/4!')
+const headerOpenListItemClassName = clsx(
+  headerOpenItemClassName,
+  'min-h-11 text-sm/4! sm:min-h-0 sm:text-sm/4!',
+)
 
 export type ReviewUserDetails = {
   uid?: number | string

@@ -169,7 +169,8 @@ function MapLayerCheckbox({
   action?: React.ReactNode
 }) {
   return (
-    <CheckboxField>
+    // 44px rows on phones so each toggle is an easy tap; tighter rows from sm up.
+    <CheckboxField className="min-h-11 items-center sm:min-h-0 sm:items-start">
       <Checkbox
         colorClass={colorClass}
         checked={mapLayerIsOn(layers, token)}
@@ -293,7 +294,7 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
             className="space-y-0.5"
             aria-label="Filter by review"
           >
-            <RadioField>
+            <RadioField className="min-h-11 items-center sm:min-h-0 sm:items-start">
               <Radio value="unseen" />
               <Label>
                 <span className="inline-flex items-center gap-1.5">
@@ -302,7 +303,7 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
                 </span>
               </Label>
             </RadioField>
-            <RadioField>
+            <RadioField className="min-h-11 items-center sm:min-h-0 sm:items-start">
               <Radio value="seen" color="zinc" />
               <Label>
                 <span className="inline-flex items-center gap-1.5">
