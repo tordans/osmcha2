@@ -15,7 +15,7 @@ import {
   postableDraftNotes,
   useChangesetDraft,
   useChangesetNotesActions,
-  useFinishFocusNonce,
+  useFinishFocusRequest,
 } from '../../stores/changeset-notes-store.ts'
 import { Button } from '../ui/button.tsx'
 import { Textarea } from '../ui/textarea.tsx'
@@ -31,8 +31,9 @@ export function FinishReviewCard({
 }) {
   const userKey = useNotesUserKey()
   const draft = useChangesetDraft(userKey, changesetId)
-  const { setIntro, removeDraftNote, setOpenEditor, clearDraft } = useChangesetNotesActions()
-  const finishFocusNonce = useFinishFocusNonce()
+  const { setIntro, removeDraftNote, setOpenEditor, clearDraft, clearFinishFocusRequest } =
+    useChangesetNotesActions()
+  const focusRequested = useFinishFocusRequest() === changesetId
   const cardRef = useRef<HTMLElement>(null)
   const queryClient = useQueryClient()
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -50,12 +51,14 @@ export function FinishReviewCard({
   const osmUsernameQuery = useQuery(osmUsernameQueryOptions(signedInToOsm))
   const osmUser = osmUsernameQuery.data ?? null
 
+  // One-shot: a request made from the Discussion tab waits until this card has mounted.
   useEffect(
-    function scrollFinishIntoView() {
-      if (finishFocusNonce === 0) return
+    function scrollFinishIntoViewOnRequest() {
+      if (!focusRequested) return
       cardRef.current?.scrollIntoView({ block: 'nearest' })
+      clearFinishFocusRequest()
     },
-    [finishFocusNonce],
+    [focusRequested, clearFinishFocusRequest],
   )
 
   async function postToOsm() {

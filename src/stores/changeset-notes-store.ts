@@ -144,7 +144,8 @@ interface ChangesetNotesStore {
   byUser: Record<string, UserNotesState>
   openEditor: OpenEditor | null
   pinPlacement: PinPlacement | null
-  finishFocusNonce: number
+  /** Changeset whose Post notes card scrolls into view once it renders; cleared after. */
+  finishFocusRequest: number | null
   focusedObject: { changesetId: number; type: string; id: number } | null
   actions: {
     setDiscussionRaw: (value: boolean) => void
@@ -162,7 +163,8 @@ interface ChangesetNotesStore {
     setDraftPin: (userKey: string, changesetId: number, noteId: string, pin: PinParam) => void
     clearPin: (userKey: string, changesetId: number, noteId: string) => void
     clearDraft: (userKey: string, changesetId: number) => void
-    requestFinishFocus: () => void
+    requestFinishFocus: (changesetId: number) => void
+    clearFinishFocusRequest: () => void
     setFocusedObject: (focused: { changesetId: number; type: string; id: number } | null) => void
   }
 }
@@ -174,7 +176,7 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
       byUser: {},
       openEditor: null,
       pinPlacement: null,
-      finishFocusNonce: 0,
+      finishFocusRequest: null,
       focusedObject: null,
       actions: {
         setDiscussionRaw: (value) =>
@@ -391,8 +393,9 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
               byUser: writeUser(state.byUser, userKey, { ...user, drafts }),
             }
           }),
-        requestFinishFocus: () =>
-          set((state) => ({ finishFocusNonce: state.finishFocusNonce + 1 })),
+        requestFinishFocus: (changesetId) => set({ finishFocusRequest: changesetId }),
+        clearFinishFocusRequest: () =>
+          set((state) => (state.finishFocusRequest == null ? state : { finishFocusRequest: null })),
         setFocusedObject: (focused) => set({ focusedObject: focused }),
       },
     }),
@@ -429,7 +432,8 @@ export const useOpenEditor = () => useChangesetNotesStore((state) => state.openE
 
 export const usePinPlacement = () => useChangesetNotesStore((state) => state.pinPlacement)
 
-export const useFinishFocusNonce = () => useChangesetNotesStore((state) => state.finishFocusNonce)
+export const useFinishFocusRequest = () =>
+  useChangesetNotesStore((state) => state.finishFocusRequest)
 
 export const useFocusedObject = () => useChangesetNotesStore((state) => state.focusedObject)
 
@@ -457,7 +461,7 @@ export function resetChangesetNotesStoreForTests() {
     byUser: {},
     openEditor: null,
     pinPlacement: null,
-    finishFocusNonce: 0,
+    finishFocusRequest: null,
     focusedObject: null,
   })
 }

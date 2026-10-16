@@ -278,13 +278,7 @@ export function DetailsChanges({
       )}
       <OtherNotesSection notes={located.unmatched} />
       <FinishReviewCard changesetId={changesetId} selectRef={selectRef} />
-      <UnsentNotesBar
-        changesetId={changesetId}
-        onFinish={() => {
-          requestFinishFocus()
-          document.getElementById('finish-review')?.scrollIntoView({ block: 'nearest' })
-        }}
-      />
+      <UnsentNotesBar changesetId={changesetId} onFinish={() => requestFinishFocus(changesetId)} />
     </section>
   )
 }

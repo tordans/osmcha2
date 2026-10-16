@@ -23,6 +23,7 @@ import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import { useListScrollNonce, useListScrollTarget } from '../../stores/changeset-hover-store.ts'
+import { useChangesetNotesActions } from '../../stores/changeset-notes-store.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
@@ -86,6 +87,7 @@ export function ReviewColumn({
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
+  const { requestFinishFocus } = useChangesetNotesActions()
   const [expanded, setExpanded] = useState(() => selectedRef != null)
   const [expandedForEpoch, setExpandedForEpoch] = useState(0)
   const selectedObjectKey = selectedRef ? `${selectedRef.type}/${selectedRef.id}` : null
@@ -335,11 +337,8 @@ export function ReviewColumn({
                     onFinishInChanges={() => {
                       exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
                       setExpanded(true)
-                      requestAnimationFrame(() => {
-                        document
-                          .getElementById('finish-review')
-                          ?.scrollIntoView({ block: 'nearest' })
-                      })
+                      // The Changes panel mounts after the exit animation; the card scrolls itself then.
+                      requestFinishFocus(changesetId)
                     }}
                   />
                 </motion.div>
