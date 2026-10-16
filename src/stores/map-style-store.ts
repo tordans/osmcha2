@@ -16,10 +16,13 @@ interface MapStyleStore {
 
 const useMapStyleStore = create<MapStyleStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       style: DEFAULT_BASEMAP_ID,
       actions: {
-        setStyle: (style) => set({ style }),
+        // persist writes localStorage after every set call, so skip unchanged styles.
+        setStyle: (style) => {
+          if (get().style !== style) set({ style })
+        },
       },
     }),
     {

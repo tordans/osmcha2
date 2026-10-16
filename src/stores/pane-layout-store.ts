@@ -29,16 +29,26 @@ interface PaneLayoutStore {
 
 const usePaneLayoutStore = create<PaneLayoutStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       listWidth: LIST_DEFAULT,
       reviewWidth: REVIEW_DEFAULT,
       actions: {
-        setListWidth: (width) =>
-          set({ listWidth: clampPane(width, LIST_MIN, LIST_MAX, LIST_DEFAULT) }),
-        setReviewWidth: (width) =>
-          set({ reviewWidth: clampPane(width, REVIEW_MIN, REVIEW_MAX, REVIEW_DEFAULT) }),
-        resetListWidth: () => set({ listWidth: LIST_DEFAULT }),
-        resetReviewWidth: () => set({ reviewWidth: REVIEW_DEFAULT }),
+        // persist writes localStorage after every set call, even one that changes nothing,
+        // so unchanged values skip the set call entirely.
+        setListWidth: (width) => {
+          const listWidth = clampPane(width, LIST_MIN, LIST_MAX, LIST_DEFAULT)
+          if (get().listWidth !== listWidth) set({ listWidth })
+        },
+        setReviewWidth: (width) => {
+          const reviewWidth = clampPane(width, REVIEW_MIN, REVIEW_MAX, REVIEW_DEFAULT)
+          if (get().reviewWidth !== reviewWidth) set({ reviewWidth })
+        },
+        resetListWidth: () => {
+          if (get().listWidth !== LIST_DEFAULT) set({ listWidth: LIST_DEFAULT })
+        },
+        resetReviewWidth: () => {
+          if (get().reviewWidth !== REVIEW_DEFAULT) set({ reviewWidth: REVIEW_DEFAULT })
+        },
       },
     }),
     {
