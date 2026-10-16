@@ -1,3 +1,5 @@
+import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+
 export type OsmElementType = 'node' | 'way' | 'relation'
 
 export type AdiffElement = {
@@ -15,6 +17,12 @@ export type AdiffAction = {
   type?: string
   old?: AdiffElement
   new?: AdiffElement
+}
+
+/** Augmented diff as returned by `@osmcha/osm-adiff-parser`. */
+export type ParsedAdiff = {
+  actions: AdiffAction[]
+  note?: string
 }
 
 export type NamedReason = { id?: number; name?: string }
@@ -117,22 +125,24 @@ function wayNodeRefs(element?: AdiffElement): Set<number> {
 }
 
 export function tagRows(action: AdiffAction): TagRow[] {
-  const oldTags = tagsOf(action.old)
-  const newTags = tagsOf(action.new)
+  // Maps, not plain objects: `in` would also match inherited keys such as "constructor".
+  const oldTags = new Map(Object.entries(tagsOf(action.old)))
+  const newTags = new Map(Object.entries(tagsOf(action.new)))
   const rows: TagRow[] = []
 
-  for (const [key, value] of Object.entries(newTags)) {
-    if (!(key in oldTags)) {
+  for (const [key, value] of newTags) {
+    const oldValue = oldTags.get(key)
+    if (oldValue === undefined) {
       rows.push({ kind: 'added', key, value })
-    } else if (oldTags[key] !== value) {
-      rows.push({ kind: 'changed', key, oldValue: oldTags[key], newValue: value })
+    } else if (oldValue !== value) {
+      rows.push({ kind: 'changed', key, oldValue, newValue: value })
     } else {
       rows.push({ kind: 'unchanged', key, value })
     }
   }
 
-  for (const [key, value] of Object.entries(oldTags)) {
-    if (!(key in newTags)) {
+  for (const [key, value] of oldTags) {
+    if (!newTags.has(key)) {
       rows.push({ kind: 'removed', key, value })
     }
   }
@@ -384,8 +394,10 @@ export function tagMutationKey(tags: TagRow[]): string {
  * Group elements that share the same added/removed/changed tags (unchanged tags ignored).
  * Elements with no tag mutations stay ungrouped. They are not "the same tag changes".
  */
-export function groupChangesByTagMutation(changes: ElementChange[]): ElementChange[][] {
-  const groups = new Map<string, ElementChange[]>()
+export function groupChangesByTagMutation(
+  changes: ElementChange[],
+): NonEmptyArray<ElementChange>[] {
+  const groups = new Map<string, NonEmptyArray<ElementChange>>()
   let ungrouped = 0
   for (const change of changes) {
     const key =

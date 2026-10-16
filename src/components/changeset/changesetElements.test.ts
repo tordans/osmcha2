@@ -11,6 +11,13 @@ import {
   tagRows,
 } from './changesetElements.ts'
 
+/** Test-only accessor: fails the test with a clear message when the item is missing. */
+function at<T>(items: T[], index: number): T {
+  const item = items[index]
+  if (item === undefined) throw new Error(`expected an item at index ${index}`)
+  return item
+}
+
 describe('tagRows', () => {
   test('splits added, removed, changed, and unchanged tags', () => {
     const rows = tagRows({
@@ -101,8 +108,8 @@ describe('buildElementChanges', () => {
       },
     ])
     expect(changes.map((change) => `${change.type}/${change.id}`)).toEqual(['way/10', 'node/9'])
-    expect(changes[0].nodeStats).toEqual({ added: 1, modified: 1, deleted: 1 })
-    expect(changes[0].geometry).toBe('rewritten')
+    expect(at(changes, 0).nodeStats).toEqual({ added: 1, modified: 1, deleted: 1 })
+    expect(at(changes, 0).geometry).toBe('rewritten')
   })
 
   test('lists a same-version way whose members moved and folds untagged members into it', () => {
@@ -168,10 +175,10 @@ describe('buildElementChanges', () => {
       'node/9',
       'node/99',
     ])
-    expect(changes[0].geometry).toBe('moved')
-    expect(changes[0].nodeStats).toEqual({ added: 0, modified: 5, deleted: 0 })
-    expect(changes[1].geometry).toBe('moved')
-    expect(changes[2].geometry).toBe('moved')
+    expect(at(changes, 0).geometry).toBe('moved')
+    expect(at(changes, 0).nodeStats).toEqual({ added: 0, modified: 5, deleted: 0 })
+    expect(at(changes, 1).geometry).toBe('moved')
+    expect(at(changes, 2).geometry).toBe('moved')
   })
 
   test('counts shared member nodes on every way that holds them', () => {
@@ -237,8 +244,8 @@ describe('buildElementChanges', () => {
       [{ url: 'node-8', name: 'Crossing', reasons: [11], note: 'moved far' }],
       [{ id: 11, name: 'Suspicious geometry' }],
     )
-    expect(changes[0].geometry).toBe('moved')
-    expect(changes[0].flagged).toEqual({
+    expect(at(changes, 0).geometry).toBe('moved')
+    expect(at(changes, 0).flagged).toEqual({
       name: 'Crossing',
       note: 'moved far',
       userFlag: undefined,
@@ -266,7 +273,7 @@ describe('groupChangesByTagMutation', () => {
         new: { type: 'way', id: 3, version: 2, tags: { highway: 'footway' } },
       },
     ])
-    expect(tagMutationKey(changes[0].tags)).toBe(tagMutationKey(changes[1].tags))
+    expect(tagMutationKey(at(changes, 0).tags)).toBe(tagMutationKey(at(changes, 1).tags))
     expect(
       groupChangesByTagMutation(changes).map((group) => group.map((change) => change.id)),
     ).toEqual([[1, 2], [3]])
@@ -309,8 +316,8 @@ describe('groupChangesByTagMutation', () => {
         new: { type: 'way', id: 4, version: 2, tags: { highway: 'service', name: 'B Street' } },
       },
     ])
-    expect(tagMutationRows(changes[0].tags)).toEqual([])
-    expect(tagMutationRows(changes[1].tags)).toEqual([])
+    expect(tagMutationRows(at(changes, 0).tags)).toEqual([])
+    expect(tagMutationRows(at(changes, 1).tags)).toEqual([])
     expect(
       groupChangesByTagMutation(changes).map((group) => group.map((change) => change.id)),
     ).toEqual([[1], [2], [3, 4]])

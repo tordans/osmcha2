@@ -32,6 +32,7 @@ import {
   useSeenMap,
 } from '../../stores/changeset-notes-store.ts'
 import { getFocusedObject, useReviewFocusActions } from '../../stores/review-focus-store.ts'
+import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
@@ -421,7 +422,7 @@ function TagMutationGroup({
   zoomToAndSelect,
   notesByObject,
 }: {
-  changes: ElementChange[]
+  changes: NonEmptyArray<ElementChange>
   changesetId: number
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
@@ -511,7 +512,7 @@ function TagMutationGroup({
         key={`${disclosureKey}:${forceOpen ? 'open' : 'closed'}:${deepLinkEpoch ?? 0}`}
         defaultOpen={forceOpen}
       >
-        {({ open }) => (
+        {({ open }: { open: boolean }) => (
           <>
             <div className="flex items-center gap-2">
               <Headless.DisclosureButton
