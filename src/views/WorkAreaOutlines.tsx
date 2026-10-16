@@ -63,7 +63,8 @@ export function WorkAreaOutlines({
               // The map would read this click as "clicked empty map" and drop the selection.
               onPointerDown={suppressNextMapClick}
               onClick={() => onJump(area)}
-              className="-ml-1.5 cursor-pointer touch-manipulation rounded-t-md bg-fuchsia-600 px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-white select-none hover:bg-fuchsia-700"
+              // The label is 20px tall; the invisible pseudo element makes the tap area 44px.
+              className="relative -ml-1.5 cursor-pointer touch-manipulation rounded-t-md bg-fuchsia-600 px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-white select-none before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:bg-fuchsia-700"
             >
               Area {area.id}
             </button>

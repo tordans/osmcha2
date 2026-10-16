@@ -9,7 +9,7 @@ import type { WorkAreaChanges } from './workAreaChanges.ts'
 const PILL_SPRING = { type: 'spring' as const, damping: 36, stiffness: 320 }
 
 const tabLayoutClassName =
-  'inline-flex h-full flex-none items-center gap-1.5 px-2.5 text-sm font-medium whitespace-nowrap'
+  'inline-flex h-full min-w-11 flex-none items-center justify-center gap-1.5 px-2.5 text-sm font-medium whitespace-nowrap'
 
 type TabKey = 'all' | number
 
@@ -79,8 +79,10 @@ export function WorkAreaBar({
     <nav
       ref={navRef}
       aria-label="Work areas"
+      // Only side padding: the tabs fill the full 44px height as touch targets,
+      // while the pill keeps its inset (`top-1 bottom-1`).
       className={clsx(
-        'pointer-events-auto relative isolate flex h-11 max-w-full items-center overflow-x-auto rounded-lg p-1',
+        'pointer-events-auto relative isolate flex h-11 max-w-full items-center overflow-x-auto rounded-lg px-1',
         flyoutFrostedSurfaceClassName,
       )}
       onMouseLeave={() => setHovered(null)}
