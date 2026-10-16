@@ -180,7 +180,8 @@ function CMap({
   const urlWritesEnabledRef = useRef(false)
   const lastClickFeatureIdRef = useRef<string | number | null>(null)
   const matchedImageryUsedRef = useRef<string | null | undefined>(undefined)
-  const emptyAdiffWarnedRef = useRef(false)
+  // The map stays mounted across changesets; warn once per changeset, not once per session.
+  const emptyAdiffWarnedForRef = useRef<number | null>(null)
   const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const [cursor, setCursor] = useState('default')
@@ -274,15 +275,15 @@ function CMap({
 
   useEffect(
     function warnEmptyAdiff() {
-      if (!viewer || emptyAdiffWarnedRef.current) return
+      if (!viewer || emptyAdiffWarnedForRef.current === changesetId) return
       if (viewer.adiff.actions.length === 0) {
-        emptyAdiffWarnedRef.current = true
+        emptyAdiffWarnedForRef.current = changesetId
         toast.error('Augmented diff is empty', {
           description: 'No elements to show',
         })
       }
     },
-    [viewer],
+    [viewer, changesetId],
   )
 
   useEffect(
