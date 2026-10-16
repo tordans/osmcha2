@@ -20,8 +20,8 @@ import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import {
-  useChangesetHover,
   useChangesetHoverActions,
+  useIsAnyElementHovered,
   useIsElementHovered,
   useListScrollTarget,
 } from '../../stores/changeset-hover-store.ts'
@@ -434,14 +434,12 @@ function TagMutationGroup({
   const draft = useChangesetDraft(userKey, changesetId)
   const { markAllSeen, toggleEditor } = useChangesetNotesActions()
   const openEditor = useOpenEditor()
-  const hover = useChangesetHover()
+  const hoveredInGroup = useIsAnyElementHovered(changes)
   const listScrollTarget = useListScrollTarget()
   const currentUser = userKey === 'anonymous' ? undefined : userKey
   const mutations = tagMutationRows(changes[0].tags)
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
   const containsSelected = selectedInGroup != null
-  const hoveredInGroup =
-    hover != null && changes.some((change) => change.type === hover.type && change.id === hover.id)
   const scrollTargetInGroup =
     listScrollTarget != null &&
     changes.some(

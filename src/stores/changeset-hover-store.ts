@@ -37,6 +37,15 @@ export const useChangesetHover = () => useChangesetHoverStore((state) => state.h
 export const useIsElementHovered = (type: string, id: number) =>
   useChangesetHoverStore((state) => state.hover?.type === type && state.hover?.id === id)
 
+/** True while any of `elements` is hovered; re-renders only when that answer flips. */
+export const useIsAnyElementHovered = (elements: readonly ChangesetHover[]) =>
+  useChangesetHoverStore((state) => {
+    const { hover } = state
+    return (
+      hover != null && elements.some((item) => item.type === hover.type && item.id === hover.id)
+    )
+  })
+
 export const useListScrollTarget = () => useChangesetHoverStore((state) => state.listScrollTarget)
 
 export const useListScrollNonce = () => useChangesetHoverStore((state) => state.listScrollNonce)
