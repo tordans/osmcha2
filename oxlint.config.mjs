@@ -47,6 +47,16 @@ export default defineConfig({
     // 'typescript/no-array-delete': 'off',
   },
   overrides: [
+    // Everything under src/ ships to the browser (no server code in this SPA).
+    // Web APIs are checked against package.json browserslist.
+    {
+      files: ['src/**'],
+      excludeFiles: ['**/*.test.ts', '**/*.test.tsx', '**/*.test.jsx'],
+      jsPlugins: [{ name: 'compat', specifier: 'eslint-plugin-compat' }],
+      rules: {
+        'compat/compat': 'error',
+      },
+    },
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
       rules: {
