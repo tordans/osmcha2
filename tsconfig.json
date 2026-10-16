@@ -7,7 +7,7 @@
   //   paths: omitted — no src file imports through '@/'
   //   allowJs: kept — src/ has three .jsx test files, which TypeScript checks only with allowJs
   //   include: src/** only — vite.config.js and root config files are not type-checked
-  //   lib ES2025 accepts newer built-ins (for example Set.prototype.union); compat/compat in oxlint.config.mjs is the guard for them
+  //   lib ES2025 lets tsc accept built-ins newer than the browser floor (for example Set.prototype.union); compat/compat in oxlint.config.mjs catches only some of them
   "compilerOptions": {
     "target": "ES2025",
     "useDefineForClassFields": true,
