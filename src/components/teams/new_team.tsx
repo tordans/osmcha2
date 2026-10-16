@@ -229,10 +229,13 @@ export default function NewTeam(props: NewTeamProps) {
           and can be visualized by any logged in OSMCha user.
         </Text>
 
+        {/* The form error type is `unknown`; String() keeps any value visible, as before. */}
         <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
-          {(submitError) =>
+          {(submitError: unknown) =>
             submitError ? (
-              <p className="text-base/6 font-medium text-red-600">{String(submitError)}</p>
+              <p className="text-base/6 font-medium text-red-600">
+                {String(submitError as string)}
+              </p>
             ) : null
           }
         </form.Subscribe>

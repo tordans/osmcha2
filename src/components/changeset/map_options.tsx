@@ -417,7 +417,7 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
 
   return (
     <Headless.Popover>
-      {({ open }) => (
+      {({ open }: { open: boolean }) => (
         <>
           {isAppliedFromChangeset && appliedTooltip ? (
             <Tooltip as="span" content={appliedTooltip} className="inline-flex">
@@ -541,7 +541,7 @@ function ViewportEditorLayerList({
         ) : null}
         {categoryGroups.map(({ category, label, layers: groupLayers }) => (
           <Headless.Disclosure key={category} defaultOpen={false}>
-            {({ open }) => (
+            {({ open }: { open: boolean }) => (
               <div className={clsx('rounded-lg border border-zinc-950/10', open && 'bg-zinc-50')}>
                 <Headless.DisclosureButton className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-2.5 text-left text-sm font-medium text-zinc-700 select-none active:bg-zinc-950/5">
                   <span className="min-w-0 truncate">

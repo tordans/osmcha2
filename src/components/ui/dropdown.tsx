@@ -16,7 +16,7 @@ export function Dropdown({
 }: { backdrop?: boolean } & Headless.MenuProps) {
   return (
     <Headless.Menu as="div" {...props}>
-      {(bag) => (
+      {(bag: { open: boolean; close: () => void }) => (
         <>
           {backdrop && bag.open ? (
             <div aria-hidden className={flyoutBackdropClassName} onClick={() => bag.close()} />

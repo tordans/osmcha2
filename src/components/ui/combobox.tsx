@@ -114,7 +114,7 @@ export function Combobox<T>({
           'transition-opacity duration-100 ease-in data-closed:data-leave:opacity-0 data-transition:pointer-events-none',
         )}
       >
-        {({ option }) => children(option)}
+        {({ option }: { option: NonNullable<T> }) => children(option)}
       </Headless.ComboboxOptions>
     </Headless.Combobox>
   )

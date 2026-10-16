@@ -121,7 +121,7 @@ export function ListboxOption<T>({
 
   return (
     <Headless.ListboxOption as={Fragment} {...props}>
-      {({ selectedOption }) => {
+      {({ selectedOption }: { selectedOption: boolean }) => {
         if (selectedOption) {
           return <div className={clsx(className, sharedClasses)}>{children}</div>
         }
