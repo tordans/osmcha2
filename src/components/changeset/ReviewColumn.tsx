@@ -250,7 +250,7 @@ export function ReviewColumn({
           className={clsx(
             'min-h-0 flex-1 flex-col overflow-hidden',
             expanded ? 'flex' : 'hidden',
-            'min-[56rem]:flex',
+            'pb-[env(safe-area-inset-bottom)] min-[56rem]:flex min-[56rem]:pb-0',
           )}
         >
           <div className="shrink-0 border-b border-zinc-200">
