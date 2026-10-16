@@ -4,6 +4,7 @@ import { createRootRouteWithContext, Outlet, redirect } from '@tanstack/react-ro
 import { MotionConfig } from 'motion/react'
 import { useAppHeight } from '../hooks/useAppHeight.ts'
 import { useBookmarkletAuthHandoff } from '../hooks/useBookmarkletAuthHandoff.ts'
+import { useOsmchaStatusToast } from '../hooks/useOsmchaStatusToast.ts'
 import { AppShell } from '../layout/AppShell.tsx'
 import { PanePresence } from '../layout/PanePresence.tsx'
 import { aoiQueryOptions } from '../query/options/aoi.ts'
@@ -99,6 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootLayout() {
   useAppHeight()
   useBookmarkletAuthHandoff()
+  useOsmchaStatusToast()
 
   return (
     <MotionConfig reducedMotion="user">
