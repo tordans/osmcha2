@@ -45,10 +45,12 @@ export function syncSeenFeatureState(
   if (!map.getSource(CHANGESET_SOURCE_ID)) return
   for (const feature of geojson.features) {
     if (feature.id == null) continue
-    map.setFeatureState(
-      { source: CHANGESET_SOURCE_ID, id: feature.id },
-      { seen: featureIsSeen(feature.properties, seenMap) },
-    )
+    const target = { source: CHANGESET_SOURCE_ID, id: feature.id }
+    const seen = featureIsSeen(feature.properties, seenMap)
+    // MapLibre re-uploads every feature passed to setFeatureState, even with an unchanged value.
+    // Marking one object seen should not re-upload the thousands of others.
+    if (map.getFeatureState(target).seen === seen) continue
+    map.setFeatureState(target, { seen })
   }
 }
 

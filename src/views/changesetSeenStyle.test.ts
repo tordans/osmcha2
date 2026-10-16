@@ -133,6 +133,7 @@ describe('syncSeenFeatureState', () => {
     const calls: Array<{ id: string | number; state: object }> = []
     const map = {
       getSource: () => ({}),
+      getFeatureState: () => ({}),
       setFeatureState: (_ref: { id: string | number }, state: object) => {
         calls.push({ id: _ref.id, state })
       },
@@ -153,6 +154,34 @@ describe('syncSeenFeatureState', () => {
       { id: 1, state: { seen: true } },
       { id: 2, state: { seen: false } },
     ])
+  })
+
+  test('only touches features whose seen state changed', () => {
+    const states = new globalThis.Map<string | number, { seen?: boolean }>()
+    const calls: Array<string | number> = []
+    const map = {
+      getSource: () => ({}),
+      getFeatureState: (ref: { id: string | number }) => ({ ...states.get(ref.id) }),
+      setFeatureState: (ref: { id: string | number }, state: { seen: boolean }) => {
+        calls.push(ref.id)
+        states.set(ref.id, { ...states.get(ref.id), ...state })
+      },
+    } as unknown as Map
+    const geojson = {
+      features: [
+        { id: 1, properties: { type: 'way', id: 10 } },
+        { id: 2, properties: { type: 'node', id: 11 } },
+        { id: 3, properties: { type: 'node', id: 12 } },
+      ],
+    }
+
+    syncSeenFeatureState(map, geojson, { 'way/10': 'x' })
+    expect(calls).toEqual([1, 2, 3])
+
+    calls.length = 0
+    syncSeenFeatureState(map, geojson, { 'way/10': 'x', 'node/12': 'y' })
+    expect(calls).toEqual([3])
+    expect([...states.values()]).toEqual([{ seen: true }, { seen: false }, { seen: true }])
   })
 
   test('no-ops until the changeset source exists', () => {
