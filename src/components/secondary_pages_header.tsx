@@ -5,7 +5,7 @@ import { Heading } from './ui/heading.tsx'
 export function AccountPage({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh px-[max(1.5rem,env(safe-area-inset-left))] pt-[max(1.5rem,env(safe-area-inset-top))] pr-[max(1.5rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <div className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-6">{children}</div>
+      <div className="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-6">{children}</div>
     </div>
   )
 }
