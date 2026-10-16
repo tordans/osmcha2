@@ -144,7 +144,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </main>
         </div>
       </PaneAvailableContext.Provider>
-      <DebugOverlay />
+      {import.meta.env.DEV && <DebugOverlay />}
     </div>
   )
 }
