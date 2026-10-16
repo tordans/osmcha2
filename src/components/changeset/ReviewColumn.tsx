@@ -23,7 +23,7 @@ import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import { useListScrollNonce, useListScrollTarget } from '../../stores/changeset-hover-store.ts'
-import { useChangesetNotesActions } from '../../stores/changeset-notes-store.ts'
+import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
@@ -87,7 +87,7 @@ export function ReviewColumn({
   zoomToAndSelect,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
-  const { requestFinishFocus } = useChangesetNotesActions()
+  const { requestFinishFocus } = useReviewFocusActions()
   const [expanded, setExpanded] = useState(() => selectedRef != null)
   const [expandedForEpoch, setExpandedForEpoch] = useState(0)
   const selectedObjectKey = selectedRef ? `${selectedRef.type}/${selectedRef.id}` : null

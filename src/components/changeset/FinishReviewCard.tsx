@@ -15,8 +15,8 @@ import {
   postableDraftNotes,
   useChangesetDraft,
   useChangesetNotesActions,
-  useFinishFocusRequest,
 } from '../../stores/changeset-notes-store.ts'
+import { useFinishFocusRequest, useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import { Button } from '../ui/button.tsx'
 import { Textarea } from '../ui/textarea.tsx'
 import { typeScale } from '../ui/typography.ts'
@@ -31,8 +31,8 @@ export function FinishReviewCard({
 }) {
   const userKey = useNotesUserKey()
   const draft = useChangesetDraft(userKey, changesetId)
-  const { setIntro, removeDraftNote, setOpenEditor, clearDraft, clearFinishFocusRequest } =
-    useChangesetNotesActions()
+  const { setIntro, removeDraftNote, setOpenEditor, clearDraft } = useChangesetNotesActions()
+  const { clearFinishFocusRequest } = useReviewFocusActions()
   const focusRequested = useFinishFocusRequest() === changesetId
   const cardRef = useRef<HTMLElement>(null)
   const queryClient = useQueryClient()

@@ -28,10 +28,10 @@ import {
 import {
   useChangesetDraft,
   useChangesetNotesActions,
-  useFocusedObject,
   useOpenEditor,
   useSeenMap,
 } from '../../stores/changeset-notes-store.ts'
+import { getFocusedObject, useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
@@ -177,8 +177,8 @@ export function DetailsChanges({
   const userKey = useNotesUserKey()
   const seenMap = useSeenMap(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
-  const focusedObject = useFocusedObject()
-  const { markSeen, markUnseen, toggleEditor, requestFinishFocus } = useChangesetNotesActions()
+  const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
+  const { requestFinishFocus } = useReviewFocusActions()
   const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
   const changes = buildElementChanges(adiff?.actions ?? [], flagged, reasons)
   const { listedObjects, keysByObject } = listedObjectsFromChanges(changes)
@@ -194,6 +194,7 @@ export function DetailsChanges({
     {
       hotkey: 'N',
       callback: () => {
+        const focusedObject = getFocusedObject()
         if (!focusedObject || focusedObject.changesetId !== changesetId) return
         const nextRef = refParamFromElement(focusedObject.type, focusedObject.id)
         if (nextRef) toggleEditor(userKey, changesetId, nextRef)
@@ -202,6 +203,7 @@ export function DetailsChanges({
     {
       hotkey: 'S',
       callback: () => {
+        const focusedObject = getFocusedObject()
         if (!focusedObject || focusedObject.changesetId !== changesetId) return
         const objectKey = objectRefKey(focusedObject.type, focusedObject.id)
         const change = changes.find(
@@ -616,7 +618,8 @@ function ElementChangeRow({
   const seenMap = useSeenMap(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
   const openEditor = useOpenEditor()
-  const { markSeen, markUnseen, toggleEditor, setFocusedObject } = useChangesetNotesActions()
+  const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
+  const { setFocusedObject } = useReviewFocusActions()
   const { setHover } = useChangesetHoverActions()
   const hovered = useIsElementHovered(change.type, change.id)
   const currentUser = userKey === 'anonymous' ? undefined : userKey

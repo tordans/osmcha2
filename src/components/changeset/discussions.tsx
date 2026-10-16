@@ -6,7 +6,10 @@ import {
   type ParsedNote,
 } from '../../notes/discussionNotes.ts'
 import { serializePinParam } from '../../routing/pinParam.ts'
-import { useChangesetNotesActions, useDiscussionRaw } from '../../stores/changeset-notes-store.ts'
+import {
+  useDiscussionLayoutActions,
+  useDiscussionRaw,
+} from '../../stores/discussion-layout-store.ts'
 import { parseOsmDate } from '../../utils/datetime.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { RelativeTime } from '../relative_time.tsx'
@@ -34,7 +37,7 @@ function Discussions({
   onFinishInChanges,
 }: DiscussionsProps) {
   const discussionRaw = useDiscussionRaw()
-  const { setDiscussionRaw } = useChangesetNotesActions()
+  const { setDiscussionRaw } = useDiscussionLayoutActions()
 
   return (
     <section className="p-2.5">

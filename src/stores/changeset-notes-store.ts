@@ -140,15 +140,10 @@ function draftNoteIsBlank(note: DraftNote) {
 }
 
 interface ChangesetNotesStore {
-  discussionRaw: boolean
   byUser: Record<string, UserNotesState>
   openEditor: OpenEditor | null
   pinPlacement: PinPlacement | null
-  /** Changeset whose Post notes card scrolls into view once it renders; cleared after. */
-  finishFocusRequest: number | null
-  focusedObject: { changesetId: number; type: string; id: number } | null
   actions: {
-    setDiscussionRaw: (value: boolean) => void
     markSeen: (userKey: string, changesetId: number, objectKey: string) => void
     markUnseen: (userKey: string, changesetId: number, objectKey: string) => void
     markAllSeen: (userKey: string, changesetId: number, objectKeys: string[]) => void
@@ -163,24 +158,16 @@ interface ChangesetNotesStore {
     setDraftPin: (userKey: string, changesetId: number, noteId: string, pin: PinParam) => void
     clearPin: (userKey: string, changesetId: number, noteId: string) => void
     clearDraft: (userKey: string, changesetId: number) => void
-    requestFinishFocus: (changesetId: number) => void
-    clearFinishFocusRequest: () => void
-    setFocusedObject: (focused: { changesetId: number; type: string; id: number } | null) => void
   }
 }
 
 const useChangesetNotesStore = create<ChangesetNotesStore>()(
   persist(
     (set) => ({
-      discussionRaw: false,
       byUser: {},
       openEditor: null,
       pinPlacement: null,
-      finishFocusRequest: null,
-      focusedObject: null,
       actions: {
-        setDiscussionRaw: (value) =>
-          set((state) => (state.discussionRaw === value ? state : { discussionRaw: value })),
         markSeen: (userKey, changesetId, objectKey) =>
           set((state) => {
             const user = userOf(state.byUser, userKey)
@@ -393,10 +380,6 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
               byUser: writeUser(state.byUser, userKey, { ...user, drafts }),
             }
           }),
-        requestFinishFocus: (changesetId) => set({ finishFocusRequest: changesetId }),
-        clearFinishFocusRequest: () =>
-          set((state) => (state.finishFocusRequest == null ? state : { finishFocusRequest: null })),
-        setFocusedObject: (focused) => set({ focusedObject: focused }),
       },
     }),
     {
@@ -416,8 +399,6 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
   ),
 )
 
-export const useDiscussionRaw = () => useChangesetNotesStore((state) => state.discussionRaw)
-
 export const useChangesetNotesActions = () => useChangesetNotesStore((state) => state.actions)
 
 export const useChangesetDraft = (userKey: string, changesetId: number) =>
@@ -431,11 +412,6 @@ export const useSeenMap = (userKey: string, changesetId: number) =>
 export const useOpenEditor = () => useChangesetNotesStore((state) => state.openEditor)
 
 export const usePinPlacement = () => useChangesetNotesStore((state) => state.pinPlacement)
-
-export const useFinishFocusRequest = () =>
-  useChangesetNotesStore((state) => state.finishFocusRequest)
-
-export const useFocusedObject = () => useChangesetNotesStore((state) => state.focusedObject)
 
 export function getPinPlacement() {
   return useChangesetNotesStore.getState().pinPlacement
@@ -457,12 +433,9 @@ export function getChangesetDraft(userKey: string, changesetId: number) {
 
 export function resetChangesetNotesStoreForTests() {
   useChangesetNotesStore.setState({
-    discussionRaw: false,
     byUser: {},
     openEditor: null,
     pinPlacement: null,
-    finishFocusRequest: null,
-    focusedObject: null,
   })
 }
 
