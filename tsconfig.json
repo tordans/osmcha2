@@ -1,7 +1,6 @@
 {
   // Soft-aligned to the FMC app profile (total-typescript bundler/dom, inlined, no extends).
   // Vite SPA: no server boundary and no scripts/ folder, so one app profile is enough.
-  // Not adopted yet: noUncheckedIndexedAccess (50 errors) and noImplicitAny (11 errors) need source changes.
   // Other deviations from examples/tsconfig.app.json:
   //   types: vite/client only — no Bun globals in src/, so no bun-types/web and no @types/bun or bun-types devDependency
   //   paths: omitted — no src file imports through '@/'
@@ -25,7 +24,10 @@
     "noErrorTruncation": true,
     "jsx": "react-jsx",
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noUncheckedSideEffectImports": true,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
