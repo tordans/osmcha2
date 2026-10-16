@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   buildElementChanges,
+  type AdiffAction,
   groupChangesByTagMutation,
   groupElementChanges,
   matchFlaggedFeature,
@@ -171,6 +172,37 @@ describe('buildElementChanges', () => {
     expect(changes[0].nodeStats).toEqual({ added: 0, modified: 5, deleted: 0 })
     expect(changes[1].geometry).toBe('moved')
     expect(changes[2].geometry).toBe('moved')
+  })
+
+  test('counts shared member nodes on every way that holds them', () => {
+    const way = (id: number, refs: number[]): AdiffAction => ({
+      type: 'modify',
+      old: { type: 'way', id, version: 1, nodes: refs.slice(1), tags: { highway: 'path' } },
+      new: { type: 'way', id, version: 2, nodes: refs, tags: { highway: 'path' } },
+    })
+    const changes = buildElementChanges([
+      way(10, [1, 2, 3]),
+      way(11, [3, 4]),
+      way(12, [7, 8]),
+      { type: 'create', new: { type: 'node', id: 1, version: 1, tags: {} } },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 3, version: 1, lat: 1, lon: 1, tags: {} },
+        new: { type: 'node', id: 3, version: 2, lat: 1.1, lon: 1, tags: {} },
+      },
+      { type: 'delete', old: { type: 'node', id: 4, version: 3, tags: {} } },
+      { type: 'noop', new: { type: 'node', id: 2, version: 1 } },
+      {
+        type: 'modify',
+        old: { type: 'node', id: 7, version: 4, tags: {} },
+        new: { type: 'node', id: 7, version: 4, tags: {} },
+      },
+    ])
+    expect(changes.map((change) => [`${change.type}/${change.id}`, change.nodeStats])).toEqual([
+      ['way/10', { added: 1, modified: 1, deleted: 0 }],
+      ['way/11', { added: 0, modified: 1, deleted: 1 }],
+      ['way/12', { added: 0, modified: 0, deleted: 0 }],
+    ])
   })
 
   test('still skips a same-version way whose member geometry did not change', () => {

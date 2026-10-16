@@ -247,15 +247,18 @@ function emptyNodeStats(): NodeStats {
   return { added: 0, modified: 0, deleted: 0 }
 }
 
-function countWayNodeStats(wayAction: AdiffAction, actions: AdiffAction[]): NodeStats {
-  const refs = new Set([...wayNodeRefs(wayAction.old), ...wayNodeRefs(wayAction.new)])
-  const stats = emptyNodeStats()
-  if (refs.size === 0) return stats
-
+/** Create/modify/delete counts per node id, so each way sums its own nodes without rescanning every action. */
+function nodeActionStats(actions: AdiffAction[]): Map<number, NodeStats> {
+  const byNode = new Map<number, NodeStats>()
   for (const action of actions) {
     if (isNoopAction(action) || !isElementActionType(action.type)) continue
     const element = currentElement(action)
-    if (element?.type !== 'node' || element.id == null || !refs.has(element.id)) continue
+    if (element?.type !== 'node' || element.id == null) continue
+    let stats = byNode.get(element.id)
+    if (!stats) {
+      stats = emptyNodeStats()
+      byNode.set(element.id, stats)
+    }
     switch (action.type) {
       case 'create':
         stats.added += 1
@@ -267,6 +270,19 @@ function countWayNodeStats(wayAction: AdiffAction, actions: AdiffAction[]): Node
         stats.deleted += 1
         break
     }
+  }
+  return byNode
+}
+
+function countWayNodeStats(wayAction: AdiffAction, byNode: Map<number, NodeStats>): NodeStats {
+  const refs = new Set([...wayNodeRefs(wayAction.old), ...wayNodeRefs(wayAction.new)])
+  const stats = emptyNodeStats()
+  for (const ref of refs) {
+    const node = byNode.get(ref)
+    if (!node) continue
+    stats.added += node.added
+    stats.modified += node.modified
+    stats.deleted += node.deleted
   }
   return stats
 }
@@ -298,6 +314,7 @@ export function buildElementChanges(
   changesetReasons: NamedReason[] = [],
 ): ElementChange[] {
   const wayMemberNodes = wayMemberNodeIds(actions)
+  const statsByNode = nodeActionStats(actions)
   const changes: ElementChange[] = []
 
   for (const action of actions) {
@@ -307,7 +324,7 @@ export function buildElementChanges(
     if (!isOsmElementType(element.type) || !isElementActionType(action.type)) continue
     const type = element.type
     const flagged = matchFlaggedFeature(type, element.id, flaggedFeatures)
-    const nodeStats = type === 'way' ? countWayNodeStats(action, actions) : undefined
+    const nodeStats = type === 'way' ? countWayNodeStats(action, statsByNode) : undefined
 
     changes.push({
       actionType: action.type,
