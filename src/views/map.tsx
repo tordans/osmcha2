@@ -143,6 +143,38 @@ function CollapseCompactAttributionOnMount() {
   return null
 }
 
+/**
+ * Owns the hover subscription so a hover change re-renders only this, not the whole map view.
+ * Render inside `<Map>`, after the changeset `<Source>`.
+ */
+function HoverFeatureStateSync({
+  viewer,
+  styleEpoch,
+}: {
+  viewer: ChangesetAdiffViewer
+  styleEpoch: number
+}) {
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  const hover = useChangesetHover()
+
+  const applyHighlightFromHover = useEffectEvent((map: MaplibreMap) => {
+    syncHighlightedFeatureState(map, viewer.geojson, hover)
+  })
+
+  useEffect(
+    function syncHighlightedFeatureStateFromHover() {
+      if (!mapLoaded) return
+      const map = mainMap?.getMap()
+      if (!map) return
+      applyHighlightFromHover(map)
+    },
+    [mapLoaded, mainMap, viewer, hover, styleEpoch],
+  )
+
+  return null
+}
+
 interface CMapProps {
   changesetId: number | null
   imageryUsed?: string | null
@@ -193,7 +225,6 @@ function CMap({
   const spyglassEnabled = mapLayers.spyglass
   const userKey = useNotesUserKey()
   const seenMap = useSeenMap(userKey, changesetId ?? 0)
-  const hover = useChangesetHover()
   const { setHover, requestListScroll } = useChangesetHoverActions()
   const jumpToWorkArea = useJumpToWorkArea(workAreas)
   const viewBounds = workAreas[0]?.bounds ?? null
@@ -376,21 +407,6 @@ function CMap({
       applyFeatureStateFromRef(map)
     },
     [mapLoaded, mainMap, viewer, refSearch, styleEpoch],
-  )
-
-  const applyHighlightFromHover = useEffectEvent((map: MaplibreMap) => {
-    if (!viewer) return
-    syncHighlightedFeatureState(map, viewer.geojson, hover)
-  })
-
-  useEffect(
-    function syncHighlightedFeatureStateFromHover() {
-      if (!mapLoaded) return
-      const map = mainMap?.getMap()
-      if (!map) return
-      applyHighlightFromHover(map)
-    },
-    [mapLoaded, mainMap, viewer, hover, styleEpoch],
   )
 
   const applySeenFromNotes = useEffectEvent((map: MaplibreMap) => {
@@ -600,6 +616,7 @@ function CMap({
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
             </Source>
+            <HoverFeatureStateSync viewer={viewer} styleEpoch={styleEpoch} />
             {overlayBg && firstFeatureLayerId ? (
               <ChangesetOverlayBackground
                 layer={overlayBg as LayerProps}
