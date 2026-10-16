@@ -19,7 +19,9 @@ export function Listbox<T>({
   children?: React.ReactNode
 } & Omit<Headless.ListboxProps<'div', T>, 'as' | 'multiple'>) {
   return (
-    <Headless.Listbox as={'div' as const} {...props} multiple={false}>
+    // min-w-0: in a flex row a long placeholder would otherwise push the
+    // control past the viewport instead of truncating.
+    <Headless.Listbox as={'div' as const} className="min-w-0" {...props} multiple={false}>
       <Headless.ListboxButton
         autoFocus={autoFocus}
         data-slot="control"
@@ -79,8 +81,9 @@ export function Listbox<T>({
         className={clsx(
           // Anchor positioning
           '[--anchor-offset:-1.625rem] [--anchor-padding:--spacing(4)] sm:[--anchor-offset:-1.375rem]',
-          // Base styles
-          'isolate w-max min-w-[calc(var(--button-width)+1.75rem)] scroll-py-1 rounded-xl p-1 select-none',
+          // Base styles. The min-width stays inside the anchor padding, so a
+          // full-width control on a phone does not open a menu past the edge.
+          'isolate w-max min-w-[min(calc(var(--button-width)+1.75rem),calc(100vw-2*var(--anchor-padding)))] scroll-py-1 rounded-xl p-1 select-none',
           // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
           'outline outline-transparent focus:outline-hidden',
           // Handle scrolling when menu won't fit in viewport
