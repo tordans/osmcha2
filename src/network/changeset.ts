@@ -1,4 +1,3 @@
-import adiffParser from '@osmcha/osm-adiff-parser'
 import { subSeconds } from 'date-fns'
 import { z } from 'zod'
 import { adiffServiceUrl, apiOSM, overpassBase } from '../config/constants.ts'
@@ -55,7 +54,12 @@ export function fetchChangeset(id: number): Promise<ChangesetFeature> {
 }
 
 export async function fetchAndParseAugmentedDiff(id: number) {
-  const xml = await fetchAugmentedDiff(id)
+  // The parser (and its `sax` dependency) loads with the first diff, not with
+  // the app shell: the route loader that calls this lives in the entry chunk.
+  const [xml, { default: adiffParser }] = await Promise.all([
+    fetchAugmentedDiff(id),
+    import('@osmcha/osm-adiff-parser'),
+  ])
   const adiff = await adiffParser(xml)
   return adiff
 }
