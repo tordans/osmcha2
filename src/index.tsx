@@ -15,6 +15,24 @@ import { persistQueryOptions } from './query/persist.ts'
 import { router } from './router.tsx'
 import { waitForAuthHydration } from './stores/auth-store.ts'
 
+const CHUNK_RELOAD_KEY = 'osmcha-chunk-reload-at'
+const CHUNK_RELOAD_WINDOW_MS = 10_000
+
+// A tab opened before a new GitHub Pages deploy still requests the chunk files
+// the deploy removed. One reload loads the new index.html; the timestamp keeps
+// a persistent failure from reloading in a loop. Without storage, do not reload.
+window.addEventListener('vite:preloadError', (event) => {
+  try {
+    const lastReload = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY)) || 0
+    if (Date.now() - lastReload < CHUNK_RELOAD_WINDOW_MS) return
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()))
+  } catch {
+    return
+  }
+  event.preventDefault()
+  window.location.reload()
+})
+
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element not found')
 
