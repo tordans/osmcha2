@@ -134,7 +134,7 @@ export function SavedFilters() {
                         <RouterLink
                           to="/filters"
                           search={{ aoi: String(aoi.id) }}
-                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-2 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-2 text-sm font-semibold wrap-anywhere text-zinc-950 select-none hover:bg-zinc-950/5"
                         >
                           {aoi.properties?.name}
                         </RouterLink>
