@@ -153,7 +153,7 @@ function NavigationMenu() {
         aria-label="Menu"
         data-panel-origin="menu"
         className={clsx(
-          'group relative isolate z-10 h-9 min-h-9 bg-zinc-100',
+          'group relative isolate z-10 h-11 min-h-11 bg-zinc-100 sm:h-9 sm:min-h-9',
           chromeButtonShadowClassName,
           'data-hover:bg-zinc-100! data-open:z-[110] data-open:bg-zinc-100!',
         )}

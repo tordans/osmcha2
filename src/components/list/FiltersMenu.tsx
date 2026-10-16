@@ -145,7 +145,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
         aria-busy={pending}
         aria-label={pending ? `${triggerLabel}, loading` : triggerLabel}
         title={triggerLabel}
-        className="group relative h-9 min-h-9 w-full min-w-0 justify-start data-open:z-[110]"
+        className="group relative h-11 min-h-11 w-full min-w-0 justify-start data-open:z-[110] sm:h-9 sm:min-h-9"
       >
         <span className="min-w-0 truncate">{triggerLabel}</span>
         {pending ? (
