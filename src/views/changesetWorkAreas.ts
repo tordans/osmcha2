@@ -95,7 +95,18 @@ function elementBounds(
   return elements
 }
 
-/** Single linkage: elements whose boxes are within `gap` of each other share a cluster. */
+/** True when the boxes are at most `gap` apart on both axes. */
+function boxesWithin(a: Box, b: Box, gap: number) {
+  return a[0] <= b[2] + gap && b[0] <= a[2] + gap && a[1] <= b[3] + gap && b[1] <= a[3] + gap
+}
+
+/**
+ * Single linkage: elements whose boxes are within `gap` of each other share a cluster.
+ *
+ * Boxes go into a grid of `gap / 3` cells. Boxes in the same or touching cells are
+ * always within `gap`, so they join without a check; only cells two to four apart
+ * compare boxes. A busy changeset is then near-linear instead of comparing every pair.
+ */
 function clusterBoxes(boxes: readonly Box[], gap: number) {
   const parent = boxes.map((_, index) => index)
   function find(index: number) {
@@ -108,14 +119,77 @@ function clusterBoxes(boxes: readonly Box[], gap: number) {
     }
     return root
   }
+  function join(a: number, b: number) {
+    parent[find(a)] = find(b)
+  }
 
-  const order = boxes.map((_, index) => index).sort((a, b) => boxes[a]![0] - boxes[b]![0])
-  for (let i = 0; i < order.length; i++) {
-    const a = boxes[order[i]!]!
-    for (let j = i + 1; j < order.length; j++) {
-      const b = boxes[order[j]!]!
-      if (b[0] > a[2] + gap) break
-      if (b[1] <= a[3] + gap && a[1] <= b[3] + gap) parent[find(order[j]!)] = find(order[i]!)
+  const size = gap / 3
+  let originX = Infinity
+  let originY = Infinity
+  let maxY = -Infinity
+  for (const box of boxes) {
+    originX = Math.min(originX, box[0])
+    originY = Math.min(originY, box[1])
+    maxY = Math.max(maxY, box[3])
+  }
+  const column = (x: number) => Math.floor((x - originX) / size)
+  const row = (y: number) => Math.floor((y - originY) / size)
+  // `gap` is at least a tenth of the extent, so the grid stays around 30×30 cells.
+  const rows = row(maxY) + 1
+  const cells = new Map<number, { column: number; row: number; members: number[] }>()
+  boxes.forEach((box, index) => {
+    for (let x = column(box[0]); x <= column(box[2]); x++) {
+      for (let y = row(box[1]); y <= row(box[3]); y++) {
+        const key = x * rows + y
+        const cell = cells.get(key)
+        if (cell) {
+          cell.members.push(index)
+          join(index, cell.members[0]!)
+        } else {
+          cells.set(key, { column: x, row: y, members: [index] })
+        }
+      }
+    }
+  })
+
+  function cellBox(cell: { column: number; row: number }): Box {
+    const minX = originX + cell.column * size
+    const minY = originY + cell.row * size
+    return [minX, minY, minX + size, minY + size]
+  }
+
+  function joinIfAnyWithin(a: number[], b: number[], aBox: Box, bBox: Box) {
+    // Only boxes near the other cell can be within `gap`; the slack covers rounding.
+    const nearB = a.filter((index) => boxesWithin(boxes[index]!, bBox, gap + size))
+    const nearA = b.filter((index) => boxesWithin(boxes[index]!, aBox, gap + size))
+    for (const i of nearB) {
+      for (const j of nearA) {
+        if (boxesWithin(boxes[i]!, boxes[j]!, gap)) {
+          join(i, j)
+          return
+        }
+      }
+    }
+  }
+
+  const MAX_CELL_DISTANCE = 4
+  for (const pass of ['touching', 'apart'] as const) {
+    for (const cell of cells.values()) {
+      for (let dx = 0; dx <= MAX_CELL_DISTANCE; dx++) {
+        for (let dy = -MAX_CELL_DISTANCE; dy <= MAX_CELL_DISTANCE; dy++) {
+          // Each pair of cells once.
+          if (dx === 0 && dy <= 0) continue
+          const touching = dx <= 1 && Math.abs(dy) <= 1
+          if (touching !== (pass === 'touching')) continue
+          const other = cells.get((cell.column + dx) * rows + cell.row + dy)
+          if (!other || other.row !== cell.row + dy) continue
+          const a = cell.members[0]!
+          const b = other.members[0]!
+          if (find(a) === find(b)) continue
+          if (touching) join(a, b)
+          else joinIfAnyWithin(cell.members, other.members, cellBox(cell), cellBox(other))
+        }
+      }
     }
   }
 

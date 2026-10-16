@@ -77,6 +77,30 @@ describe('changesetWorkAreas', () => {
     expect(areas.reduce((sum, area) => sum + area.elementKeys.size, 0)).toBe(30)
   })
 
+  test('keeps a busy cluster whole and joins only the edits within the gap', () => {
+    // 900 nodes within ~1.5 km, a 1° jump to a second town, and a chain heading east
+    // whose steps sit just under and just over the split gap (a tenth of the extent).
+    const busy = Array.from({ length: 900 }, (_, index) =>
+      node(index + 1, 13.4 + (index % 30) * 0.0005, 52.5 + Math.floor(index / 30) * 0.0005),
+    )
+    const chain = [
+      node(1001, 13.4145 + 0.09, 52.5),
+      node(1002, 13.4145 + 0.09 + 0.11, 52.5),
+      node(1003, 13.4145 + 0.09 + 0.11 + 0.09, 52.5),
+    ]
+    const town = [node(2001, 14.4, 52.5), node(2002, 14.401, 52.501)]
+
+    const areas = changesetWorkAreas([...town, ...chain, ...busy])
+
+    expect(areas.map((area) => [area.id, area.elementKeys.size])).toEqual([
+      [1, 901],
+      [2, 2],
+      [3, 2],
+    ])
+    expect(areas[0]!.elementKeys.has('node/1001')).toBe(true)
+    expect([...areas[1]!.elementKeys]).toEqual(['node/1002', 'node/1003'])
+  })
+
   test('assigns a relation to the area it touches without widening that area', () => {
     const areas = changesetWorkAreas([...delftAndHuizhou, relation(7, [4, 51, 6, 53])])
 
