@@ -81,9 +81,10 @@ export function Listbox<T>({
         className={clsx(
           // Anchor positioning
           '[--anchor-offset:-1.625rem] [--anchor-padding:--spacing(4)] sm:[--anchor-offset:-1.375rem]',
-          // Base styles. The min-width stays inside the anchor padding, so a
-          // full-width control on a phone does not open a menu past the edge.
-          'isolate w-max min-w-[min(calc(var(--button-width)+1.75rem),calc(100vw-2*var(--anchor-padding)))] scroll-py-1 rounded-xl p-1 select-none',
+          // Base styles. Width is capped to the screen minus the anchor padding,
+          // so a full-width control on a phone does not open a menu past the
+          // edge, and long option labels truncate (ListboxLabel) instead.
+          'isolate w-max max-w-[calc(100vw-2*var(--anchor-padding))] min-w-[min(calc(var(--button-width)+1.75rem),calc(100vw-2*var(--anchor-padding)))] scroll-py-1 rounded-xl p-1 select-none',
           // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
           'outline outline-transparent focus:outline-hidden',
           // Handle scrolling when menu won't fit in viewport
