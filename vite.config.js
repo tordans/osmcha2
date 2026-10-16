@@ -7,6 +7,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
+import { configDefaults } from 'vitest/config'
 
 /**
  * GitHub Pages has no SPA rewrite. Copy index.html → 404.html so deep links
@@ -139,6 +140,8 @@ export default defineConfig(({ mode }) => {
 
     test: {
       globals: true,
+      // Agent worktrees under .claude/ carry their own copies of every test.
+      exclude: [...configDefaults.exclude, '.claude/**'],
       environment: 'jsdom',
       env: {
         TZ: 'UTC',
