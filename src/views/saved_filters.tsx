@@ -128,7 +128,8 @@ export function SavedFilters() {
               <TableBody>
                 {aois.map((aoi) => (
                   <TableRow key={aoi.id}>
-                    <TableCell>
+                    {/* Long names wrap so the actions stay on screen on a phone. */}
+                    <TableCell className="whitespace-normal">
                       <div className="flex flex-wrap items-center gap-2">
                         <RouterLink
                           to="/filters"
