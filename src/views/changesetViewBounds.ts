@@ -1,5 +1,3 @@
-import bbox from '@turf/bbox'
-
 const EPSILON_DEG = 0.00005
 const CHANGED_ACTIONS = new Set(['create', 'modify', 'delete'])
 
@@ -16,8 +14,67 @@ export type ChangesetViewFeature = {
 
 export type LngLatBoundsTuple = [number, number, number, number]
 
+type GeometryFeature = ChangesetViewFeature & { geometry: GeoJSON.Geometry }
+
+/** West, south, east, north of the positions seen so far. */
+type Extent = [west: number, south: number, east: number, north: number]
+
 function versionOnSide(group: readonly ChangesetViewFeature[], side: string): number | undefined {
   return group.find((feature) => feature.properties?.side === side)?.properties?.version
+}
+
+function emptyExtent(): Extent {
+  return [Infinity, Infinity, -Infinity, -Infinity]
+}
+
+/** Same comparisons as `@turf/bbox`, so a NaN coordinate is skipped on its own axis. */
+function extendWithPosition(extent: Extent, position: GeoJSON.Position) {
+  const x = position[0]!
+  const y = position[1]!
+  if (extent[0] > x) extent[0] = x
+  if (extent[1] > y) extent[1] = y
+  if (extent[2] < x) extent[2] = x
+  if (extent[3] < y) extent[3] = y
+}
+
+/** Walks every position of a geometry in one pass, the way `@turf/bbox` does, without per-position closures. */
+function extendWithGeometry(extent: Extent, geometry: GeoJSON.Geometry) {
+  switch (geometry.type) {
+    case 'Point':
+      extendWithPosition(extent, geometry.coordinates)
+      return
+    case 'MultiPoint':
+    case 'LineString':
+      for (const position of geometry.coordinates) extendWithPosition(extent, position)
+      return
+    case 'MultiLineString':
+    case 'Polygon':
+      for (const line of geometry.coordinates) {
+        for (const position of line) extendWithPosition(extent, position)
+      }
+      return
+    case 'MultiPolygon':
+      for (const polygon of geometry.coordinates) {
+        for (const ring of polygon) {
+          for (const position of ring) extendWithPosition(extent, position)
+        }
+      }
+      return
+    case 'GeometryCollection':
+      for (const child of geometry.geometries) {
+        if (child) extendWithGeometry(extent, child)
+      }
+      return
+    default:
+      throw new Error('Unknown Geometry Type')
+  }
+}
+
+function finiteBounds(extent: Extent): LngLatBoundsTuple | null {
+  const [west, south, east, north] = extent
+  if (!Number.isFinite(west) || !Number.isFinite(south)) return null
+  if (!Number.isFinite(east) || !Number.isFinite(north)) return null
+  return [west, south, east, north]
 }
 
 export function elementKey(feature: ChangesetViewFeature): string | null {
@@ -58,14 +115,18 @@ function isChangedEdit(feature: ChangesetViewFeature, unchanged: ReadonlySet<str
   return !key || !unchanged.has(key)
 }
 
+function hasGeometry(feature: ChangesetViewFeature): feature is GeometryFeature {
+  return Boolean(feature.geometry)
+}
+
 /** Edited features that have geometry; context members and same-version modifies are dropped. */
 export function changedEditFeatures(features: readonly ChangesetViewFeature[]) {
   const unchanged = unchangedElementKeys(features)
-  return features
-    .filter((feature): feature is ChangesetViewFeature & { geometry: GeoJSON.Geometry } =>
-      Boolean(feature.geometry),
-    )
-    .filter((feature) => isChangedEdit(feature, unchanged))
+  const changed: GeometryFeature[] = []
+  for (const feature of features) {
+    if (hasGeometry(feature) && isChangedEdit(feature, unchanged)) changed.push(feature)
+  }
+  return changed
 }
 
 /** Relation envelopes can span continents; keep them only when they are the only change. */
@@ -74,24 +135,17 @@ export function withoutRelationEnvelopes<T extends ChangesetViewFeature>(changed
   return withoutRelations.length > 0 ? withoutRelations : [...changed]
 }
 
-export function featureBounds(
-  features: ReadonlyArray<ChangesetViewFeature & { geometry: GeoJSON.Geometry }>,
-): LngLatBoundsTuple | null {
-  if (features.length === 0) return null
-  const raw = bbox({
-    type: 'FeatureCollection',
-    features: features.map((feature) => ({
-      type: 'Feature' as const,
-      geometry: feature.geometry,
-      properties: feature.properties ?? {},
-    })),
-  })
-  const west = raw[0]
-  const south = raw[1]
-  const east = raw.length === 6 ? raw[3] : raw[2]
-  const north = raw.length === 6 ? raw[4] : raw[3]
-  if (![west, south, east, north].every(Number.isFinite)) return null
-  return [west, south, east, north]
+/** Bounds of one geometry, or null when none of its positions is finite. */
+export function geometryBounds(geometry: GeoJSON.Geometry): LngLatBoundsTuple | null {
+  const extent = emptyExtent()
+  extendWithGeometry(extent, geometry)
+  return finiteBounds(extent)
+}
+
+export function featureBounds(features: ReadonlyArray<GeometryFeature>): LngLatBoundsTuple | null {
+  const extent = emptyExtent()
+  for (const feature of features) extendWithGeometry(extent, feature.geometry)
+  return finiteBounds(extent)
 }
 
 /** A single point has no extent to fit; widen it to a small square. */

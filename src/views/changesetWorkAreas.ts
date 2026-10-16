@@ -1,7 +1,7 @@
 import {
   changedEditFeatures,
   elementKey,
-  featureBounds,
+  geometryBounds,
   padDegenerateBounds,
   withoutRelationEnvelopes,
   type ChangesetViewFeature,
@@ -85,7 +85,7 @@ function elementBounds(
 ) {
   const byKey = new Map<string, LngLatBoundsTuple>()
   features.forEach((feature, index) => {
-    const bounds = featureBounds([feature])
+    const bounds = geometryBounds(feature.geometry)
     if (!bounds) return
     const key = elementKey(feature) ?? `#${index}`
     const known = byKey.get(key)
@@ -209,14 +209,22 @@ function clusterBoxes(boxes: readonly Box[], gap: number) {
  */
 export function changesetWorkAreas(features: readonly ChangesetViewFeature[]) {
   const changed = changedEditFeatures(features)
-  const elements = elementBounds(withoutRelationEnvelopes(changed))
+  const clustered = withoutRelationEnvelopes(changed)
+  const elements = elementBounds(clustered)
   if (elements.length === 0) return []
 
   const boxes = elements.map((element) => boxOfBounds(element.bounds))
-  const extent = Math.max(
-    Math.max(...boxes.map((box) => box[2])) - Math.min(...boxes.map((box) => box[0])),
-    Math.max(...boxes.map((box) => box[3])) - Math.min(...boxes.map((box) => box[1])),
-  )
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const box of boxes) {
+    minX = Math.min(minX, box[0])
+    minY = Math.min(minY, box[1])
+    maxX = Math.max(maxX, box[2])
+    maxY = Math.max(maxY, box[3])
+  }
+  const extent = Math.max(maxX - minX, maxY - minY)
 
   let clusters = [boxes.map((_, index) => index)]
   if (extent > SINGLE_VIEW_EXTENT) {
@@ -236,7 +244,9 @@ export function changesetWorkAreas(features: readonly ChangesetViewFeature[]) {
     .sort((a, b) => b.elementKeys.size - a.elementKeys.size || a.bounds[0] - b.bounds[0])
 
   // Relations kept out of the clustering still belong to the area they touch.
-  for (const element of elementBounds(changed)) {
+  // Without relation envelopes removed, the element list is the same one, so reuse it.
+  const allElements = clustered.length === changed.length ? elements : elementBounds(changed)
+  for (const element of allElements) {
     if (areas.some((area) => area.elementKeys.has(element.key))) continue
     areas.find((area) => boundsIntersect(area.bounds, element.bounds))?.elementKeys.add(element.key)
   }
