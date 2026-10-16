@@ -34,7 +34,7 @@ export function Table({
     <TableContext.Provider
       value={{ bleed, dense, grid, striped } as React.ContextType<typeof TableContext>}
     >
-      <div className="flow-root">
+      <div className="flow-root min-w-0">
         <div
           {...props}
           className={clsx(className, '-mx-(--gutter) overflow-x-auto whitespace-nowrap')}
