@@ -10,6 +10,8 @@
 
 # misc
 .DS_Store
+# TypeScript incremental build info (tsconfig tsBuildInfoFile)
+.tsbuildinfo-*
 .env.local
 .env.*.local
 *.local
