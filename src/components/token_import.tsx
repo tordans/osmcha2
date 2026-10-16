@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getAuthActions } from '../stores/auth-store.ts'
 import { parseTokenPaste } from '../utils/auth.ts'
 import { appEntryUrl, buildOpenSignedInBookmarklet } from '../utils/bookmarkletAuthHandoff.ts'
@@ -223,21 +223,12 @@ function Shortcut({ keys, ariaLabel }: { keys: string[]; ariaLabel: string }) {
 }
 
 function BookmarkletDragLink({ href, label }: { href: string; label: string }) {
-  const nodeRef = useRef<HTMLAnchorElement>(null)
-
-  useLayoutEffect(
-    function assignBookmarkletHref() {
-      // React 19 strips `javascript:` from JSX `href` (status bar shows a thrown Error).
-      // Set it on the DOM so drag-to-bookmarks still gets a real bookmarklet.
-      nodeRef.current?.setAttribute('href', href)
-    },
-    [href],
-  )
-
   return (
     <a
+      // React 19 strips `javascript:` from JSX `href` (status bar shows a thrown Error).
+      // Set it on the DOM so drag-to-bookmarks still gets a real bookmarklet. The ref
+      // callback re-runs whenever `href` changes, and React never rewrites the static href.
       ref={(node) => {
-        nodeRef.current = node
         node?.setAttribute('href', href)
       }}
       href="https://osmcha.org/"
