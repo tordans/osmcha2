@@ -409,7 +409,11 @@ export const useChangesetDraft = (userKey: string, changesetId: number) =>
 export const useSeenMap = (userKey: string, changesetId: number) =>
   useChangesetNotesStore((state) => userOf(state.byUser, userKey).seen[changesetIdKey(changesetId)])
 
-export const useOpenEditor = () => useChangesetNotesStore((state) => state.openEditor)
+/** Open note id when it belongs to `changesetId`, else null; re-renders only when that changes. */
+export const useOpenEditorNoteId = (changesetId: number) =>
+  useChangesetNotesStore((state) =>
+    state.openEditor?.changesetId === changesetId ? state.openEditor.noteId : null,
+  )
 
 export const usePinPlacement = () => useChangesetNotesStore((state) => state.pinPlacement)
 

@@ -28,7 +28,7 @@ import {
 import {
   useChangesetDraft,
   useChangesetNotesActions,
-  useOpenEditor,
+  useOpenEditorNoteId,
   useSeenMap,
 } from '../../stores/changeset-notes-store.ts'
 import { getFocusedObject, useReviewFocusActions } from '../../stores/review-focus-store.ts'
@@ -435,7 +435,7 @@ function TagMutationGroup({
   const seenMap = useSeenMap(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
   const { markAllSeen, toggleEditor } = useChangesetNotesActions()
-  const openEditor = useOpenEditor()
+  const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const hoveredInGroup = useIsAnyElementHovered(changes)
   const listScrollTarget = useListScrollTarget()
   const currentUser = userKey === 'anonymous' ? undefined : userKey
@@ -468,9 +468,7 @@ function TagMutationGroup({
     }))
     .sort((left, right) => Number(right.hasNotes) - Number(left.hasNotes))
   const editingNote =
-    openEditor?.changesetId === changesetId
-      ? draft?.notes.find((note) => note.id === openEditor.noteId)
-      : undefined
+    openEditorNoteId != null ? draft?.notes.find((note) => note.id === openEditorNoteId) : undefined
   const editingInGroup =
     editingNote?.ref != null &&
     changes.some(
@@ -617,7 +615,7 @@ function ElementChangeRow({
   const userKey = useNotesUserKey()
   const seenMap = useSeenMap(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
-  const openEditor = useOpenEditor()
+  const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
   const { setFocusedObject } = useReviewFocusActions()
   const { setHover } = useChangesetHoverActions()
@@ -631,9 +629,7 @@ function ElementChangeRow({
     currentUser,
   )
   const editingNote =
-    openEditor?.changesetId === changesetId
-      ? drafts.find((note) => note.id === openEditor.noteId)
-      : undefined
+    openEditorNoteId != null ? drafts.find((note) => note.id === openEditorNoteId) : undefined
   const objectKey = objectRefKey(change.type, change.id)
   const currentSelect = isSelected(change, selected)
   const [flash, setFlash] = useState(false)
