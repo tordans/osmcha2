@@ -72,7 +72,8 @@ function CollapseListButton() {
       className={clsx(
         chromeIconButtonClassName,
         chromeButtonShadowClassName,
-        'hidden data-disabled:shadow-none min-[56rem]:inline-flex',
+        // `hidden` alone loses to Button's inline-flex, so the phone rule is explicit.
+        'data-disabled:shadow-none max-[56rem]:hidden min-[56rem]:inline-flex',
       )}
       onClick={collapse}
     >
@@ -83,7 +84,11 @@ function CollapseListButton() {
   if (canCollapse) return button
 
   return (
-    <Tooltip as="span" content="Select a changeset to hide the list" className="inline-flex">
+    <Tooltip
+      as="span"
+      content="Select a changeset to hide the list"
+      className="inline-flex max-[56rem]:hidden"
+    >
       {button}
     </Tooltip>
   )

@@ -18,7 +18,7 @@ export function Logo() {
     <RouterLink
       to="/"
       search={search}
-      className="cursor-pointer touch-manipulation px-2 text-base font-semibold text-zinc-600 select-none"
+      className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center px-2 text-base font-semibold text-zinc-600 select-none sm:min-h-0"
     >
       <BrandMark />
     </RouterLink>

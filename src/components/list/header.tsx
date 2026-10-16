@@ -150,7 +150,7 @@ function RefreshChangesetsButton({
     : 'Refresh changeset list'
   const icon = <ArrowPathIcon data-slot="icon" className={clsx(loading && 'animate-spin')} />
   const shared = {
-    className: 'h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0',
+    className: 'h-11 min-h-11 w-11 min-w-11 px-0 sm:h-9 sm:min-h-9 sm:w-9 sm:min-w-9 sm:px-0',
     onClick,
     disabled,
     'aria-label': label,
@@ -191,7 +191,8 @@ function OrderMenu({
   title?: string
   onChange: (option: OrderOption) => void
 }) {
-  const iconButtonClassName = 'relative h-9 min-h-9 w-9 min-w-9 px-0 sm:px-0 data-open:z-[110]'
+  const iconButtonClassName =
+    'relative h-11 min-h-11 w-11 min-w-11 px-0 sm:h-9 sm:min-h-9 sm:w-9 sm:min-w-9 sm:px-0 data-open:z-[110]'
   const ariaLabel = selected ? `Order by: ${orderItemLabel(selected.value)}` : 'Order by'
 
   if (disabled) {
