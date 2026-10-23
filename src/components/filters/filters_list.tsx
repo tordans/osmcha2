@@ -84,7 +84,6 @@ export function FiltersList({
       handleFocus: () => handleFocus(config.name),
       hasValue: config.name in currentFilters,
       display: config.display,
-      key,
       description: active === config.name ? config.description : undefined,
     }
 
@@ -121,7 +120,7 @@ export function FiltersList({
 
     if (!config.range && config.type === 'number') {
       return (
-        <Wrapper {...wrapperProps}>
+        <Wrapper key={key} {...wrapperProps}>
           <Text {...propsToSend} min="1" max="100" />
         </Wrapper>
       )
@@ -184,7 +183,7 @@ export function FiltersList({
 
     if (config.name === 'metadata') {
       return (
-        <Wrapper {...wrapperProps} description={undefined}>
+        <Wrapper key={key} {...wrapperProps} description={undefined}>
           <MetadataFilter
             name={config.name}
             value={currentFilters[config.name]}
@@ -196,7 +195,7 @@ export function FiltersList({
 
     if (config.type === 'text') {
       return (
-        <Wrapper {...wrapperProps}>
+        <Wrapper key={key} {...wrapperProps}>
           <Text {...propsToSend} />
         </Wrapper>
       )
@@ -204,7 +203,7 @@ export function FiltersList({
 
     if (config.type === 'radio') {
       return (
-        <Wrapper {...wrapperProps}>
+        <Wrapper key={key} {...wrapperProps}>
           <Radio {...propsToSend} options={(config.options ?? []) as FilterOption[]} />
         </Wrapper>
       )
