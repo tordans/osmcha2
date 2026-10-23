@@ -553,7 +553,9 @@ export function DetailsHeader({
                         <th className="w-[38%] pr-2 pb-0.5 text-left font-medium text-zinc-500">
                           {key}
                         </th>
-                        <td className="pb-0.5 break-all">{String(val)}</td>
+                        <td className="pb-0.5 break-all">
+                          <LinkifyText text={String(val)} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
