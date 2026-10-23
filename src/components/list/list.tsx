@@ -55,7 +55,11 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
   const features = currentPage?.features
 
   return (
-    <ul aria-label="Changesets" className="flex min-h-0 flex-1 flex-col divide-y divide-zinc-100">
+    <ul
+      aria-label="Changesets"
+      // White even when the phone is in dark mode; the rows have no background of their own.
+      className="flex min-h-0 flex-1 flex-col divide-y divide-zinc-100 bg-white"
+    >
       {features?.map((f) => (
         <Row
           active={f.id === activeChangesetId}
