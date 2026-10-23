@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 const DAY_MS = 24 * 60 * 60 * 1000
-export const READ_CHANGESET_MAX_AGE_MS = 30 * DAY_MS
+const READ_CHANGESET_MAX_AGE_MS = 30 * DAY_MS
 export const READ_CHANGESET_MAX_ENTRIES = 2000
 
 const persistedReadChangesetsSchema = z.object({
