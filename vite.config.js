@@ -137,6 +137,11 @@ export default defineConfig(({ mode }) => {
       },
     },
 
+    // MapLibre always spawns its worker with { type: 'module' }
+    worker: {
+      format: 'es',
+    },
+
     build: {
       outDir: 'dist',
       sourcemap: true,
