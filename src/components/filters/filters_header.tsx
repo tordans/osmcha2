@@ -189,7 +189,11 @@ export function FiltersHeader({
                 <LinkIcon data-slot="icon" />
               </Button>
             </Tooltip>
-            <Tooltip as="span" content="RSS Feed" className="inline-flex">
+            <Tooltip
+              as="span"
+              content="RSS Feed: changesets from the last 30 days at most"
+              className="inline-flex"
+            >
               <Button
                 plain
                 href={aoiFeedUrl(aoiId)}

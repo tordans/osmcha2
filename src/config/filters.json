@@ -6,7 +6,7 @@
     "range": true,
     "display": "Date",
     "type": "date",
-    "description": "Filter for changesets by when they were created. Last N days is a rolling window (saved filters, AOIs, and RSS stay relative). Date range uses a fixed From and optional To.",
+    "description": "Filter for changesets by when they were created. Last N days is a rolling window (saved filters and AOIs stay relative). The RSS feed of a saved area shows at most the last 30 days. Date range uses a fixed From and optional To.",
     "placeholder": "YYYY-MM-DD"
   },
   {
