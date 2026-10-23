@@ -2,6 +2,7 @@ import { createRouter } from '@tanstack/react-router'
 import { queryClient } from './query/client.ts'
 import { routeTree } from './routeTree.gen.ts'
 import { routerSearch } from './routing/routerSearch.ts'
+import { NotFound } from './views/not_found.tsx'
 
 const baseUrl = import.meta.env.BASE_URL
 const basepath =
@@ -13,6 +14,7 @@ export const router = createRouter({
   trailingSlash: 'never',
   parseSearch: routerSearch.parse,
   stringifySearch: routerSearch.stringify,
+  defaultNotFoundComponent: NotFound,
   defaultPreload: 'intent',
   // Query owns staleness via ensureQueryData — do not skip loaders from the router.
   defaultPreloadStaleTime: 0,
