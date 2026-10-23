@@ -13,7 +13,7 @@ import { PaneResizeHandle } from '../../layout/PaneResizeHandle.tsx'
 import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.ts'
 import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
-import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
+import { useChangesetMap, useChangesetMapFromOverpass } from '../../query/hooks/useChangesetMap.ts'
 import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import { getListPaneOpen } from '../../stores/list-pane-store.ts'
@@ -82,7 +82,10 @@ function Changeset({
   const { token } = useAuth()
   const { available, displayed } = useDisplayedPaneWidths(true)
   const { resetReviewWidth } = usePaneLayoutActions()
-  const { data: osmInfo } = useChangesetMap(changesetId)
+  const { data: adiffMap } = useChangesetMap(changesetId)
+  // Set once the user loaded the map from Overpass because the adiff was missing.
+  const { data: overpassMap } = useChangesetMapFromOverpass(changesetId)
+  const osmInfo = adiffMap ?? overpassMap
   const { userDetails, whosThat } = useChangesetMapper(
     currentChangeset?.properties?.uid,
     Boolean(token),
