@@ -6,6 +6,7 @@ import {
   groupElementChanges,
   matchFlaggedFeature,
   mergeFlaggedFeatures,
+  primaryTagMutation,
   tagMutationKey,
   tagMutationRows,
   tagRows,
@@ -336,5 +337,30 @@ describe('flagged feature matching', () => {
     )
     expect(merged.find((feature) => feature.url === 'node-1')?.user_flag).toBe('Flagged by alice')
     expect(merged.find((feature) => feature.url === 'way-2')?.user_flag).toBe('Flagged by bob')
+  })
+})
+
+describe('primaryTagMutation', () => {
+  test('prefers a changed name', () => {
+    expect(
+      primaryTagMutation([
+        { kind: 'added', key: 'amenity', value: 'cafe' },
+        { kind: 'unchanged', key: 'building', value: 'yes' },
+        { kind: 'changed', key: 'name', oldValue: 'A', newValue: 'B' },
+      ]),
+    ).toEqual({ kind: 'changed', key: 'name', oldValue: 'A', newValue: 'B' })
+  })
+
+  test('falls back to the first change and skips unchanged tags', () => {
+    expect(
+      primaryTagMutation([
+        { kind: 'unchanged', key: 'name', value: 'A' },
+        { kind: 'removed', key: 'shop', value: 'bakery' },
+      ]),
+    ).toEqual({ kind: 'removed', key: 'shop', value: 'bakery' })
+  })
+
+  test('is null without tag changes', () => {
+    expect(primaryTagMutation([{ kind: 'unchanged', key: 'name', value: 'A' }])).toBeNull()
   })
 })

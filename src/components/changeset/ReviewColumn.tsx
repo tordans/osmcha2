@@ -3,28 +3,28 @@ import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import {
-  useEffectEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type PointerEvent,
-  type ReactNode,
-} from 'react'
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import {
   bindingKey,
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
+import { useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
 import { isOsmSandboxAuth } from '../../notes/osmAuthConfig.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import type { RefParam } from '../../routing/refParam.ts'
-import { useListScrollNonce, useListScrollTarget } from '../../stores/changeset-hover-store.ts'
+import {
+  useChangesetHoverActions,
+  useListScrollNonce,
+  useListScrollTarget,
+} from '../../stores/changeset-hover-store.ts'
 import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
+import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
+import { moveReviewSheet, resetReviewSheet } from '../../views/reviewCamera.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -32,7 +32,9 @@ import type { AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
-import { changeRowDomId, scrollChildIntoScroller } from './scrollChildIntoScroller.ts'
+import { ElementCard } from './ElementCard.tsx'
+import { ReviewSheet } from './ReviewSheet.tsx'
+import { changeRowDomId, scrollChildIntoScroller, stickyTopOf } from './scrollChildIntoScroller.ts'
 
 const COLUMN_TABS = [
   {
@@ -65,6 +67,8 @@ type ReviewColumnProps = {
   deepLinkReveal?: RefParam | null
   deepLinkEpoch?: number
   zoomToAndSelect: (type: string, id: number, key?: string) => void
+  /** Deselect, also on the map (phone element card ×). */
+  clearSelection: () => void
 }
 
 export function ReviewColumn({
@@ -85,23 +89,14 @@ export function ReviewColumn({
   deepLinkReveal,
   deepLinkEpoch = 0,
   zoomToAndSelect,
+  clearSelection,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
   const { requestFinishFocus } = useReviewFocusActions()
-  const [expanded, setExpanded] = useState(() => selectedRef != null)
-  const [expandedForEpoch, setExpandedForEpoch] = useState(0)
-  const selectedObjectKey = selectedRef ? `${selectedRef.type}/${selectedRef.id}` : null
-  const [expandedForSelection, setExpandedForSelection] = useState<string | null>(null)
-  if (deepLinkEpoch > 0 && deepLinkEpoch !== expandedForEpoch) {
-    setExpandedForEpoch(deepLinkEpoch)
-    setExpanded(true)
-  }
-  if (selectedObjectKey != null && selectedObjectKey !== expandedForSelection) {
-    setExpandedForSelection(selectedObjectKey)
-    setExpanded(true)
-  }
-  const dragStartY = useRef<number | null>(null)
-  const dragged = useRef(false)
+  const desktop = useDesktopLayout()
+  const { requestListScroll } = useChangesetHoverActions()
+  // Phone sheet: DetailsHeader portals everything below its menus into the scroller.
+  const [headerBodySlot, setHeaderBodySlot] = useState<HTMLDivElement | null>(null)
   const changesScrollerRef = useRef<HTMLDivElement>(null)
   const lastScrolledNonceRef = useRef(0)
   const lastScrolledDeepLinkRef = useRef(0)
@@ -117,12 +112,13 @@ export function ReviewColumn({
   })
   const discussions = discussion?.changeset?.comments || []
 
+  /**
+   * Scroll the Changes list to a row. Phones keep the sheet where it is: the list is laid
+   * out while hidden, and a page load starts in the list anyway.
+   */
   const revealChangeRow = useEffectEvent((target: { type: string; id: number }) => {
     if (!bindingsState[CHANGESET_DETAILS_DETAILS.label]) {
       exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
-      setExpanded(true)
-    } else {
-      setExpanded(true)
     }
 
     const rowId = changeRowDomId(target.type, target.id)
@@ -132,7 +128,7 @@ export function ReviewColumn({
       const scroller = changesScrollerRef.current
       const row = document.getElementById(rowId)
       if (scroller && row instanceof HTMLElement && row.getBoundingClientRect().height > 0) {
-        scrollChildIntoScroller(scroller, row)
+        scrollChildIntoScroller(scroller, row, 8, stickyTopOf(scroller))
       }
       if (remaining <= 0) return
       frame = requestAnimationFrame(() => attempt(remaining - 1))
@@ -143,6 +139,10 @@ export function ReviewColumn({
       cancelAnimationFrame(frame)
     }
   })
+
+  useEffect(function resetReviewSheetOnUnmount() {
+    return resetReviewSheet
+  }, [])
 
   useLayoutEffect(
     function scrollSelectedChangeIntoView() {
@@ -160,14 +160,14 @@ export function ReviewColumn({
 
   function revealDiscussionNote(target: NoteTarget) {
     if (!changesActive) exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
-    setExpanded(true)
+    moveReviewSheet('list')
     revealRef(target)
   }
 
   function selectPanel(label: string) {
     const turningOn = !bindingsState[label]
     exclusiveKeyToggle(label)
-    if (turningOn) setExpanded(true)
+    if (turningOn && getReviewSheetPosition() === 'map') moveReviewSheet('list')
     if (turningOn && label === CHANGESET_DETAILS_DISCUSSIONS.label) {
       void queryClient.refetchQueries({
         queryKey: changesetDiscussionQueryOptions(changesetId).queryKey,
@@ -184,171 +184,172 @@ export function ReviewColumn({
     ),
   )
 
-  function onHandlePointerDown(event: PointerEvent<HTMLButtonElement>) {
-    dragStartY.current = event.clientY
-    dragged.current = false
-    event.currentTarget.setPointerCapture(event.pointerId)
+  function openSelectedInList() {
+    if (!selectedRef) return
+    moveReviewSheet('list')
+    requestListScroll({ type: selectedRef.type, id: selectedRef.id })
   }
 
-  function onHandlePointerMove(event: PointerEvent<HTMLButtonElement>) {
-    if (dragStartY.current == null) return
-    if (Math.abs(dragStartY.current - event.clientY) > 12) {
-      dragged.current = true
-    }
-  }
+  const header = (
+    <DetailsHeader
+      changesetId={changesetId}
+      currentChangeset={currentChangeset}
+      userDetails={userDetails}
+      whosThat={whosThat}
+      layout={desktop ? 'column' : 'sheet'}
+      bodySlot={headerBodySlot}
+    />
+  )
 
-  function onHandlePointerUp(event: PointerEvent<HTMLButtonElement>) {
-    if (dragStartY.current == null) return
-    const delta = dragStartY.current - event.clientY
-    dragStartY.current = null
-    if (!dragged.current) return
-    setExpanded(delta > 0)
-  }
+  const sandboxNote =
+    import.meta.env.DEV && isOsmSandboxAuth() ? (
+      <p className="px-2.5 pb-1 text-xs text-amber-800">
+        Discussion posts go to the OSM sandbox, not osm.org.
+      </p>
+    ) : null
 
-  function onHandleClick() {
-    if (dragged.current) return
-    setExpanded((value) => !value)
+  const tabs = (
+    <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-2.5">
+      <ReviewTab
+        current={changesActive}
+        title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
+        onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
+      >
+        Changes{' '}
+        {changesetCount > 0 ? (
+          <Badge color={changesActive ? 'blue' : 'zinc'}>{changesetCount}</Badge>
+        ) : null}
+      </ReviewTab>
+      <ReviewTab
+        current={discussionActive}
+        title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
+        onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
+      >
+        Discussion{' '}
+        {discussions.length > 0 ? (
+          <Badge
+            color={discussionActive ? 'blue' : 'zinc'}
+            aria-label={`${discussions.length} comments`}
+            className="flex flex-none items-center gap-1"
+          >
+            <ChatBubbleLeftIcon variant="fill" className="size-4" /> {discussions.length}
+          </Badge>
+        ) : (
+          <ChatBubbleLeftIcon
+            variant="fill"
+            className={clsx('size-4', discussionActive ? 'text-blue-500' : 'text-zinc-300')}
+            aria-label="No comments"
+          />
+        )}
+      </ReviewTab>
+    </nav>
+  )
+
+  const panels = (
+    <AnimatePresence mode="wait" initial={false}>
+      {changesActive ? (
+        <motion.div
+          key="changes"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <DetailsChanges
+            changesetId={changesetId}
+            adiff={osmInfo?.adiff}
+            workAreas={workAreas}
+            activeWorkArea={activeWorkArea}
+            jumpToWorkArea={jumpToWorkArea}
+            features={properties.features ?? []}
+            reviewedFeatures={properties.reviewed_features ?? []}
+            reasons={properties.reasons ?? []}
+            selected={selected}
+            selectedRef={selectedRef}
+            selectRef={selectRef}
+            deepLinkReveal={deepLinkReveal}
+            deepLinkEpoch={deepLinkEpoch}
+            zoomToAndSelect={zoomToAndSelect}
+          />
+        </motion.div>
+      ) : discussionActive ? (
+        <motion.div
+          key="discussion"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Discussions
+            changesetAuthor={properties.user ?? ''}
+            discussions={discussions}
+            changesetId={changesetId}
+            revealRef={revealDiscussionNote}
+            onFinishInChanges={() => {
+              exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
+              moveReviewSheet('list')
+              // The Changes panel mounts after the exit animation; the card scrolls itself then.
+              requestFinishFocus(changesetId)
+            }}
+          />
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  )
+
+  if (!desktop) {
+    return (
+      <ReviewSheet
+        summary={sheetSummary(changesetCount, discussions.length)}
+        header={header}
+        card={
+          selected ? (
+            <ElementCard action={selected} onOpen={openSelectedInList} onClear={clearSelection} />
+          ) : null
+        }
+        scrollerRef={changesScrollerRef}
+      >
+        <div ref={setHeaderBodySlot} />
+        {sandboxNote}
+        {/* Sticks below the menus; work-area headings stick below it via --changes-sticky-top. */}
+        <div className="sticky top-0 z-20 border-b border-zinc-200 bg-white">{tabs}</div>
+        {panels}
+      </ReviewSheet>
+    )
   }
 
   return (
     <section
       className={clsx(
-        'z-30 flex min-h-0 flex-col overflow-hidden bg-white',
-        'absolute inset-x-0 bottom-0 rounded-t-xl shadow-lg',
-        expanded ? 'h-[80%]' : 'h-auto',
-        '@container/review min-[56rem]:relative min-[56rem]:inset-auto min-[56rem]:h-full min-[56rem]:w-(--pane-review-width,24rem) min-[56rem]:shrink-0 min-[56rem]:overflow-visible',
+        '@container/review relative z-30 flex h-full min-h-0 w-(--pane-review-width,24rem) shrink-0 flex-col overflow-visible bg-white',
         paneCardClassName,
       )}
     >
       <div className={clsx('flex min-h-0 flex-1 flex-col', paneCardClipClassName)}>
-        <button
-          type="button"
-          aria-expanded={expanded}
-          aria-label={expanded ? 'Collapse review' : 'Expand review'}
-          onPointerDown={onHandlePointerDown}
-          onPointerMove={onHandlePointerMove}
-          onPointerUp={onHandlePointerUp}
-          onClick={onHandleClick}
-          className="flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-center select-none min-[56rem]:hidden"
-        >
-          <span className="h-1 w-10 rounded-full bg-zinc-300" />
-        </button>
+        {header}
+        {sandboxNote}
 
-        <DetailsHeader
-          changesetId={changesetId}
-          currentChangeset={currentChangeset}
-          userDetails={userDetails}
-          whosThat={whosThat}
-        />
-        {import.meta.env.DEV && isOsmSandboxAuth() ? (
-          <p className="px-2.5 pb-1 text-xs text-amber-800">
-            Discussion posts go to the OSM sandbox, not osm.org.
-          </p>
-        ) : null}
-
-        <div
-          className={clsx(
-            'min-h-0 flex-1 flex-col overflow-hidden',
-            expanded ? 'flex' : 'hidden',
-            'pb-[env(safe-area-inset-bottom)] min-[56rem]:flex min-[56rem]:pb-0',
-          )}
-        >
-          <div className="shrink-0 border-b border-zinc-200">
-            <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-2.5">
-              <ReviewTab
-                current={changesActive}
-                title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
-                onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
-              >
-                Changes{' '}
-                {changesetCount > 0 ? (
-                  <Badge color={changesActive ? 'blue' : 'zinc'}>{changesetCount}</Badge>
-                ) : null}
-              </ReviewTab>
-              <ReviewTab
-                current={discussionActive}
-                title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
-                onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
-              >
-                Discussion{' '}
-                {discussions.length > 0 ? (
-                  <Badge
-                    color={discussionActive ? 'blue' : 'zinc'}
-                    aria-label={`${discussions.length} comments`}
-                    className="flex flex-none items-center gap-1"
-                  >
-                    <ChatBubbleLeftIcon variant="fill" className="size-4" /> {discussions.length}
-                  </Badge>
-                ) : (
-                  <ChatBubbleLeftIcon
-                    variant="fill"
-                    className={clsx('size-4', discussionActive ? 'text-blue-500' : 'text-zinc-300')}
-                    aria-label="No comments"
-                  />
-                )}
-              </ReviewTab>
-            </nav>
-          </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 border-b border-zinc-200">{tabs}</div>
 
           <div
             ref={changesScrollerRef}
             data-changeset-changes-scroll
             className="min-h-0 flex-1 overflow-y-auto"
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {changesActive ? (
-                <motion.div
-                  key="changes"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <DetailsChanges
-                    changesetId={changesetId}
-                    adiff={osmInfo?.adiff}
-                    workAreas={workAreas}
-                    activeWorkArea={activeWorkArea}
-                    jumpToWorkArea={jumpToWorkArea}
-                    features={properties.features ?? []}
-                    reviewedFeatures={properties.reviewed_features ?? []}
-                    reasons={properties.reasons ?? []}
-                    selected={selected}
-                    selectedRef={selectedRef}
-                    selectRef={selectRef}
-                    deepLinkReveal={deepLinkReveal}
-                    deepLinkEpoch={deepLinkEpoch}
-                    zoomToAndSelect={zoomToAndSelect}
-                  />
-                </motion.div>
-              ) : discussionActive ? (
-                <motion.div
-                  key="discussion"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <Discussions
-                    changesetAuthor={properties.user ?? ''}
-                    discussions={discussions}
-                    changesetId={changesetId}
-                    revealRef={revealDiscussionNote}
-                    onFinishInChanges={() => {
-                      exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
-                      setExpanded(true)
-                      // The Changes panel mounts after the exit animation; the card scrolls itself then.
-                      requestFinishFocus(changesetId)
-                    }}
-                  />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            {panels}
           </div>
         </div>
       </div>
     </section>
   )
+}
+
+/** Phone sheet strip label: "12 changes · 3 comments". */
+function sheetSummary(changes: number, comments: number) {
+  const changesLabel = `${changes.toLocaleString()} ${changes === 1 ? 'change' : 'changes'}`
+  if (comments === 0) return changesLabel
+  return `${changesLabel} · ${comments.toLocaleString()} ${comments === 1 ? 'comment' : 'comments'}`
 }
 
 function ReviewTab({

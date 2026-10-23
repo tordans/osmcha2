@@ -26,8 +26,12 @@ import {
 } from '../../stores/pane-layout-store.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import { flyMapToAdiffElement } from '../../views/changesetCamera.ts'
-import { setSelectedFeatureState } from '../../views/changesetFeatureState.ts'
+import {
+  clearSelectedFeatureState,
+  setSelectedFeatureState,
+} from '../../views/changesetFeatureState.ts'
 import type { WorkArea } from '../../views/changesetWorkAreas.ts'
+import { runReviewCamera } from '../../views/reviewCamera.ts'
 import { useActiveWorkArea, useJumpToWorkArea } from '../../views/useWorkAreaMap.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import { buildElementChanges, type AdiffAction } from './changesetElements.ts'
@@ -156,7 +160,15 @@ function Changeset({
     if (!mainMap || !mapLoaded || !viewer) return
     const map = mainMap.getMap()
     setSelectedFeatureState(map, viewer.geojson, type, id)
-    flyMapToAdiffElement(map, viewer, type, id, null, { staged: true })
+    runReviewCamera((bottomInset) => {
+      flyMapToAdiffElement(map, viewer, type, id, null, { staged: true, bottomInset })
+    })
+  }
+
+  function clearSelection() {
+    selectRef(null)
+    if (!mainMap || !mapLoaded || !viewer) return
+    clearSelectedFeatureState(mainMap.getMap(), viewer.geojson)
   }
 
   return (
@@ -231,6 +243,7 @@ function Changeset({
             deepLinkReveal={deepLinkReveal}
             deepLinkEpoch={deepLinkEpoch}
             zoomToAndSelect={zoomToAndSelect}
+            clearSelection={clearSelection}
           />
         </>
       )}

@@ -5,6 +5,7 @@ import { useMapLoaded } from '../stores/map-loaded-store.ts'
 import { flyMapToChangesetBounds } from './changesetCamera.ts'
 import type { LngLatBoundsTuple } from './changesetViewBounds.ts'
 import { activeWorkArea, type ActiveWorkArea, type WorkArea } from './changesetWorkAreas.ts'
+import { runReviewCamera } from './reviewCamera.ts'
 
 /** Which work area the review map currently shows; follows every camera move. */
 export function useActiveWorkArea(areas: readonly WorkArea[]) {
@@ -53,6 +54,11 @@ export function useJumpToWorkArea(areas: readonly WorkArea[]) {
                 : next,
             null,
           )
-    if (bounds) flyMapToChangesetBounds(mainMap.getMap(), bounds)
+    if (!bounds) return
+    const map = mainMap.getMap()
+    // On phones the list covers the map; the move waits until the map shows.
+    runReviewCamera((bottomInset) => {
+      flyMapToChangesetBounds(map, bounds, { bottomInset })
+    })
   }
 }

@@ -84,6 +84,7 @@ import {
   exposeMainMapForDebugging,
 } from './exposeMainMapForDebugging.ts'
 import { ChangesetPinMarkers, PinPlacementOverlay } from './PinPlacementOverlay.tsx'
+import { runReviewCamera } from './reviewCamera.ts'
 import {
   changesetClickableLayerIds,
   changesetHoverFromFeatures,
@@ -386,16 +387,21 @@ function CMap({
         return
       }
       zoomedDeepLinkKeyRef.current = key
-      runWhileApplyingCamera(applyingCameraRef, () => {
-        flyMapToPin(map, pin)
+      runReviewCamera((bottomInset) => {
+        runWhileApplyingCamera(applyingCameraRef, () => {
+          flyMapToPin(map, pin, { bottomInset })
+        })
       })
       return
     }
     const action = actionMatchingRef(viewer.adiff.actions, parsed)
     if (!action) return
     zoomedDeepLinkKeyRef.current = key
-    runWhileApplyingCamera(applyingCameraRef, () => {
-      flyMapToAdiffElement(map, viewer, parsed.type, parsed.id, pin)
+    // On phones a deep link opens the list over the map; fly once the map shows.
+    runReviewCamera((bottomInset) => {
+      runWhileApplyingCamera(applyingCameraRef, () => {
+        flyMapToAdiffElement(map, viewer, parsed.type, parsed.id, pin, { bottomInset })
+      })
     })
   })
 

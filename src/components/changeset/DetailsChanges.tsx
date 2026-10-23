@@ -298,7 +298,9 @@ function WorkAreaHeading({
   current: boolean
   onJump?: (area: WorkArea | null) => void
 }) {
-  const stickyClassName = 'sticky top-0 z-10 border-b border-zinc-200 bg-white'
+  // Phone sheet: stick below the sticky tabs (`--changes-sticky-top`); desktop: at the top.
+  const stickyClassName =
+    'sticky top-[var(--changes-sticky-top,0px)] z-10 border-b border-zinc-200 bg-white'
   const rowClassName = clsx(
     typeScale.body,
     'flex min-h-11 w-full items-center gap-2 px-2 font-medium sm:min-h-9',

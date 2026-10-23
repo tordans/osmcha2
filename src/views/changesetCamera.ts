@@ -35,6 +35,16 @@ export function changesetFitOptions(width: number, height: number) {
   return { padding, maxZoom: MAX_FIT_ZOOM }
 }
 
+/**
+ * Fit padding when the bottom of the map is covered (phone review sheet). The covered
+ * part is added to the bottom so the target lands in the visible area; it is clamped so
+ * a usable viewport always remains.
+ */
+export function paddingWithBottomInset(padding: number, bottomInset: number, height: number) {
+  const inset = Math.max(0, Math.min(bottomInset, height - 2 * padding - 32))
+  return { top: padding, right: padding, bottom: padding + inset, left: padding }
+}
+
 export function jumpMapToChangesetBounds(map: Map, bounds: LngLatBoundsTuple) {
   const container = map.getContainer()
   const options = changesetFitOptions(container.clientWidth, container.clientHeight)
@@ -87,6 +97,8 @@ type FlyFitOptions = {
   staged?: boolean
   /** Fixed time for a direct fly; MapLibre otherwise scales it with distance. */
   duration?: number
+  /** Px of the map hidden at the bottom (phone review sheet); the target fits above it. */
+  bottomInset?: number
 }
 
 function easeInOutCubic(t: number) {
@@ -199,15 +211,30 @@ function flyMapToFitFeatures(map: Map, features: GeoJSON.Feature[], options: Fly
   const north = raw.length === 6 ? raw[4] : raw[3]
   if (![west, south, east, north].every(Number.isFinite)) return false
   const bounds: LngLatBoundsTuple = [west, south, east, north]
-  return flyMapToCamera(map, map.cameraForBounds(bounds, { padding: 50, maxZoom: 18 }), options)
+  const padding = options.bottomInset
+    ? paddingWithBottomInset(50, options.bottomInset, map.getContainer().clientHeight)
+    : 50
+  return flyMapToCamera(map, map.cameraForBounds(bounds, { padding, maxZoom: 18 }), options)
 }
 
 /** Fly to a work area or the whole changeset, padded like the initial fit. */
-export function flyMapToChangesetBounds(map: Map, bounds: LngLatBoundsTuple) {
+export function flyMapToChangesetBounds(
+  map: Map,
+  bounds: LngLatBoundsTuple,
+  { bottomInset = 0 }: { bottomInset?: number } = {},
+) {
   const container = map.getContainer()
-  const fit = changesetFitOptions(container.clientWidth, container.clientHeight)
+  const fit = changesetFitOptions(container.clientWidth, container.clientHeight - bottomInset)
   if (!fit) return false
-  const nextCamera = map.cameraForBounds(bounds, fit)
+  const nextCamera = map.cameraForBounds(
+    bounds,
+    bottomInset
+      ? {
+          ...fit,
+          padding: paddingWithBottomInset(fit.padding, bottomInset, container.clientHeight),
+        }
+      : fit,
+  )
   if (!nextCamera || nextCamera.center == null) return false
   // Pan-then-zoom only reads well for a nearby target; let flyTo arc to a distant one.
   const target = map.project(nextCamera.center)
@@ -244,6 +271,6 @@ export function flyMapToAdiffElement(
 }
 
 /** Fly the camera to a pin-only note (no object `ref`). */
-export function flyMapToPin(map: Map, pin: PinParam) {
-  return flyMapToFitFeatures(map, [pinPointFeature(pin)])
+export function flyMapToPin(map: Map, pin: PinParam, options?: FlyFitOptions) {
+  return flyMapToFitFeatures(map, [pinPointFeature(pin)], options)
 }

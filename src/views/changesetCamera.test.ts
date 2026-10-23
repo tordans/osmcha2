@@ -3,6 +3,7 @@ import {
   changesetCameraIntent,
   changesetFitPadding,
   featuresToFitForNote,
+  paddingWithBottomInset,
   stagedFlyPlan,
 } from './changesetCamera.ts'
 
@@ -73,5 +74,24 @@ describe('featuresToFitForNote', () => {
   test('includes the object and the pin when both are present', () => {
     const features = featuresToFitForNote(viewer, { type: 'way', id: 1 }, { lat: 52.5, lng: 13.4 })
     expect(features).toHaveLength(2)
+  })
+})
+
+describe('paddingWithBottomInset', () => {
+  test('adds the covered height to the bottom only', () => {
+    expect(paddingWithBottomInset(50, 300, 800)).toEqual({
+      top: 50,
+      right: 50,
+      bottom: 350,
+      left: 50,
+    })
+  })
+
+  test('clamps the inset so a usable viewport remains', () => {
+    expect(paddingWithBottomInset(50, 900, 800).bottom).toBe(50 + 800 - 100 - 32)
+  })
+
+  test('ignores a negative inset', () => {
+    expect(paddingWithBottomInset(16, -20, 800).bottom).toBe(16)
   })
 })

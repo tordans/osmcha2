@@ -21,6 +21,7 @@ import {
   Globe,
   Link,
   MapPin,
+  MapTrifold,
   NotePencil,
   Pencil,
   Plus,
@@ -62,6 +63,7 @@ export const HandThumbUpIcon = appIcon(ThumbsUp)
 export const LanguageIcon = appIcon(Translate)
 export const LinkIcon = appIcon(Link)
 export const MapPinIcon = appIcon(MapPin)
+export const MapIcon = appIcon(MapTrifold)
 export const LoaderCircleIcon = appIcon(CircleNotch)
 export const PanelLeftCloseIcon = appIcon(Sidebar)
 export const PanelLeftOpenIcon = appIcon(Sidebar)

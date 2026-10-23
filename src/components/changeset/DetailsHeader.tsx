@@ -2,6 +2,7 @@ import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
@@ -186,6 +187,9 @@ type DetailsHeaderProps = {
   currentChangeset: ReviewChangeset
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
+  /** `sheet`: menus side by side here, the rest portaled into `bodySlot` (phone review sheet). */
+  layout?: 'column' | 'sheet'
+  bodySlot?: HTMLElement | null
 }
 
 export function DetailsHeader({
@@ -193,6 +197,8 @@ export function DetailsHeader({
   currentChangeset,
   userDetails,
   whosThat = [],
+  layout = 'column',
+  bodySlot = null,
 }: DetailsHeaderProps) {
   const { map } = changesetRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
@@ -364,351 +370,360 @@ export function DetailsHeader({
     })),
   ])
 
-  return (
-    <header className="flex flex-col gap-2.5 bg-zinc-50 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] min-[56rem]:pb-2.5">
-      <div ref={pairRef} className="grid grid-cols-1 gap-2 @min-[28rem]/review:grid-cols-2">
-        <Dropdown className="min-w-0">
-          <DropdownButton outline className={headerMenuButtonClassName}>
-            <span className={headerMenuTitleRowClassName}>
-              <h1 className={clsx(typeScale.heading, 'min-w-0 flex-1 truncate')}>
-                Changeset #{changesetId}
-              </h1>
-              <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
-            </span>
-            <div className={headerMenuMetaClassName}>
-              {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
-              {changesetIsOpen ? (
-                <Tooltip
-                  as="span"
-                  content="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
-                >
-                  <Badge color="amber">Open</Badge>
-                </Tooltip>
-              ) : null}
-              {' | '}
+  const pair = (
+    <div
+      ref={pairRef}
+      className={
+        layout === 'sheet'
+          ? 'grid grid-cols-2 gap-2'
+          : 'grid grid-cols-1 gap-2 @min-[28rem]/review:grid-cols-2'
+      }
+    >
+      <Dropdown className="min-w-0">
+        <DropdownButton outline className={headerMenuButtonClassName}>
+          <span className={headerMenuTitleRowClassName}>
+            <h1 className={clsx(typeScale.heading, 'min-w-0 flex-1 truncate')}>
+              Changeset #{changesetId}
+            </h1>
+            <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+          </span>
+          <div className={headerMenuMetaClassName}>
+            {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+            {changesetIsOpen ? (
               <Tooltip
-                as="abbr"
-                content={`Editor ${properties.editor ?? 'unknown'}${
-                  properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
-                }`}
+                as="span"
+                content="This OSM changeset is still open. Further edits can still land; the map diff may be incomplete."
               >
-                {editorLabel}
+                <Badge color="amber">Open</Badge>
               </Tooltip>
-            </div>
-          </DropdownButton>
-          <DropdownMenu
-            anchor="bottom start"
-            className={changesetOpenMenuClassName}
-            style={menuStyle}
-          >
-            <DropdownSection>
-              <DropdownHeading>Changeset #{changesetId}</DropdownHeading>
-              <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
-                Changeset on OpenStreetMap.org
-              </DropdownItem>
-            </DropdownSection>
-            <DropdownDivider />
-            <DropdownSection>
-              <DropdownHeading>Changeset tools</DropdownHeading>
-              <div className={headerOpenItemsClassName}>
-                <DropdownItem
-                  href={urls.achavi}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  Achavi
-                </DropdownItem>
-                <DropdownItem
-                  href={urls.osmRevert}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  osm-revert
-                </DropdownItem>
-                <DropdownItem
-                  href={urls.resultMaps}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  ResultMaps
-                </DropdownItem>
-              </div>
-            </DropdownSection>
-            <DropdownDivider />
-            <DropdownSection>
-              <DropdownHeading>Open map location</DropdownHeading>
-              <div className={headerOpenItemsClassName}>
-                <DropdownItem
-                  href={urls.id}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  iD
-                </DropdownItem>
-                <DropdownItem
-                  href={urls.rapid}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  Rapid
-                </DropdownItem>
-                <DropdownItem
-                  href={urls.spyglass}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  Spyglass
-                </DropdownItem>
-              </div>
-            </DropdownSection>
-            <DropdownDivider />
-            <DropdownSection>
-              <DropdownHeading>Open changeset in editor</DropdownHeading>
-              <div className={headerOpenItemsClassName}>
-                <DropdownItem
-                  href={urls.josm}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  JOSM
-                </DropdownItem>
-                <DropdownItem
-                  href={urls.level0}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  Level0
-                </DropdownItem>
-              </div>
-            </DropdownSection>
-            {visibleMetadata.length > 0 ? (
-              <>
-                <DropdownDivider />
-                <DropdownSection>
-                  <DropdownHeading>Changeset tags</DropdownHeading>
-                  <table
-                    className={clsx(
-                      'col-span-full mx-2 mb-1 w-[calc(100%-1rem)] table-fixed',
-                      'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
-                    )}
-                  >
-                    <tbody>
-                      {visibleMetadata.map(([key, val]) => (
-                        <tr key={key} className="align-top">
-                          <th className="w-[38%] pr-2 pb-0.5 text-left font-medium text-zinc-500">
-                            {key}
-                          </th>
-                          <td className="pb-0.5 break-all">{String(val)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </DropdownSection>
-              </>
             ) : null}
-          </DropdownMenu>
-        </Dropdown>
-
-        <Dropdown className="min-w-0">
-          <DropdownButton outline className={headerMenuButtonClassName}>
-            <span className={headerMenuTitleRowClassName}>
-              <span className={clsx(typeScale.heading, 'min-w-0 flex-1 truncate')}>
-                By {osmUser}
-                {isInTrustedlist && (
-                  <StarIcon
-                    variant="fill"
-                    className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
-                  />
-                )}
-                {isInWatchlist && (
-                  <ExclamationTriangleIcon
-                    variant="fill"
-                    className="ml-1 inline-block size-4 align-text-bottom text-red-500"
-                  />
-                )}
-              </span>
-              <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
-            </span>
-            <div className={headerMenuMetaClassName}>
-              {accountCreated ? (
-                <Tooltip
-                  as="span"
-                  content={[
-                    formatLocalDateTime(accountCreated),
-                    formatAccountAge(accountCreated, now, { full: true }),
-                  ].join('\n')}
+            {' | '}
+            <Tooltip
+              as="abbr"
+              content={`Editor ${properties.editor ?? 'unknown'}${
+                properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
+              }`}
+            >
+              {editorLabel}
+            </Tooltip>
+          </div>
+        </DropdownButton>
+        <DropdownMenu
+          anchor="bottom start"
+          className={changesetOpenMenuClassName}
+          style={menuStyle}
+        >
+          <DropdownSection>
+            <DropdownHeading>Changeset #{changesetId}</DropdownHeading>
+            <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
+              Changeset on OpenStreetMap.org
+            </DropdownItem>
+          </DropdownSection>
+          <DropdownDivider />
+          <DropdownSection>
+            <DropdownHeading>Changeset tools</DropdownHeading>
+            <div className={headerOpenItemsClassName}>
+              <DropdownItem
+                href={urls.achavi}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                Achavi
+              </DropdownItem>
+              <DropdownItem
+                href={urls.osmRevert}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                osm-revert
+              </DropdownItem>
+              <DropdownItem
+                href={urls.resultMaps}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                ResultMaps
+              </DropdownItem>
+            </div>
+          </DropdownSection>
+          <DropdownDivider />
+          <DropdownSection>
+            <DropdownHeading>Open map location</DropdownHeading>
+            <div className={headerOpenItemsClassName}>
+              <DropdownItem
+                href={urls.id}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                iD
+              </DropdownItem>
+              <DropdownItem
+                href={urls.rapid}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                Rapid
+              </DropdownItem>
+              <DropdownItem
+                href={urls.spyglass}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                Spyglass
+              </DropdownItem>
+            </div>
+          </DropdownSection>
+          <DropdownDivider />
+          <DropdownSection>
+            <DropdownHeading>Open changeset in editor</DropdownHeading>
+            <div className={headerOpenItemsClassName}>
+              <DropdownItem
+                href={urls.josm}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                JOSM
+              </DropdownItem>
+              <DropdownItem
+                href={urls.level0}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                Level0
+              </DropdownItem>
+            </div>
+          </DropdownSection>
+          {visibleMetadata.length > 0 ? (
+            <>
+              <DropdownDivider />
+              <DropdownSection>
+                <DropdownHeading>Changeset tags</DropdownHeading>
+                <table
+                  className={clsx(
+                    'col-span-full mx-2 mb-1 w-[calc(100%-1rem)] table-fixed',
+                    'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
+                  )}
                 >
-                  <time dateTime={accountCreated.toISOString()}>
-                    {formatAccountAge(accountCreated, now, { compact: true })}
-                  </time>
-                </Tooltip>
-              ) : null}
-              {editCount > 0 ? (
-                <>
-                  {accountCreated ? ' | ' : null}
-                  <Tooltip as="span" content={`${editCount.toLocaleString()} edits`}>
-                    {formatCompactCount(editCount)}
-                  </Tooltip>
-                </>
-              ) : null}
+                  <tbody>
+                    {visibleMetadata.map(([key, val]) => (
+                      <tr key={key} className="align-top">
+                        <th className="w-[38%] pr-2 pb-0.5 text-left font-medium text-zinc-500">
+                          {key}
+                        </th>
+                        <td className="pb-0.5 break-all">{String(val)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </DropdownSection>
+            </>
+          ) : null}
+        </DropdownMenu>
+      </Dropdown>
+
+      <Dropdown className="min-w-0">
+        <DropdownButton outline className={headerMenuButtonClassName}>
+          <span className={headerMenuTitleRowClassName}>
+            <span className={clsx(typeScale.heading, 'min-w-0 flex-1 truncate')}>
+              By {osmUser}
+              {isInTrustedlist && (
+                <StarIcon
+                  variant="fill"
+                  className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
+                />
+              )}
+              {isInWatchlist && (
+                <ExclamationTriangleIcon
+                  variant="fill"
+                  className="ml-1 inline-block size-4 align-text-bottom text-red-500"
+                />
+              )}
+            </span>
+            <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
+          </span>
+          <div className={headerMenuMetaClassName}>
+            {accountCreated ? (
               <Tooltip
                 as="span"
                 content={[
-                  'Changesets of this user marked in OSMCha:',
-                  `${checkedGood.toLocaleString()} Looks OK`,
-                  `${checkedBad.toLocaleString()} Needs a look`,
+                  formatLocalDateTime(accountCreated),
+                  formatAccountAge(accountCreated, now, { full: true }),
                 ].join('\n')}
-                className="isolate ml-auto inline-flex shrink-0 rounded-md"
               >
-                <Badge rounded="left" className={headerReviewCountBadgeClassName}>
-                  {checkedGood.toLocaleString()}{' '}
-                  <CircleCheckIcon
-                    variant="fill"
-                    className={clsx(headerReviewCountIconClassName, 'text-zinc-600')}
-                    aria-label="Looks OK changesets"
-                  />
-                </Badge>
-                <Badge rounded="right" className={clsx('-ml-px', headerReviewCountBadgeClassName)}>
-                  <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
-                    {checkedBad.toLocaleString()}{' '}
-                  </span>
-                  <FlagIcon
-                    variant="fill"
-                    className={clsx(
-                      headerReviewCountIconClassName,
-                      checkedBad ? 'text-orange-500' : 'text-zinc-600',
-                    )}
-                    aria-label="Needs a look changesets"
-                  />
-                </Badge>
+                <time dateTime={accountCreated.toISOString()}>
+                  {formatAccountAge(accountCreated, now, { compact: true })}
+                </time>
               </Tooltip>
-            </div>
-          </DropdownButton>
-          <DropdownMenu anchor="bottom end" className={userOpenMenuClassName} style={menuStyle}>
-            <DropdownSection>
-              <DropdownHeading>
-                User {osmUser}
-                {uid ? ` / ${uid}` : ''}
-              </DropdownHeading>
-              <div className={headerOpenItemsClassName}>
-                <DropdownItem
-                  href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  OSM profile
-                </DropdownItem>
-                <DropdownItem
-                  href={hdycUrl(osmUser)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={headerOpenItemClassName}
-                >
-                  HDYC
-                </DropdownItem>
-                {properties.user || userDetails?.name ? (
-                  <DropdownItem
-                    href={missingMapsUrl(osmUser)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={headerOpenItemClassName}
-                  >
-                    Missing Maps
-                  </DropdownItem>
-                ) : null}
-              </div>
-            </DropdownSection>
-            {uid ? (
+            ) : null}
+            {editCount > 0 ? (
               <>
-                <DropdownDivider />
-                <DropdownSection>
-                  <DropdownHeading>OSMCha</DropdownHeading>
-                  <DropdownItem onClick={filterOsmchaByUser}>
-                    {editCount > 0
-                      ? `${editCount.toLocaleString()} changesets by this user`
-                      : 'Changesets by this user'}
-                  </DropdownItem>
-                </DropdownSection>
+                {accountCreated ? ' | ' : null}
+                <Tooltip as="span" content={`${editCount.toLocaleString()} edits`}>
+                  {formatCompactCount(editCount)}
+                </Tooltip>
               </>
             ) : null}
-            {token && uid ? (
-              <>
-                <DropdownDivider />
-                <DropdownSection>
-                  <DropdownHeading>Watchlist & trusted</DropdownHeading>
-                  {isInWatchlist ? (
-                    <DropdownItem onClick={() => removeFromWatchlistMutation.mutate(String(uid))}>
-                      Remove from watchlist
-                    </DropdownItem>
-                  ) : isInTrustedlist ? (
-                    <DropdownItem onClick={() => removeFromTrustedlistMutation.mutate(osmUser)}>
-                      Remove from trusted users
-                    </DropdownItem>
-                  ) : (
-                    <div className={headerOpenListItemsClassName}>
-                      <DropdownItem
-                        onClick={() =>
-                          addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
-                        }
-                        className={headerOpenListItemClassName}
-                      >
-                        Add to watchlist
-                      </DropdownItem>
-                      <DropdownItem
-                        onClick={() => addToTrustedlistMutation.mutate(osmUser)}
-                        className={headerOpenListItemClassName}
-                      >
-                        Add to trusted
-                      </DropdownItem>
-                    </div>
+            <Tooltip
+              as="span"
+              content={[
+                'Changesets of this user marked in OSMCha:',
+                `${checkedGood.toLocaleString()} Looks OK`,
+                `${checkedBad.toLocaleString()} Needs a look`,
+              ].join('\n')}
+              className="isolate ml-auto inline-flex shrink-0 rounded-md"
+            >
+              <Badge rounded="left" className={headerReviewCountBadgeClassName}>
+                {checkedGood.toLocaleString()}{' '}
+                <CircleCheckIcon
+                  variant="fill"
+                  className={clsx(headerReviewCountIconClassName, 'text-zinc-600')}
+                  aria-label="Looks OK changesets"
+                />
+              </Badge>
+              <Badge rounded="right" className={clsx('-ml-px', headerReviewCountBadgeClassName)}>
+                <span className={clsx(checkedBad ? 'text-orange-700' : '')}>
+                  {checkedBad.toLocaleString()}{' '}
+                </span>
+                <FlagIcon
+                  variant="fill"
+                  className={clsx(
+                    headerReviewCountIconClassName,
+                    checkedBad ? 'text-orange-500' : 'text-zinc-600',
                   )}
+                  aria-label="Needs a look changesets"
+                />
+              </Badge>
+            </Tooltip>
+          </div>
+        </DropdownButton>
+        <DropdownMenu anchor="bottom end" className={userOpenMenuClassName} style={menuStyle}>
+          <DropdownSection>
+            <DropdownHeading>
+              User {osmUser}
+              {uid ? ` / ${uid}` : ''}
+            </DropdownHeading>
+            <div className={headerOpenItemsClassName}>
+              <DropdownItem
+                href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                OSM profile
+              </DropdownItem>
+              <DropdownItem
+                href={hdycUrl(osmUser)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                HDYC
+              </DropdownItem>
+              {properties.user || userDetails?.name ? (
+                <DropdownItem
+                  href={missingMapsUrl(osmUser)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={headerOpenItemClassName}
+                >
+                  Missing Maps
+                </DropdownItem>
+              ) : null}
+            </div>
+          </DropdownSection>
+          {uid ? (
+            <>
+              <DropdownDivider />
+              <DropdownSection>
+                <DropdownHeading>OSMCha</DropdownHeading>
+                <DropdownItem onClick={filterOsmchaByUser}>
+                  {editCount > 0
+                    ? `${editCount.toLocaleString()} changesets by this user`
+                    : 'Changesets by this user'}
+                </DropdownItem>
+              </DropdownSection>
+            </>
+          ) : null}
+          {token && uid ? (
+            <>
+              <DropdownDivider />
+              <DropdownSection>
+                <DropdownHeading>Watchlist & trusted</DropdownHeading>
+                {isInWatchlist ? (
+                  <DropdownItem onClick={() => removeFromWatchlistMutation.mutate(String(uid))}>
+                    Remove from watchlist
+                  </DropdownItem>
+                ) : isInTrustedlist ? (
+                  <DropdownItem onClick={() => removeFromTrustedlistMutation.mutate(osmUser)}>
+                    Remove from trusted users
+                  </DropdownItem>
+                ) : (
+                  <div className={headerOpenListItemsClassName}>
+                    <DropdownItem
+                      onClick={() =>
+                        addToWatchlistMutation.mutate({ username: osmUser, uid: String(uid) })
+                      }
+                      className={headerOpenListItemClassName}
+                    >
+                      Add to watchlist
+                    </DropdownItem>
+                    <DropdownItem
+                      onClick={() => addToTrustedlistMutation.mutate(osmUser)}
+                      className={headerOpenListItemClassName}
+                    >
+                      Add to trusted
+                    </DropdownItem>
+                  </div>
+                )}
+              </DropdownSection>
+            </>
+          ) : null}
+          {pastNames.length > 0 || description ? (
+            <>
+              <DropdownDivider />
+              {pastNames.length > 0 ? (
+                <DropdownSection>
+                  <DropdownHeading>Past usernames</DropdownHeading>
+                  <ul className="col-span-full list-disc px-3.5 pb-1 pl-7 text-xs/4 text-zinc-600 sm:px-3">
+                    {pastNames.map((name) => (
+                      <li key={name}>{name}</li>
+                    ))}
+                  </ul>
                 </DropdownSection>
-              </>
-            ) : null}
-            {pastNames.length > 0 || description ? (
-              <>
-                <DropdownDivider />
-                {pastNames.length > 0 ? (
-                  <DropdownSection>
-                    <DropdownHeading>Past usernames</DropdownHeading>
-                    <ul className="col-span-full list-disc px-3.5 pb-1 pl-7 text-xs/4 text-zinc-600 sm:px-3">
-                      {pastNames.map((name) => (
-                        <li key={name}>{name}</li>
-                      ))}
-                    </ul>
-                  </DropdownSection>
-                ) : null}
-                {description ? (
-                  <blockquote
-                    className={clsx(
-                      'col-span-full mx-2 mb-1 border-l-2 border-zinc-200 py-0.5 pl-2.5',
-                      'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
-                      '[&_a]:text-blue-700 [&_a]:underline',
-                      '[&_p]:my-1 [&_p]:first:mt-0 [&_p]:last:mb-0',
-                      '[&_h1]:my-1 [&_h1]:text-xs/4 [&_h1]:font-semibold',
-                      '[&_h2]:my-1 [&_h2]:text-xs/4 [&_h2]:font-semibold',
-                      '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4',
-                      '[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4',
-                    )}
-                  >
-                    <Markdown remarkPlugins={[remarkGfm]}>{description}</Markdown>
-                  </blockquote>
-                ) : null}
-              </>
-            ) : null}
-          </DropdownMenu>
-        </Dropdown>
-      </div>
+              ) : null}
+              {description ? (
+                <blockquote
+                  className={clsx(
+                    'col-span-full mx-2 mb-1 border-l-2 border-zinc-200 py-0.5 pl-2.5',
+                    'text-[0.6875rem]/4 wrap-break-word text-zinc-600',
+                    '[&_a]:text-blue-700 [&_a]:underline',
+                    '[&_p]:my-1 [&_p]:first:mt-0 [&_p]:last:mb-0',
+                    '[&_h1]:my-1 [&_h1]:text-xs/4 [&_h1]:font-semibold',
+                    '[&_h2]:my-1 [&_h2]:text-xs/4 [&_h2]:font-semibold',
+                    '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-4',
+                    '[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4',
+                  )}
+                >
+                  <Markdown remarkPlugins={[remarkGfm]}>{description}</Markdown>
+                </blockquote>
+              ) : null}
+            </>
+          ) : null}
+        </DropdownMenu>
+      </Dropdown>
+    </div>
+  )
 
+  const body = (
+    <>
       <div className={clsx('flex flex-col gap-1', typeScale.body)}>
         <blockquote
           className="relative flex w-full items-start gap-1 leading-tight wrap-break-word hyphens-auto not-italic"
@@ -903,6 +918,28 @@ export function DetailsHeader({
       </Alert>
 
       <Divider className="mt-1" />
+    </>
+  )
+
+  if (layout === 'sheet') {
+    // Phone sheet: the menus stay put; the rest scrolls away with the Changes list.
+    return (
+      <>
+        <header className="bg-zinc-50 px-2.5 pb-2">{pair}</header>
+        {bodySlot
+          ? createPortal(
+              <div className="flex flex-col gap-2.5 bg-zinc-50 px-2.5 pt-0.5 pb-2.5">{body}</div>,
+              bodySlot,
+            )
+          : null}
+      </>
+    )
+  }
+
+  return (
+    <header className="flex flex-col gap-2.5 bg-zinc-50 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] min-[56rem]:pb-2.5">
+      {pair}
+      {body}
     </header>
   )
 }

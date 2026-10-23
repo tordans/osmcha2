@@ -15,6 +15,11 @@ function getDesktopLayoutSnapshot() {
   return window.matchMedia(DESKTOP_MQ).matches
 }
 
+/** Non-reactive read for event handlers and camera code outside render. */
+export function isDesktopLayout() {
+  return getDesktopLayoutSnapshot()
+}
+
 function getDesktopLayoutServerSnapshot() {
   return true
 }

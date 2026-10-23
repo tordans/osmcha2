@@ -377,6 +377,12 @@ export function tagMutationRows(tags: TagRow[]): TagMutation[] {
   return tags.filter((row): row is TagMutation => row.kind !== 'unchanged')
 }
 
+/** The one tag change worth a glance: `name` when it changed, else the first change. */
+export function primaryTagMutation(tags: TagRow[]): TagMutation | null {
+  const mutations = tagMutationRows(tags)
+  return mutations.find((row) => row.key === 'name') ?? mutations[0] ?? null
+}
+
 function mutationTuple(row: TagMutation): [string, string, string, string?] {
   if (row.kind === 'changed') return ['changed', row.key, row.oldValue, row.newValue]
   return [row.kind, row.key, row.value]
