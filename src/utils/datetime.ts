@@ -55,8 +55,10 @@ export function parseOsmDate(value: string): Date {
 }
 
 export type FormatAccountAgeOptions = {
-  /** Short units and no trailing " old" (visible meta label), e.g. `12d`, `>2y`. */
+  /** Drop the trailing " old" (visible meta label). */
   compact?: boolean
+  /** One-letter units without " old" for narrow labels, e.g. `12d`, `>2y`. */
+  short?: boolean
   /** Uncapped distance (tooltip); default caps at ">2 years". */
   full?: boolean
 }
@@ -71,18 +73,17 @@ export function formatAccountAge(
   now: Date = new Date(),
   options: FormatAccountAgeOptions = {},
 ): string {
-  const { compact = false, full = false } = options
-  const suffix = compact ? '' : ' old'
+  const { compact = false, short = false, full = false } = options
+  const suffix = compact || short ? '' : ' old'
 
   if (created >= now || differenceInMinutes(now, created) < 1) return 'just now'
   if (differenceInHours(now, created) < 1) {
-    return compact
-      ? `${differenceInMinutes(now, created)}min`
-      : `${differenceInMinutes(now, created)} min${suffix}`
+    const minutes = differenceInMinutes(now, created)
+    return short ? `${minutes}min` : `${minutes} min${suffix}`
   }
-  if (!full && differenceInYears(now, created) >= 2) return compact ? '>2y' : `>2 years${suffix}`
+  if (!full && differenceInYears(now, created) >= 2) return short ? '>2y' : `>2 years${suffix}`
   const distance = formatDistanceStrict(created, now, { roundingMethod: 'floor' })
-  return compact ? shortDistance(distance) : `${distance}${suffix}`
+  return short ? shortDistance(distance) : `${distance}${suffix}`
 }
 
 const SHORT_UNITS: Record<string, string> = {
@@ -101,8 +102,8 @@ function shortDistance(distance: string) {
   return `${match[1]}${SHORT_UNITS[match[2]!]}`
 }
 
-/** Compact age of a past moment, e.g. `14d ago`, for narrow meta lines. */
-export function formatCompactAgo(date: Date, now: Date = new Date()): string {
+/** Age of a past moment with one-letter units, e.g. `14d ago`, for narrow meta lines. */
+export function formatShortAgo(date: Date, now: Date = new Date()): string {
   if (date >= now || differenceInMinutes(now, date) < 1) return 'just now'
   if (differenceInHours(now, date) < 1) return `${differenceInMinutes(now, date)}min ago`
   return `${shortDistance(formatDistanceStrict(date, now, { roundingMethod: 'floor' }))} ago`

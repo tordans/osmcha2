@@ -33,7 +33,7 @@ import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
 import { formatCompactCount } from '../../utils/formatCount.ts'
-import { editorCompactName } from '../list/editorShortname.ts'
+import { editorCompactName, editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
@@ -84,9 +84,19 @@ const headerMenuTitleRowClassName = 'flex min-w-0 items-center justify-between g
 
 /** Fixed height matches the review-count badges so both header meta rows align. */
 const headerMenuMetaClassName = clsx(
-  '-mt-0.5 flex h-6 min-w-0 flex-nowrap items-center gap-x-1 overflow-hidden font-normal whitespace-nowrap text-zinc-500',
+  '@container/meta -mt-0.5 flex h-6 min-w-0 flex-nowrap items-center gap-x-1 overflow-hidden font-normal whitespace-nowrap text-zinc-500',
   typeScale.small,
 )
+
+/** Full meta details under a menu heading. */
+const headerMenuDetailClassName =
+  'col-span-full px-3.5 pb-1 text-xs/5 text-zinc-500 wrap-break-word sm:px-3'
+
+/** Meta labels: one-letter units and short editor names only when the card is narrow. */
+const changesetMetaShortClassName = '@min-[12rem]/meta:hidden'
+const changesetMetaLongClassName = 'hidden @min-[12rem]/meta:inline'
+const userMetaShortClassName = '@min-[11rem]/meta:hidden'
+const userMetaLongClassName = 'hidden @min-[11rem]/meta:inline'
 
 /** Compact review counters in the user meta line (override Button's `data-slot=icon` sizing). */
 const headerReviewCountBadgeClassName = 'gap-x-0.5 px-1 py-0 text-[0.625rem]/3 sm:text-[0.625rem]/3'
@@ -231,7 +241,8 @@ export function DetailsHeader({
     checkUser: properties.check_user,
   })
   const reviewColor = presentation?.color ?? 'green'
-  const editorLabel = editorCompactName(properties.editor)
+  const editorLabel = editorShortname(properties.editor)
+  const editorShortLabel = editorCompactName(properties.editor)
   const changesetDate = properties.date ? parseOsmDate(properties.date) : null
   const accountCreated = userDetails?.accountCreated
     ? parseOsmDate(userDetails.accountCreated)
@@ -388,7 +399,18 @@ export function DetailsHeader({
             <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
           </span>
           <div className={headerMenuMetaClassName}>
-            {changesetDate ? <RelativeTime datetime={changesetDate} compact /> : 'Unknown date'}
+            {changesetDate ? (
+              <>
+                <span className={changesetMetaShortClassName}>
+                  <RelativeTime datetime={changesetDate} short />
+                </span>
+                <span className={changesetMetaLongClassName}>
+                  <RelativeTime datetime={changesetDate} />
+                </span>
+              </>
+            ) : (
+              'Unknown date'
+            )}
             {changesetIsOpen ? (
               <Tooltip
                 as="span"
@@ -404,7 +426,8 @@ export function DetailsHeader({
                 properties.metadata?.host ? ` on ${properties.metadata.host}` : ''
               }`}
             >
-              {editorLabel}
+              <span className={changesetMetaShortClassName}>{editorShortLabel}</span>
+              <span className={changesetMetaLongClassName}>{editorLabel}</span>
             </Tooltip>
           </div>
         </DropdownButton>
@@ -415,6 +438,18 @@ export function DetailsHeader({
         >
           <DropdownSection>
             <DropdownHeading>Changeset #{changesetId}</DropdownHeading>
+            {/* The full meta line: the button may show it shortened, and touch has no tooltips. */}
+            <p className={headerMenuDetailClassName}>
+              {changesetDate ? (
+                <>
+                  {formatLocalDateTime(changesetDate)} (<RelativeTime datetime={changesetDate} />)
+                </>
+              ) : (
+                'Unknown date'
+              )}
+              <br />
+              Editor {properties.editor ?? 'unknown'}
+            </p>
             <DropdownItem href={urls.osm} target="_blank" rel="noopener noreferrer">
               Changeset on OpenStreetMap.org
             </DropdownItem>
@@ -559,7 +594,12 @@ export function DetailsHeader({
                 ].join('\n')}
               >
                 <time dateTime={accountCreated.toISOString()}>
-                  {formatAccountAge(accountCreated, now, { compact: true })}
+                  <span className={userMetaShortClassName}>
+                    {formatAccountAge(accountCreated, now, { short: true })}
+                  </span>
+                  <span className={userMetaLongClassName}>
+                    {formatAccountAge(accountCreated, now, { compact: true })}
+                  </span>
                 </time>
               </Tooltip>
             ) : null}
@@ -610,6 +650,12 @@ export function DetailsHeader({
               User {osmUser}
               {uid ? ` / ${uid}` : ''}
             </DropdownHeading>
+            {accountCreated ? (
+              <p className={headerMenuDetailClassName}>
+                Account created {formatLocalDateTime(accountCreated)} (
+                {formatAccountAge(accountCreated, now, { full: true })})
+              </p>
+            ) : null}
             <div className={headerOpenItemsClassName}>
               <DropdownItem
                 href={`https://www.openstreetmap.org/user/${encodeURIComponent(osmUser)}`}

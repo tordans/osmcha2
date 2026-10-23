@@ -2,7 +2,7 @@ import { TZDate } from '@date-fns/tz'
 import { describe, expect, test } from 'vitest'
 import {
   formatAccountAge,
-  formatCompactAgo,
+  formatShortAgo,
   formatLocalDate,
   formatLocalDateTime,
   localDateFromIsoDate,
@@ -73,20 +73,35 @@ describe('formatAccountAge', () => {
     expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now)).toBe('>2 years old')
   })
 
-  test('compact uses short units without the trailing " old"', () => {
+  test('compact drops the trailing " old"', () => {
     expect(formatAccountAge(parseOsmDate('2026-08-30T11:48:00.000Z'), now, { compact: true })).toBe(
-      '12min',
+      '12 min',
     )
     expect(formatAccountAge(parseOsmDate('2026-08-18T12:00:00.000Z'), now, { compact: true })).toBe(
-      '12d',
+      '12 days',
     )
     expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now, { compact: true })).toBe(
-      '>2y',
+      '>2 years',
     )
     expect(formatAccountAge(parseOsmDate('2025-12-30T12:00:00.000Z'), now, { compact: true })).toBe(
-      '8mo',
+      '8 months',
     )
     expect(formatAccountAge(now, now, { compact: true })).toBe('just now')
+  })
+
+  test('short uses one-letter units', () => {
+    expect(formatAccountAge(parseOsmDate('2026-08-30T11:48:00.000Z'), now, { short: true })).toBe(
+      '12min',
+    )
+    expect(formatAccountAge(parseOsmDate('2026-08-18T12:00:00.000Z'), now, { short: true })).toBe(
+      '12d',
+    )
+    expect(formatAccountAge(parseOsmDate('2025-12-30T12:00:00.000Z'), now, { short: true })).toBe(
+      '8mo',
+    )
+    expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now, { short: true })).toBe(
+      '>2y',
+    )
   })
 
   test('full is uncapped past two years', () => {
@@ -99,13 +114,13 @@ describe('formatAccountAge', () => {
   })
 })
 
-describe('formatCompactAgo', () => {
+describe('formatShortAgo', () => {
   const now = parseOsmDate('2026-08-30T12:00:00.000Z')
 
   test('uses one-letter units', () => {
-    expect(formatCompactAgo(parseOsmDate('2026-08-16T12:00:00.000Z'), now)).toBe('14d ago')
-    expect(formatCompactAgo(parseOsmDate('2026-08-30T07:00:00.000Z'), now)).toBe('5h ago')
-    expect(formatCompactAgo(parseOsmDate('2026-08-30T11:48:00.000Z'), now)).toBe('12min ago')
-    expect(formatCompactAgo(now, now)).toBe('just now')
+    expect(formatShortAgo(parseOsmDate('2026-08-16T12:00:00.000Z'), now)).toBe('14d ago')
+    expect(formatShortAgo(parseOsmDate('2026-08-30T07:00:00.000Z'), now)).toBe('5h ago')
+    expect(formatShortAgo(parseOsmDate('2026-08-30T11:48:00.000Z'), now)).toBe('12min ago')
+    expect(formatShortAgo(now, now)).toBe('just now')
   })
 })
