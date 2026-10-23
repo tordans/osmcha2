@@ -55,7 +55,7 @@ export function parseOsmDate(value: string): Date {
 }
 
 export type FormatAccountAgeOptions = {
-  /** Drop the trailing " old" (visible meta label). */
+  /** Short units and no trailing " old" (visible meta label), e.g. `12d`, `>2y`. */
   compact?: boolean
   /** Uncapped distance (tooltip); default caps at ">2 years". */
   full?: boolean
@@ -76,8 +76,34 @@ export function formatAccountAge(
 
   if (created >= now || differenceInMinutes(now, created) < 1) return 'just now'
   if (differenceInHours(now, created) < 1) {
-    return `${differenceInMinutes(now, created)} min${suffix}`
+    return compact
+      ? `${differenceInMinutes(now, created)}min`
+      : `${differenceInMinutes(now, created)} min${suffix}`
   }
-  if (!full && differenceInYears(now, created) >= 2) return `>2 years${suffix}`
-  return `${formatDistanceStrict(created, now, { roundingMethod: 'floor' })}${suffix}`
+  if (!full && differenceInYears(now, created) >= 2) return compact ? '>2y' : `>2 years${suffix}`
+  const distance = formatDistanceStrict(created, now, { roundingMethod: 'floor' })
+  return compact ? shortDistance(distance) : `${distance}${suffix}`
+}
+
+const SHORT_UNITS: Record<string, string> = {
+  second: 's',
+  minute: 'min',
+  hour: 'h',
+  day: 'd',
+  month: 'mo',
+  year: 'y',
+}
+
+/** `14 days` → `14d`, `8 months` → `8mo`: date-fns' strict distance with one-letter units. */
+function shortDistance(distance: string) {
+  const match = /^(\d+) (second|minute|hour|day|month|year)s?$/.exec(distance)
+  if (!match) return distance
+  return `${match[1]}${SHORT_UNITS[match[2]!]}`
+}
+
+/** Compact age of a past moment, e.g. `14d ago`, for narrow meta lines. */
+export function formatCompactAgo(date: Date, now: Date = new Date()): string {
+  if (date >= now || differenceInMinutes(now, date) < 1) return 'just now'
+  if (differenceInHours(now, date) < 1) return `${differenceInMinutes(now, date)}min ago`
+  return `${shortDistance(formatDistanceStrict(date, now, { roundingMethod: 'floor' }))} ago`
 }

@@ -33,7 +33,7 @@ import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
 import { formatCompactCount } from '../../utils/formatCount.ts'
-import { editorShortname } from '../list/editorShortname.ts'
+import { editorCompactName } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
@@ -84,7 +84,7 @@ const headerMenuTitleRowClassName = 'flex min-w-0 items-center justify-between g
 
 /** Fixed height matches the review-count badges so both header meta rows align. */
 const headerMenuMetaClassName = clsx(
-  '-mt-0.5 flex h-6 flex-nowrap items-center gap-x-1 font-normal text-zinc-500',
+  '-mt-0.5 flex h-6 min-w-0 flex-nowrap items-center gap-x-1 overflow-hidden font-normal whitespace-nowrap text-zinc-500',
   typeScale.small,
 )
 
@@ -231,7 +231,7 @@ export function DetailsHeader({
     checkUser: properties.check_user,
   })
   const reviewColor = presentation?.color ?? 'green'
-  const editorLabel = editorShortname(properties.editor)
+  const editorLabel = editorCompactName(properties.editor)
   const changesetDate = properties.date ? parseOsmDate(properties.date) : null
   const accountCreated = userDetails?.accountCreated
     ? parseOsmDate(userDetails.accountCreated)
@@ -388,7 +388,7 @@ export function DetailsHeader({
             <ChevronDownIcon data-slot="icon" className="size-4 shrink-0" />
           </span>
           <div className={headerMenuMetaClassName}>
-            {changesetDate ? <RelativeTime datetime={changesetDate} /> : 'Unknown date'}
+            {changesetDate ? <RelativeTime datetime={changesetDate} compact /> : 'Unknown date'}
             {changesetIsOpen ? (
               <Tooltip
                 as="span"

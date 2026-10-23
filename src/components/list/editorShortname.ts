@@ -15,3 +15,11 @@ export function editorShortname(longname: string | null | undefined): string {
 
   return longname.split(' ')[0] ?? longname
 }
+
+/** Shorter still, for the narrow review header: StreetComplete is SC, Every Door is ED. */
+export function editorCompactName(longname: string | null | undefined): string {
+  const short = editorShortname(longname)
+  if (short === 'StreetComplete') return 'SC'
+  if (short === 'Every Door') return 'ED'
+  return short
+}

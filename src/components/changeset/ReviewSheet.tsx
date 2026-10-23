@@ -57,7 +57,7 @@ export function ReviewSheet({
   const { setInsets } = useReviewSheetActions()
   const reduceMotion = useReducedMotion()
   const sheetRef = useRef<HTMLElement>(null)
-  const stripRef = useRef<HTMLButtonElement>(null)
+  const stripRef = useRef<HTMLDivElement>(null)
   const safeAreaRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const draggedRef = useRef(false)
@@ -195,17 +195,28 @@ export function ReviewSheet({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-xl">
-          <div onPointerDown={startSheetDrag} className="shrink-0 touch-none">
-            <button
+          <div onPointerDown={startSheetDrag} className="relative shrink-0 touch-none">
+            {/* The strip the map position leaves visible; measured for the stops. */}
+            <div
               ref={stripRef}
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-14"
+            />
+            <button
               type="button"
               aria-expanded={position !== 'map'}
               aria-label={position === 'list' ? 'Show map' : 'Show review list'}
               onClick={onStripClick}
-              className="flex h-14 w-full cursor-pointer touch-none flex-col items-center justify-center gap-1.5 select-none"
+              className={clsx(
+                'relative z-10 flex w-full cursor-pointer touch-none flex-col items-center gap-1.5 pt-2.5 select-none',
+                // The list shows the counts on its tabs; only the map position needs the label.
+                position === 'map' ? 'h-14' : 'h-6',
+              )}
             >
-              <span aria-hidden className="h-1 w-10 rounded-full bg-zinc-300" />
-              <span className="text-sm font-medium text-zinc-700">{summary}</span>
+              <span aria-hidden className="h-1 w-10 shrink-0 rounded-full bg-zinc-300" />
+              {position === 'map' ? (
+                <span className="text-sm font-medium text-zinc-700">{summary}</span>
+              ) : null}
             </button>
             <div
               className={clsx(

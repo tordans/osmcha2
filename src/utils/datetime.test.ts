@@ -2,6 +2,7 @@ import { TZDate } from '@date-fns/tz'
 import { describe, expect, test } from 'vitest'
 import {
   formatAccountAge,
+  formatCompactAgo,
   formatLocalDate,
   formatLocalDateTime,
   localDateFromIsoDate,
@@ -72,15 +73,18 @@ describe('formatAccountAge', () => {
     expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now)).toBe('>2 years old')
   })
 
-  test('compact drops the trailing " old"', () => {
+  test('compact uses short units without the trailing " old"', () => {
     expect(formatAccountAge(parseOsmDate('2026-08-30T11:48:00.000Z'), now, { compact: true })).toBe(
-      '12 min',
+      '12min',
     )
     expect(formatAccountAge(parseOsmDate('2026-08-18T12:00:00.000Z'), now, { compact: true })).toBe(
-      '12 days',
+      '12d',
     )
     expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now, { compact: true })).toBe(
-      '>2 years',
+      '>2y',
+    )
+    expect(formatAccountAge(parseOsmDate('2025-12-30T12:00:00.000Z'), now, { compact: true })).toBe(
+      '8mo',
     )
     expect(formatAccountAge(now, now, { compact: true })).toBe('just now')
   })
@@ -92,5 +96,16 @@ describe('formatAccountAge', () => {
     expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now, { full: true })).toBe(
       '11 years old',
     )
+  })
+})
+
+describe('formatCompactAgo', () => {
+  const now = parseOsmDate('2026-08-30T12:00:00.000Z')
+
+  test('uses one-letter units', () => {
+    expect(formatCompactAgo(parseOsmDate('2026-08-16T12:00:00.000Z'), now)).toBe('14d ago')
+    expect(formatCompactAgo(parseOsmDate('2026-08-30T07:00:00.000Z'), now)).toBe('5h ago')
+    expect(formatCompactAgo(parseOsmDate('2026-08-30T11:48:00.000Z'), now)).toBe('12min ago')
+    expect(formatCompactAgo(now, now)).toBe('just now')
   })
 })

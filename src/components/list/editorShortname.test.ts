@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { editorShortname } from './editorShortname.ts'
+import { editorCompactName, editorShortname } from './editorShortname.ts'
 
 describe('editorShortname', () => {
   test('returns Unknown when the editor string is missing', () => {
@@ -21,5 +21,15 @@ describe('editorShortname', () => {
 
   test('falls back to the first word when unrecognised', () => {
     expect(editorShortname('Potlatch 2')).toBe('Potlatch')
+  })
+})
+
+describe('editorCompactName', () => {
+  test('abbreviates the long editor names and keeps the short ones', () => {
+    expect(editorCompactName('StreetComplete 58.2')).toBe('SC')
+    expect(editorCompactName('Every Door 5.0')).toBe('ED')
+    expect(editorCompactName('Go Map!! 2.0')).toBe('GoMap')
+    expect(editorCompactName('JOSM/1.5 (Windows)')).toBe('JOSM')
+    expect(editorCompactName('iD 2.27.0')).toBe('iD')
   })
 })
