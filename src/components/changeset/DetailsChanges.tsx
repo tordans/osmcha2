@@ -770,7 +770,7 @@ function ElementChangeRow({
           <span className="truncate">
             {change.type}/{change.id}
           </span>
-          {change.version != null ? <span className="text-zinc-400">#{change.version}</span> : null}
+          {change.version != null ? <span className="text-zinc-500">#{change.version}</span> : null}
         </h3>
         <div
           className="flex shrink-0 items-center justify-end gap-1"

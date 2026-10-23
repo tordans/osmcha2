@@ -93,7 +93,7 @@ function Discussions({
                     {post.user}
                   </UserOSMLink>{' '}
                   {isChangesetUser ? (
-                    <span className="font-normal text-zinc-400">(changeset author)</span>
+                    <span className="font-normal text-zinc-500">(changeset author)</span>
                   ) : null}{' '}
                   {postDate ? <RelativeTime datetime={postDate} /> : null}:
                 </span>
