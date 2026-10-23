@@ -42,6 +42,7 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
         to="/changesets/$id"
         params={{ id: changesetId }}
         search={(prev) => searchWithoutMap({ ...prev, ...search })}
+        aria-current={active ? 'page' : undefined}
         className={clsx(
           'relative flex min-h-11 flex-col items-start justify-between gap-1 rounded pt-2.5 pr-0.5 pb-2 pl-3 break-words',
           'cursor-pointer touch-manipulation select-none',

@@ -116,6 +116,7 @@ it('renders username, comment, editor, and review status', async () => {
   expect(text).toContain('intentional')
   expect(text).not.toContain('49328744')
   expect(text).not.toContain('1624')
+  expect(screen.getByRole('link').getAttribute('aria-current')).toBeNull()
   MockDate.reset()
 })
 
@@ -126,6 +127,7 @@ it('marks the active row with a blue background and a visible chevron', async ()
 
   expect(link.className).toContain('bg-blue-50')
   expect(link.textContent).toContain('DaryR')
+  expect(link.getAttribute('aria-current')).toBe('page')
   MockDate.reset()
 })
 

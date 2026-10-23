@@ -55,7 +55,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
   const features = currentPage?.features
 
   return (
-    <ul className="flex min-h-0 flex-1 flex-col divide-y divide-zinc-100">
+    <ul aria-label="Changesets" className="flex min-h-0 flex-1 flex-col divide-y divide-zinc-100">
       {features?.map((f) => (
         <Row
           active={f.id === activeChangesetId}
