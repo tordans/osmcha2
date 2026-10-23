@@ -12,9 +12,12 @@ const nominatimSearchResultSchema = z.array(nominatimPlaceSchema)
 export type NominatimPlace = z.infer<typeof nominatimPlaceSchema>
 
 export async function nominatimSearch(input: string, type: string): Promise<NominatimPlace[]> {
-  const res = await fetch(`${nominatimUrl}?polygon_geojson=1&format=json&${type}=${input}`, {
-    method: 'GET',
-  })
+  const res = await fetch(
+    `${nominatimUrl}?polygon_geojson=1&format=json&${type}=${encodeURIComponent(input)}`,
+    {
+      method: 'GET',
+    },
+  )
   const json = await handleResponse(res)
   const parsed = nominatimSearchResultSchema.safeParse(json)
   return parsed.success ? parsed.data : []
