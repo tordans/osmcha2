@@ -175,9 +175,9 @@ function Changeset({
     <div className="relative flex h-full min-h-0 min-w-0 flex-col min-[56rem]:flex-row">
       <div className={clsx('relative min-h-0 min-w-0 flex-1', paneCardClassName)}>
         <div className={clsx('h-full', paneCardClipClassName)}>{children}</div>
-        {/* Narrow: below the List button, left of the map buttons. Wide: top center. */}
+        {/* Narrow: in the top row between the List button and the map buttons. Wide: top center. */}
         {showWorkAreas ? (
-          <div className="pointer-events-none absolute top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] right-16 left-[max(0.75rem,env(safe-area-inset-left))] z-10 flex min-[56rem]:top-[max(0.75rem,env(safe-area-inset-top))] min-[56rem]:right-[max(0.75rem,env(safe-area-inset-right))] min-[56rem]:left-44 min-[56rem]:justify-center">
+          <div className="pointer-events-none absolute top-[max(0.75rem,env(safe-area-inset-top))] right-16 left-[calc(max(0.75rem,env(safe-area-inset-left))+5.875rem)] z-10 flex min-[56rem]:top-[max(0.75rem,env(safe-area-inset-top))] min-[56rem]:right-[max(0.75rem,env(safe-area-inset-right))] min-[56rem]:left-44 min-[56rem]:justify-center">
             <WorkAreaBar
               groups={groupChangesByWorkArea(
                 buildElementChanges(osmInfo?.adiff?.actions ?? []),

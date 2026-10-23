@@ -75,14 +75,23 @@ export function WorkAreaBar({
     [highlighted, tabs.length],
   )
 
+  useLayoutEffect(
+    function scrollActiveTabIntoView() {
+      const tab = active == null ? null : tabRefs.current.get(active)
+      tab?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    },
+    [active],
+  )
+
   return (
     <nav
       ref={navRef}
       aria-label="Work areas"
       // Only side padding: the tabs fill the full 44px height as touch targets,
       // while the pill keeps its inset (`top-1 bottom-1`).
+      // Phones: a sideways scroller that snaps to tabs, without a scrollbar.
       className={clsx(
-        'pointer-events-auto relative isolate flex h-11 max-w-full items-center overflow-x-auto rounded-lg px-1',
+        'pointer-events-auto relative isolate flex h-11 max-w-full snap-x scroll-px-1 [scrollbar-width:none] items-center overflow-x-auto overscroll-x-contain rounded-lg px-1 [&::-webkit-scrollbar]:hidden',
         flyoutFrostedSurfaceClassName,
       )}
       onMouseLeave={() => setHovered(null)}
@@ -100,7 +109,7 @@ export function WorkAreaBar({
           onMouseEnter={() => setHovered(tab.key)}
           className={clsx(
             tabLayoutClassName,
-            'cursor-pointer touch-manipulation rounded-md text-zinc-700 select-none',
+            'cursor-pointer touch-manipulation snap-start rounded-md text-zinc-700 select-none',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
           )}
         >
@@ -149,7 +158,8 @@ function TabLabel({
       {count != null ? (
         <span
           className={clsx(
-            'rounded-md px-1.5 py-0.5 text-xs/5 font-medium tabular-nums',
+            // Phones: the list headings show the counts; the bar has little room.
+            'rounded-md px-1.5 py-0.5 text-xs/5 font-medium tabular-nums max-[56rem]:hidden',
             inverted ? 'bg-white/20 text-white' : 'bg-zinc-600/10 text-zinc-700',
           )}
         >
