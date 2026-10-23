@@ -1,0 +1,79 @@
+{
+  "name": "osmcha-django",
+  "repo": "https://github.com/OSMCha/osmcha-django",
+  "branch": "main",
+  "base": "647100058633cb69c05a22a49f685e2880776f49",
+  "cursor": "f46154af4941305c6f2fc383af736b8f404f0801",
+  "noise": [
+    {
+      "name": "ci",
+      "files": "^\\.github/"
+    }
+  ],
+  "intents": [
+    {
+      "id": "dj-aoi-window",
+      "title": "AOI RSS feeds limited to the last 30 days",
+      "commits": [
+        "00dc837aacec9577d63463c4368f2d385f49f766",
+        "f46154af4941305c6f2fc383af736b8f404f0801"
+      ],
+      "area": "api",
+      "decision": "adopted",
+      "reason": "The API window was narrowed to RSS feeds only; our RSS tooltip and filter text now say so.",
+      "decidedBy": "Tobias",
+      "date": "2026-10-23",
+      "ours": ["f840c70e0f5ad498d2fc54bb55a56d7c2f32bc5d"]
+    },
+    {
+      "id": "dj-e09c939",
+      "title": "Duplicate ST_Intersects in AOI query",
+      "commits": ["e09c9398f05f5a6f8fb8b2d54dc5669f9cb836f7"],
+      "area": "api",
+      "decision": "not-relevant",
+      "reason": "Internal query cleanup; no client-visible change.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "dj-8fd8573",
+      "title": "Debug print cleanup",
+      "commits": ["8fd8573cf17af8d785919c4e045f1acae6781621"],
+      "area": "api",
+      "decision": "not-relevant",
+      "reason": "Logging only.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "dj-729893c",
+      "title": "X-Route response header",
+      "commits": ["729893ca40e8e564b55229961121dcf4862186be"],
+      "area": "api",
+      "decision": "not-relevant",
+      "reason": "For proxy logs; our client does not read it.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "dj-e254d32",
+      "title": "Parallel fetchchangesets job",
+      "commits": ["e254d323181ae6b826623eb355a9d35a3a211e2d"],
+      "area": "api",
+      "decision": "not-relevant",
+      "reason": "Backend ingest only.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "dj-7e1720f",
+      "title": "AOI geometry filter as GeoJSON object",
+      "commits": ["7e1720f59613308f6ea131e9ded164270fb4ab4b"],
+      "area": "api",
+      "decision": "not-relevant",
+      "reason": "Backend fix; our client already saves geometry in that shape.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    }
+  ]
+}

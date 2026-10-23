@@ -1,0 +1,300 @@
+{
+  "name": "osmcha-frontend",
+  "repo": "https://github.com/OSMCha/osmcha-frontend",
+  "branch": "main",
+  "base": "c20d6723c8cf8b83062d44899954494d1dea7174",
+  "cursor": "f8d907af82a9d7716192ff6b8bd05ae3c776b6cd",
+  "noise": [
+    {
+      "name": "release",
+      "subject": "^(Release v|Bump version to )"
+    },
+    {
+      "name": "dependencies",
+      "subject": "^Bump some dependency"
+    },
+    {
+      "name": "ci",
+      "files": "^\\.github/"
+    }
+  ],
+  "intents": [
+    {
+      "id": "noise-ci-f0086f885",
+      "title": "ci: 1 commits",
+      "commits": ["f0086f8858b89aef67fce75bb5d3f37a2151f1b7"],
+      "decision": "not-relevant",
+      "reason": "noise rule \"ci\"",
+      "decidedBy": "rule",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "noise-dependencies-8b3e9c057",
+      "title": "dependencies: 1 commits",
+      "commits": ["8b3e9c05714108b347ec1b72ffc115fb57f1b0e2"],
+      "decision": "not-relevant",
+      "reason": "noise rule \"dependencies\"",
+      "decidedBy": "rule",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "noise-release-5eaf13f24",
+      "title": "release: 3 commits",
+      "commits": [
+        "5eaf13f24dbd2a5aab083eea372a4505ed3075d2",
+        "dc38739473a541500c1fd147162bd0f4669208fd",
+        "f8d907af82a9d7716192ff6b8bd05ae3c776b6cd"
+      ],
+      "decision": "not-relevant",
+      "reason": "noise rule \"release\"",
+      "decidedBy": "rule",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-229dae9",
+      "title": "Group tag value changes",
+      "commits": ["229dae9fbf68d561d9a444888889372a46e97b95"],
+      "area": "changeset",
+      "decision": "rejected",
+      "reason": "Upstream groups tag changes per tag key/value; we group elements by their whole set of tag changes (changesetElements.ts), a deliberate different design.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-browsers",
+      "title": "Min browser support in vite/tsc instead of browserslist",
+      "commits": [
+        "a0d3a5f6ef3d5afb0c9eb837bdfa8e27bd54c191",
+        "31272856a58f23b899448444dadf49fa3e4274a3"
+      ],
+      "area": "build",
+      "decision": "rejected",
+      "reason": "Our browserslist is load-bearing: vite.config.js derives build.target from it, and tsconfig targets ES2025 on purpose.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-2ef5ffd",
+      "title": "Fix rerender bug in filters map",
+      "commits": ["2ef5ffd7ca33c9c787721a5af5f98fd9447ba6ad"],
+      "area": "filters",
+      "decision": "already-have",
+      "reason": "Our location map is declarative and reads current props through useEffectEvent (src/components/filters/location.tsx), so the stale closure cannot happen.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-d2a3703",
+      "title": "Fix active changeset detection in sidebar",
+      "commits": ["d2a3703b5b052b089f344682010b9d57d77db2eb"],
+      "area": "list",
+      "decision": "already-have",
+      "reason": "We derive the active row from the TanStack route match with a numeric id (src/views/changesets_list.tsx).",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-b11fa48",
+      "title": "Clickable URLs in changeset sources",
+      "commits": ["b11fa48dda54cbc7c7b61e4e5bdd29c18be5faec"],
+      "area": "changeset",
+      "decision": "adopted",
+      "reason": "Changeset tag values are linkified in the changeset menu.",
+      "decidedBy": "agent",
+      "date": "2026-10-23",
+      "ours": ["84dbdd8f7f4ed160c5fa18470143388e04933f40"]
+    },
+    {
+      "id": "fe-bcd6778",
+      "title": "Rearrange changeset details table",
+      "commits": ["bcd6778770ea881612433ade3d76af60a04747f0"],
+      "area": "changeset",
+      "decision": "not-relevant",
+      "reason": "Replaces their property carousel, which we never had; our tags table lives in the changeset menu.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-d628515",
+      "title": "Improve text contrast",
+      "commits": ["d628515336500f7948df9c403bc99bd4cd79eb65"],
+      "area": "ui",
+      "decision": "adopted",
+      "reason": "Two text labels still used zinc-400; raised to zinc-500. The rest of their CSS targets markup we do not have.",
+      "decidedBy": "agent",
+      "date": "2026-10-23",
+      "ours": ["090ede9c0aadf5da1ce4225c257570e01b622802"]
+    },
+    {
+      "id": "fe-e760ed9",
+      "title": "Filter descriptions say what they filter for",
+      "commits": ["e760ed9e31b005549bac2b96bb23e4532ba28135"],
+      "area": "filters",
+      "decision": "adopted",
+      "reason": "Filter descriptions reworded to \"Filter for changesets ...\".",
+      "decidedBy": "agent",
+      "date": "2026-10-23",
+      "ours": ["eb8f9e655f2686ed7863e9fdb6ae3f6a5114e19b"]
+    },
+    {
+      "id": "fe-3ac3e3a",
+      "title": "Tweak the changeset info panel tab bar",
+      "commits": ["3ac3e3a4ba25f6b8a963b3b7d900fd0a3df8e72e"],
+      "area": "changeset",
+      "decision": "not-relevant",
+      "reason": "Restyles their floating tab strip; our review column/sheet has no such tab bar.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-80a8650",
+      "title": "Show selected element in tag and geometry tabs",
+      "commits": ["80a86509d09615b27aa27986ee5aebb9ced0dd2d"],
+      "area": "changeset",
+      "decision": "already-have",
+      "reason": "DetailsChanges highlights the selected element and opens its group (isSelected, revealInGroup).",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-fbcf8bb",
+      "title": "Fix empty Modified Relations section",
+      "commits": ["fbcf8bbb5f0e89e3f39486b98a26664526378808"],
+      "area": "changeset",
+      "decision": "already-have",
+      "reason": "Our element grouping has no type filter and lists modified relations with the modify group (changesetElements.ts).",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-9ee4d47",
+      "title": "Enter submits on watchlist page",
+      "commits": ["9ee4d479afac3a99cee2e71ee428480d9c4daee0"],
+      "area": "watchlist",
+      "decision": "already-have",
+      "reason": "Our watchlist add control is a form with a submit button (src/components/user/watchlist_user.tsx).",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-74ce826",
+      "title": "Disable view-changesets button for empty watchlist",
+      "commits": ["74ce8261e4bdcc17b43f86137ccd20d295b6b7fd"],
+      "area": "watchlist",
+      "decision": "adopted",
+      "reason": "The link is disabled with an explanation when the loaded watchlist is empty.",
+      "decidedBy": "agent",
+      "date": "2026-10-23",
+      "ours": ["33b2fd602c0646a2c2da0fa4f04663d1525889e4"]
+    },
+    {
+      "id": "fe-1768a32",
+      "title": "404 page",
+      "commits": ["1768a322277b8194f5e5562f32d46b1d4cb5e7c4"],
+      "area": "routing",
+      "decision": "adopted",
+      "reason": "defaultNotFoundComponent with a Page not found view.",
+      "decidedBy": "agent",
+      "date": "2026-10-23",
+      "ours": ["2ac5b5c210afbc8935325a42935c7710552f0fd4"]
+    },
+    {
+      "id": "fe-a07f168",
+      "title": "Redirects from /:id and /changeset/:id",
+      "commits": ["a07f16871bd581aee426de9fc9461750d8f93ce5"],
+      "area": "routing",
+      "decision": "not-relevant",
+      "reason": "Legacy osmcha.org URLs; our route tree never had those paths.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-ad1351a",
+      "title": "Contrast of read/selected rows in the list",
+      "commits": ["ad1351a27e624cd888d5a60f5693a6b7dc8f3ed6"],
+      "area": "list",
+      "decision": "adopted",
+      "reason": "Stronger selected row; read state persisted in localStorage for 30 days instead of component memory (decided by Tobias).",
+      "decidedBy": "Tobias",
+      "date": "2026-10-23",
+      "ours": ["51528ac19e393c06168a91c0067daa5c56073faf"]
+    },
+    {
+      "id": "fe-25066fe",
+      "title": "Accessibility of the changeset list",
+      "commits": ["25066fe382dbdafbfaa7f0c2088a1c70e9793f12"],
+      "area": "list",
+      "decision": "adopted",
+      "reason": "aria-current on the open row and a label on the list; no ID as accessible name (decided by Tobias).",
+      "decidedBy": "Tobias",
+      "date": "2026-10-23",
+      "ours": ["8383fbe381f95baf961acef46b0b26d2ea586895"]
+    },
+    {
+      "id": "fe-340e442",
+      "title": "Dashed underline on <time> in changeset panel",
+      "commits": ["340e442ab6f88800554b770bdb261ee1ba844225"],
+      "area": "changeset",
+      "decision": "not-relevant",
+      "reason": "CSS for their tab panel; our times sit in tooltips with their own affordance.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-9a48083",
+      "title": "Changeset comment styling",
+      "commits": ["9a4808373881e9721a0fd3568f115c9dca2467d1"],
+      "area": "changeset",
+      "decision": "not-relevant",
+      "reason": "Restyles their comment paragraph; ours is a blockquote with its own empty state.",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-998b8f2",
+      "title": "Remove line truncation in changeset list",
+      "commits": ["998b8f21381eea68a140ceec971cacdc6871ac14"],
+      "area": "list",
+      "decision": "already-have",
+      "reason": "Our list does not clamp the comment (src/components/list/primary_line.tsx).",
+      "decidedBy": "agent",
+      "date": "2026-10-23"
+    },
+    {
+      "id": "fe-7cff3ce",
+      "title": "MapLibre 6",
+      "commits": ["7cff3ced3fd4f7892a5723999e3f45dc87098f0a"],
+      "area": "map",
+      "decision": "adopted",
+      "reason": "We were already on MapLibre 6 with setWorkerUrl; adopted their worker.format es.",
+      "decidedBy": "agent",
+      "date": "2026-10-23",
+      "ours": ["415721315dac28433e39342af5f8e5bc89b2ace2"]
+    },
+    {
+      "id": "fe-e20e1af",
+      "title": "Area filter UI and Nominatim usage",
+      "commits": ["e20e1aff61813916764a43196501bf77387ee3df"],
+      "area": "filters",
+      "decision": "adopted",
+      "reason": "Encode the query; search after each word or on Enter, at most one request per second, instead of typeahead (decided by Tobias). Their layout change we already had.",
+      "decidedBy": "Tobias",
+      "date": "2026-10-23",
+      "ours": [
+        "503f21bf0fd3e0643b2385a058ca3d73fb2c2d30",
+        "b0e9e99c559e674ab0a60236756cb973a5dfd442"
+      ]
+    },
+    {
+      "id": "fe-159b5cd",
+      "title": "Overpass only after explicit confirmation",
+      "commits": ["159b5cd89985eb9752a06f13c6ccbd7cc8cdfd46"],
+      "area": "changeset",
+      "decision": "adopted",
+      "reason": "Missing adiff offers \"Load from Overpass\" instead of an automatic fallback; no Overpass retries (decided by Tobias).",
+      "decidedBy": "Tobias",
+      "date": "2026-10-23",
+      "ours": ["e945bfbb22e64008a078ece5d4e82a0401052fa1"]
+    }
+  ]
+}

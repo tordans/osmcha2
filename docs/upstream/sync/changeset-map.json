@@ -1,0 +1,14 @@
+{
+  "name": "changeset-map",
+  "repo": "https://github.com/osmlab/changeset-map",
+  "branch": "master",
+  "base": "998db7fde25b16c64cb42289a59f48d42c52ef78",
+  "cursor": "998db7fde25b16c64cb42289a59f48d42c52ef78",
+  "noise": [
+    {
+      "name": "release",
+      "subject": "^v?\\d+\\.\\d+\\.\\d+$"
+    }
+  ],
+  "intents": []
+}
