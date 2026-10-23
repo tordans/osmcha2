@@ -23,6 +23,12 @@ import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
 import { areaLtBoundPolygon, parseAreaLt } from './areaLtBound.ts'
 import { filterOptionLabel, type Filter } from './filterTypes.ts'
+import {
+  isSearchablePlaceQuery,
+  millisecondsUntilPlaceSearchAllowed,
+  shouldSearchPlaceOnEnter,
+  shouldSearchPlaceOnInput,
+} from './placeSearchTrigger.ts'
 import { SearchCombobox, type SearchOption } from './search_combobox.tsx'
 
 type QueryTypeOption = { value: string; label: string }
@@ -51,14 +57,6 @@ type LocationSelectProps = {
   areaLtDescription: string
   areaLtPlaceholder?: string
   onChange: (name: string, value?: Filter | null) => void
-}
-
-function isOneCharInputAllowed(input: string) {
-  try {
-    return /\p{scx=Han}|\p{scx=Hangul}|\p{scx=Hiragana}|\p{scx=Katakana}/u.test(input)
-  } catch {
-    return true
-  }
 }
 
 function geometryFromValue(value?: Filter) {
@@ -96,8 +94,12 @@ function LocationSelectInner({
   onChange,
 }: LocationSelectProps) {
   const [queryType, setQueryType] = useState('q')
-  const [placeQuery, setPlaceQuery] = useState('')
-  const [debouncedPlaceQuery, setDebouncedPlaceQuery] = useState('')
+  // The place text last sent to Nominatim (trimmed). It only changes when a search is sent.
+  const [searchedPlaceQuery, setSearchedPlaceQuery] = useState('')
+  const lastSentPlaceQueryRef = useRef('')
+  const lastSentPlaceAtRef = useRef<number | null>(null)
+  const pendingPlaceQueryRef = useRef<string | null>(null)
+  const pendingPlaceTimerRef = useRef<number | null>(null)
   const [activeMode, setActiveMode] = useState('render')
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -118,11 +120,8 @@ function LocationSelectInner({
 
   const selectedQueryType =
     queryTypeOptions.find((option) => option.value === queryType) ?? queryTypeOptions[0]
-  const canSearchPlaces = Boolean(
-    debouncedPlaceQuery &&
-    (debouncedPlaceQuery.length >= 2 || isOneCharInputAllowed(debouncedPlaceQuery)),
-  )
-  const nominatimQuery = useNominatimSearch(debouncedPlaceQuery, queryType, canSearchPlaces)
+  const canSearchPlaces = isSearchablePlaceQuery(searchedPlaceQuery)
+  const nominatimQuery = useNominatimSearch(searchedPlaceQuery, queryType, canSearchPlaces)
   const placeOptions: SearchOption[] = canSearchPlaces
     ? (nominatimQuery.data ?? []).map((place) => ({
         label: place.display_name,
@@ -153,17 +152,13 @@ function LocationSelectInner({
     setActiveMode('render')
   })
 
-  useEffect(
-    function debouncePlaceQuery() {
-      const handle = window.setTimeout(function publishDebouncedPlaceQuery() {
-        setDebouncedPlaceQuery(placeQuery)
-      }, 500)
-      return function cancelDebouncedPlaceQuery() {
-        window.clearTimeout(handle)
+  useEffect(function cancelPendingPlaceSearch() {
+    return function clearPendingPlaceSearchTimer() {
+      if (pendingPlaceTimerRef.current !== null) {
+        window.clearTimeout(pendingPlaceTimerRef.current)
       }
-    },
-    [placeQuery],
-  )
+    }
+  }, [])
 
   useEffect(
     function startLocationTerraDraw() {
@@ -216,6 +211,59 @@ function LocationSelectInner({
     },
     [areaLtBound, locationGeometry, mapLoaded, locationMap],
   )
+
+  function sendPlaceSearch(text: string) {
+    const query = text.trim()
+    lastSentPlaceQueryRef.current = query
+    lastSentPlaceAtRef.current = Date.now()
+    setSearchedPlaceQuery(query)
+  }
+
+  function flushPendingPlaceSearch() {
+    pendingPlaceTimerRef.current = null
+    const text = pendingPlaceQueryRef.current
+    pendingPlaceQueryRef.current = null
+    if (text !== null && text.trim() !== lastSentPlaceQueryRef.current) sendPlaceSearch(text)
+  }
+
+  // At most one Nominatim request per interval. A request that has to wait goes out
+  // when the interval has passed, with the latest text.
+  function requestPlaceSearch(text: string) {
+    pendingPlaceQueryRef.current = text
+    if (pendingPlaceTimerRef.current !== null) return
+
+    const delay = millisecondsUntilPlaceSearchAllowed({
+      lastSentAt: lastSentPlaceAtRef.current,
+      now: Date.now(),
+    })
+    if (delay === 0) {
+      pendingPlaceQueryRef.current = null
+      sendPlaceSearch(text)
+      return
+    }
+    pendingPlaceTimerRef.current = window.setTimeout(flushPendingPlaceSearch, delay)
+  }
+
+  function resetPlaceSearch() {
+    if (pendingPlaceTimerRef.current !== null) window.clearTimeout(pendingPlaceTimerRef.current)
+    pendingPlaceTimerRef.current = null
+    pendingPlaceQueryRef.current = null
+    lastSentPlaceQueryRef.current = ''
+    setSearchedPlaceQuery('')
+  }
+
+  function handlePlaceQueryChange(input: string) {
+    // Clearing the input drops the results, so retyping the same place searches again.
+    if (!input.trim()) {
+      resetPlaceSearch()
+      return
+    }
+    if (shouldSearchPlaceOnInput(input, lastSentPlaceQueryRef.current)) requestPlaceSearch(input)
+  }
+
+  function handlePlaceEnter(input: string) {
+    if (shouldSearchPlaceOnEnter(input, lastSentPlaceQueryRef.current)) requestPlaceSearch(input)
+  }
 
   const handlePlaceSelect = (option: SearchOption) => {
     const draw = drawRef.current
@@ -289,11 +337,13 @@ function LocationSelectInner({
             options={placeOptions}
             placeholder={placeholder}
             clientFilter={false}
-            onQueryChange={setPlaceQuery}
+            onQueryChange={handlePlaceQueryChange}
+            onEnter={handlePlaceEnter}
             onSelect={handlePlaceSelect}
           />
         </div>
       </div>
+      <Description>Search starts after each word, or press Enter.</Description>
 
       <div className="flex flex-wrap gap-2">
         <Button

@@ -26,6 +26,8 @@ type SearchComboboxProps = {
   selected?: SearchOption | null
   onSelect: (option: SearchOption) => void
   onQueryChange?: (query: string) => void
+  /** Enter in the input. Without an active option, the input does not submit a surrounding form. */
+  onEnter?: (query: string) => void
   clientFilter?: boolean
   allowCreate?: boolean
   createLabel?: (query: string) => string
@@ -39,6 +41,7 @@ export function SearchCombobox({
   selected = null,
   onSelect,
   onQueryChange,
+  onEnter,
   clientFilter = true,
   allowCreate = false,
   createLabel = defaultCreateLabel,
@@ -94,6 +97,13 @@ export function SearchCombobox({
             const next = event.target.value
             setQuery(next)
             onQueryChange?.(next)
+          }}
+          onKeyDown={(event) => {
+            if (!onEnter || event.key !== 'Enter' || event.nativeEvent.isComposing) return
+            // An active option is selected by the combobox itself; keep it as it was.
+            if (event.currentTarget.getAttribute('aria-activedescendant')) return
+            event.preventDefault()
+            onEnter(event.currentTarget.value)
           }}
         />
         <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex cursor-pointer touch-manipulation items-center px-2 select-none">

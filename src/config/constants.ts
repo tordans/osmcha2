@@ -27,6 +27,8 @@ export const adiffServiceUrl = 'https://adiffs.osmcha.org'
 export const whosThat = 'https://whosthat.osmz.ru/whosthat.php?action=names&id='
 
 export const nominatimUrl = 'https://nominatim.openstreetmap.org/search.php'
+/** Nominatim usage policy: at most one request per second. Place search waits for this gap. */
+export const NOMINATIM_SEARCH_MIN_INTERVAL_MS = 1000
 
 /** Default list start: this many days before today. */
 export const DEFAULT_FROM_DATE = 2
