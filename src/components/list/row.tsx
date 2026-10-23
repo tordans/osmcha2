@@ -2,6 +2,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { searchWithoutMap } from '../../routing/mapParam.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
+import { useIsChangesetRead } from '../../stores/read-changesets-store.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
 import { ChevronRightIcon } from '../ui/icons.ts'
 import { typeScale } from '../ui/typography.ts'
@@ -35,6 +36,7 @@ interface RowProps {
 export function Row({ properties, changesetId, data, active, inputRef }: RowProps) {
   const search = rootRouteApi.useSearch()
   const editor = properties.editor || properties.created_by
+  const isRead = useIsChangesetRead(changesetId)
 
   return (
     <li className="relative" ref={inputRef}>
@@ -46,7 +48,11 @@ export function Row({ properties, changesetId, data, active, inputRef }: RowProp
         className={clsx(
           'relative flex min-h-11 flex-col items-start justify-between gap-1 rounded pt-2.5 pr-0.5 pb-2 pl-3 break-words',
           'cursor-pointer touch-manipulation select-none',
-          active ? 'bg-blue-50 active:bg-blue-100' : 'hover:bg-gray-50 active:bg-zinc-100',
+          active
+            ? 'bg-blue-100 active:bg-blue-200'
+            : isRead
+              ? 'bg-zinc-100 hover:bg-zinc-200/70 active:bg-zinc-200'
+              : 'hover:bg-gray-50 active:bg-zinc-100',
         )}
       >
         <Title

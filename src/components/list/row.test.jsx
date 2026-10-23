@@ -11,6 +11,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import MockDate from 'mockdate'
 import { routerSearch } from '../../routing/routerSearch.ts'
 import { osmchaSearchSchema } from '../../routing/searchSchemas.ts'
+import { getReadChangesetsActions } from '../../stores/read-changesets-store.ts'
 import { PrimaryLine } from './primary_line.tsx'
 import { Row } from './row.tsx'
 
@@ -125,7 +126,7 @@ it('marks the active row with a blue background and a visible chevron', async ()
   await renderRow(true)
   const link = screen.getByRole('link')
 
-  expect(link.className).toContain('bg-blue-50')
+  expect(link.className).toContain('bg-blue-100')
   expect(link.textContent).toContain('DaryR')
   expect(link.getAttribute('aria-current')).toBe('page')
   MockDate.reset()
@@ -144,4 +145,15 @@ it('renders PrimaryLine as username: comment', () => {
 
   expect(container.textContent).toContain('DaryR')
   expect(container.textContent).toContain('#hotosm-project-2999')
+})
+
+it('gives a read changeset a grey background', async () => {
+  MockDate.set(1497172627326)
+  getReadChangesetsActions().markRead(changeset.id)
+  await renderRow(false)
+
+  const link = screen.getByRole('link')
+  expect(link.className).toContain('bg-zinc-100')
+  expect(link.className).not.toContain('bg-blue-100')
+  MockDate.reset()
 })

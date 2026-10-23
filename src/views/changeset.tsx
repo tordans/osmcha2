@@ -1,7 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
 import { Changeset as ChangesetWorkspace } from '../components/changeset/Changeset.tsx'
 import {
@@ -19,6 +19,7 @@ import { changesetQueryOptions } from '../query/options/changeset.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
 import { useAuthToken } from '../stores/auth-store.ts'
+import { useReadChangesetsActions } from '../stores/read-changesets-store.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import { changesetWorkAreas } from './changesetWorkAreas.ts'
 import { CMap } from './map.tsx'
@@ -44,6 +45,14 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
+  const { markRead } = useReadChangesetsActions()
+
+  useEffect(
+    function markChangesetRead() {
+      markRead(changesetId)
+    },
+    [changesetId, markRead],
+  )
 
   const mapLayers = parseLayersParam(search.layers)
   const viewer = useChangesetAdiffViewer(
