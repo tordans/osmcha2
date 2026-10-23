@@ -30,8 +30,9 @@ import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { flyoutSurfaceClassName } from '../components/ui/flyout.ts'
 import { useAuth } from '../hooks/useAuth.ts'
+import { AdiffNotFoundError } from '../network/changeset.ts'
 import { useNotesUserKey } from '../notes/useNotesUserKey.ts'
-import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
+import { useChangesetMap, useChangesetMapFromOverpass } from '../query/hooks/useChangesetMap.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { parsePinParam } from '../routing/pinParam.ts'
@@ -205,6 +206,7 @@ function CMap({
   const zoomedDeepLinkKeyRef = useRef<string | null>(null)
   const styleId = useMapStyle()
   const changesetQuery = useChangesetMap(changesetId)
+  const overpassQuery = useChangesetMapFromOverpass(changesetId)
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
   const { markMapLoaded, resetMapLoaded } = useMapLoadedActions()
@@ -474,9 +476,30 @@ function CMap({
         ? { bounds: viewBounds, fitBoundsOptions: { padding: 16, maxZoom: 18 } }
         : { longitude: 0, latitude: 0, zoom: 1 }
   const canMountMap = Boolean(mapStyle && viewer)
-  const showError = changesetQuery.isError && !changesetQuery.isFetching
+  // Once the Overpass fallback has loaded, the adiff error no longer applies.
+  const adiffFailed =
+    changesetQuery.isError && !changesetQuery.isFetching && !overpassQuery.isSuccess
+  const adiffMissing = adiffFailed && changesetQuery.error instanceof AdiffNotFoundError
+  const overpassFailed = overpassQuery.isError && !overpassQuery.isFetching
+  const showError = adiffFailed || overpassFailed
   const showLoading =
-    !showError && (!canMountMap || changesetQuery.isLoading || changesetQuery.isFetching)
+    !showError &&
+    (!canMountMap ||
+      changesetQuery.isLoading ||
+      changesetQuery.isFetching ||
+      overpassQuery.isFetching)
+
+  function retryChangesetMap() {
+    if (overpassFailed) {
+      void overpassQuery.refetch()
+    } else {
+      void changesetQuery.refetch()
+    }
+  }
+
+  function loadChangesetMapFromOverpass() {
+    void overpassQuery.refetch()
+  }
 
   function isReviewVisible(feature: {
     source?: string
@@ -652,10 +675,12 @@ function CMap({
       </div>
       {showError && (
         <ChangesetMapUnavailable
-          error={changesetQuery.error}
-          onRetry={() => {
-            void changesetQuery.refetch()
-          }}
+          error={overpassFailed ? overpassQuery.error : changesetQuery.error}
+          overpassFailed={overpassFailed}
+          onRetry={retryChangesetMap}
+          onLoadFromOverpass={
+            adiffMissing && !overpassFailed ? loadChangesetMapFromOverpass : undefined
+          }
         />
       )}
       {showLoading && (

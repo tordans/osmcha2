@@ -14,7 +14,7 @@ import { SignIn } from '../components/sign_in.tsx'
 import { FILTER_BY_USER } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
 import type { NoteTarget } from '../notes/discussionNotes.ts'
-import { useChangesetMap } from '../query/hooks/useChangesetMap.ts'
+import { useChangesetMap, useChangesetMapFromOverpass } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
@@ -39,13 +39,15 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const navigate = changesetRouteApi.useNavigate()
   const { data: changeset } = useSuspenseQuery(changesetQueryOptions(changesetId))
   const mapQuery = useChangesetMap(changesetId)
+  // Only has data after the user asked for the Overpass fallback in the map pane.
+  const overpassMapQuery = useChangesetMapFromOverpass(changesetId)
   const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
 
   const mapLayers = parseLayersParam(search.layers)
   const viewer = useChangesetAdiffViewer(
-    mapQuery.data?.adiff,
+    (mapQuery.data ?? overpassMapQuery.data)?.adiff,
     mapLayers.showElements,
     mapLayers.showActions,
   )

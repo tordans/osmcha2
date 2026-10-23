@@ -53,45 +53,43 @@ export function fetchChangeset(id: number): Promise<ChangesetFeature> {
   return api.get(`/changesets/${id}/`).then((data) => changesetFeatureSchema.parse(data))
 }
 
+/// Thrown when the adiff service has no augmented diff for a changeset. A 404 is
+/// expected for very new changesets (generation lags the OSM API).
+export class AdiffNotFoundError extends Error {
+  constructor(id: number, status: number, statusText: string) {
+    super(`GET /changesets/${id}.adiff returned ${status} ${statusText}`.trim())
+    this.name = 'AdiffNotFoundError'
+  }
+}
+
+/// Fetch and parse the augmented diff for a changeset from the configured adiff service.
+/// It does not fall back to Overpass: use fetchAndParseAugmentedDiffFromOverpass after the user asks for it.
 export async function fetchAndParseAugmentedDiff(id: number) {
   // The parser (and its `sax` dependency) loads with the first diff, not with
   // the app shell: the route loader that calls this lives in the entry chunk.
   const [xml, { default: adiffParser }] = await Promise.all([
-    fetchAugmentedDiff(id),
+    fetchAdiffServiceXml(id),
     import('@osmcha/osm-adiff-parser'),
   ])
   const adiff = await adiffParser(xml)
   return adiff
 }
 
-/// Fetch an augmented diff for the given changeset ID. Tries to fetch from the
-/// configured adiff service (if it exists) and falls back to using the configured
-/// Overpass server if that fails. A 404 from the adiff service is expected for
-/// very new changesets (generation lags the OSM API).
-async function fetchAugmentedDiff(id: number) {
-  try {
-    return await fetchAugmentedDiffFromAdiffService(id)
-  } catch (err) {
-    if (err instanceof AdiffServiceMissError) {
-      console.warn(err.message)
-    } else {
-      console.error(err)
-    }
-    return await fetchAugmentedDiffFromOverpass(id)
-  }
+/// Fetch and parse the augmented diff for a changeset from the Overpass API.
+/// Overpass is slower and heavier on a shared server, so only call this in response to user action.
+export async function fetchAndParseAugmentedDiffFromOverpass(id: number) {
+  const [xml, { default: adiffParser }] = await Promise.all([
+    fetchAugmentedDiffFromOverpass(id),
+    import('@osmcha/osm-adiff-parser'),
+  ])
+  const adiff = await adiffParser(xml)
+  return adiff
 }
 
-class AdiffServiceMissError extends Error {
-  constructor(id: number, status: number, statusText: string) {
-    super(`GET /changesets/${id}.adiff returned ${status} ${statusText}`.trim())
-    this.name = 'AdiffServiceMissError'
-  }
-}
-
-async function fetchAugmentedDiffFromAdiffService(id: number) {
+async function fetchAdiffServiceXml(id: number) {
   const res = await fetch(`${adiffServiceUrl}/changesets/${id}.adiff`)
   if (res.status === 404) {
-    throw new AdiffServiceMissError(id, res.status, res.statusText)
+    throw new AdiffNotFoundError(id, res.status, res.statusText)
   }
   if (res.status !== 200) {
     throw new Error(`GET /changesets/${id}.adiff returned ${res.status} ${res.statusText}`.trim())
