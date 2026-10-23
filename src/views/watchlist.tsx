@@ -43,7 +43,7 @@ const columnHelper = createColumnHelper<typeof features, WatchlistUserRow>()
 
 export function Watchlist() {
   const { token, user } = useAuth()
-  const { data: watchlist = EMPTY_WATCHLIST } = useWatchlist()
+  const { data: watchlist = EMPTY_WATCHLIST, isSuccess: isWatchlistLoaded } = useWatchlist()
   const addMutation = useAddToWatchlist()
   const removeMutation = useRemoveFromWatchlist()
 
@@ -173,16 +173,25 @@ export function Watchlist() {
           <SaveUser onCreate={addToWatchList} forWatchlist={true} />
 
           <div>
-            <RouterLink
-              to="/"
-              search={listSearchFromFilters({
-                blacklist: [{ label: 'Yes', value: 'True' }],
-              })}
-              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
-            >
-              <FunnelIcon className="size-4" />
-              View changesets from users on your watchlist
-            </RouterLink>
+            {isWatchlistLoaded && watchlist.length === 0 ? (
+              <span className="inline-block" title="You don't have any users on your watchlist">
+                <Button outline disabled>
+                  <FunnelIcon className="size-4" />
+                  View changesets from users on your watchlist
+                </Button>
+              </span>
+            ) : (
+              <RouterLink
+                to="/"
+                search={listSearchFromFilters({
+                  blacklist: [{ label: 'Yes', value: 'True' }],
+                })}
+                className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
+              >
+                <FunnelIcon className="size-4" />
+                View changesets from users on your watchlist
+              </RouterLink>
+            )}
           </div>
         </div>
       ) : null}
