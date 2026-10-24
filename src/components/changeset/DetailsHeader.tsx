@@ -33,7 +33,7 @@ import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
 import { formatCompactCount } from '../../utils/formatCount.ts'
-import { htmlLinksToMarkdown } from '../../utils/htmlLinksToMarkdown.ts'
+import { prepareProfileMarkdown } from '../../utils/profileMarkdown.ts'
 import { editorCompactName, editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { RelativeTime } from '../relative_time.tsx'
@@ -764,7 +764,7 @@ export function DetailsHeader({
                   )}
                 >
                   <Markdown remarkPlugins={[remarkGfm]}>
-                    {htmlLinksToMarkdown(description)}
+                    {prepareProfileMarkdown(description)}
                   </Markdown>
                 </blockquote>
               ) : null}

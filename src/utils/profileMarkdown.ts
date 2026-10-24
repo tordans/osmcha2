@@ -27,3 +27,25 @@ export function htmlLinksToMarkdown(text: string) {
     return `[${escapedLabel}](<${href.replace(/[<>]/g, encodeURIComponent)}>)`
   })
 }
+
+/** kramdown comment blocks, `{::comment}…{:/comment}` or the short `{::comment /}` form. */
+const KRAMDOWN_COMMENT = /\{::comment\}[\s\S]*?\{:\/comment\}|\{::comment\s*\/\}/g
+/** Other kramdown extensions and attribute lists, e.g. `{::options …/}` or `{: .class}`. */
+const KRAMDOWN_TAG = /\{::?[^}\n]*\}/g
+const HTML_COMMENT = /<!--[\s\S]*?-->/g
+
+/**
+ * OSM renders profile descriptions with kramdown, which hides `{::comment}` blocks and attribute
+ * lists. Drop those, and HTML comments, so they do not show as text here; then turn `<a>` tags
+ * into Markdown links. Reference links (`[text][id]` with `[id]: url "title"` lines) are plain
+ * Markdown and work once the comments around their definitions are gone.
+ */
+export function prepareProfileMarkdown(text: string) {
+  const cleaned = text
+    .replace(HTML_COMMENT, '')
+    .replace(KRAMDOWN_COMMENT, '')
+    .replace(KRAMDOWN_TAG, '')
+    // A definition left after removed text on its line must start the line again to count.
+    .replace(/[ \t]+(\[[^\]\n]+\]:[ \t]*\S)/g, '\n$1')
+  return htmlLinksToMarkdown(cleaned)
+}

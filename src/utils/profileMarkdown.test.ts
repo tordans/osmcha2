@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { htmlLinksToMarkdown } from './htmlLinksToMarkdown.ts'
+import { htmlLinksToMarkdown, prepareProfileMarkdown } from './profileMarkdown.ts'
 
 describe('htmlLinksToMarkdown', () => {
   test('turns a rel="me" Mastodon link into a Markdown link', () => {
@@ -34,5 +34,38 @@ describe('htmlLinksToMarkdown', () => {
   test('leaves Markdown and other text alone', () => {
     const text = '## Hi\n\n[OSM](https://osm.org) and a < b'
     expect(htmlLinksToMarkdown(text)).toBe(text)
+  })
+})
+
+describe('prepareProfileMarkdown', () => {
+  test('drops kramdown comments, attribute lists and HTML comments', () => {
+    expect(
+      prepareProfileMarkdown(
+        'geogeek {::comment} Anzeige {:/comment} | <!-- hidden -->[OSM][o]{: .x}',
+      ),
+    ).toBe('geogeek  | [OSM][o]')
+    expect(prepareProfileMarkdown('a{::comment /}b {::options parse_block_html="true" /}')).toBe(
+      'ab ',
+    )
+  })
+
+  test('removes multi-line comments', () => {
+    expect(
+      prepareProfileMarkdown('keep\n{::comment}\nline 1\nline 2\n{:/comment}\nalso keep'),
+    ).toBe('keep\n\nalso keep')
+  })
+
+  test('puts reference definitions back at the start of a line', () => {
+    expect(
+      prepareProfileMarkdown(
+        '{::comment} Linkliste {:/comment} [wiki]: https://wiki.example "Wiki" [forum]: https://forum.example',
+      ),
+    ).toBe('\n[wiki]: https://wiki.example "Wiki"\n[forum]: https://forum.example')
+  })
+
+  test('still converts HTML links', () => {
+    expect(prepareProfileMarkdown('<a rel="me" href="https://m.example/@x">M</a>')).toBe(
+      '[M](<https://m.example/@x>)',
+    )
   })
 })
