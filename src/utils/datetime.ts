@@ -59,7 +59,7 @@ export type FormatAccountAgeOptions = {
   compact?: boolean
   /** One-letter units without " old" for narrow labels, e.g. `12d`, `>2y`. */
   short?: boolean
-  /** Uncapped distance (tooltip); default caps at ">2 years". */
+  /** Exact distance (tooltip); by default two years and up show as ">N years". */
   full?: boolean
 }
 
@@ -81,7 +81,9 @@ export function formatAccountAge(
     const minutes = differenceInMinutes(now, created)
     return short ? `${minutes}min` : `${minutes} min${suffix}`
   }
-  if (!full && differenceInYears(now, created) >= 2) return short ? '>2y' : `>2 years${suffix}`
+  const years = differenceInYears(now, created)
+  // Two years and up: whole years with ">", since the months no longer matter for trust.
+  if (!full && years >= 2) return short ? `>${years}y` : `>${years} years${suffix}`
   const distance = formatDistanceStrict(created, now, { roundingMethod: 'floor' })
   return short ? shortDistance(distance) : `${distance}${suffix}`
 }

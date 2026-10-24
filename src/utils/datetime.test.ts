@@ -70,7 +70,7 @@ describe('formatAccountAge', () => {
     expect(formatAccountAge(parseOsmDate('2025-12-30T12:00:00.000Z'), now)).toBe('8 months old')
     expect(formatAccountAge(parseOsmDate('2025-08-30T12:00:00.000Z'), now)).toBe('1 year old')
     expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now)).toBe('>2 years old')
-    expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now)).toBe('>2 years old')
+    expect(formatAccountAge(parseOsmDate('2015-01-01T00:00:00.000Z'), now)).toBe('>11 years old')
   })
 
   test('compact drops the trailing " old"', () => {
@@ -101,6 +101,9 @@ describe('formatAccountAge', () => {
     )
     expect(formatAccountAge(parseOsmDate('2024-08-30T12:00:00.000Z'), now, { short: true })).toBe(
       '>2y',
+    )
+    expect(formatAccountAge(parseOsmDate('2011-05-03T12:00:00.000Z'), now, { short: true })).toBe(
+      '>15y',
     )
   })
 
