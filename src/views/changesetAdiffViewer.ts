@@ -2,6 +2,11 @@ import { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { useMemo } from 'react'
 import { remapAdiffActionLayers } from '../components/changeset/actionColors.ts'
 import type { ParsedAdiff } from '../components/changeset/changesetElements.ts'
+import {
+  annotateNodeClickability,
+  applyNodeClickabilityStyle,
+  CHANGESET_NODE_VERTEX_LAYER_IDS,
+} from './changesetNodeLayers.ts'
 
 export const CHANGESET_MAP_ID = 'mainMap'
 export const CHANGESET_SOURCE_ID = 'changeset'
@@ -17,8 +22,12 @@ export type ChangesetAdiffViewer = {
   layers: () => Array<{ id: string; type?: string; paint?: Record<string, unknown> }>
 }
 
+/** Untagged corner points of ways are drawn but never hit-tested. */
 export function changesetInteractiveLayerIds(layers: Array<{ id: string }>): string[] {
-  return layers.map((layer) => layer.id).filter((id) => id !== CHANGESET_OVERLAY_BG_LAYER_ID)
+  return layers
+    .map((layer) => layer.id)
+    .filter((id) => id !== CHANGESET_OVERLAY_BG_LAYER_ID)
+    .filter((id) => !CHANGESET_NODE_VERTEX_LAYER_IDS.includes(id))
 }
 
 /** Background dim has no source; vis.gl injects `source` onto nested Layer children. */
@@ -60,9 +69,9 @@ export function useChangesetAdiffViewer(
     )
     return {
       adiff: viewer.adiff,
-      geojson: viewer.geojson,
+      geojson: annotateNodeClickability(viewer.geojson, viewer.adiff.actions),
       options: viewer.options,
-      layers: () => remapAdiffActionLayers(viewer.layers()),
+      layers: () => applyNodeClickabilityStyle(remapAdiffActionLayers(viewer.layers())),
     }
   }, [adiff, showElements, showActions])
 }

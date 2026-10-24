@@ -527,3 +527,28 @@ describe('inspectFlyoutTags', () => {
     })
   })
 })
+
+describe('untagged way vertices', () => {
+  test('are never interactive layers', () => {
+    const ids = changesetClickableLayerIds([
+      ...viewerLayers,
+      { id: 'changeset-node-vertex-bg' },
+      { id: 'changeset-node-vertex' },
+    ])
+    expect(ids).not.toContain('changeset-node-vertex')
+    expect(ids).not.toContain('changeset-node-vertex-bg')
+    expect(ids).toContain('changeset-node-tagged')
+  })
+
+  test('are not clickable or hoverable even if a query returns them', () => {
+    const vertex = {
+      layer: { id: 'changeset-node-tagged' },
+      properties: { type: 'node', id: 5, action: 'modify', clickable: false },
+    }
+    expect(isClickableMapFeature(vertex)).toBe(false)
+    expect(changesetHoverFromFeatures([vertex])).toBeNull()
+    expect(
+      isClickableMapFeature({ ...vertex, properties: { ...vertex.properties, clickable: true } }),
+    ).toBe(true)
+  })
+})

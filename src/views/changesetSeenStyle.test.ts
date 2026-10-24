@@ -198,3 +198,34 @@ describe('syncSeenFeatureState', () => {
     ).not.toThrow()
   })
 })
+
+describe('applySeenMapStyle on ringed points', () => {
+  const point: { id: string; type: string; paint: Record<string, unknown> } = {
+    id: 'changeset-node-tagged',
+    type: 'circle',
+    paint: {
+      'circle-color': '#2dd4bf',
+      'circle-stroke-color': '#ffffff',
+      'circle-stroke-width': 1.5,
+    },
+  }
+
+  test('keeps the ring white when graying', () => {
+    const [styled] = applySeenMapStyle([point], {
+      showSeen: true,
+      showUnseen: true,
+      graySeen: true,
+    })
+    expect(styled?.paint['circle-stroke-color']).toBe('#ffffff')
+    expect(styled?.paint['circle-color']).not.toBe('#2dd4bf')
+  })
+
+  test('hides the ring together with the fill', () => {
+    const [styled] = applySeenMapStyle([point], {
+      showSeen: false,
+      showUnseen: true,
+      graySeen: true,
+    })
+    expect(styled?.paint['circle-stroke-opacity']).toEqual(styled?.paint['circle-opacity'])
+  })
+})

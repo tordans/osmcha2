@@ -72,7 +72,7 @@ import {
   setSelectedFeatureState,
   syncHighlightedFeatureState,
 } from './changesetFeatureState.ts'
-import { pickChangesetActionFromClick } from './changesetMapClick.ts'
+import { hitSlopPx, isTouchInput, pickChangesetActionFromClick } from './changesetMapClick.ts'
 import { ChangesetMapUnavailable } from './ChangesetMapUnavailable.tsx'
 import {
   applySeenMapStyle,
@@ -550,6 +550,7 @@ function CMap({
       actions: viewer.adiff.actions,
       previousFeatureId: lastClickFeatureIdRef.current,
       isFeatureVisible: isReviewVisible,
+      hitSlop: hitSlopPx(isTouchInput(event.originalEvent)),
     })
 
     const geojson = viewer.geojson

@@ -54,6 +54,7 @@ const NON_TAG_KEYS = new Set([
   'relations',
   'num_tags',
   'tags_changed',
+  'clickable',
   'old_tags',
   'new_tags',
 ])
@@ -213,6 +214,8 @@ function isInspectMapFeature(feature: InspectableMapFeature): boolean {
 
 export function isClickableMapFeature(feature: InspectableMapFeature): boolean {
   if (!isChangesetLayerId(layerIdOf(feature))) return false
+  // Untagged way corner points: context only.
+  if (feature.properties?.clickable === false) return false
   return !isChangesetNoopFeature(feature)
 }
 

@@ -55,18 +55,24 @@ export function syncSeenFeatureState(
 }
 
 function isColorPaintKey(key: string) {
-  return key.endsWith('-color') && key !== 'background-color'
+  // The white ring around clickable points stays white when the fill turns gray.
+  return key.endsWith('-color') && key !== 'background-color' && key !== 'circle-stroke-color'
 }
 
-function opacityPaintKey(
+function opacityPaintKeys(
   layerType: string | undefined,
   paint: Record<string, unknown> | undefined,
-): 'line-opacity' | 'circle-opacity' | null {
-  if (layerType === 'line') return 'line-opacity'
-  if (layerType === 'circle') return 'circle-opacity'
-  if (paint != null && 'line-color' in paint) return 'line-opacity'
-  if (paint != null && 'circle-color' in paint) return 'circle-opacity'
-  return null
+): Array<'line-opacity' | 'circle-opacity' | 'circle-stroke-opacity'> {
+  if (layerType === 'line' || (layerType == null && paint != null && 'line-color' in paint)) {
+    return ['line-opacity']
+  }
+  if (layerType === 'circle' || (layerType == null && paint != null && 'circle-color' in paint)) {
+    // A ring must fade with its fill, or hidden objects keep an empty white circle.
+    return paint != null && 'circle-stroke-color' in paint
+      ? ['circle-opacity', 'circle-stroke-opacity']
+      : ['circle-opacity']
+  }
+  return []
 }
 
 export function grayPaintIfSeen(value: unknown): unknown {
@@ -103,16 +109,17 @@ export function applySeenMapStyle<
       }
     }
 
-    const opacityKey = opacityPaintKey(layer.type, layer.paint)
     const needsVisibility = !options.showSeen || !options.showUnseen
     const needsDim = options.graySeen && options.showSeen
-    if (opacityKey && (needsVisibility || needsDim)) {
-      paint[opacityKey] = reviewVisibilityPaint(
-        layer.paint?.[opacityKey],
-        options.showSeen,
-        options.showUnseen,
-        options.graySeen,
-      )
+    if (needsVisibility || needsDim) {
+      for (const opacityKey of opacityPaintKeys(layer.type, layer.paint)) {
+        paint[opacityKey] = reviewVisibilityPaint(
+          layer.paint?.[opacityKey],
+          options.showSeen,
+          options.showUnseen,
+          options.graySeen,
+        )
+      }
     }
 
     return { ...layer, paint }
