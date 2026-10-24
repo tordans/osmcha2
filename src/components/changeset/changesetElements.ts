@@ -1,4 +1,5 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+import { clusterChangesBySpace } from './changeGroupClusters.ts'
 import { detectWaySplits, wayKey } from './waySplits.ts'
 
 export type OsmElementType = 'node' | 'way' | 'relation'
@@ -54,6 +55,21 @@ export type ElementFlag = {
   reasons: string[]
 }
 
+export type LonLat = { lon: number; lat: number }
+
+/** Where a way lies, taken from the node coordinates of its current version (old version when deleted). */
+export type WayShape = {
+  /** Node refs in way order. */
+  refs: number[]
+  /** First node = last node, with at least 4 nodes. */
+  closed: boolean
+  /** First and last node, when their coordinates are known. */
+  first?: LonLat
+  last?: LonLat
+  /** Box around all nodes with known coordinates. */
+  bounds?: { minLon: number; minLat: number; maxLon: number; maxLat: number }
+}
+
 export type ElementChange = {
   actionType: 'create' | 'modify' | 'delete'
   type: OsmElementType
@@ -65,6 +81,8 @@ export type ElementChange = {
   flagged?: ElementFlag
   lat?: number
   lon?: number
+  /** Ways only: nodes and extent, used to group edits that sit in one place. */
+  wayShape?: WayShape
   /** Created way: id of the modified way it was split from. `tags` are then diffed against that way's old tags. */
   splitFrom?: number
   /** Modified way: ids of the created ways split off it. */
@@ -118,6 +136,39 @@ function nodeRef(node: WayNode | number): number | undefined {
 
 function wayNodes(element?: AdiffElement): WayNode[] {
   return (element?.nodes ?? []).map(asWayNode)
+}
+
+function lonLatOf(node?: WayNode): LonLat | undefined {
+  if (node?.lon == null || node.lat == null) return undefined
+  return Number.isFinite(node.lon) && Number.isFinite(node.lat)
+    ? { lon: node.lon, lat: node.lat }
+    : undefined
+}
+
+function wayShape(element?: AdiffElement): WayShape {
+  const nodes = wayNodes(element)
+  const refs: number[] = []
+  let bounds: WayShape['bounds']
+  for (const node of nodes) {
+    if (node.ref != null) refs.push(node.ref)
+    const at = lonLatOf(node)
+    if (!at) continue
+    bounds = bounds
+      ? {
+          minLon: Math.min(bounds.minLon, at.lon),
+          minLat: Math.min(bounds.minLat, at.lat),
+          maxLon: Math.max(bounds.maxLon, at.lon),
+          maxLat: Math.max(bounds.maxLat, at.lat),
+        }
+      : { minLon: at.lon, minLat: at.lat, maxLon: at.lon, maxLat: at.lat }
+  }
+  return {
+    refs,
+    closed: nodes.length >= 4 && refs.length === nodes.length && refs[0] === refs[refs.length - 1],
+    first: lonLatOf(nodes[0]),
+    last: lonLatOf(nodes[nodes.length - 1]),
+    bounds,
+  }
 }
 
 function wayNodeRefs(element?: AdiffElement): Set<number> {
@@ -379,6 +430,7 @@ export function buildElementChanges(
         : undefined,
       lat: element.lat ?? action.old?.lat,
       lon: element.lon ?? action.old?.lon,
+      wayShape: type === 'way' ? wayShape(element) : undefined,
       splitFrom: splitParent ? splitFrom : undefined,
       splitInto,
     })
@@ -424,22 +476,42 @@ export function tagMutationKey(tags: TagRow[]): string {
 }
 
 /**
- * Group elements that share the same added/removed/changed tags (unchanged tags ignored).
- * Elements with no tag mutations stay ungrouped. They are not "the same tag changes".
+ * Group elements that share the same added/removed/changed tags (unchanged tags ignored) and sit
+ * in one place (see `clusterChangesBySpace`). Elements with no tag mutations stay ungrouped. They
+ * are not "the same tag changes". Groups follow the order of their first member.
  */
 export function groupChangesByTagMutation(
   changes: ElementChange[],
 ): NonEmptyArray<ElementChange>[] {
-  const groups = new Map<string, NonEmptyArray<ElementChange>>()
+  const indicesByKey = new Map<string, number[]>()
   let ungrouped = 0
-  for (const change of changes) {
+  changes.forEach((change, index) => {
     const key =
       tagMutationRows(change.tags).length === 0
         ? `__ungrouped:${ungrouped++}`
         : `${change.splitFrom != null ? 'split:' : ''}${tagMutationKey(change.tags)}`
+    const indices = indicesByKey.get(key)
+    if (indices) indices.push(index)
+    else indicesByKey.set(key, [index])
+  })
+
+  const groupKeyByIndex: string[] = []
+  for (const [key, indices] of indicesByKey) {
+    const labels =
+      indices.length === 1
+        ? [0]
+        : clusterChangesBySpace(indices.flatMap((index) => changes[index] ?? []))
+    indices.forEach((index, position) => {
+      groupKeyByIndex[index] = `${key}#${labels[position]}`
+    })
+  }
+
+  const groups = new Map<string, NonEmptyArray<ElementChange>>()
+  changes.forEach((change, index) => {
+    const key = groupKeyByIndex[index] ?? String(index)
     const group = groups.get(key)
     if (group) group.push(change)
     else groups.set(key, [change])
-  }
+  })
   return [...groups.values()]
 }

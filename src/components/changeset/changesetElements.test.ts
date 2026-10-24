@@ -260,18 +260,72 @@ describe('groupChangesByTagMutation', () => {
     const changes = buildElementChanges([
       {
         type: 'modify',
-        old: { type: 'way', id: 1, version: 1, tags: { highway: 'residential', name: 'A Street' } },
-        new: { type: 'way', id: 1, version: 2, tags: { highway: 'service', name: 'A Street' } },
+        old: {
+          type: 'way',
+          id: 1,
+          version: 1,
+          nodes: [
+            { ref: 1, lon: 13, lat: 52 },
+            { ref: 2, lon: 13.001, lat: 52 },
+          ],
+          tags: { highway: 'residential', name: 'A Street' },
+        },
+        new: {
+          type: 'way',
+          id: 1,
+          version: 2,
+          nodes: [
+            { ref: 1, lon: 13, lat: 52 },
+            { ref: 2, lon: 13.001, lat: 52 },
+          ],
+          tags: { highway: 'service', name: 'A Street' },
+        },
       },
       {
         type: 'modify',
-        old: { type: 'way', id: 2, version: 1, tags: { highway: 'residential', name: 'B Street' } },
-        new: { type: 'way', id: 2, version: 2, tags: { highway: 'service', name: 'B Street' } },
+        old: {
+          type: 'way',
+          id: 2,
+          version: 1,
+          nodes: [
+            { ref: 2, lon: 13.001, lat: 52 },
+            { ref: 3, lon: 13.002, lat: 52 },
+          ],
+          tags: { highway: 'residential' },
+        },
+        new: {
+          type: 'way',
+          id: 2,
+          version: 2,
+          nodes: [
+            { ref: 2, lon: 13.001, lat: 52 },
+            { ref: 3, lon: 13.002, lat: 52 },
+          ],
+          tags: { highway: 'service' },
+        },
       },
       {
         type: 'modify',
-        old: { type: 'way', id: 3, version: 1, tags: { highway: 'residential' } },
-        new: { type: 'way', id: 3, version: 2, tags: { highway: 'footway' } },
+        old: {
+          type: 'way',
+          id: 3,
+          version: 1,
+          nodes: [
+            { ref: 8, lon: 13.01, lat: 52.01 },
+            { ref: 9, lon: 13.011, lat: 52.01 },
+          ],
+          tags: { highway: 'residential' },
+        },
+        new: {
+          type: 'way',
+          id: 3,
+          version: 2,
+          nodes: [
+            { ref: 8, lon: 13.01, lat: 52.01 },
+            { ref: 9, lon: 13.011, lat: 52.01 },
+          ],
+          tags: { highway: 'footway' },
+        },
       },
     ])
     expect(tagMutationKey(at(changes, 0).tags)).toBe(tagMutationKey(at(changes, 1).tags))
@@ -308,13 +362,49 @@ describe('groupChangesByTagMutation', () => {
       },
       {
         type: 'modify',
-        old: { type: 'way', id: 3, version: 1, tags: { highway: 'residential', name: 'A Street' } },
-        new: { type: 'way', id: 3, version: 2, tags: { highway: 'service', name: 'A Street' } },
+        old: {
+          type: 'way',
+          id: 3,
+          version: 1,
+          nodes: [
+            { ref: 7, lon: 13, lat: 52 },
+            { ref: 8, lon: 13.001, lat: 52 },
+          ],
+          tags: { highway: 'residential', name: 'A Street' },
+        },
+        new: {
+          type: 'way',
+          id: 3,
+          version: 2,
+          nodes: [
+            { ref: 7, lon: 13, lat: 52 },
+            { ref: 8, lon: 13.001, lat: 52 },
+          ],
+          tags: { highway: 'service', name: 'A Street' },
+        },
       },
       {
         type: 'modify',
-        old: { type: 'way', id: 4, version: 1, tags: { highway: 'residential', name: 'B Street' } },
-        new: { type: 'way', id: 4, version: 2, tags: { highway: 'service', name: 'B Street' } },
+        old: {
+          type: 'way',
+          id: 4,
+          version: 1,
+          nodes: [
+            { ref: 8, lon: 13.001, lat: 52 },
+            { ref: 9, lon: 13.002, lat: 52 },
+          ],
+          tags: { highway: 'residential', name: 'A Street' },
+        },
+        new: {
+          type: 'way',
+          id: 4,
+          version: 2,
+          nodes: [
+            { ref: 8, lon: 13.001, lat: 52 },
+            { ref: 9, lon: 13.002, lat: 52 },
+          ],
+          tags: { highway: 'service', name: 'A Street' },
+        },
       },
     ])
     expect(tagMutationRows(at(changes, 0).tags)).toEqual([])
