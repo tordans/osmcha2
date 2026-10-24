@@ -430,7 +430,8 @@ function isSelected(change: ElementChange, selected?: AdiffAction | null) {
 
 function elementRowHighlightClassName(selected: boolean, hovered: boolean) {
   if (selected) {
-    return 'ring-2 ring-yellow-400 inset-ring-8 inset-ring-yellow-100'
+    // Inside the row only: an outer ring is cut off where the list clips its sides.
+    return 'bg-yellow-50 inset-ring-2 inset-ring-yellow-400'
   }
   if (hovered) return 'bg-zinc-100'
   return 'hover:bg-zinc-50 active:bg-zinc-950/5'

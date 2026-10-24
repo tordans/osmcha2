@@ -138,7 +138,7 @@ export function TagRows({
           className={clsx(
             'group/tag-row col-span-4 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
             onKeyClick && 'cursor-pointer touch-manipulation hover:bg-zinc-50',
-            highlightedKey === row.key && 'ring-2 ring-yellow-400 ring-offset-1',
+            highlightedKey === row.key && 'bg-yellow-50 inset-ring-2 inset-ring-yellow-400',
           )}
           onClick={
             onKeyClick
