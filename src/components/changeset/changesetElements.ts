@@ -1,4 +1,5 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+import { detectWaySplits, wayKey } from './waySplits.ts'
 
 export type OsmElementType = 'node' | 'way' | 'relation'
 
@@ -64,6 +65,10 @@ export type ElementChange = {
   flagged?: ElementFlag
   lat?: number
   lon?: number
+  /** Created way: id of the modified way it was split from. `tags` are then diffed against that way's old tags. */
+  splitFrom?: number
+  /** Modified way: ids of the created ways split off it. */
+  splitInto?: number[]
 }
 
 export const ACTION_ORDER = ['create', 'modify', 'delete'] as const
@@ -125,9 +130,18 @@ function wayNodeRefs(element?: AdiffElement): Set<number> {
 }
 
 export function tagRows(action: AdiffAction): TagRow[] {
+  return diffTags(tagsOf(action.old), tagsOf(action.new))
+}
+
+/** Tags of a way split off `parent`, compared with the parent's tags before the split. */
+export function splitTagRows(parent: AdiffAction, child: AdiffAction): TagRow[] {
+  return diffTags(tagsOf(parent.old), tagsOf(child.new))
+}
+
+function diffTags(oldRecord: Record<string, string>, newRecord: Record<string, string>): TagRow[] {
   // Maps, not plain objects: `in` would also match inherited keys such as "constructor".
-  const oldTags = new Map(Object.entries(tagsOf(action.old)))
-  const newTags = new Map(Object.entries(tagsOf(action.new)))
+  const oldTags = new Map(Object.entries(oldRecord))
+  const newTags = new Map(Object.entries(newRecord))
   const rows: TagRow[] = []
 
   for (const [key, value] of newTags) {
@@ -325,6 +339,13 @@ export function buildElementChanges(
 ): ElementChange[] {
   const wayMemberNodes = wayMemberNodeIds(actions)
   const statsByNode = nodeActionStats(actions)
+  const { parentByChild, childrenByParent } = detectWaySplits(actions)
+  const parentActions = new Map<number, AdiffAction>()
+  for (const action of actions) {
+    const parentId =
+      action.type === 'modify' && action.old?.type === 'way' ? action.old.id : undefined
+    if (parentId != null && childrenByParent.has(parentId)) parentActions.set(parentId, action)
+  }
   const changes: ElementChange[] = []
 
   for (const action of actions) {
@@ -335,13 +356,17 @@ export function buildElementChanges(
     const type = element.type
     const flagged = matchFlaggedFeature(type, element.id, flaggedFeatures)
     const nodeStats = type === 'way' ? countWayNodeStats(action, statsByNode) : undefined
+    const splitFrom = type === 'way' ? parentByChild.get(wayKey(element.id)) : undefined
+    const splitParent = splitFrom != null ? parentActions.get(splitFrom) : undefined
+    const splitInto =
+      type === 'way' && action.type === 'modify' ? childrenByParent.get(element.id) : undefined
 
     changes.push({
       actionType: action.type,
       type,
       id: element.id,
       version: element.version,
-      tags: tagRows(action),
+      tags: splitParent ? splitTagRows(splitParent, action) : tagRows(action),
       nodeStats,
       geometry: geometryChip(action),
       flagged: flagged
@@ -354,6 +379,8 @@ export function buildElementChanges(
         : undefined,
       lat: element.lat ?? action.old?.lat,
       lon: element.lon ?? action.old?.lon,
+      splitFrom: splitParent ? splitFrom : undefined,
+      splitInto,
     })
   }
 
@@ -409,7 +436,7 @@ export function groupChangesByTagMutation(
     const key =
       tagMutationRows(change.tags).length === 0
         ? `__ungrouped:${ungrouped++}`
-        : tagMutationKey(change.tags)
+        : `${change.splitFrom != null ? 'split:' : ''}${tagMutationKey(change.tags)}`
     const group = groups.get(key)
     if (group) group.push(change)
     else groups.set(key, [change])

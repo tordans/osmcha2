@@ -364,3 +364,129 @@ describe('primaryTagMutation', () => {
     expect(primaryTagMutation([{ kind: 'unchanged', key: 'name', value: 'A' }])).toBeNull()
   })
 })
+
+describe('split ways', () => {
+  const splitActions: AdiffAction[] = [
+    {
+      type: 'modify',
+      old: {
+        type: 'way',
+        id: 10,
+        version: 3,
+        nodes: [1, 2, 3, 4, 5],
+        tags: { highway: 'residential', name: 'Main Street', surface: 'asphalt' },
+      },
+      new: {
+        type: 'way',
+        id: 10,
+        version: 4,
+        nodes: [1, 2, 3],
+        tags: { highway: 'residential', name: 'Main Street', surface: 'asphalt' },
+      },
+    },
+    {
+      type: 'create',
+      new: {
+        type: 'way',
+        id: 20,
+        version: 1,
+        nodes: [3, 4, 5],
+        tags: { highway: 'residential', name: 'Main Street', surface: 'paved' },
+      },
+    },
+  ]
+
+  test('links parent and child and diffs the child against the parent’s old tags', () => {
+    const [parent, child] = buildElementChanges(splitActions)
+    expect(parent?.splitInto).toEqual([20])
+    expect(parent?.splitFrom).toBeUndefined()
+    expect(child?.splitFrom).toBe(10)
+    expect(child?.actionType).toBe('create')
+    expect(child?.tags).toEqual([
+      { kind: 'unchanged', key: 'highway', value: 'residential' },
+      { kind: 'unchanged', key: 'name', value: 'Main Street' },
+      { kind: 'changed', key: 'surface', oldValue: 'asphalt', newValue: 'paved' },
+    ])
+    expect(primaryTagMutation(at(buildElementChanges(splitActions), 1).tags)).toEqual({
+      kind: 'changed',
+      key: 'surface',
+      oldValue: 'asphalt',
+      newValue: 'paved',
+    })
+  })
+
+  test('a split child with identical tags has no tag mutation', () => {
+    const [, child] = buildElementChanges([
+      at(splitActions, 0),
+      {
+        type: 'create',
+        new: {
+          type: 'way',
+          id: 20,
+          nodes: [3, 4, 5],
+          tags: { highway: 'residential', name: 'Main Street', surface: 'asphalt' },
+        },
+      },
+    ])
+    expect(child?.splitFrom).toBe(10)
+    expect(child ? tagMutationRows(child.tags) : null).toEqual([])
+    expect(child ? primaryTagMutation(child.tags) : undefined).toBeNull()
+  })
+
+  test('shows added and removed tags relative to the parent', () => {
+    const [, child] = buildElementChanges([
+      at(splitActions, 0),
+      {
+        type: 'create',
+        new: {
+          type: 'way',
+          id: 20,
+          nodes: [3, 4, 5],
+          tags: { highway: 'residential', lit: 'yes' },
+        },
+      },
+    ])
+    expect(child?.tags).toEqual([
+      { kind: 'unchanged', key: 'highway', value: 'residential' },
+      { kind: 'added', key: 'lit', value: 'yes' },
+      { kind: 'removed', key: 'name', value: 'Main Street' },
+      { kind: 'removed', key: 'surface', value: 'asphalt' },
+    ])
+  })
+
+  test('leaves unrelated created ways as plain creates', () => {
+    const [, child] = buildElementChanges([
+      at(splitActions, 0),
+      { type: 'create', new: { type: 'way', id: 21, nodes: [90, 91], tags: { highway: 'path' } } },
+    ])
+    expect(child?.splitFrom).toBeUndefined()
+    expect(child?.tags).toEqual([{ kind: 'added', key: 'highway', value: 'path' }])
+  })
+
+  test('does not group split children with plain creates that have the same tag changes', () => {
+    const changes = buildElementChanges([
+      at(splitActions, 0),
+      {
+        type: 'create',
+        new: {
+          type: 'way',
+          id: 20,
+          nodes: [3, 4, 5],
+          tags: { highway: 'residential', name: 'Main Street', surface: 'gravel' },
+        },
+      },
+      {
+        type: 'create',
+        new: {
+          type: 'way',
+          id: 21,
+          nodes: [90, 91],
+          tags: { highway: 'residential', name: 'Main Street', surface: 'gravel' },
+        },
+      },
+    ])
+    expect(
+      groupChangesByTagMutation(changes.filter((change) => change.actionType === 'create')),
+    ).toHaveLength(2)
+  })
+})

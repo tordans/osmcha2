@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import type { ReactNode } from 'react'
 import { Badge } from '../ui/badge.tsx'
 import { XMarkIcon } from '../ui/icons.ts'
 import { ACTION } from './actionColors.ts'
@@ -6,8 +7,10 @@ import {
   currentElement,
   isNoopAction,
   primaryTagMutation,
+  tagMutationRows,
   tagRows,
   type AdiffAction,
+  type ElementChange,
   type TagMutation,
 } from './changesetElements.ts'
 
@@ -17,20 +20,29 @@ import {
  */
 export function ElementCard({
   action,
+  change,
   onOpen,
   onClear,
 }: {
   action: AdiffAction
+  /** The listed change for `action`; carries split info and tags diffed against the parent way. */
+  change?: ElementChange
   onOpen: () => void
   onClear: () => void
 }) {
   const element = currentElement(action)
   const actionKey = isNoopAction(action)
     ? 'noop'
-    : action.type === 'create' || action.type === 'delete'
-      ? action.type
-      : 'modify'
-  const mutation = primaryTagMutation(tagRows(action))
+    : change?.splitFrom != null
+      ? 'split'
+      : action.type === 'create' || action.type === 'delete'
+        ? action.type
+        : 'modify'
+  const tags = change?.tags ?? tagRows(action)
+  const mutation = primaryTagMutation(tags)
+  const splitFrom = change?.splitFrom
+  const sameTagsAsParent =
+    splitFrom != null && tags.length > 0 && tagMutationRows(tags).length === 0
   const label = `${element?.type ?? 'element'}/${element?.id ?? ''}`
 
   return (
@@ -46,6 +58,10 @@ export function ElementCard({
           <span className="truncate">{label}</span>
         </span>
         {mutation ? <TagMutationLine mutation={mutation} /> : null}
+        {sameTagsAsParent ? <NoteLine>Same tags as way/{splitFrom}</NoteLine> : null}
+        {change?.splitInto && !mutation ? (
+          <NoteLine>Split into {change.splitInto.map((id) => `way/${id}`).join(', ')}</NoteLine>
+        ) : null}
       </button>
       <button
         type="button"
@@ -57,6 +73,10 @@ export function ElementCard({
       </button>
     </div>
   )
+}
+
+function NoteLine({ children }: { children: ReactNode }) {
+  return <span className="w-full truncate text-xs/4 text-zinc-600">{children}</span>
 }
 
 function TagMutationLine({ mutation }: { mutation: TagMutation }) {

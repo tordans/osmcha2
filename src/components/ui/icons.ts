@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowSquareOut,
+  ArrowsSplit,
   BugBeetle,
   CalendarBlank,
   CaretDown,
@@ -45,6 +46,7 @@ import { appIcon } from './icon.tsx'
 export const ArrowDownWideNarrowIcon = appIcon(SortAscending)
 export const ArrowLeftIcon = appIcon(ArrowLeft)
 export const ArrowRightIcon = appIcon(ArrowRight)
+export const ArrowsSplitIcon = appIcon(ArrowsSplit)
 export const ArrowPathIcon = appIcon(ArrowClockwise)
 export const CalendarDaysIcon = appIcon(CalendarBlank)
 export const CheckIcon = appIcon(Check)

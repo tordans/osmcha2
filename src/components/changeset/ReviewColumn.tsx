@@ -28,7 +28,7 @@ import { moveReviewSheet, resetReviewSheet } from '../../views/reviewCamera.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
-import type { AdiffAction } from './changesetElements.ts'
+import { buildElementChanges, type AdiffAction } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
@@ -297,6 +297,14 @@ export function ReviewColumn({
     </AnimatePresence>
   )
 
+  const selectedElement = selected?.new ?? selected?.old
+  const selectedChange =
+    !desktop && selectedElement
+      ? buildElementChanges(osmInfo?.adiff?.actions ?? []).find(
+          (change) => change.type === selectedElement.type && change.id === selectedElement.id,
+        )
+      : undefined
+
   if (!desktop) {
     return (
       <ReviewSheet
@@ -304,7 +312,12 @@ export function ReviewColumn({
         header={header}
         card={
           selected ? (
-            <ElementCard action={selected} onOpen={openSelectedInList} onClear={clearSelection} />
+            <ElementCard
+              action={selected}
+              change={selectedChange}
+              onOpen={openSelectedInList}
+              onClear={clearSelection}
+            />
           ) : null
         }
         scrollerRef={changesScrollerRef}

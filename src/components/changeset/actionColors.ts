@@ -1,6 +1,6 @@
-import { PencilIcon, PlusCircleIcon, TrashIcon } from '../ui/icons.ts'
+import { ArrowsSplitIcon, PencilIcon, PlusCircleIcon, TrashIcon } from '../ui/icons.ts'
 
-export type ElementActionKey = 'create' | 'modify' | 'delete'
+export type ElementActionKey = 'create' | 'modify' | 'delete' | 'split'
 
 /**
  * Single source for create/modify/delete/noop: Catalyst badge token, map paint hex
@@ -36,6 +36,13 @@ export const ACTION = {
     tagText: 'text-red-700',
     checkbox:
       '[--checkbox-check:var(--color-red-700)] [--checkbox-checked-bg:var(--color-red-500)]/15 [--checkbox-checked-border:var(--color-red-500)]/15',
+  },
+  /** List label for a created way split off a modified way. The map still paints it as created. */
+  split: {
+    token: 'sky',
+    icon: ArrowsSplitIcon,
+    label: 'Split',
+    tagText: 'text-sky-700',
   },
   noop: {
     token: 'violet',

@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -532,7 +532,7 @@ function TagMutationGroup({
                 >
                   <ChevronRightIcon className="size-4 flex-none" />
                 </motion.span>
-                <ActionTypeLabel actionType={changes[0].actionType} />
+                <ActionTypeLabel actionType={actionLabelKey(changes[0])} />
                 <span>Same tag changes</span>
                 <Badge>{changes.length}</Badge>
               </Headless.DisclosureButton>
@@ -679,6 +679,10 @@ function ElementChangeRow({
     [flashKey, flashNonce],
   )
 
+  function selectWay(id: number) {
+    zoomToAndSelect('way', id)
+  }
+
   function addNoteOnObject() {
     const nextRef = refParamFromElement(change.type, change.id)
     if (!nextRef) return
@@ -724,7 +728,7 @@ function ElementChangeRow({
         onMouseLeave={() => setHover(null)}
         onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
       >
-        <ActionTypeLabel actionType={change.actionType} muted />
+        <ActionTypeLabel actionType={actionLabelKey(change)} muted />
         <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
           {change.type}/{change.id}
         </span>
@@ -766,7 +770,7 @@ function ElementChangeRow({
     >
       <div className="flex w-full items-center justify-between gap-1">
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
-          <ActionTypeLabel actionType={change.actionType} />
+          <ActionTypeLabel actionType={actionLabelKey(change)} />
           <span className="truncate">
             {change.type}/{change.id}
           </span>
@@ -849,8 +853,26 @@ function ElementChangeRow({
           />
         </div>
       </div>
+      {/* Own line: next to the id it squeezed the id out on narrow rows. */}
+      {change.splitFrom != null ? (
+        <p className={clsx(typeScale.small, ACTION.split.tagText)}>
+          Split from <WayLinks ids={[change.splitFrom]} onSelect={selectWay} />
+        </p>
+      ) : null}
+      {change.splitInto ? (
+        <p className={clsx(typeScale.small, ACTION.split.tagText)}>
+          Split into <WayLinks ids={change.splitInto} onSelect={selectWay} />
+        </p>
+      ) : null}
       {showTags ? (
         <div className="w-full border-t font-mono">
+          {change.splitFrom != null &&
+          change.tags.length > 0 &&
+          tagMutationRows(change.tags).length === 0 ? (
+            <p className={clsx('px-1 py-1 text-zinc-500', typeScale.small)}>
+              Same tags as <WayLinks ids={[change.splitFrom]} onSelect={selectWay} />
+            </p>
+          ) : null}
           <TagRows
             rows={change.tags}
             emptyLabel="No tags"
@@ -874,6 +896,31 @@ function ElementChangeRow({
       />
     </li>
   )
+}
+
+/** A created way split off another way shows as "Split" instead of "Created". */
+function actionLabelKey(change: ElementChange) {
+  return change.splitFrom != null ? 'split' : change.actionType
+}
+
+/** `way/<id>` links that select that way, like clicking its row. */
+function WayLinks({ ids, onSelect }: { ids: number[]; onSelect: (id: number) => void }) {
+  return ids.map((id, index) => (
+    <Fragment key={id}>
+      {index > 0 ? ', ' : null}
+      <button
+        type="button"
+        aria-label={`Show way/${id} on map`}
+        className="relative cursor-pointer touch-manipulation underline decoration-dotted underline-offset-2 select-none after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-['']"
+        onClick={(event) => {
+          event.stopPropagation()
+          onSelect(id)
+        }}
+      >
+        way/{id}
+      </button>
+    </Fragment>
+  ))
 }
 
 function nodeStatsAriaLabel(stats: NodeStats) {
