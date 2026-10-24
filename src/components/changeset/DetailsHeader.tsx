@@ -76,6 +76,8 @@ const rootRouteApi = getRouteApi('__root__')
 /** Trigger chrome shared by the changeset and user header menus. */
 const headerMenuButtonClassName = clsx(
   'h-full w-full cursor-pointer touch-manipulation px-2 py-1 text-left select-none',
+  // Phones: beat Catalyst's button padding so the narrow cards have room for their text.
+  'max-[56rem]:px-2! max-[56rem]:py-1.5!',
   // Stack title + meta; Chevron sits on the title row only so the meta line is full-width.
   'flex! flex-col! items-stretch! justify-start! gap-x-0 gap-y-0',
 )
