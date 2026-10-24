@@ -36,6 +36,8 @@ jobs:
         run: bun run build
         env:
           VITE_BASE: ${{ steps.pages.outputs.base_path }}
+          # Public OSM OAuth client id (repo variable); without it posting to OSM stays off.
+          VITE_OSM_OAUTH_CLIENT_ID: ${{ vars.VITE_OSM_OAUTH_CLIENT_ID }}
 
       - uses: actions/upload-pages-artifact@v5
         with:

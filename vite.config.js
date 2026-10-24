@@ -95,8 +95,11 @@ export default defineConfig(({ mode }) => {
       'process.env.NODE_ENV': JSON.stringify(mode),
     },
 
+    // Fixed 127.0.0.1:3000 for dev and preview: the OSM sandbox OAuth app redirects to
+    // http://127.0.0.1:3000/osm-oauth, so the address must never move to another port.
     server: {
       port: 3000,
+      strictPort: true,
       host: '127.0.0.1',
       open: false,
       // Cursor's embedded browser was serving a stale prebundle (`?v=de1bebf7`)
@@ -113,6 +116,7 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
+    preview: { port: 3000, strictPort: true, host: '127.0.0.1' },
 
     // `sax` (via `@osmcha/osm-adiff-parser`) probes `require('stream').Stream`
     // at load. Vite's browser stub warns on that access; the parser only uses
