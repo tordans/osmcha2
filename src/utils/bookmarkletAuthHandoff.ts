@@ -23,7 +23,7 @@ export function isAllowedHandoffOrigin(origin: string): boolean {
 
 /**
  * Absolute entry URL for this deploy (origin + Vite `base`).
- * Pages: `https://tordans.github.io/osmcha2/`; local: `http://127.0.0.1:3000/`.
+ * Pages: `https://tordans.github.io/osmcha2/`; local: `http://127.0.0.1:5287/`.
  */
 export function appEntryUrl(
   origin: string = typeof window !== 'undefined' ? window.location.origin : '',

@@ -5,7 +5,7 @@
  *   Redirect https://tordans.github.io/osmcha2/osm-oauth. Client id is the GitHub repo variable
  *   VITE_OSM_OAUTH_CLIENT_ID, read by .github/workflows/deploy-pages.yml.
  * - OSM sandbox, account tordansdev: https://master.apis.dev.openstreetmap.org/oauth2/applications/1596
- *   Redirect http://127.0.0.1:3000/osm-oauth (fixed in vite.config.js). Client id and sandbox
+ *   Redirect http://127.0.0.1:5287/osm-oauth (fixed in vite.config.js). Client id and sandbox
  *   URLs go in .env.local, see .env.example.
  */
 const DEFAULT_AUTH_URL = 'https://www.openstreetmap.org'
