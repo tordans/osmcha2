@@ -17,7 +17,8 @@ function getOsmAuth(): OsmAuthClient | null {
     client = new osmAuth({
       client_id: osmOAuthClientId(),
       redirect_uri: osmOAuthRedirectUri(),
-      scope: 'read_prefs write_api',
+      // Only what posting needs: the username (read_prefs) and changeset comments.
+      scope: 'read_prefs write_changeset_comments',
       url: osmAuthUrl(),
       apiUrl: osmApiUrl(),
       auto: false,
