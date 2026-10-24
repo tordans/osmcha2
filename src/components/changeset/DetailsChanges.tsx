@@ -885,7 +885,9 @@ function ElementChangeRow({
           />
         </div>
       ) : null}
-      {editingNote ? <NoteEditor changesetId={changesetId} note={editingNote} autoFocus /> : null}
+      {editingNote ? (
+        <NoteEditor changesetId={changesetId} note={editingNote} autoFocus={!prefersTouchInput()} />
+      ) : null}
       <NotesBlock
         type={change.type}
         id={change.id}
@@ -962,4 +964,9 @@ function NodeStatsTooltip({ stats }: { stats: NodeStats }) {
       </p>
     </div>
   )
+}
+
+/** Touch screens: focusing a field opens the keyboard, which a stray tap should not do. */
+function prefersTouchInput() {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }

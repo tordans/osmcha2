@@ -124,10 +124,10 @@ export function TagRows({
   return (
     <dl
       className={clsx(
-        '@container/tags grid w-full grid-cols-[auto_auto_minmax(4.5rem,1fr)] font-mono',
-        '@min-[16rem]/tags:grid-cols-[auto_auto_minmax(7rem,1fr)]',
-        '@min-[20rem]/tags:grid-cols-[auto_auto_minmax(9rem,1fr)]',
-        '@min-[24rem]/tags:grid-cols-[auto_auto_minmax(11rem,1fr)]',
+        '@container/tags grid w-full grid-cols-[auto_auto_auto_minmax(4.5rem,1fr)] font-mono',
+        '@min-[16rem]/tags:grid-cols-[auto_auto_auto_minmax(7rem,1fr)]',
+        '@min-[20rem]/tags:grid-cols-[auto_auto_auto_minmax(9rem,1fr)]',
+        '@min-[24rem]/tags:grid-cols-[auto_auto_auto_minmax(11rem,1fr)]',
         typeScale.small,
         className,
       )}
@@ -136,7 +136,7 @@ export function TagRows({
         <div
           key={row.key}
           className={clsx(
-            'group/tag-row col-span-3 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
+            'group/tag-row col-span-4 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
             onKeyClick && 'cursor-pointer touch-manipulation hover:bg-zinc-50',
             highlightedKey === row.key && 'ring-2 ring-yellow-400 ring-offset-1',
           )}
@@ -149,6 +149,29 @@ export function TagRows({
               : undefined
           }
         >
+          {/* First in the row: on phones it sits far from the element's own buttons at the right edge. */}
+          {onAddNote ? (
+            <span
+              className={clsx(
+                'inline-flex',
+                activeNoteKey !== row.key &&
+                  'pointer-fine:opacity-0 pointer-fine:group-focus-within/tag-row:opacity-100 pointer-fine:group-hover/tag-row:opacity-100',
+              )}
+            >
+              <AddNoteButton
+                compact
+                label={
+                  activeNoteKey === row.key
+                    ? `Close note on ${row.key}`
+                    : `Add a note on ${row.key}`
+                }
+                pressed={activeNoteKey === row.key}
+                onClick={() => onAddNote(row.key)}
+              />
+            </span>
+          ) : (
+            <span aria-hidden />
+          )}
           <dt
             className="max-w-[8rem] min-w-0 font-medium break-all text-zinc-800 @min-[20rem]/tags:max-w-[11rem]"
             title={row.key}
@@ -167,26 +190,6 @@ export function TagRows({
               count={noteCountByKey?.[row.key] ?? 0}
               onNoteCountClick={onNoteCountClick}
             />
-            {onAddNote ? (
-              <span
-                className={clsx(
-                  'inline-flex',
-                  activeNoteKey !== row.key &&
-                    'pointer-fine:opacity-0 pointer-fine:group-focus-within/tag-row:opacity-100 pointer-fine:group-hover/tag-row:opacity-100',
-                )}
-              >
-                <AddNoteButton
-                  compact
-                  label={
-                    activeNoteKey === row.key
-                      ? `Close note on ${row.key}`
-                      : `Add a note on ${row.key}`
-                  }
-                  pressed={activeNoteKey === row.key}
-                  onClick={() => onAddNote(row.key)}
-                />
-              </span>
-            ) : null}
           </dd>
         </div>
       ))}
