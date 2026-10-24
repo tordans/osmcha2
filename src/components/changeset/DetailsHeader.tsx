@@ -330,13 +330,23 @@ export function DetailsHeader({
     }
   }
 
-  function filterOsmchaByUser() {
+  function filterOsmchaByUser(harmful?: 'True' | 'False') {
     if (!uid) return
     void navigate({
       to: '/',
       search: listSearchFromFilters({
         uids: [{ label: String(uid), value: String(uid) }],
         date__gte: [{ label: '', value: '' }],
+        ...(harmful
+          ? {
+              harmful: [
+                {
+                  label: harmful === 'True' ? 'Show Needs a look only' : 'Show Looks OK only',
+                  value: harmful,
+                },
+              ],
+            }
+          : {}),
       }),
     })
   }
@@ -695,11 +705,26 @@ export function DetailsHeader({
               <DropdownDivider />
               <DropdownSection>
                 <DropdownHeading>OSMCha</DropdownHeading>
-                <DropdownItem onClick={filterOsmchaByUser}>
+                <DropdownItem onClick={() => filterOsmchaByUser()}>
                   {editCount > 0
                     ? `${editCount.toLocaleString()} changesets by this user`
                     : 'Changesets by this user'}
                 </DropdownItem>
+                {/* The counts on the card in words; touch has no tooltip for them. */}
+                <div className={headerOpenListItemsClassName}>
+                  <DropdownItem
+                    onClick={() => filterOsmchaByUser('False')}
+                    className={headerOpenListItemClassName}
+                  >
+                    {checkedGood.toLocaleString()} marked Looks OK
+                  </DropdownItem>
+                  <DropdownItem
+                    onClick={() => filterOsmchaByUser('True')}
+                    className={headerOpenListItemClassName}
+                  >
+                    {checkedBad.toLocaleString()} marked Needs a look
+                  </DropdownItem>
+                </div>
               </DropdownSection>
             </>
           ) : null}
