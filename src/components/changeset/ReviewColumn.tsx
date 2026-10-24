@@ -306,6 +306,7 @@ export function ReviewColumn({
       : undefined
 
   if (!desktop) {
+    const hasDiscussion = discussions.length > 0
     return (
       <ReviewSheet
         summary={sheetSummary(changesetCount, discussions.length)}
@@ -321,11 +322,14 @@ export function ReviewColumn({
           ) : null
         }
         scrollerRef={changesScrollerRef}
+        stickyTopPx={hasDiscussion ? 44 : 0}
       >
         <div ref={setHeaderBodySlot} />
         {sandboxNote}
-        {/* Sticks below the menus; work-area headings stick below it via --changes-sticky-top. */}
-        <div className="sticky top-0 z-20 border-b border-zinc-200 bg-white">{tabs}</div>
+        {/* Phones switch tabs only when there is a discussion to switch to. Sticks below the menus. */}
+        {hasDiscussion ? (
+          <div className="sticky top-0 z-20 border-b border-zinc-200 bg-white">{tabs}</div>
+        ) : null}
         {panels}
       </ReviewSheet>
     )

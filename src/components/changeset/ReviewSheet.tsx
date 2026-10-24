@@ -13,6 +13,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent,
   type ReactNode,
   type Ref,
@@ -41,6 +42,7 @@ export function ReviewSheet({
   header,
   card,
   scrollerRef,
+  stickyTopPx,
   children,
 }: {
   /** Strip label, e.g. "12 changes · 3 comments". */
@@ -50,6 +52,8 @@ export function ReviewSheet({
   /** Selected element, floating above the strip in the map position. */
   card: ReactNode
   scrollerRef: Ref<HTMLDivElement>
+  /** Height of what sticks at the top of the scroller; work-area headings stick below it. */
+  stickyTopPx: number
   /** Scroll content. */
   children: ReactNode
 }) {
@@ -231,7 +235,9 @@ export function ReviewSheet({
           <div
             ref={scrollerRef}
             data-changeset-changes-scroll
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain [--changes-sticky-top:44px]"
+            // Vertical only: a button's touch area poking past the edge must not make the list pan sideways.
+            className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
+            style={{ '--changes-sticky-top': `${stickyTopPx}px` } as CSSProperties}
           >
             {children}
             {/* Room for the Map pill, then the home indicator. */}
