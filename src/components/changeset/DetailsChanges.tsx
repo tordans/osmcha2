@@ -962,13 +962,18 @@ function ElementChangeRow({
           ) : null}
           {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
           {change.geometry === 'rewritten' ? (
+            // A split keeps the original id on one part, which therefore lost nodes.
             <Tooltip
               as="span"
               placement="bottom-end"
-              content="This way’s member nodes changed (added, removed, or reordered), so its geometry was rewritten."
+              content={
+                change.splitInto
+                  ? `This way was split. It keeps its id and history; the cut-off part is now ${change.splitInto.map((id) => `way/${id}`).join(', ')}.`
+                  : 'This way’s nodes changed (added, removed, or reordered), so its shape changed.'
+              }
               className="inline-flex"
             >
-              <Badge color="yellow">Rewritten</Badge>
+              <Badge color="yellow">{change.splitInto ? 'Shortened' : 'Reshaped'}</Badge>
             </Tooltip>
           ) : null}
           {change.nodeStats ? (
