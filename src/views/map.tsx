@@ -218,7 +218,8 @@ function CMap({
   const applyingCameraRef = useRef(false)
   const urlWritesEnabledRef = useRef(false)
   const lastClickFeatureIdRef = useRef<string | number | null>(null)
-  const matchedImageryUsedRef = useRef<string | null | undefined>(undefined)
+  // `<changeset>:<imagery_used>` last applied: the same text on the next changeset applies again.
+  const matchedImageryUsedRef = useRef<string | undefined>(undefined)
   // The map stays mounted across changesets; warn once per changeset, not once per session.
   const emptyAdiffWarnedForRef = useRef<number | null>(null)
   const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
@@ -300,8 +301,9 @@ function CMap({
         await waitForMapStyleHydration()
         if (cancelled) return
 
-        if (matchedImageryUsedRef.current !== imageryUsed) {
-          matchedImageryUsedRef.current = imageryUsed
+        const imageryKey = `${changesetId}:${imageryUsed ?? ''}`
+        if (matchedImageryUsedRef.current !== imageryKey) {
+          matchedImageryUsedRef.current = imageryKey
           const matchedStyleId = matchImageryUsedStyleId(imageryUsed)
           if (matchedStyleId && matchedStyleId !== getMapStyle()) {
             getMapStyleActions().setStyle(matchedStyleId)
@@ -318,7 +320,7 @@ function CMap({
         cancelled = true
       }
     },
-    [styleId, imageryUsed],
+    [styleId, imageryUsed, changesetId],
   )
 
   useEffect(

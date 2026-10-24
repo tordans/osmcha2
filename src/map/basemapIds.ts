@@ -4,7 +4,8 @@ export const BUILTIN_BASEMAP_OPTIONS = [
   {
     id: 'bing',
     label: 'Bing Maps Aerial',
-    aliases: ['bing', 'bing maps aerial', 'bing aerial', 'bing maps'],
+    // iD cites Bing as `Bing aerial imagery` in `imagery_used`.
+    aliases: ['bing', 'bing maps aerial', 'bing aerial', 'bing aerial imagery', 'bing maps'],
   },
   {
     id: 'esri',
@@ -24,7 +25,16 @@ export const BUILTIN_BASEMAP_OPTIONS = [
   {
     id: 'carto',
     label: 'OpenStreetMap Carto',
-    aliases: ['openstreetmap carto', 'openstreetmap', 'osm carto', 'standard', 'mapnik', 'carto'],
+    // iD and the Editor Layer Index call this `OpenStreetMap (Standard)`.
+    aliases: [
+      'openstreetmap carto',
+      'openstreetmap (standard)',
+      'openstreetmap',
+      'osm carto',
+      'standard',
+      'mapnik',
+      'carto',
+    ],
   },
 ] as const
 
