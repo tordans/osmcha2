@@ -12,6 +12,7 @@ import {
 } from '../../notes/locateNotes.ts'
 import {
   draftsForObject,
+  effectiveSeenAt,
   isObjectSeenCollapsed,
   latestForeignNoteAt,
   type ChangesetDraft,
@@ -29,7 +30,9 @@ import {
   useChangesetDraft,
   useChangesetNotesActions,
   useOpenEditorNoteId,
+  getSeenState,
   useSeenMap,
+  useUnseenOverrides,
 } from '../../stores/changeset-notes-store.ts'
 import { getFocusedObject, useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
@@ -57,6 +60,7 @@ import {
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
 import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
+import { formatMoveMeters, MINOR_MOVES_EXPLANATION } from './minorMoves.ts'
 import { NoteEditor } from './NoteEditor.tsx'
 import {
   ChangesetNotesSection,
@@ -135,9 +139,14 @@ function aggregateNoteCountByKey(
   return counts
 }
 
+type SeenState = {
+  seenMap: Record<string, string> | undefined
+  unseenOverrides: readonly string[] | undefined
+}
+
 function reviewState(
   change: ElementChange,
-  seenMap: Record<string, string> | undefined,
+  { seenMap, unseenOverrides }: SeenState,
   objectNotes: ObjectNotes | undefined,
   draft: ChangesetDraft | undefined,
   currentUser?: string,
@@ -145,8 +154,13 @@ function reviewState(
   const notes = flattenObjectNotes(objectNotes)
   const drafts = draftsForObject(draft, change.type, change.id)
   const hasNotes = notes.length > 0 || drafts.some((note) => note.body.trim())
+  const objectKey = objectRefKey(change.type, change.id)
   const collapsed = isObjectSeenCollapsed({
-    seenAt: seenMap?.[objectRefKey(change.type, change.id)],
+    seenAt: effectiveSeenAt({
+      seenAt: seenMap?.[objectKey],
+      minorMove: change.minorMove != null,
+      unseenOverride: unseenOverrides?.includes(objectKey) ?? false,
+    }),
     latestForeignNoteAt: latestForeignNoteAt(notes, currentUser),
   })
   return { collapsed, hasNotes, drafts }
@@ -176,7 +190,6 @@ export function DetailsChanges({
     pollWhileActive: true,
   })
   const userKey = useNotesUserKey()
-  const seenMap = useSeenMap(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
   const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
   const { requestFinishFocus } = useReviewFocusActions()
@@ -213,7 +226,7 @@ export function DetailsChanges({
         if (!change) return
         const { collapsed } = reviewState(
           change,
-          seenMap,
+          getSeenState(userKey, changesetId),
           located.byObject.get(objectKey),
           draft,
           currentUser,
@@ -359,9 +372,11 @@ function ChangeList({
   zoomToAndSelect: (type: string, id: number, key?: string) => void
   notesByObject: Map<string, ObjectNotes>
 }) {
+  const listedChanges = changes.filter((change) => change.minorMove == null)
+  const minorMoves = changes.filter((change) => change.minorMove != null)
   return (
     <ul>
-      {groupElementChanges(changes).map(([, actionChanges]) =>
+      {groupElementChanges(listedChanges).map(([, actionChanges]) =>
         groupChangesByTagMutation(actionChanges).map((group) =>
           group.length === 1 ? (
             <ElementChangeRow
@@ -391,6 +406,19 @@ function ChangeList({
           ),
         ),
       )}
+      {minorMoves.length > 0 ? (
+        <MinorMovesGroup
+          changes={minorMoves}
+          changesetId={changesetId}
+          selected={selected}
+          selectedRef={selectedRef}
+          selectRef={selectRef}
+          deepLinkReveal={deepLinkReveal}
+          deepLinkEpoch={deepLinkEpoch}
+          zoomToAndSelect={zoomToAndSelect}
+          notesByObject={notesByObject}
+        />
+      ) : null}
     </ul>
   )
 }
@@ -436,6 +464,7 @@ function TagMutationGroup({
 }) {
   const userKey = useNotesUserKey()
   const seenMap = useSeenMap(userKey, changesetId)
+  const unseenOverrides = useUnseenOverrides(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
   const { markAllSeen, toggleEditor } = useChangesetNotesActions()
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
@@ -463,7 +492,7 @@ function TagMutationGroup({
       change,
       ...reviewState(
         change,
-        seenMap,
+        { seenMap, unseenOverrides },
         notesByObject.get(objectRefKey(change.type, change.id)),
         draft,
         currentUser,
@@ -594,6 +623,127 @@ function TagMutationGroup({
   )
 }
 
+/**
+ * Moves too small to review (see `minorMoveOf`) count as seen. They sit in one collapsed group
+ * after the other changes, so they do not take attention but can still be opened and un-seen.
+ */
+function MinorMovesGroup({
+  changes,
+  changesetId,
+  selected,
+  selectedRef,
+  selectRef,
+  deepLinkReveal,
+  deepLinkEpoch,
+  zoomToAndSelect,
+  notesByObject,
+}: {
+  changes: ElementChange[]
+  changesetId: number
+  selected?: AdiffAction | null
+  selectedRef?: RefParam | null
+  selectRef: (ref: RefParam | null) => void
+  deepLinkReveal?: RefParam | null
+  deepLinkEpoch?: number
+  zoomToAndSelect: (type: string, id: number, key?: string) => void
+  notesByObject: Map<string, ObjectNotes>
+}) {
+  const userKey = useNotesUserKey()
+  const draft = useChangesetDraft(userKey, changesetId)
+  const openEditorNoteId = useOpenEditorNoteId(changesetId)
+  const hoveredInGroup = useIsAnyElementHovered(changes)
+  const listScrollTarget = useListScrollTarget()
+  const selectedInGroup = changes.find((change) => isSelected(change, selected))
+  const scrollTargetInGroup =
+    listScrollTarget != null &&
+    changes.some(
+      (change) => change.type === listScrollTarget.type && change.id === listScrollTarget.id,
+    )
+  const editingNote =
+    openEditorNoteId != null ? draft?.notes.find((note) => note.id === openEditorNoteId) : undefined
+  const editingInGroup =
+    editingNote?.ref != null &&
+    changes.some(
+      (change) => change.type === editingNote.ref?.type && change.id === editingNote.ref.id,
+    )
+  const hasNotes = changes.some(
+    (change) =>
+      flattenObjectNotes(notesByObject.get(objectRefKey(change.type, change.id))).length > 0 ||
+      draftsForObject(draft, change.type, change.id).some((note) => note.body.trim()),
+  )
+  const forceOpen =
+    editingInGroup ||
+    hasNotes ||
+    selectedInGroup != null ||
+    scrollTargetInGroup ||
+    tagGroupContainsRef(changes, deepLinkReveal)
+  const disclosureKey = selectedInGroup
+    ? `${selectedInGroup.type}/${selectedInGroup.id}`
+    : scrollTargetInGroup && listScrollTarget
+      ? `${listScrollTarget.type}/${listScrollTarget.id}`
+      : 'none'
+
+  return (
+    <li className="px-2 py-2">
+      <Headless.Disclosure
+        key={`${disclosureKey}:${forceOpen ? 'open' : 'closed'}:${deepLinkEpoch ?? 0}`}
+        defaultOpen={forceOpen}
+      >
+        {({ open }: { open: boolean }) => (
+          <>
+            <Headless.DisclosureButton
+              aria-label={`${changes.length} minor moves`}
+              className={clsx(
+                'flex min-h-11 w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium text-zinc-600 select-none active:bg-zinc-950/5',
+                !open && hoveredInGroup ? 'bg-zinc-100' : 'hover:bg-zinc-50',
+              )}
+            >
+              <motion.span
+                className="inline-flex origin-center"
+                initial={false}
+                animate={{ rotate: open ? 90 : 0 }}
+                transition={disclosureTransition}
+              >
+                <ChevronRightIcon className="size-4 flex-none" />
+              </motion.span>
+              <span>Minor moves</span>
+              <Badge>{changes.length}</Badge>
+            </Headless.DisclosureButton>
+            <p className={clsx(typeScale.small, 'px-1 pl-6 text-zinc-500')}>
+              {MINOR_MOVES_EXPLANATION}
+            </p>
+            <Headless.DisclosurePanel static>
+              <motion.div
+                initial={false}
+                animate={open ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
+                transition={disclosureTransition}
+                className="overflow-hidden"
+                inert={!open}
+              >
+                <ul>
+                  {changes.map((change) => (
+                    <ElementChangeRow
+                      key={`${change.type}/${change.id}`}
+                      change={change}
+                      changesetId={changesetId}
+                      selected={selected}
+                      selectedRef={selectedRef}
+                      selectRef={selectRef}
+                      deepLinkReveal={deepLinkReveal}
+                      zoomToAndSelect={zoomToAndSelect}
+                      objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
+                    />
+                  ))}
+                </ul>
+              </motion.div>
+            </Headless.DisclosurePanel>
+          </>
+        )}
+      </Headless.Disclosure>
+    </li>
+  )
+}
+
 function ElementChangeRow({
   change,
   changesetId,
@@ -617,6 +767,7 @@ function ElementChangeRow({
 }) {
   const userKey = useNotesUserKey()
   const seenMap = useSeenMap(userKey, changesetId)
+  const unseenOverrides = useUnseenOverrides(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
@@ -626,7 +777,7 @@ function ElementChangeRow({
   const currentUser = userKey === 'anonymous' ? undefined : userKey
   const { collapsed, hasNotes, drafts } = reviewState(
     change,
-    seenMap,
+    { seenMap, unseenOverrides },
     objectNotes,
     draft,
     currentUser,
@@ -732,6 +883,7 @@ function ElementChangeRow({
         <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
           {change.type}/{change.id}
         </span>
+        {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
         {hasNotes ? (
           <Badge>
             {flattenObjectNotes(objectNotes).length +
@@ -808,6 +960,7 @@ function ElementChangeRow({
               <Badge color="yellow">Moved</Badge>
             </Tooltip>
           ) : null}
+          {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
           {change.geometry === 'rewritten' ? (
             <Tooltip
               as="span"
@@ -897,6 +1050,19 @@ function ElementChangeRow({
         selectRef={selectRef}
       />
     </li>
+  )
+}
+
+function MinorMoveBadge({ meters }: { meters: number }) {
+  return (
+    <Tooltip
+      as="span"
+      placement="bottom-end"
+      content="A minor move: counts as seen automatically."
+      className="inline-flex"
+    >
+      <Badge>{formatMoveMeters(meters)}</Badge>
+    </Tooltip>
   )
 }
 

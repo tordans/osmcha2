@@ -45,6 +45,8 @@ const changesetDraftSchema = z.object({
 const userNotesSchema = z.object({
   drafts: z.record(z.string(), changesetDraftSchema),
   seen: z.record(z.string(), z.record(z.string(), z.string())),
+  // Added later: notes saved before it have none.
+  unseenOverrides: z.record(z.string(), z.array(z.string())).default({}),
   seenTouchedAt: z.record(z.string(), z.number()),
 })
 
@@ -114,17 +116,31 @@ function writeDraft(
   }
 }
 
+/**
+ * Writes the seen map. `unseenOverrides` is the whole new list when given: marking an object seen
+ * drops its override, un-seeing one adds it (see `effectiveSeenAt`).
+ */
 function writeSeen(
   user: UserNotesState,
   changesetId: number,
   seenMap: Record<string, string>,
+  unseenOverrides?: string[],
 ): UserNotesState {
   const id = changesetIdKey(changesetId)
   return {
     ...user,
     seen: { ...user.seen, [id]: seenMap },
+    unseenOverrides:
+      unseenOverrides == null
+        ? user.unseenOverrides
+        : { ...user.unseenOverrides, [id]: unseenOverrides },
     seenTouchedAt: { ...user.seenTouchedAt, [id]: Date.now() },
   }
+}
+
+function withoutOverrides(user: UserNotesState, changesetId: number, objectKeys: string[]) {
+  const current = user.unseenOverrides[changesetIdKey(changesetId)] ?? []
+  return current.filter((key) => !objectKeys.includes(key))
 }
 
 function newNoteId() {
@@ -175,7 +191,16 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             const seenMap = { ...user.seen[id] }
             seenMap[objectKey] = new Date().toISOString()
             return {
-              byUser: writeUser(state.byUser, userKey, writeSeen(user, changesetId, seenMap)),
+              byUser: writeUser(
+                state.byUser,
+                userKey,
+                writeSeen(
+                  user,
+                  changesetId,
+                  seenMap,
+                  withoutOverrides(user, changesetId, [objectKey]),
+                ),
+              ),
             }
           }),
         markUnseen: (userKey, changesetId, objectKey) =>
@@ -183,10 +208,20 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             const user = userOf(state.byUser, userKey)
             const id = changesetIdKey(changesetId)
             const seenMap = { ...user.seen[id] }
-            if (seenMap[objectKey] == null) return state
+            const overrides = user.unseenOverrides[id] ?? []
+            // The override keeps an automatically seen object (a minor move) un-seen. For any
+            // other object it does nothing.
+            if (seenMap[objectKey] == null && overrides.includes(objectKey)) return state
             delete seenMap[objectKey]
             return {
-              byUser: writeUser(state.byUser, userKey, writeSeen(user, changesetId, seenMap)),
+              byUser: writeUser(
+                state.byUser,
+                userKey,
+                writeSeen(user, changesetId, seenMap, [
+                  ...withoutOverrides(user, changesetId, [objectKey]),
+                  objectKey,
+                ]),
+              ),
             }
           }),
         markAllSeen: (userKey, changesetId, objectKeys) =>
@@ -197,7 +232,16 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             const seenAt = new Date().toISOString()
             for (const objectKey of objectKeys) seenMap[objectKey] = seenAt
             return {
-              byUser: writeUser(state.byUser, userKey, writeSeen(user, changesetId, seenMap)),
+              byUser: writeUser(
+                state.byUser,
+                userKey,
+                writeSeen(
+                  user,
+                  changesetId,
+                  seenMap,
+                  withoutOverrides(user, changesetId, objectKeys),
+                ),
+              ),
             }
           }),
         setIntro: (userKey, changesetId, intro) =>
@@ -225,8 +269,14 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             if (note.body.trim() && note.ref) {
               const id = changesetIdKey(changesetId)
               const seenMap = { ...nextUser.seen[id] }
-              seenMap[objectKeyFromRef(note.ref)] = new Date().toISOString()
-              nextUser = writeSeen(nextUser, changesetId, seenMap)
+              const objectKey = objectKeyFromRef(note.ref)
+              seenMap[objectKey] = new Date().toISOString()
+              nextUser = writeSeen(
+                nextUser,
+                changesetId,
+                seenMap,
+                withoutOverrides(nextUser, changesetId, [objectKey]),
+              )
             }
             return { byUser: writeUser(state.byUser, userKey, nextUser) }
           }),
@@ -409,6 +459,11 @@ export const useChangesetDraft = (userKey: string, changesetId: number) =>
 export const useSeenMap = (userKey: string, changesetId: number) =>
   useChangesetNotesStore((state) => userOf(state.byUser, userKey).seen[changesetIdKey(changesetId)])
 
+export const useUnseenOverrides = (userKey: string, changesetId: number) =>
+  useChangesetNotesStore(
+    (state) => userOf(state.byUser, userKey).unseenOverrides[changesetIdKey(changesetId)],
+  )
+
 /** Open note id when it belongs to `changesetId`, else null; re-renders only when that changes. */
 export const useOpenEditorNoteId = (changesetId: number) =>
   useChangesetNotesStore((state) =>
@@ -427,6 +482,12 @@ export function getChangesetNotesActions() {
 
 export function getOpenEditor() {
   return useChangesetNotesStore.getState().openEditor
+}
+
+export function getSeenState(userKey: string, changesetId: number) {
+  const user = userOf(useChangesetNotesStore.getState().byUser, userKey)
+  const id = changesetIdKey(changesetId)
+  return { seenMap: user.seen[id], unseenOverrides: user.unseenOverrides[id] }
 }
 
 export function getChangesetDraft(userKey: string, changesetId: number) {

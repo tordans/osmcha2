@@ -53,3 +53,7 @@ _Avoid_: bbox group, cluster, region.
 
 **Unchanged element**:
 An object in the changeset payload that was not edited (adiff `noop`). Shown as purple context. Distinct from **unchanged tags** on an edited object.
+
+**Minor move**:
+A node moved 2 m or less with nothing else changed, or a line or area whose shape shifted 2 m or less (Hausdorff distance) with the same nodes and tags. It counts as seen without the reviewer looking, sits in a collapsed "Minor moves" group in the Changes list, and the reviewer can un-see it.
+_Avoid_: small edit, trivial change

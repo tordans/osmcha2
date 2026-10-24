@@ -3,7 +3,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import type { Map as MaplibreMap, MapLibreEvent, StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import '../utils/maplibreWorker.ts'
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import {
   AttributionControl,
   Map,
@@ -17,8 +17,10 @@ import {
 import { toast } from 'sonner'
 import { ACTION } from '../components/changeset/actionColors.ts'
 import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
+import { buildElementChanges } from '../components/changeset/changesetElements.ts'
 import { InspectKindSwatch } from '../components/changeset/InspectKindSwatch.tsx'
 import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
+import { minorMoveObjectKeys } from '../components/changeset/minorMoves.ts'
 import {
   actionMatchingRef,
   refDeepLinkKey,
@@ -31,6 +33,7 @@ import { SignIn } from '../components/sign_in.tsx'
 import { flyoutSurfaceClassName } from '../components/ui/flyout.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { AdiffNotFoundError } from '../network/changeset.ts'
+import { effectiveSeenMap } from '../notes/reviewSeen.ts'
 import { useNotesUserKey } from '../notes/useNotesUserKey.ts'
 import { useChangesetMap, useChangesetMapFromOverpass } from '../query/hooks/useChangesetMap.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
@@ -43,6 +46,7 @@ import {
   getPinPlacement,
   usePinPlacement,
   useSeenMap,
+  useUnseenOverrides,
 } from '../stores/changeset-notes-store.ts'
 import { useMapLoaded, useMapLoadedActions } from '../stores/map-loaded-store.ts'
 import {
@@ -227,7 +231,17 @@ function CMap({
   const mapLayers = parseLayersParam(layersSearch)
   const spyglassEnabled = mapLayers.spyglass
   const userKey = useNotesUserKey()
-  const seenMap = useSeenMap(userKey, changesetId ?? 0)
+  const storedSeenMap = useSeenMap(userKey, changesetId ?? 0)
+  const unseenOverrides = useUnseenOverrides(userKey, changesetId ?? 0)
+  // Minor moves count as seen without being stored; see `effectiveSeenMap`.
+  const minorMoveKeys = useMemo(
+    () => minorMoveObjectKeys(buildElementChanges(viewer?.adiff.actions)),
+    [viewer],
+  )
+  const seenMap = useMemo(
+    () => effectiveSeenMap(storedSeenMap, unseenOverrides, minorMoveKeys),
+    [storedSeenMap, unseenOverrides, minorMoveKeys],
+  )
   const { setHover, requestListScroll } = useChangesetHoverActions()
   const jumpToWorkArea = useJumpToWorkArea(workAreas)
   const viewBounds = workAreas[0]?.bounds ?? null

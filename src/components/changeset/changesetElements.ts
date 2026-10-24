@@ -1,5 +1,6 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
 import { clusterChangesBySpace } from './changeGroupClusters.ts'
+import { minorMoveOf } from './minorMoves.ts'
 import { detectWaySplits, wayKey } from './waySplits.ts'
 
 export type OsmElementType = 'node' | 'way' | 'relation'
@@ -78,6 +79,8 @@ export type ElementChange = {
   tags: TagRow[]
   nodeStats?: NodeStats
   geometry?: 'moved' | 'rewritten' | null
+  /** Only moved a tiny bit (see `minorMoveOf`): counts as seen unless the reviewer un-sees it. */
+  minorMove?: { meters: number }
   flagged?: ElementFlag
   lat?: number
   lon?: number
@@ -412,14 +415,18 @@ export function buildElementChanges(
     const splitInto =
       type === 'way' && action.type === 'modify' ? childrenByParent.get(element.id) : undefined
 
+    const tags = splitParent ? splitTagRows(splitParent, action) : tagRows(action)
+    const geometry = geometryChip(action)
+
     changes.push({
       actionType: action.type,
       type,
       id: element.id,
       version: element.version,
-      tags: splitParent ? splitTagRows(splitParent, action) : tagRows(action),
+      tags,
       nodeStats,
-      geometry: geometryChip(action),
+      geometry,
+      minorMove: minorMoveOf(action, { geometry, tagsChanged: tagMutationRows(tags).length > 0 }),
       flagged: flagged
         ? {
             name: flagged.name,

@@ -8,7 +8,7 @@ export const POINT_LINK_METERS = 50
 export const AREA_LINK_METERS = 25
 
 /** Mean earth radius, in meters per degree of latitude. */
-const METERS_PER_DEGREE = (Math.PI / 180) * 6_371_008.8
+export const METERS_PER_DEGREE = (Math.PI / 180) * 6_371_008.8
 /** Keeps longitude scaling finite next to the poles. */
 const MIN_LATITUDE_COSINE = 0.01
 
@@ -48,13 +48,13 @@ function createUnionFind(size: number) {
 
 type UnionFind = ReturnType<typeof createUnionFind>
 
-function longitudeScale(latitude: number): number {
+export function longitudeScale(latitude: number): number {
   const cosine = Math.cos((latitude * Math.PI) / 180)
   return Math.max(Math.abs(cosine), MIN_LATITUDE_COSINE)
 }
 
 /** Equirectangular approximation: accurate enough for distances of tens of meters. */
-function distanceMeters(left: LonLat, right: LonLat): number {
+export function distanceMeters(left: LonLat, right: LonLat): number {
   const scale = longitudeScale((left.lat + right.lat) / 2)
   const dx = (left.lon - right.lon) * METERS_PER_DEGREE * scale
   const dy = (left.lat - right.lat) * METERS_PER_DEGREE

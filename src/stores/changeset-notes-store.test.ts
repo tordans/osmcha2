@@ -4,6 +4,7 @@ import {
   getChangesetDraft,
   getChangesetNotesActions,
   getOpenEditor,
+  getSeenState,
   postableDraftNotes,
   resetChangesetNotesStoreForTests,
 } from './changeset-notes-store.ts'
@@ -60,5 +61,39 @@ describe('changeset notes store', () => {
     expect(getChangesetDraft('alice', 1)?.notes).toHaveLength(1)
     actions.toggleEditor('alice', 1, ref)
     expect(getOpenEditor()?.noteId).toBe(noteId)
+  })
+
+  test('un-seeing stores an override that seeing again removes', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    // A minor move has no stored seen entry; un-seeing it must still be remembered.
+    actions.markUnseen('alice', 1, 'node/5')
+    expect(getSeenState('alice', 1).seenMap).toEqual({})
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual(['node/5'])
+
+    actions.markUnseen('alice', 1, 'node/5')
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual(['node/5'])
+
+    actions.markSeen('alice', 1, 'node/5')
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual([])
+    expect(getSeenState('alice', 1).seenMap?.['node/5']).toBeDefined()
+
+    actions.markUnseen('alice', 1, 'node/5')
+    expect(getSeenState('alice', 1).seenMap?.['node/5']).toBeUndefined()
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual(['node/5'])
+    actions.markAllSeen('alice', 1, ['node/5', 'node/6'])
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual([])
+  })
+
+  test('saving a note on an un-seen minor move marks it seen again', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.markUnseen('alice', 1, 'node/5')
+    actions.upsertDraftNote('alice', 1, {
+      id: 'n1',
+      body: 'why',
+      ref: { type: 'node', id: 5 },
+    })
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual([])
   })
 })

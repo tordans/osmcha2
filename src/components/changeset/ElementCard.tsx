@@ -13,6 +13,7 @@ import {
   type ElementChange,
   type TagMutation,
 } from './changesetElements.ts'
+import { formatMoveMeters } from './minorMoves.ts'
 
 /**
  * Phone map view: the selected element floating above the sheet strip. Tapping it opens
@@ -59,6 +60,9 @@ export function ElementCard({
         </span>
         {mutation ? <TagMutationLine mutation={mutation} /> : null}
         {sameTagsAsParent ? <NoteLine>Same tags as way/{splitFrom}</NoteLine> : null}
+        {change?.minorMove ? (
+          <NoteLine>Minor move · {formatMoveMeters(change.minorMove.meters)}</NoteLine>
+        ) : null}
         {change?.splitInto && !mutation ? (
           <NoteLine>Split into {change.splitInto.map((id) => `way/${id}`).join(', ')}</NoteLine>
         ) : null}
