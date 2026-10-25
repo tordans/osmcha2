@@ -373,7 +373,12 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
       {({ open }: { open: boolean }) => (
         <>
           {isAppliedFromChangeset && appliedTooltip ? (
-            <Tooltip as="span" content={appliedTooltip} className="inline-flex">
+            <Tooltip
+              as="span"
+              content={appliedTooltip}
+              placement="bottom-right"
+              className="inline-flex"
+            >
               {imageryButton}
             </Tooltip>
           ) : (

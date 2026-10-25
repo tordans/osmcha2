@@ -9,7 +9,7 @@ import {
 } from 'react'
 
 type TooltipAs = 'button' | 'span' | 'abbr'
-type TooltipPlacement = 'bottom' | 'bottom-end'
+type TooltipPlacement = 'bottom' | 'bottom-end' | 'bottom-right'
 
 type TooltipProps = {
   content: ReactNode
@@ -25,6 +25,8 @@ type TooltipProps = {
   /**
    * Default centers under the trigger. `bottom-end` grows left from the trigger’s
    * right edge from `min-[56rem]` (desktop split); stays centered in the mobile sheet.
+   * `bottom-right` grows left from the trigger's right edge at every width, for triggers at the
+   * right edge of the screen.
    */
   placement?: TooltipPlacement
 }
@@ -34,18 +36,21 @@ const panelPositionClassName = {
     'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2',
   'bottom-end':
     'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [left:anchor(center)] -translate-x-1/2 min-[56rem]:[left:auto] min-[56rem]:[right:anchor(right)] min-[56rem]:translate-x-0',
+  'bottom-right': 'fixed [inset:auto] [top:calc(anchor(bottom)+0.35rem)] [right:anchor(right)]',
 } as const
 
 const panelArrowClassName = {
   bottom: 'before:left-1/2 before:-translate-x-1/2',
   'bottom-end':
     'before:left-1/2 before:-translate-x-1/2 min-[56rem]:before:right-1.5 min-[56rem]:before:left-auto min-[56rem]:before:translate-x-0',
+  'bottom-right': 'before:right-1.5',
 } as const
 
 const panelTryClassName = {
   bottom: '[position-try-fallbacks:flip-block,flip-inline]',
   'bottom-end':
     '[position-try-fallbacks:flip-block,flip-inline] min-[56rem]:[position-try-fallbacks:flip-block]',
+  'bottom-right': '[position-try-fallbacks:flip-block]',
 } as const
 
 const nativeInterestInvokers =
