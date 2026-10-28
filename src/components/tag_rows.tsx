@@ -267,7 +267,7 @@ export function TagRows({
                       {row.oldKey}
                     </span>
                     <span className="block">
-                      <span aria-hidden>→ </span>
+                      {/* The row marker already shows the arrow. */}
                       <span className="sr-only">to </span>
                       {row.key}
                     </span>
