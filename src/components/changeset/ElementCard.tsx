@@ -92,6 +92,13 @@ function TagMutationLine({ mutation }: { mutation: TagMutation }) {
       </span>
     )
   }
+  if (mutation.kind === 'renamed') {
+    return (
+      <span className={className}>
+        {mutation.oldKey} → {mutation.key}
+      </span>
+    )
+  }
   return (
     <span
       className={clsx(

@@ -1,7 +1,8 @@
 import clsx from 'clsx'
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { ACTION } from './changeset/actionColors.ts'
 import { AddNoteButton } from './changeset/AddNoteButton.tsx'
+import { orderTagRows, tagRowKeys, type TagRow } from './changeset/changesetElements.ts'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
 
@@ -16,7 +17,55 @@ export type TagRowsItem =
       rawOld?: string
       rawNew?: string
     }
+  | { kind: 'renamed'; oldKey: string; key: string; value: ReactNode; rawValue?: string }
   | { kind: 'unchanged'; key: string; value: ReactNode; rawValue?: string }
+
+/** Whole-row look per kind: background, hover, key text, and the marker in front of the row. */
+const ROW_STYLE: Record<
+  TagRow['kind'],
+  { row: string; hover: string; key: string; marker: string; markerText: string; word: string }
+> = {
+  added: {
+    row: 'bg-green-50',
+    hover: 'hover:bg-green-100',
+    key: 'text-green-800',
+    marker: 'text-green-800',
+    markerText: '+',
+    word: 'added',
+  },
+  removed: {
+    row: 'bg-red-50',
+    hover: 'hover:bg-red-100',
+    key: 'text-red-800',
+    marker: 'text-red-800',
+    markerText: '−',
+    word: 'removed',
+  },
+  changed: {
+    row: 'bg-amber-50',
+    hover: 'hover:bg-amber-100',
+    key: 'text-zinc-800',
+    marker: 'text-amber-800',
+    markerText: '~',
+    word: 'changed',
+  },
+  renamed: {
+    row: 'bg-amber-50',
+    hover: 'hover:bg-amber-100',
+    key: 'text-zinc-800',
+    marker: 'text-amber-800',
+    markerText: '→',
+    word: 'renamed',
+  },
+  unchanged: {
+    row: '',
+    hover: 'hover:bg-zinc-50',
+    key: 'text-zinc-800',
+    marker: '',
+    markerText: '',
+    word: '',
+  },
+}
 
 function textOf(value: ReactNode, raw?: string) {
   if (raw != null) return raw
@@ -82,10 +131,12 @@ function TagRowValue({ row }: { row: TagRowsItem }) {
   const wrap = wrapClass(row.value, row.rawValue)
   const tone =
     row.kind === 'added'
-      ? ACTION.create.tagText
+      ? 'text-green-800'
       : row.kind === 'removed'
-        ? ACTION.delete.tagText
-        : ACTION.noop.tagText
+        ? 'text-red-800 line-through'
+        : row.kind === 'renamed'
+          ? 'text-zinc-800'
+          : ACTION.noop.tagText
 
   return (
     <div className={clsx(tone, wrap)} dir="auto">
@@ -121,78 +172,127 @@ export function TagRows({
     ) : null
   }
 
+  const { mutations, unchanged } = orderTagRows(rows)
+  const ordered = [...mutations, ...unchanged]
+  const dividerAt = mutations.length > 0 && unchanged.length > 0 ? mutations.length : -1
+
   return (
     <dl
       className={clsx(
-        '@container/tags grid w-full grid-cols-[auto_auto_auto_minmax(4.5rem,1fr)] font-mono',
-        '@min-[16rem]/tags:grid-cols-[auto_auto_auto_minmax(7rem,1fr)]',
-        '@min-[20rem]/tags:grid-cols-[auto_auto_auto_minmax(9rem,1fr)]',
-        '@min-[24rem]/tags:grid-cols-[auto_auto_auto_minmax(11rem,1fr)]',
+        '@container/tags grid w-full grid-cols-[auto_auto_auto_auto_minmax(4.5rem,1fr)] font-mono',
+        '@min-[16rem]/tags:grid-cols-[auto_auto_auto_auto_minmax(7rem,1fr)]',
+        '@min-[20rem]/tags:grid-cols-[auto_auto_auto_auto_minmax(9rem,1fr)]',
+        '@min-[24rem]/tags:grid-cols-[auto_auto_auto_auto_minmax(11rem,1fr)]',
         typeScale.small,
         className,
       )}
     >
-      {rows.map((row) => (
-        <div
-          key={row.key}
-          className={clsx(
-            'group/tag-row col-span-4 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
-            onKeyClick && 'cursor-pointer touch-manipulation hover:bg-zinc-50',
-            highlightedKey === row.key && 'bg-yellow-50 inset-ring-2 inset-ring-yellow-400',
-          )}
-          onClick={
-            onKeyClick
-              ? (event) => {
-                  event.stopPropagation()
-                  onKeyClick(row.key)
-                }
-              : undefined
-          }
-        >
-          {/* First in the row: on phones it sits far from the element's own buttons at the right edge. */}
-          {onAddNote ? (
-            <span
+      {ordered.map((row, index) => {
+        const style = ROW_STYLE[row.kind]
+        const keys = tagRowKeys(row)
+        const highlighted = highlightedKey != null && keys.includes(highlightedKey)
+        const noteActive = activeNoteKey != null && keys.includes(activeNoteKey)
+        const noteCount = keys.reduce((sum, key) => sum + (noteCountByKey?.[key] ?? 0), 0)
+        return (
+          <Fragment key={row.key}>
+            {index === dividerAt ? (
+              <div
+                className={clsx(
+                  'col-span-5 border-b border-zinc-950/5 px-1 pt-2 pb-0.5 font-sans text-zinc-500',
+                  typeScale.small,
+                )}
+              >
+                Unchanged
+              </div>
+            ) : null}
+            <div
               className={clsx(
-                'inline-flex',
-                activeNoteKey !== row.key &&
-                  'pointer-fine:opacity-0 pointer-fine:group-focus-within/tag-row:opacity-100 pointer-fine:group-hover/tag-row:opacity-100',
+                'group/tag-row col-span-5 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',
+                style.row,
+                onKeyClick && ['cursor-pointer touch-manipulation', style.hover],
+                // The yellow frame marks the selection; changed rows keep their own background inside it.
+                highlighted &&
+                  clsx(
+                    'inset-ring-2 inset-ring-yellow-400',
+                    row.kind === 'unchanged' && 'bg-yellow-50',
+                  ),
               )}
+              onClick={
+                onKeyClick
+                  ? (event) => {
+                      event.stopPropagation()
+                      onKeyClick(row.key)
+                    }
+                  : undefined
+              }
             >
-              <AddNoteButton
-                compact
-                label={
-                  activeNoteKey === row.key
-                    ? `Close note on ${row.key}`
-                    : `Add a note on ${row.key}`
-                }
-                pressed={activeNoteKey === row.key}
-                onClick={() => onAddNote(row.key)}
-              />
-            </span>
-          ) : (
-            <span aria-hidden />
-          )}
-          <dt
-            className="max-w-[8rem] min-w-0 font-medium break-all text-zinc-800 @min-[20rem]/tags:max-w-[11rem]"
-            title={row.key}
-          >
-            {row.key}
-          </dt>
-          <span className="text-zinc-300 select-none" aria-hidden>
-            =
-          </span>
-          <dd className="flex min-w-0 items-center gap-1">
-            <div className="min-w-0 flex-1">
-              <TagRowValue row={row} />
+              {/* First in the row: on phones it sits far from the element's own buttons at the right edge. */}
+              {onAddNote ? (
+                <span
+                  className={clsx(
+                    'inline-flex',
+                    !noteActive &&
+                      'pointer-fine:opacity-0 pointer-fine:group-focus-within/tag-row:opacity-100 pointer-fine:group-hover/tag-row:opacity-100',
+                  )}
+                >
+                  <AddNoteButton
+                    compact
+                    label={noteActive ? `Close note on ${row.key}` : `Add a note on ${row.key}`}
+                    pressed={noteActive}
+                    onClick={() => onAddNote(row.key)}
+                  />
+                </span>
+              ) : (
+                <span aria-hidden />
+              )}
+              {row.kind === 'unchanged' ? (
+                <span aria-hidden />
+              ) : (
+                <span className={clsx('text-center font-bold select-none', style.marker)}>
+                  <span className="sr-only">{style.word} </span>
+                  <span aria-hidden>{style.markerText}</span>
+                </span>
+              )}
+              <dt
+                className={clsx(
+                  'max-w-[8rem] min-w-0 font-medium break-all @min-[20rem]/tags:max-w-[11rem]',
+                  style.key,
+                )}
+                title={row.kind === 'renamed' ? `${row.oldKey} → ${row.key}` : row.key}
+              >
+                {row.kind === 'renamed' ? (
+                  <>
+                    <span className="block font-normal text-zinc-500 line-through">
+                      <span className="sr-only">from </span>
+                      {row.oldKey}
+                    </span>
+                    <span className="block">
+                      <span aria-hidden>→ </span>
+                      <span className="sr-only">to </span>
+                      {row.key}
+                    </span>
+                  </>
+                ) : (
+                  row.key
+                )}
+              </dt>
+              <span className="text-zinc-300 select-none" aria-hidden>
+                =
+              </span>
+              <dd className="flex min-w-0 items-center gap-1">
+                <div className="min-w-0 flex-1">
+                  <TagRowValue row={row} />
+                </div>
+                <TagNoteCountBadge
+                  tagKey={row.key}
+                  count={noteCount}
+                  onNoteCountClick={onNoteCountClick}
+                />
+              </dd>
             </div>
-            <TagNoteCountBadge
-              tagKey={row.key}
-              count={noteCountByKey?.[row.key] ?? 0}
-              onNoteCountClick={onNoteCountClick}
-            />
-          </dd>
-        </div>
-      ))}
+          </Fragment>
+        )
+      })}
     </dl>
   )
 }

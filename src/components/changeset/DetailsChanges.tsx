@@ -52,6 +52,7 @@ import {
   groupElementChanges,
   mergeFlaggedFeatures,
   tagMutationRows,
+  tagRowKeys,
   type AdiffAction,
   type ElementChange,
   type FlaggedFeature,
@@ -101,7 +102,7 @@ function listedObjectsFromChanges(changes: ElementChange[]) {
   for (const change of changes) {
     const key = objectRefKey(change.type, change.id)
     listedObjects.add(key)
-    keysByObject.set(key, new Set(change.tags.map((tag) => tag.key)))
+    keysByObject.set(key, new Set(change.tags.flatMap(tagRowKeys)))
   }
   return { listedObjects, keysByObject }
 }
@@ -1050,7 +1051,7 @@ function ElementChangeRow({
       <NotesBlock
         type={change.type}
         id={change.id}
-        tags={change.tags}
+        tags={change.tags.flatMap((tag) => tagRowKeys(tag).map((key) => ({ key })))}
         notes={objectNotes}
         flashKey={flashKey}
         selectRef={selectRef}
