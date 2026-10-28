@@ -88,6 +88,7 @@ import {
   clearMainMapDebugExposure,
   exposeMainMapForDebugging,
 } from './exposeMainMapForDebugging.ts'
+import { OsmNoteMarker } from './OsmNoteMarker.tsx'
 import { ChangesetPinMarkers, PinPlacementOverlay } from './PinPlacementOverlay.tsx'
 import { runReviewCamera } from './reviewCamera.ts'
 import {
@@ -684,6 +685,7 @@ function CMap({
             <CollapseCompactAttributionOnMount />
             <PinPlacementOverlay />
             <ChangesetPinMarkers changesetId={changesetId} />
+            <OsmNoteMarker changesetId={changesetId} />
           </Map>
         ) : null}
         {overlayActive && inspectHover && inspectPoint ? (

@@ -36,6 +36,7 @@ import { formatCompactCount } from '../../utils/formatCount.ts'
 import { prepareProfileMarkdown } from '../../utils/profileMarkdown.ts'
 import { editorCompactName, editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
+import { OsmNoteChips } from '../osm_notes/OsmNoteChips.tsx'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
 import { Alert, AlertActions, AlertDescription, AlertTitle } from '../ui/alert.tsx'
@@ -810,10 +811,11 @@ export function DetailsHeader({
           <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
           <p className={clsx('min-w-0 flex-1', comment && 'pr-4')}>
             <span className="sr-only">Changeset comment: </span>
-            <LinkifyText text={comment || 'NO COMMENT'} />
+            <LinkifyText text={comment || 'NO COMMENT'} osmNotes />
           </p>
           {comment ? <TranslateButton text={comment} /> : null}
         </blockquote>
+        <OsmNoteChips text={comment} />
         {reasons.length > 0 && (
           <div className="flex flex-wrap items-center gap-1">
             {reasons.map((reason) => (
