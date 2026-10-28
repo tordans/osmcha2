@@ -3,6 +3,8 @@ import { Fragment, type ReactNode } from 'react'
 import { ACTION } from './changeset/actionColors.ts'
 import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { orderTagRows, tagRowKeys, type TagRow } from './changeset/changesetElements.ts'
+import { TrafficSignChips } from './traffic_signs/TrafficSignChips.tsx'
+import { countryPrefixOfValue, trafficSignValueOfRow } from './traffic_signs/trafficSignRows.ts'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
 
@@ -143,6 +145,16 @@ function TagRowValue({ row }: { row: TagRowsItem }) {
       {row.value}
     </div>
   )
+}
+
+/**
+ * Icon and name of the signs in a `traffic_sign` value, on their own grid line below the value. Other
+ * rows render nothing, and the sign catalogue only loads once a row with a country prefix asks for it.
+ */
+function TagRowSigns({ row }: { row: TagRowsItem }) {
+  const value = trafficSignValueOfRow(row)
+  if (value == null || countryPrefixOfValue(value) == null) return null
+  return <TrafficSignChips value={value} removed={row.kind === 'removed'} />
 }
 
 export function TagRows({
@@ -289,6 +301,7 @@ export function TagRows({
                   onNoteCountClick={onNoteCountClick}
                 />
               </dd>
+              <TagRowSigns row={row} />
             </div>
           </Fragment>
         )

@@ -157,6 +157,8 @@ export default defineConfig(({ mode }) => {
       // Agent worktrees under .claude/ carry their own copies of every test.
       exclude: [...configDefaults.exclude, '.claude/**'],
       environment: 'jsdom',
+      // The converter lazy-imports its sign SVGs; Vite has to process them, Node cannot load `.svg`.
+      server: { deps: { inline: ['@osm-traffic-signs/converter'] } },
       env: {
         TZ: 'UTC',
       },

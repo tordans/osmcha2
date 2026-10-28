@@ -19,7 +19,9 @@ const queryPersister = createAsyncStoragePersister({
 })
 
 function shouldPersistQuery(query: Query) {
-  return query.queryKey[0] !== 'changesetMap' && defaultShouldDehydrateQuery(query)
+  // The sign results hold asset URLs of this build, which change with every deploy.
+  const notPersisted = query.queryKey[0] === 'changesetMap' || query.queryKey[0] === 'trafficSigns'
+  return !notPersisted && defaultShouldDehydrateQuery(query)
 }
 
 export const persistQueryOptions = {

@@ -17,6 +17,12 @@ export const cacheChangesetMap = {
   gcTime: Infinity,
 } as const
 
+/** Signs of a `traffic_sign` value: static catalogue data, kept for the tab session, not persisted. */
+export const cacheTrafficSigns = {
+  staleTime: Infinity,
+  gcTime: Infinity,
+} as const
+
 /** OSM discussion for the changeset currently on screen. */
 export const DISCUSSION_STALE_MS = 5 * MINUTE
 
