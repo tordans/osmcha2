@@ -93,20 +93,21 @@ function NoteSummary({ note }: { note: OsmNote }) {
   const status = STATUS_BADGE[note.status]
   return (
     <div className="mt-2 flex flex-col gap-1 text-sm/6 text-zinc-700">
-      <p className="flex flex-wrap items-center gap-x-2">
+      {/* div, not p: RelativeTime's tooltip renders a div. */}
+      <div className="flex flex-wrap items-center gap-x-2">
         <Badge color={status.color}>{status.label}</Badge>
         <span>
           Created <RelativeTime datetime={new Date(note.createdAt)} />
         </span>
         <ExactDate iso={note.createdAt} />
-      </p>
+      </div>
       {note.closedAt ? (
-        <p className="flex flex-wrap items-center gap-x-2">
+        <div className="flex flex-wrap items-center gap-x-2">
           <span>
             Closed <RelativeTime datetime={new Date(note.closedAt)} />
           </span>
           <ExactDate iso={note.closedAt} />
-        </p>
+        </div>
       ) : null}
     </div>
   )
