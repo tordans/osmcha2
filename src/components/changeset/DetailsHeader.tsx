@@ -801,30 +801,33 @@ export function DetailsHeader({
     </div>
   )
 
-  const body = (
-    <>
-      <div className={clsx('flex flex-col gap-1', typeScale.body)}>
-        <blockquote
-          className="relative flex w-full items-start gap-1 leading-tight wrap-break-word hyphens-auto not-italic"
-          lang="en"
-        >
-          <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
-          <p className={clsx('min-w-0 flex-1', comment && 'pr-4')}>
-            <span className="sr-only">Changeset comment: </span>
-            <LinkifyText text={comment || 'NO COMMENT'} osmNotes />
-          </p>
-          {comment ? <TranslateButton text={comment} /> : null}
-        </blockquote>
-        <OsmNoteChips text={comment} />
-        {reasons.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1">
-            {reasons.map((reason) => (
-              <Badge key={reason.id ?? reason.name}>{reason.name}</Badge>
-            ))}
-          </div>
-        )}
-      </div>
+  const commentBlock = (
+    <div className={clsx('flex flex-col gap-1', typeScale.body)}>
+      <blockquote
+        className="relative flex w-full items-start gap-1 leading-tight wrap-break-word hyphens-auto not-italic"
+        lang="en"
+      >
+        <QuoteIcon className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
+        <p className={clsx('min-w-0 flex-1', comment && 'pr-4')}>
+          <span className="sr-only">Changeset comment: </span>
+          <LinkifyText text={comment || 'NO COMMENT'} osmNotes />
+        </p>
+        {comment ? <TranslateButton text={comment} /> : null}
+      </blockquote>
+      <OsmNoteChips text={comment} />
+      {reasons.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          {reasons.map((reason) => (
+            <Badge key={reason.id ?? reason.name}>{reason.name}</Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 
+  /** Looks OK / Needs a look and the verdict once set; sticky on phones. */
+  const verdictBlock = (
+    <>
       <div className="flex flex-wrap items-center gap-2">
         {checked && presentation ? (
           <>
@@ -996,19 +999,29 @@ export function DetailsHeader({
           <Button onClick={() => markLooksOk(true)}>Remove tags and mark Looks OK</Button>
         </AlertActions>
       </Alert>
+    </>
+  )
 
+  const body = (
+    <>
+      {commentBlock}
+      {verdictBlock}
       <Divider className="mt-1" />
     </>
   )
 
   if (layout === 'sheet') {
-    // Phone sheet: the menus stay put; the rest scrolls away with the Changes list.
+    // Phone sheet: only the verdict buttons stay put; the menus and the comment scroll away with the
+    // Changes list.
     return (
       <>
-        <header className="bg-zinc-50 px-2.5 pb-2">{pair}</header>
+        <header className="bg-zinc-50 px-2.5 pb-2">{verdictBlock}</header>
         {bodySlot
           ? createPortal(
-              <div className="flex flex-col gap-2.5 bg-zinc-50 px-2.5 pt-0.5 pb-2.5">{body}</div>,
+              <div className="flex flex-col gap-2.5 bg-zinc-50 px-2.5 pt-0.5 pb-2.5">
+                {pair}
+                {commentBlock}
+              </div>,
               bodySlot,
             )
           : null}
