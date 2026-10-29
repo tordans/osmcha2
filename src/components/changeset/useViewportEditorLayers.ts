@@ -1,6 +1,7 @@
-import { loadLayersInViewport, type EliLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
+import type { EliLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
 import type * as maplibre from 'maplibre-gl'
 import { useEffect, useState } from 'react'
+import { loadEli } from './eliModule.ts'
 
 const VIEWPORT_LAYER_FILTER = {
   excludeOverlays: true,
@@ -31,11 +32,15 @@ export function useViewportEditorLayers(map: maplibre.Map | null, enabled: boole
         generation = generation + 1
         const gen = generation
         setStatus('loading')
-        void loadLayersInViewport(map.getBounds(), VIEWPORT_LAYER_FILTER).then((next) => {
-          if (gen !== generation) return
-          setLayers(next)
-          setStatus('ready')
-        })
+        void loadEli()
+          .then(({ loadLayersInViewport }) =>
+            loadLayersInViewport(map.getBounds(), VIEWPORT_LAYER_FILTER),
+          )
+          .then((next) => {
+            if (gen !== generation) return
+            setLayers(next)
+            setStatus('ready')
+          })
       }
 
       const onMoveEnd = () => {

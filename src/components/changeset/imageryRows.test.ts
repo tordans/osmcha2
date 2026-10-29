@@ -1,3 +1,4 @@
+import { groupLayers } from '@osm-editor-kit/maplibre-editor-layer-index'
 import { describe, expect, it } from 'vitest'
 import {
   BACKGROUND_GROUPS,
@@ -80,9 +81,19 @@ describe('groupRows', () => {
   })
 })
 
+/** The panel groups the layers with the loaded index first. */
+function rowsOf(
+  layers: ImageryListLayer[],
+  ...rest: DropFirst<Parameters<typeof buildImageryRows>>
+) {
+  return buildImageryRows(groupLayers(layers), ...rest)
+}
+
+type DropFirst<T extends unknown[]> = T extends [unknown, ...infer Rest] ? Rest : never
+
 describe('buildImageryRows', () => {
   it('shows a series once, with its dates newest first', () => {
-    const rows = buildImageryRows(berlin)
+    const rows = rowsOf(berlin)
     expect(rows).toHaveLength(1)
     const [row] = rows
     expect(row?.name).toBe('Berlin/Geoportal DOP20RGB')
@@ -95,27 +106,27 @@ describe('buildImageryRows', () => {
   })
 
   it('marks the best date and picks it with a click on the row', () => {
-    const [row] = buildImageryRows(berlin)
+    const [row] = rowsOf(berlin)
     expect(row?.best).toBe(true)
     expect(row?.styleId).toBe('eli:Berlin-2026')
     expect(row?.chips.filter((chip) => chip.best).map((chip) => chip.label)).toEqual(['2026'])
   })
 
   it('picks the newest date when none is best', () => {
-    const [row] = buildImageryRows(berlin.map((entry) => ({ ...entry, best: false })))
+    const [row] = rowsOf(berlin.map((entry) => ({ ...entry, best: false })))
     expect(row?.best).toBe(false)
     expect(row?.styleId).toBe('eli:Berlin-2026')
   })
 
   it('is one row without chips for a layer that is no series', () => {
-    const rows = buildImageryRows([layer('Solo', 'Solo Orthophoto')])
+    const rows = rowsOf([layer('Solo', 'Solo Orthophoto')])
     expect(rows).toHaveLength(1)
     expect(rows[0]?.chips).toEqual([])
     expect(rows[0]?.styleId).toBe('eli:Solo')
   })
 
   it('sorts best rows first, then by name', () => {
-    const rows = buildImageryRows([
+    const rows = rowsOf([
       layer('b', 'Beta Ortho'),
       layer('z', 'Zeta Ortho', { best: true }),
       layer('a', 'Alpha Ortho'),
@@ -124,7 +135,7 @@ describe('buildImageryRows', () => {
   })
 
   it('files a row by its newest date and worldwide layers as global', () => {
-    const rows = buildImageryRows([
+    const rows = rowsOf([
       layer('w', 'World Ortho', { continents: ['world'] }),
       layer('m', 'Old Map', { category: 'historicmap' }),
       ...berlin,
@@ -137,7 +148,7 @@ describe('buildImageryRows', () => {
   })
 
   it('marks the date the changeset used, picks it with the row and leaves the others', () => {
-    const [row] = buildImageryRows(berlin, new Set(['eli:Berlin-2025']))
+    const [row] = rowsOf(berlin, new Set(['eli:Berlin-2025']))
     expect(row?.used).toBe(true)
     expect(row?.usedOtherDate).toBe(false)
     expect(row?.styleId).toBe('eli:Berlin-2025')
@@ -149,30 +160,26 @@ describe('buildImageryRows', () => {
   })
 
   it('says when only another date of the series was used', () => {
-    const [row] = buildImageryRows(berlin, new Set(), new Set(['eli:Berlin-2024']))
+    const [row] = rowsOf(berlin, new Set(), new Set(['eli:Berlin-2024']))
     expect(row?.used).toBe(false)
     expect(row?.usedOtherDate).toBe(true)
     expect(row?.styleId).toBe('eli:Berlin-2026')
-    const [exact] = buildImageryRows(
-      berlin,
-      new Set(['eli:Berlin-2025']),
-      new Set(['eli:Berlin-2024']),
-    )
+    const [exact] = rowsOf(berlin, new Set(['eli:Berlin-2025']), new Set(['eli:Berlin-2024']))
     expect(exact?.usedOtherDate).toBe(false)
   })
 
   it('does not mark unrelated rows', () => {
-    const rows = buildImageryRows([layer('Solo', 'Solo Orthophoto'), ...berlin], new Set(['eli:x']))
+    const rows = rowsOf([layer('Solo', 'Solo Orthophoto'), ...berlin], new Set(['eli:x']))
     expect(rows.every((row) => !row.used && !row.usedOtherDate)).toBe(true)
   })
 })
 
 describe('rowIsShown', () => {
   it('is true while any date of the row is drawn', () => {
-    const [row] = buildImageryRows(berlin)
+    const [row] = rowsOf(berlin)
     expect(row && rowIsShown(row, 'eli:Berlin-2024')).toBe(true)
     expect(row && rowIsShown(row, 'bing')).toBe(false)
-    const [solo] = buildImageryRows([layer('Solo', 'Solo Orthophoto')])
+    const [solo] = rowsOf([layer('Solo', 'Solo Orthophoto')])
     expect(solo && rowIsShown(solo, 'eli:Solo')).toBe(true)
   })
 })

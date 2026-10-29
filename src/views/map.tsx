@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { ACTION } from '../components/changeset/actionColors.ts'
 import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
 import { buildElementChanges } from '../components/changeset/changesetElements.ts'
+import { loadEli } from '../components/changeset/eliModule.ts'
 import { InspectKindSwatch } from '../components/changeset/InspectKindSwatch.tsx'
 import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
 import { minorMoveObjectKeys } from '../components/changeset/minorMoves.ts'
@@ -311,7 +312,10 @@ function CMap({
         const imageryKey = `${changesetId}:${imageryUsed ?? ''}`
         if (matchedImageryUsedRef.current !== imageryKey) {
           matchedImageryUsedRef.current = imageryKey
-          const matchedStyleId = matchImageryUsedStyleId(imageryUsed)
+          const matchedStyleId = imageryUsed
+            ? matchImageryUsedStyleId(imageryUsed, (await loadEli()).getLayers())
+            : null
+          if (cancelled) return
           if (matchedStyleId && matchedStyleId !== getMapStyle()) {
             getMapStyleActions().setStyle(matchedStyleId)
             return

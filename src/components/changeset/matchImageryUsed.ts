@@ -1,4 +1,4 @@
-import { getLayers, type EliLocatorLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
+import type { EliLocatorLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
 import { BUILTIN_BASEMAP_OPTIONS } from '../../map/basemapIds.ts'
 import { toEliStyleId } from './basemapStyles.ts'
 
@@ -9,7 +9,7 @@ import { toEliStyleId } from './basemapStyles.ts'
  * each source (`Berlin/Geoportal DOP20RGB (2025)`), `Bing aerial imagery`, or `Custom (<url>)`.
  * Other editors write a free text or `Not reported`. Names can contain commas, so only `;` splits.
  *
- * Pure: no React and no map. The ELI package is only read for its (bundled, synchronous) layer list.
+ * Pure: no React and no map. Callers pass the ELI layer list (`getLayers()` of the loaded index, see `eliModule.ts`).
  */
 
 const SKIP_TOKENS = new Set(['', 'not reported', 'none', 'unknown'])
@@ -195,7 +195,7 @@ function isDefined<T>(value: T | undefined): value is T {
  */
 export function resolveImageryUsed(
   imageryUsed: string | null | undefined,
-  layers: readonly ImageryLayerRef[] = getLayers(),
+  layers: readonly ImageryLayerRef[],
 ): ImageryUsedResolution {
   const tokens = parseImageryUsed(imageryUsed)
   const index = indexLayers(layers)
@@ -239,14 +239,14 @@ export function resolveImageryUsed(
 /** The first entry of the tag that names a background the map can show. */
 export function matchImageryUsedSelection(
   imageryUsed: string | null | undefined,
-  layers: readonly ImageryLayerRef[] = getLayers(),
+  layers: readonly ImageryLayerRef[],
 ): ImageryUsedMatch | null {
   return resolveImageryUsed(imageryUsed, layers).matches[0] ?? null
 }
 
 export function matchImageryUsedStyleId(
   imageryUsed: string | null | undefined,
-  layers: readonly ImageryLayerRef[] = getLayers(),
+  layers: readonly ImageryLayerRef[],
 ): string | null {
   return matchImageryUsedSelection(imageryUsed, layers)?.styleId ?? null
 }

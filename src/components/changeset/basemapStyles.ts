@@ -1,12 +1,6 @@
-import {
-  eliSourceId,
-  getLayerHydrated,
-  getRasterLayerSpec,
-  getRasterSourceSpec,
-  type EliLayer,
-} from '@osm-editor-kit/maplibre-editor-layer-index'
 import type * as maplibre from 'maplibre-gl'
 import { isBuiltinBasemapId, type BuiltinBasemapId } from '../../map/basemapIds.ts'
+import { loadEli } from './eliModule.ts'
 
 const BING_AERIAL_IMAGERY_STYLE: maplibre.StyleSpecification = {
   version: 8,
@@ -126,19 +120,6 @@ export function parseEliStyleId(styleId: string): string | null {
   return styleId.startsWith(ELI_STYLE_PREFIX) ? styleId.slice(ELI_STYLE_PREFIX.length) : null
 }
 
-export function styleFromEliLayer(layer: EliLayer): maplibre.StyleSpecification {
-  const sourceId = eliSourceId(layer)
-  return {
-    version: 8,
-    sources: {
-      [sourceId]: getRasterSourceSpec(layer),
-    },
-    layers: [
-      getRasterLayerSpec(layer, { id: 'imagery', source: sourceId }),
-    ] as maplibre.StyleSpecification['layers'],
-  }
-}
-
 export async function resolveBasemapStyle(styleId: string): Promise<maplibre.StyleSpecification> {
   if (isBuiltinBasemapId(styleId)) {
     return cloneBasemapStyle(BASEMAP_STYLES[styleId])
@@ -149,12 +130,22 @@ export async function resolveBasemapStyle(styleId: string): Promise<maplibre.Sty
     return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }
 
+  const { eliSourceId, getLayerHydrated, getRasterLayerSpec, getRasterSourceSpec } = await loadEli()
   const layer = await getLayerHydrated(eliId)
   if (!layer) {
     return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }
 
-  return styleFromEliLayer(layer)
+  const sourceId = eliSourceId(layer)
+  return {
+    version: 8,
+    sources: {
+      [sourceId]: getRasterSourceSpec(layer),
+    },
+    layers: [
+      getRasterLayerSpec(layer, { id: 'imagery', source: sourceId }),
+    ] as maplibre.StyleSpecification['layers'],
+  }
 }
 
 /** MapLibre mutates the style object; never pass module-level specs through as `mapStyle`. */

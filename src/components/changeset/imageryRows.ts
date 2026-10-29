@@ -1,4 +1,4 @@
-import { groupLayers, type EliLayer } from '@osm-editor-kit/maplibre-editor-layer-index'
+import type { EliLayer, EliLayerEntry } from '@osm-editor-kit/maplibre-editor-layer-index'
 import { toEliStyleId } from './basemapStyles.ts'
 
 /**
@@ -93,16 +93,16 @@ export type ImageryRow = {
 }
 
 /**
- * The rows of the layers in view, best rows first, then by name (as Maid's list). `usedStyleIds` are the
+ * The rows of the layers in view, best rows first, then by name (as Maid's list). `entries` are the layers
+ * grouped into time series (`groupLayers` of the loaded index, see `eliModule.ts`). `usedStyleIds` are the
  * layers the changeset used (exact matches), `similarStyleIds` those of the same series (see
  * `resolveImageryUsed`).
  */
 export function buildImageryRows(
-  layers: readonly ImageryListLayer[],
+  entries: readonly EliLayerEntry<ImageryListLayer>[],
   usedStyleIds: ReadonlySet<string> = new Set(),
   similarStyleIds: ReadonlySet<string> = new Set(),
 ): ImageryRow[] {
-  const entries = groupLayers([...layers])
   return entries
     .map((entry): ImageryRow => {
       const usedVariant = entry.variants.find((variant) =>

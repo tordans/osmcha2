@@ -37,6 +37,7 @@ import { Radio, RadioField } from '../ui/radio.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ACTION } from './actionColors.ts'
 import { ActionIcon } from './ActionTypeLabel.tsx'
+import { useEli } from './eliModule.ts'
 import {
   buildImageryRows,
   groupRows,
@@ -362,7 +363,8 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
   const map = mapLoaded ? (mainMap?.getMap() ?? null) : null
   const style = useMapStyle()
   const { setStyle } = useMapStyleActions()
-  const resolution = resolveImageryUsed(imageryUsed)
+  const eli = useEli(Boolean(imageryUsed))
+  const resolution = resolveImageryUsed(imageryUsed, eli?.getLayers() ?? [])
   const appliedMatch = resolution.matches[0] ?? null
   const isAppliedFromChangeset = appliedMatch !== null && style === appliedMatch.styleId
   const appliedTooltip = appliedMatch
@@ -563,9 +565,10 @@ function ViewportEditorLayerList({
   setStyle: (style: string) => void
 }) {
   const { layers, status } = useViewportEditorLayers(map, enabled)
+  const eli = useEli(enabled)
   const visibleLayers = layers.filter((layer) => !isDuplicateOfBuiltinLayer(layer))
   const rows = buildImageryRows(
-    visibleLayers,
+    eli?.groupLayers(visibleLayers) ?? [],
     new Set(resolution.matches.map((match) => match.styleId)),
     new Set(resolution.similar.map((match) => match.styleId)),
   )
