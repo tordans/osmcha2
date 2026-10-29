@@ -2,6 +2,7 @@ import * as Headless from '@headlessui/react'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type * as maplibre from 'maplibre-gl'
+import { lazy, Suspense } from 'react'
 import { useMap } from 'react-map-gl/maplibre'
 import { BUILTIN_BASEMAP_OPTIONS } from '../../map/basemapIds.ts'
 import {
@@ -18,12 +19,20 @@ import {
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStyle, useMapStyleActions } from '../../stores/map-style-store.ts'
+import {
+  useMapillaryLayerOn,
+  usePanoramaxLayerOn,
+  useStreetImageryLayerActions,
+  useStreetImageryLayerOn,
+  useStreetImageryPhotoKind,
+} from '../../stores/street-imagery-layer-store.ts'
 import { SEEN_FILTER } from '../../views/changesetSeenStyle.ts'
+import type { StreetImageryPhotoKind } from '../street_imagery/streetImageryLayerSettings.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
 import { flyoutSurfaceClassName } from '../ui/flyout.ts'
-import { CircleCheckIcon, FunnelIcon, GlobeAltIcon, StarIcon } from '../ui/icons.ts'
+import { CameraIcon, CircleCheckIcon, FunnelIcon, GlobeAltIcon, StarIcon } from '../ui/icons.ts'
 import { Radio, RadioField } from '../ui/radio.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ACTION } from './actionColors.ts'
@@ -43,6 +52,9 @@ import {
 } from './matchImageryUsed.ts'
 import { openInUrls } from './openInUrls.ts'
 import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
+
+// The date slider comes with the street-imagery package; it loads when the panel first shows it.
+const StreetImageryDateFilter = lazy(() => import('../street_imagery/StreetImageryDateFilter.tsx'))
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -585,6 +597,102 @@ function ViewportEditorLayerList({
   )
 }
 
+const PHOTO_KIND_OPTIONS: { value: StreetImageryPhotoKind; label: string }[] = [
+  { value: 'all', label: 'All photos' },
+  { value: 'flat', label: 'Flat photos' },
+  { value: 'pano', label: '360° photos' },
+]
+
+function MapStreetImageryOptions() {
+  const layerOn = useStreetImageryLayerOn()
+  const mapillaryOn = useMapillaryLayerOn()
+  const panoramaxOn = usePanoramaxLayerOn()
+  const photoKind = useStreetImageryPhotoKind()
+  const { setProviderOn, setPhotoKind } = useStreetImageryLayerActions()
+
+  return (
+    <Headless.Popover>
+      <Headless.PopoverButton
+        aria-label={layerOn ? 'Street-level photos (on)' : 'Street-level photos'}
+        className={mapControlButtonClassName}
+      >
+        <CameraIcon className={clsx('size-5', layerOn ? 'text-sky-600' : 'text-zinc-700')} />
+      </Headless.PopoverButton>
+      <Headless.PopoverPanel anchor="top end" className={imageryPanelClassName}>
+        <h2 className="mb-2 text-base font-semibold text-zinc-950">Street-level photos</h2>
+
+        <section className="space-y-1">
+          <h3 className="text-base font-medium text-zinc-700">Show on the map</h3>
+          <CheckboxField className="min-h-11 items-center sm:min-h-0 sm:items-start">
+            <Checkbox
+              checked={mapillaryOn}
+              onChange={(checked) => setProviderOn('mapillary', checked)}
+            />
+            <Label>
+              Mapillary
+              <span className="-mt-0.5 block text-sm/4 font-normal text-zinc-500">
+                Photos by anyone, flat and 360°
+              </span>
+            </Label>
+          </CheckboxField>
+          <CheckboxField className="min-h-11 items-center sm:min-h-0 sm:items-start">
+            <Checkbox
+              checked={panoramaxOn}
+              onChange={(checked) => setProviderOn('panoramax', checked)}
+            />
+            <Label>
+              Panoramax
+              <span className="-mt-0.5 block text-sm/4 font-normal text-zinc-500">
+                Open photos, a community alternative
+              </span>
+            </Label>
+          </CheckboxField>
+        </section>
+
+        {layerOn ? (
+          <>
+            <p className="mt-2 text-sm/5 text-zinc-500">
+              Click a dot on the map to see the photo. Photos show once the map is zoomed in to
+              street level.
+            </p>
+
+            <Divider className="my-3" />
+
+            <section className="space-y-2">
+              <h3 className="text-base font-medium text-zinc-700">Photo type</h3>
+              <Headless.RadioGroup<'div', StreetImageryPhotoKind>
+                value={photoKind}
+                onChange={setPhotoKind}
+                className="space-y-0.5"
+                aria-label="Photo type"
+              >
+                {PHOTO_KIND_OPTIONS.map((option) => (
+                  <RadioField
+                    key={option.value}
+                    className="min-h-11 items-center sm:min-h-0 sm:items-start"
+                  >
+                    <Radio value={option.value} />
+                    <Label>{option.label}</Label>
+                  </RadioField>
+                ))}
+              </Headless.RadioGroup>
+            </section>
+
+            <Divider className="my-3" />
+
+            <section className="space-y-2">
+              <h3 className="text-base font-medium text-zinc-700">Photo date</h3>
+              <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+                <StreetImageryDateFilter />
+              </Suspense>
+            </section>
+          </>
+        ) : null}
+      </Headless.PopoverPanel>
+    </Headless.Popover>
+  )
+}
+
 type MapOptionsProps = {
   imageryUsed?: string | null
   ref?: React.Ref<HTMLButtonElement>
@@ -595,6 +703,7 @@ export function MapOptions({ imageryUsed, ref }: MapOptionsProps) {
     <Headless.PopoverGroup className="flex flex-col gap-2">
       <MapFilterOptions ref={ref} />
       <MapImageryOptions imageryUsed={imageryUsed} />
+      <MapStreetImageryOptions />
     </Headless.PopoverGroup>
   )
 }

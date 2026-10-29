@@ -3,7 +3,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import type { Map as MaplibreMap, MapLibreEvent, StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import '../utils/maplibreWorker.ts'
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import {
   AttributionControl,
   Map,
@@ -55,6 +55,7 @@ import {
   useMapStyle,
   waitForMapStyleHydration,
 } from '../stores/map-style-store.ts'
+import { useStreetImageryLayerOn } from '../stores/street-imagery-layer-store.ts'
 import {
   CHANGESET_MAP_ID,
   CHANGESET_SOURCE_ID,
@@ -104,10 +105,14 @@ import {
   type InspectHoverItem,
 } from './spyglassOverlay.ts'
 import { SpyglassOverlay } from './SpyglassOverlay.tsx'
+import { openStreetImageryPhotoFromClick } from './streetImageryMapClick.ts'
 import { StreetImageryPhotoMarker } from './StreetImageryPhotoMarker.tsx'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
 import { useJumpToWorkArea } from './useWorkAreaMap.ts'
 import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
+
+// The street photo layer, the package and its providers load when a provider is first switched on.
+const StreetImageryLayers = lazy(() => import('./StreetImageryLayers.tsx'))
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -231,6 +236,7 @@ function CMap({
   const [inspectHover, setInspectHover] = useState<InspectHover | null>(null)
   const [inspectPoint, setInspectPoint] = useState<{ x: number; y: number } | null>(null)
   const pinPlacement = usePinPlacement()
+  const streetImageryOn = useStreetImageryLayerOn()
   const mapLayers = parseLayersParam(layersSearch)
   const spyglassEnabled = mapLayers.spyglass
   const userKey = useNotesUserKey()
@@ -577,6 +583,8 @@ function CMap({
     if (nextFeatureId == null) {
       // Spyglass / noop are inspect-only. Do not treat them as an empty-map deselect.
       if (inspectHoverFromFeatures(hoverFeatures)) return
+      // A changeset feature wins over a photo; only an empty spot may hit a photo of the street layer.
+      if (openStreetImageryPhotoFromClick(event)) return
       lastClickFeatureIdRef.current = null
       selectRef(null)
       clearSelectedFeatureState(map, geojson)
@@ -670,6 +678,11 @@ function CMap({
                 layer={overlayBg as LayerProps}
                 beforeId={firstFeatureLayerId}
               />
+            ) : null}
+            {streetImageryOn ? (
+              <Suspense fallback={null}>
+                <StreetImageryLayers beforeId={firstFeatureLayerId} />
+              </Suspense>
             ) : null}
             {SPYGLASS_OVERLAY_AVAILABLE && overlayActive && firstFeatureLayerId ? (
               <SpyglassOverlay beforeId={firstFeatureLayerId} />
