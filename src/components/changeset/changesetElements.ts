@@ -500,10 +500,47 @@ function shouldListAction(action: AdiffAction, wayMemberNodes: Set<number>): boo
   return true
 }
 
+const NO_ACTIONS: AdiffAction[] = []
+const NO_FLAGGED: FlaggedFeature[] = []
+const NO_REASONS: NamedReason[] = []
+/** Last few results per adiff: the list, the phone card and the map ask for the same changes. */
+const changesCache = new WeakMap<
+  AdiffAction[],
+  Array<{
+    flaggedFeatures: FlaggedFeature[]
+    changesetReasons: NamedReason[]
+    changes: ElementChange[]
+  }>
+>()
+const CHANGES_CACHE_SIZE = 4
+
+/**
+ * The same inputs (by identity) return the same change objects, so a row of the Changes list sees
+ * unchanged props and skips re-rendering. Callers must not mutate the result.
+ */
 export function buildElementChanges(
-  actions: AdiffAction[] = [],
-  flaggedFeatures: FlaggedFeature[] = [],
-  changesetReasons: NamedReason[] = [],
+  actions: AdiffAction[] = NO_ACTIONS,
+  flaggedFeatures: FlaggedFeature[] = NO_FLAGGED,
+  changesetReasons: NamedReason[] = NO_REASONS,
+): ElementChange[] {
+  const entries = changesCache.get(actions) ?? []
+  const hit = entries.find(
+    (entry) =>
+      entry.flaggedFeatures === flaggedFeatures && entry.changesetReasons === changesetReasons,
+  )
+  if (hit) return hit.changes
+  const changes = computeElementChanges(actions, flaggedFeatures, changesetReasons)
+  changesCache.set(
+    actions,
+    [{ flaggedFeatures, changesetReasons, changes }, ...entries].slice(0, CHANGES_CACHE_SIZE),
+  )
+  return changes
+}
+
+function computeElementChanges(
+  actions: AdiffAction[],
+  flaggedFeatures: FlaggedFeature[],
+  changesetReasons: NamedReason[],
 ): ElementChange[] {
   const wayMemberNodes = wayMemberNodeIds(actions)
   const statsByNode = nodeActionStats(actions)

@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Fragment, memo, useDeferredValue, useEffect, useState } from 'react'
+import { Fragment, memo, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -86,6 +86,9 @@ import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
+const NO_FLAGGED: NonNullable<DetailsChangesProps['features']> = []
+const NO_REVIEWED: NonNullable<DetailsChangesProps['reviewedFeatures']> = []
+const NO_REASONS: NonNullable<DetailsChangesProps['reasons']> = []
 /** List items (rows or groups) in the first render: more than two phone screens. */
 const FIRST_RENDER_LIST_ITEMS = 20
 /** Pause before a fully seen group folds away, so the rows show their new state first. */
@@ -207,9 +210,9 @@ export function DetailsChanges({
   workAreas = [],
   activeWorkArea = null,
   jumpToWorkArea,
-  features = [],
-  reviewedFeatures = [],
-  reasons = [],
+  features = NO_FLAGGED,
+  reviewedFeatures = NO_REVIEWED,
+  reasons = NO_REASONS,
   selected,
   selectedRef,
   selectRef,
@@ -223,14 +226,20 @@ export function DetailsChanges({
   const userKey = useNotesUserKey()
   const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
   const { requestFinishFocus } = useReviewFocusActions()
-  const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
-  const changes = buildElementChanges(adiff?.actions ?? [], flagged, reasons)
-  const { listedObjects, keysByObject } = listedObjectsFromChanges(changes)
-  const located = locateNotes(discussion?.changeset?.comments ?? [], {
-    changesetId,
-    listedObjects,
-    keysByObject,
-  })
+  // Explicit: the compiler does not memoize these here, and new change objects re-render every row.
+  const flagged = useMemo(
+    () => mergeFlaggedFeatures(features, reviewedFeatures),
+    [features, reviewedFeatures],
+  )
+  const changes = buildElementChanges(adiff?.actions, flagged, reasons)
+  const located = useMemo(() => {
+    const { listedObjects, keysByObject } = listedObjectsFromChanges(changes)
+    return locateNotes(discussion?.changeset?.comments ?? [], {
+      changesetId,
+      listedObjects,
+      keysByObject,
+    })
+  }, [changes, discussion, changesetId])
   const totalNotes = countLocatedNotes(located)
   const currentUser = userKey === 'anonymous' ? undefined : userKey
 
