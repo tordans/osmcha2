@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_OSM_AUTH_URL?: string
   /** OSM API origin, e.g. https://api.openstreetmap.org. */
   readonly VITE_OSM_API_URL?: string
+  /** Mapillary client token for street-level photos. Empty = the shared default token. */
+  readonly VITE_MAPILLARY_TOKEN?: string
 }
 
 interface Window {

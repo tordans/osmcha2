@@ -11,6 +11,7 @@ import {
   CaretRight,
   CaretUp,
   CaretUpDown,
+  Camera,
   ChatCircleText,
   Check,
   CheckCircle,
@@ -49,6 +50,7 @@ export const ArrowRightIcon = appIcon(ArrowRight)
 export const ArrowsSplitIcon = appIcon(ArrowsSplit)
 export const ArrowPathIcon = appIcon(ArrowClockwise)
 export const CalendarDaysIcon = appIcon(CalendarBlank)
+export const CameraIcon = appIcon(Camera)
 export const CheckIcon = appIcon(Check)
 export const ChevronDownIcon = appIcon(CaretDown)
 export const ChevronLeftIcon = appIcon(CaretLeft)

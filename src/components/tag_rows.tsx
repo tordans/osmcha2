@@ -3,6 +3,8 @@ import { Fragment, type ReactNode } from 'react'
 import { ACTION } from './changeset/actionColors.ts'
 import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { orderTagRows, tagRowKeys, type TagRow } from './changeset/changesetElements.ts'
+import { StreetImageryChips } from './street_imagery/StreetImageryChips.tsx'
+import { streetImageryPhotosOfRow } from './street_imagery/streetImageryTags.ts'
 import { TrafficSignChips } from './traffic_signs/TrafficSignChips.tsx'
 import { countryPrefixOfValue, trafficSignValueOfRow } from './traffic_signs/trafficSignRows.ts'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
@@ -157,6 +159,14 @@ function TagRowSigns({ row }: { row: TagRowsItem }) {
   return <TrafficSignChips value={value} removed={row.kind === 'removed'} />
 }
 
+/**
+ * A button per Mapillary or Panoramax photo in the value, on its own grid line below it. Other
+ * rows render nothing. The viewer only loads once a photo is opened.
+ */
+function TagRowPhotos({ row }: { row: TagRowsItem }) {
+  return <StreetImageryChips photos={streetImageryPhotosOfRow(row)} />
+}
+
 export function TagRows({
   rows,
   emptyLabel,
@@ -302,6 +312,7 @@ export function TagRows({
                 />
               </dd>
               <TagRowSigns row={row} />
+              <TagRowPhotos row={row} />
             </div>
           </Fragment>
         )

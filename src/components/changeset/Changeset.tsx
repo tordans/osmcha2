@@ -35,6 +35,7 @@ import { runReviewCamera } from '../../views/reviewCamera.ts'
 import { useActiveWorkArea, useJumpToWorkArea } from '../../views/useWorkAreaMap.ts'
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import { OsmNoteDialog } from '../osm_notes/OsmNoteDialog.tsx'
+import { StreetImageryDialog } from '../street_imagery/StreetImageryDialog.tsx'
 import { buildElementChanges, type AdiffAction } from './changesetElements.ts'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
@@ -253,6 +254,7 @@ function Changeset({
       )}
       <DebugDataHelper changesetId={changesetId} selected={selected} />
       <OsmNoteDialog />
+      <StreetImageryDialog />
     </div>
   )
 }

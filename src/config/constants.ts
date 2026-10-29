@@ -55,3 +55,13 @@ export const NOTE_LINK_HOSTS = [
  * Empty is the site root (local Vite, osmcha.org). `/osmcha2` is GitHub Pages.
  */
 export const NOTE_LINK_PATH_PREFIXES = ['', '/osmcha2'] as const
+
+/**
+ * Mapillary client token for the street-level photo layer and viewer. A client token is made for
+ * the browser, so it is public and part of every built page. It belongs to the Mapillary account
+ * `tordans` and is shared with Maid: both apps together get 50,000 tile requests a day.
+ * Override it with `VITE_MAPILLARY_TOKEN` (own Mapillary application, https://www.mapillary.com/dashboard/developers).
+ */
+export const MAPILLARY_TOKEN =
+  (import.meta.env.VITE_MAPILLARY_TOKEN ?? '').trim() ||
+  'MLY|39514138868200192|9f56cdfee9f25db7c536b4c5aacdfd9b'

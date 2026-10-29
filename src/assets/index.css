@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Tailwind does not scan node_modules: the street photo viewer and date filter use its classes. */
+@source '../../node_modules/@osm-editor-kit/street-imagery-react/dist';
+
 @theme {
   --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
 }

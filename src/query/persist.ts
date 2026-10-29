@@ -18,9 +18,14 @@ const queryPersister = createAsyncStoragePersister({
   },
 })
 
+/**
+ * Not persisted: the changeset map (parsed trees are large), the sign results (asset URLs of this
+ * build, which change with every deploy) and the street-level photo data (cheap to load again).
+ */
+const NOT_PERSISTED_QUERY_KEYS = new Set(['changesetMap', 'trafficSigns', 'streetImageryPhoto'])
+
 function shouldPersistQuery(query: Query) {
-  // The sign results hold asset URLs of this build, which change with every deploy.
-  const notPersisted = query.queryKey[0] === 'changesetMap' || query.queryKey[0] === 'trafficSigns'
+  const notPersisted = NOT_PERSISTED_QUERY_KEYS.has(String(query.queryKey[0]))
   return !notPersisted && defaultShouldDehydrateQuery(query)
 }
 

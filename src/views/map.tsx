@@ -104,6 +104,7 @@ import {
   type InspectHoverItem,
 } from './spyglassOverlay.ts'
 import { SpyglassOverlay } from './SpyglassOverlay.tsx'
+import { StreetImageryPhotoMarker } from './StreetImageryPhotoMarker.tsx'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
 import { useJumpToWorkArea } from './useWorkAreaMap.ts'
 import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
@@ -686,6 +687,7 @@ function CMap({
             <PinPlacementOverlay />
             <ChangesetPinMarkers changesetId={changesetId} />
             <OsmNoteMarker changesetId={changesetId} />
+            <StreetImageryPhotoMarker changesetId={changesetId} />
           </Map>
         ) : null}
         {overlayActive && inspectHover && inspectPoint ? (
