@@ -70,6 +70,12 @@ import {
   OtherNotesSection,
 } from './NotesBlock.tsx'
 import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
+import {
+  estimatedChangeRowPx,
+  estimatedGroupPx,
+  OFFSCREEN_ROW_CLASSNAME,
+  offscreenRowStyle,
+} from './offscreenRows.ts'
 import { refParamFromElement, tagGroupContainsRef } from './refSelection.ts'
 import { changeRowDomId, workAreaSectionDomId } from './scrollChildIntoScroller.ts'
 import { groupChangesByWorkArea } from './workAreaChanges.ts'
@@ -585,7 +591,14 @@ function TagMutationGroup({
   }
 
   return (
-    <li className="px-2 py-2">
+    <li
+      className={clsx('px-2 py-2', !containsSelected && OFFSCREEN_ROW_CLASSNAME)}
+      style={offscreenRowStyle(
+        open
+          ? estimatedGroupPx({ members: changes.length, tagRows: mutations.length })
+          : estimatedGroupPx({ members: 0, tagRows: 0 }),
+      )}
+    >
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -907,7 +920,9 @@ function ElementChangeRow({
           'group relative flex w-full cursor-pointer touch-manipulation items-center gap-1 rounded',
           elementRowPaddingClassName(currentSelect, true),
           elementRowHighlightClassName(currentSelect, hovered),
+          !currentSelect && OFFSCREEN_ROW_CLASSNAME,
         )}
+        style={offscreenRowStyle(estimatedChangeRowPx({ compact: true, tagRows: 0 }))}
         onClick={() => zoomToAndSelect(change.type, change.id)}
         onMouseEnter={() => setHover({ type: change.type, id: change.id })}
         onMouseLeave={() => setHover(null)}
@@ -948,6 +963,14 @@ function ElementChangeRow({
         'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-0.5 rounded',
         elementRowPaddingClassName(currentSelect, false),
         elementRowHighlightClassName(currentSelect, hovered),
+        !currentSelect && OFFSCREEN_ROW_CLASSNAME,
+      )}
+      style={offscreenRowStyle(
+        estimatedChangeRowPx({
+          compact: false,
+          tagRows: showTags ? change.tags.length : 0,
+          extraLines: (change.splitFrom != null ? 1 : 0) + (change.splitInto ? 1 : 0),
+        }),
       )}
       onClick={() => zoomToAndSelect(change.type, change.id)}
       onMouseEnter={() => setHover({ type: change.type, id: change.id })}
