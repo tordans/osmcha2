@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, memo, useEffect, useState } from 'react'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -15,7 +15,7 @@ import {
   effectiveSeenAt,
   isObjectSeenCollapsed,
   latestForeignNoteAt,
-  type ChangesetDraft,
+  type DraftNote,
 } from '../../notes/reviewSeen.ts'
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
@@ -27,10 +27,14 @@ import {
   useListScrollTarget,
 } from '../../stores/changeset-hover-store.ts'
 import {
-  useChangesetDraft,
-  useChangesetNotesActions,
-  useOpenEditorNoteId,
+  getChangesetDraft,
   getSeenState,
+  useChangesetNotesActions,
+  useDraftsForObjects,
+  useIsUnseenOverride,
+  useObjectDrafts,
+  useObjectSeenAt,
+  useOpenEditorNoteId,
   useSeenMap,
   useUnseenOverrides,
 } from '../../stores/changeset-notes-store.ts'
@@ -153,22 +157,38 @@ type SeenState = {
   unseenOverrides: readonly string[] | undefined
 }
 
+type ObjectSeen = { seenAt: string | undefined; unseenOverride: boolean }
+
+function objectSeenOf({ seenMap, unseenOverrides }: SeenState, objectKey: string): ObjectSeen {
+  return {
+    seenAt: seenMap?.[objectKey],
+    unseenOverride: unseenOverrides?.includes(objectKey) ?? false,
+  }
+}
+
+function objectKeysOf(changes: readonly ElementChange[]): ReadonlySet<string> {
+  return new Set(changes.map((change) => objectRefKey(change.type, change.id)))
+}
+
+/** Drafts on one object out of a list of drafts. */
+function draftsOn(notes: readonly DraftNote[], type: string, id: number) {
+  return notes.filter((note) => note.ref?.type === type && note.ref.id === id)
+}
+
 function reviewState(
   change: ElementChange,
-  { seenMap, unseenOverrides }: SeenState,
+  { seenAt, unseenOverride }: ObjectSeen,
   objectNotes: ObjectNotes | undefined,
-  draft: ChangesetDraft | undefined,
+  drafts: DraftNote[],
   currentUser?: string,
 ) {
   const notes = flattenObjectNotes(objectNotes)
-  const drafts = draftsForObject(draft, change.type, change.id)
   const hasNotes = notes.length > 0 || drafts.some((note) => note.body.trim())
-  const objectKey = objectRefKey(change.type, change.id)
   const collapsed = isObjectSeenCollapsed({
     seenAt: effectiveSeenAt({
-      seenAt: seenMap?.[objectKey],
+      seenAt,
       minorMove: change.minorMove != null,
-      unseenOverride: unseenOverrides?.includes(objectKey) ?? false,
+      unseenOverride,
     }),
     latestForeignNoteAt: latestForeignNoteAt(notes, currentUser),
   })
@@ -199,7 +219,6 @@ export function DetailsChanges({
     pollWhileActive: true,
   })
   const userKey = useNotesUserKey()
-  const draft = useChangesetDraft(userKey, changesetId)
   const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
   const { requestFinishFocus } = useReviewFocusActions()
   const flagged = mergeFlaggedFeatures(features, reviewedFeatures)
@@ -235,9 +254,9 @@ export function DetailsChanges({
         if (!change) return
         const { collapsed } = reviewState(
           change,
-          getSeenState(userKey, changesetId),
+          objectSeenOf(getSeenState(userKey, changesetId), objectKey),
           located.byObject.get(objectKey),
-          draft,
+          draftsForObject(getChangesetDraft(userKey, changesetId), change.type, change.id),
           currentUser,
         )
         if (collapsed) markUnseen(userKey, changesetId, objectKey)
@@ -278,6 +297,7 @@ export function DetailsChanges({
             <ChangeList
               changes={areaChanges}
               changesetId={changesetId}
+              userKey={userKey}
               selected={selected}
               selectedRef={selectedRef}
               selectRef={selectRef}
@@ -292,6 +312,7 @@ export function DetailsChanges({
         <ChangeList
           changes={changes}
           changesetId={changesetId}
+          userKey={userKey}
           selected={selected}
           selectedRef={selectedRef}
           selectRef={selectRef}
@@ -363,6 +384,7 @@ function WorkAreaHeading({
 function ChangeList({
   changes,
   changesetId,
+  userKey,
   selected,
   selectedRef,
   selectRef,
@@ -373,6 +395,7 @@ function ChangeList({
 }: {
   changes: ElementChange[]
   changesetId: number
+  userKey: string
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -392,10 +415,9 @@ function ChangeList({
               key={`${group[0].type}/${group[0].id}`}
               change={group[0]}
               changesetId={changesetId}
-              selected={selected}
-              selectedRef={selectedRef}
+              userKey={userKey}
+              {...rowSelection(group[0], selected, selectedRef, deepLinkReveal)}
               selectRef={selectRef}
-              deepLinkReveal={deepLinkReveal}
               zoomToAndSelect={zoomToAndSelect}
               objectNotes={notesByObject.get(objectRefKey(group[0].type, group[0].id))}
             />
@@ -404,6 +426,7 @@ function ChangeList({
               key={group.map((change) => `${change.type}/${change.id}`).join(',')}
               changes={group}
               changesetId={changesetId}
+              userKey={userKey}
               selected={selected}
               selectedRef={selectedRef}
               selectRef={selectRef}
@@ -419,6 +442,7 @@ function ChangeList({
         <MinorMovesGroup
           changes={minorMoves}
           changesetId={changesetId}
+          userKey={userKey}
           selected={selected}
           selectedRef={selectedRef}
           selectRef={selectRef}
@@ -435,6 +459,24 @@ function ChangeList({
 function isSelected(change: ElementChange, selected?: AdiffAction | null) {
   const element = selected?.new ?? selected?.old
   return element?.type === change.type && element?.id === change.id
+}
+
+/**
+ * Selection props for one row. Rows that are not selected get the same props on every selection
+ * change, so `memo` skips them and a tap re-renders two rows instead of the whole list.
+ */
+function rowSelection(
+  change: ElementChange,
+  selected: AdiffAction | null | undefined,
+  selectedRef: RefParam | null | undefined,
+  deepLinkReveal: RefParam | null | undefined,
+) {
+  const currentSelect = isSelected(change, selected)
+  return {
+    currentSelect,
+    selectedRef: currentSelect ? selectedRef : null,
+    deepLinkReveal: currentSelect ? deepLinkReveal : null,
+  }
 }
 
 function elementRowHighlightClassName(selected: boolean, hovered: boolean) {
@@ -454,6 +496,7 @@ function elementRowPaddingClassName(selected: boolean, compact: boolean) {
 function TagMutationGroup({
   changes,
   changesetId,
+  userKey,
   selected,
   selectedRef,
   selectRef,
@@ -464,6 +507,7 @@ function TagMutationGroup({
 }: {
   changes: NonEmptyArray<ElementChange>
   changesetId: number
+  userKey: string
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -472,10 +516,9 @@ function TagMutationGroup({
   zoomToAndSelect: (type: string, id: number, key?: string) => void
   notesByObject: Map<string, ObjectNotes>
 }) {
-  const userKey = useNotesUserKey()
   const seenMap = useSeenMap(userKey, changesetId)
   const unseenOverrides = useUnseenOverrides(userKey, changesetId)
-  const draft = useChangesetDraft(userKey, changesetId)
+  const groupDrafts = useDraftsForObjects(userKey, changesetId, objectKeysOf(changes))
   const { markAllSeen, markAllUnseen, toggleEditor } = useChangesetNotesActions()
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const hoveredInGroup = useIsAnyElementHovered(changes)
@@ -502,15 +545,15 @@ function TagMutationGroup({
       change,
       ...reviewState(
         change,
-        { seenMap, unseenOverrides },
+        objectSeenOf({ seenMap, unseenOverrides }, objectRefKey(change.type, change.id)),
         notesByObject.get(objectRefKey(change.type, change.id)),
-        draft,
+        draftsOn(groupDrafts, change.type, change.id),
         currentUser,
       ),
     }))
     .sort((left, right) => Number(right.hasNotes) - Number(left.hasNotes))
   const editingNote =
-    openEditorNoteId != null ? draft?.notes.find((note) => note.id === openEditorNoteId) : undefined
+    openEditorNoteId != null ? groupDrafts.find((note) => note.id === openEditorNoteId) : undefined
   const editingInGroup =
     editingNote?.ref != null &&
     changes.some(
@@ -655,10 +698,9 @@ function TagMutationGroup({
               key={`${change.type}/${change.id}`}
               change={change}
               changesetId={changesetId}
-              selected={selected}
-              selectedRef={selectedRef}
+              userKey={userKey}
+              {...rowSelection(change, selected, selectedRef, deepLinkReveal)}
               selectRef={selectRef}
-              deepLinkReveal={deepLinkReveal}
               zoomToAndSelect={zoomToAndSelect}
               showTags={false}
               objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
@@ -677,6 +719,7 @@ function TagMutationGroup({
 function MinorMovesGroup({
   changes,
   changesetId,
+  userKey,
   selected,
   selectedRef,
   selectRef,
@@ -687,6 +730,7 @@ function MinorMovesGroup({
 }: {
   changes: ElementChange[]
   changesetId: number
+  userKey: string
   selected?: AdiffAction | null
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
@@ -695,8 +739,7 @@ function MinorMovesGroup({
   zoomToAndSelect: (type: string, id: number, key?: string) => void
   notesByObject: Map<string, ObjectNotes>
 }) {
-  const userKey = useNotesUserKey()
-  const draft = useChangesetDraft(userKey, changesetId)
+  const groupDrafts = useDraftsForObjects(userKey, changesetId, objectKeysOf(changes))
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const hoveredInGroup = useIsAnyElementHovered(changes)
   const listScrollTarget = useListScrollTarget()
@@ -707,7 +750,7 @@ function MinorMovesGroup({
       (change) => change.type === listScrollTarget.type && change.id === listScrollTarget.id,
     )
   const editingNote =
-    openEditorNoteId != null ? draft?.notes.find((note) => note.id === openEditorNoteId) : undefined
+    openEditorNoteId != null ? groupDrafts.find((note) => note.id === openEditorNoteId) : undefined
   const editingInGroup =
     editingNote?.ref != null &&
     changes.some(
@@ -716,7 +759,7 @@ function MinorMovesGroup({
   const hasNotes = changes.some(
     (change) =>
       flattenObjectNotes(notesByObject.get(objectRefKey(change.type, change.id))).length > 0 ||
-      draftsForObject(draft, change.type, change.id).some((note) => note.body.trim()),
+      draftsOn(groupDrafts, change.type, change.id).some((note) => note.body.trim()),
   )
   const forceOpen =
     editingInGroup ||
@@ -773,10 +816,9 @@ function MinorMovesGroup({
                       key={`${change.type}/${change.id}`}
                       change={change}
                       changesetId={changesetId}
-                      selected={selected}
-                      selectedRef={selectedRef}
+                      userKey={userKey}
+                      {...rowSelection(change, selected, selectedRef, deepLinkReveal)}
                       selectRef={selectRef}
-                      deepLinkReveal={deepLinkReveal}
                       zoomToAndSelect={zoomToAndSelect}
                       objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
                     />
@@ -791,10 +833,11 @@ function MinorMovesGroup({
   )
 }
 
-function ElementChangeRow({
+const ElementChangeRow = memo(function ElementChangeRow({
   change,
   changesetId,
-  selected,
+  userKey,
+  currentSelect,
   selectedRef,
   selectRef,
   deepLinkReveal,
@@ -804,7 +847,8 @@ function ElementChangeRow({
 }: {
   change: ElementChange
   changesetId: number
-  selected?: AdiffAction | null
+  userKey: string
+  currentSelect: boolean
   selectedRef?: RefParam | null
   selectRef: (ref: RefParam | null) => void
   deepLinkReveal?: RefParam | null
@@ -812,10 +856,10 @@ function ElementChangeRow({
   showTags?: boolean
   objectNotes?: ObjectNotes
 }) {
-  const userKey = useNotesUserKey()
-  const seenMap = useSeenMap(userKey, changesetId)
-  const unseenOverrides = useUnseenOverrides(userKey, changesetId)
-  const draft = useChangesetDraft(userKey, changesetId)
+  const objectKey = objectRefKey(change.type, change.id)
+  const seenAt = useObjectSeenAt(userKey, changesetId, objectKey)
+  const unseenOverride = useIsUnseenOverride(userKey, changesetId, objectKey)
+  const objectDrafts = useObjectDrafts(userKey, changesetId, change.type, change.id)
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
   const { setFocusedObject } = useReviewFocusActions()
@@ -824,15 +868,13 @@ function ElementChangeRow({
   const currentUser = userKey === 'anonymous' ? undefined : userKey
   const { collapsed, hasNotes, drafts } = reviewState(
     change,
-    { seenMap, unseenOverrides },
+    { seenAt, unseenOverride },
     objectNotes,
-    draft,
+    objectDrafts,
     currentUser,
   )
   const editingNote =
     openEditorNoteId != null ? drafts.find((note) => note.id === openEditorNoteId) : undefined
-  const objectKey = objectRefKey(change.type, change.id)
-  const currentSelect = isSelected(change, selected)
   const [flash, setFlash] = useState(false)
   const [flashedReveal, setFlashedReveal] = useState<RefParam | null>(null)
   const [flashKey, setFlashKey] = useState<string | null>(null)
@@ -1113,7 +1155,7 @@ function ElementChangeRow({
       />
     </li>
   )
-}
+})
 
 function MinorMoveBadge({ meters }: { meters: number }) {
   return (

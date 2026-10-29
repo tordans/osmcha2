@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
+import { objectRefKey } from '../notes/locateNotes.ts'
 import {
   changesetIdKey,
+  draftsForObject,
   emptyUserNotes,
   evictUserNotes,
   objectKeyFromRef,
@@ -481,6 +484,51 @@ export const useUnseenOverrides = (userKey: string, changesetId: number) =>
   useChangesetNotesStore(
     (state) => userOf(state.byUser, userKey).unseenOverrides[changesetIdKey(changesetId)],
   )
+
+/*
+ * Per-object reads for the rows of the Changes list. Each row re-renders only when its own seen
+ * state or its own drafts change, not on every keystroke in a note on another row.
+ */
+
+/** When the object was marked seen, or undefined. */
+export const useObjectSeenAt = (userKey: string, changesetId: number, objectKey: string) =>
+  useChangesetNotesStore(
+    (state) => userOf(state.byUser, userKey).seen[changesetIdKey(changesetId)]?.[objectKey],
+  )
+
+/** Whether the user marked the object as not seen after all. */
+export const useIsUnseenOverride = (userKey: string, changesetId: number, objectKey: string) =>
+  useChangesetNotesStore(
+    (state) =>
+      userOf(state.byUser, userKey).unseenOverrides[changesetIdKey(changesetId)]?.includes(
+        objectKey,
+      ) ?? false,
+  )
+
+/** Draft notes on the object, same array while none of them changes. */
+export const useObjectDrafts = (userKey: string, changesetId: number, type: string, id: number) =>
+  useChangesetNotesStore(
+    useShallow((state) =>
+      draftsForObject(userOf(state.byUser, userKey).drafts[changesetIdKey(changesetId)], type, id),
+    ),
+  )
+
+/** Draft notes on any of the objects (`type/id` keys), same array while none of them changes. */
+export const useDraftsForObjects = (
+  userKey: string,
+  changesetId: number,
+  objectKeys: ReadonlySet<string>,
+) =>
+  useChangesetNotesStore(
+    useShallow(
+      (state) =>
+        userOf(state.byUser, userKey).drafts[changesetIdKey(changesetId)]?.notes.filter(
+          (note) => note.ref != null && objectKeys.has(objectRefKey(note.ref.type, note.ref.id)),
+        ) ?? EMPTY_DRAFT_NOTES,
+    ),
+  )
+
+const EMPTY_DRAFT_NOTES: DraftNote[] = []
 
 /** Open note id when it belongs to `changesetId`, else null; re-renders only when that changes. */
 export const useOpenEditorNoteId = (changesetId: number) =>
