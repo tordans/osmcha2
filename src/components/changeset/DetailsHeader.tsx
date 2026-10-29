@@ -1,10 +1,8 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
 import {
   OPEN_IN_ACHAVI,
@@ -33,7 +31,6 @@ import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
 import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
 import { formatCompactCount } from '../../utils/formatCount.ts'
-import { prepareProfileMarkdown } from '../../utils/profileMarkdown.ts'
 import { editorCompactName, editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { OsmNoteChips } from '../osm_notes/OsmNoteChips.tsx'
@@ -71,6 +68,9 @@ import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.
 import { type NamedTag, REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
 import { Tags } from './tags.tsx'
 import TranslateButton from './translate_button.tsx'
+
+// Only the user menu shows Markdown; the parser stays out of the changeset's first load.
+const ProfileMarkdown = lazy(() => import('./ProfileMarkdown.tsx'))
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 const rootRouteApi = getRouteApi('__root__')
@@ -789,9 +789,9 @@ export function DetailsHeader({
                     '[&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-4',
                   )}
                 >
-                  <Markdown remarkPlugins={[remarkGfm]}>
-                    {prepareProfileMarkdown(description)}
-                  </Markdown>
+                  <Suspense fallback={<p className="whitespace-pre-line">{description}</p>}>
+                    <ProfileMarkdown description={description} />
+                  </Suspense>
                 </blockquote>
               ) : null}
             </>
