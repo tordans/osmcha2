@@ -2,7 +2,7 @@ import * as Headless from '@headlessui/react'
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Fragment, memo, useEffect, useState } from 'react'
+import { Fragment, memo, useDeferredValue, useEffect, useState } from 'react'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -86,6 +86,8 @@ import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
+/** List items (rows or groups) in the first render: more than two phone screens. */
+const FIRST_RENDER_LIST_ITEMS = 20
 /** Pause before a fully seen group folds away, so the rows show their new state first. */
 const SEEN_FOLD_DELAY_S = 0.4
 
@@ -406,10 +408,27 @@ function ChangeList({
 }) {
   const listedChanges = changes.filter((change) => change.minorMove == null)
   const minorMoves = changes.filter((change) => change.minorMove != null)
+  const items = groupElementChanges(listedChanges).flatMap(([, actionChanges]) =>
+    groupChangesByTagMutation(actionChanges),
+  )
+  const selectedIndex = items.findIndex((group) =>
+    group.some((change) => isSelected(change, selected)),
+  )
+  // The first render draws the top of the list (and the selected item); React draws the rest in the
+  // background, in slices that keep the page responsive. A big changeset blocked the first paint
+  // for its whole list before.
+  const shownItems = useDeferredValue(
+    Number.POSITIVE_INFINITY,
+    Math.max(FIRST_RENDER_LIST_ITEMS, selectedIndex + 1),
+  )
+  const showMinorMoves =
+    minorMoves.length > 0 &&
+    (shownItems >= items.length || minorMoves.some((change) => isSelected(change, selected)))
   return (
     <ul>
-      {groupElementChanges(listedChanges).map(([, actionChanges]) =>
-        groupChangesByTagMutation(actionChanges).map((group) =>
+      {items
+        .slice(0, shownItems)
+        .map((group) =>
           group.length === 1 ? (
             <ElementChangeRow
               key={`${group[0].type}/${group[0].id}`}
@@ -436,9 +455,8 @@ function ChangeList({
               notesByObject={notesByObject}
             />
           ),
-        ),
-      )}
-      {minorMoves.length > 0 ? (
+        )}
+      {showMinorMoves ? (
         <MinorMovesGroup
           changes={minorMoves}
           changesetId={changesetId}
