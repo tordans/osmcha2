@@ -163,6 +163,7 @@ interface ChangesetNotesStore {
     markSeen: (userKey: string, changesetId: number, objectKey: string) => void
     markUnseen: (userKey: string, changesetId: number, objectKey: string) => void
     markAllSeen: (userKey: string, changesetId: number, objectKeys: string[]) => void
+    markAllUnseen: (userKey: string, changesetId: number, objectKeys: string[]) => void
     setIntro: (userKey: string, changesetId: number, intro: string) => void
     upsertDraftNote: (userKey: string, changesetId: number, note: DraftNote) => void
     removeDraftNote: (userKey: string, changesetId: number, noteId: string) => void
@@ -241,6 +242,23 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
                   seenMap,
                   withoutOverrides(user, changesetId, objectKeys),
                 ),
+              ),
+            }
+          }),
+        markAllUnseen: (userKey, changesetId, objectKeys) =>
+          set((state) => {
+            const user = userOf(state.byUser, userKey)
+            const id = changesetIdKey(changesetId)
+            const seenMap = { ...user.seen[id] }
+            for (const objectKey of objectKeys) delete seenMap[objectKey]
+            return {
+              byUser: writeUser(
+                state.byUser,
+                userKey,
+                writeSeen(user, changesetId, seenMap, [
+                  ...withoutOverrides(user, changesetId, objectKeys),
+                  ...objectKeys,
+                ]),
               ),
             }
           }),

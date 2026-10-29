@@ -76,6 +76,8 @@ import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
+/** Pause before a fully seen group folds away, so the rows show their new state first. */
+const SEEN_FOLD_DELAY_S = 0.4
 
 type ReviewedFeature = { id?: string; user?: string }
 
@@ -468,7 +470,7 @@ function TagMutationGroup({
   const seenMap = useSeenMap(userKey, changesetId)
   const unseenOverrides = useUnseenOverrides(userKey, changesetId)
   const draft = useChangesetDraft(userKey, changesetId)
-  const { markAllSeen, toggleEditor } = useChangesetNotesActions()
+  const { markAllSeen, markAllUnseen, toggleEditor } = useChangesetNotesActions()
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const hoveredInGroup = useIsAnyElementHovered(changes)
   const listScrollTarget = useListScrollTarget()
@@ -511,11 +513,51 @@ function TagMutationGroup({
   const allMembersCompact = memberStates.every((member) =>
     isCompactReviewRow(member.collapsed, false, member.drafts),
   )
+  const keepOpen = editingInGroup || memberStates.some((member) => member.hasNotes)
   const forceOpen =
-    editingInGroup ||
-    memberStates.some((member) => member.hasNotes) ||
-    (!allMembersCompact && (containsSelected || scrollTargetInGroup || revealInGroup))
+    keepOpen || (!allMembersCompact && (containsSelected || scrollTargetInGroup || revealInGroup))
   const activeNoteKey = editingInGroup ? editingNote?.ref?.key : undefined
+  const allSeen = memberStates.every((member) => member.collapsed)
+
+  // Open until every member is seen. Seeing the last one closes the group after a pause, so the
+  // rows first show their new state and the group then folds away.
+  const [open, setOpen] = useState(forceOpen || !allSeen)
+  const [closingAfterSeen, setClosingAfterSeen] = useState(false)
+  const [prevAllSeen, setPrevAllSeen] = useState(allSeen)
+  const openRequest = `${disclosureKey}:${forceOpen}:${deepLinkEpoch ?? 0}`
+  const [prevOpenRequest, setPrevOpenRequest] = useState(openRequest)
+  if (prevAllSeen !== allSeen) {
+    setPrevAllSeen(allSeen)
+    if (allSeen && !keepOpen) {
+      setOpen(false)
+      setClosingAfterSeen(true)
+    }
+  }
+  if (prevOpenRequest !== openRequest) {
+    setPrevOpenRequest(openRequest)
+    if (forceOpen) setOpen(true)
+  }
+
+  function toggleOpen() {
+    setOpen((current) => !current)
+    setClosingAfterSeen(false)
+  }
+
+  function toggleAllSeen() {
+    const objectKeys = changes.map((change) => objectRefKey(change.type, change.id))
+    if (allSeen) {
+      markAllUnseen(userKey, changesetId, objectKeys)
+      setOpen(true)
+      setClosingAfterSeen(false)
+    } else {
+      markAllSeen(userKey, changesetId, objectKeys)
+    }
+  }
+
+  const foldTransition = closingAfterSeen
+    ? { ...disclosureTransition, delay: SEEN_FOLD_DELAY_S }
+    : disclosureTransition
+  const panelId = `same-tags-${changes[0].type}-${changes[0].id}`
 
   function targetChangeForTag(key: string) {
     if (selectedInGroup) return selectedInGroup
@@ -541,86 +583,73 @@ function TagMutationGroup({
 
   return (
     <li className="px-2 py-2">
-      <Headless.Disclosure
-        key={`${disclosureKey}:${forceOpen ? 'open' : 'closed'}:${deepLinkEpoch ?? 0}`}
-        defaultOpen={forceOpen}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${changes.length} elements with the same tag changes`}
+          onClick={toggleOpen}
+          className={clsx(
+            'flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none active:bg-zinc-950/5',
+            !open && hoveredInGroup ? 'bg-zinc-100' : 'hover:bg-zinc-50',
+          )}
+        >
+          <motion.span
+            className="inline-flex origin-center"
+            initial={false}
+            animate={{ rotate: open ? 90 : 0 }}
+            transition={foldTransition}
+          >
+            <ChevronRightIcon className="size-4 flex-none" />
+          </motion.span>
+          <ActionTypeLabel actionType={actionLabelKey(changes[0])} />
+          <span>Same tag changes</span>
+          <Badge>{changes.length}</Badge>
+        </button>
+        <MarkSeenButton
+          label={allSeen ? `Mark all ${changes.length} unseen` : `Mark all ${changes.length} seen`}
+          pressed={allSeen}
+          onClick={toggleAllSeen}
+        />
+      </div>
+      <motion.div
+        id={panelId}
+        initial={false}
+        animate={open ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
+        transition={foldTransition}
+        className="overflow-hidden"
+        inert={!open}
       >
-        {({ open }: { open: boolean }) => (
-          <>
-            <div className="flex items-center gap-2">
-              <Headless.DisclosureButton
-                aria-label={`${changes.length} elements with the same tag changes`}
-                className={clsx(
-                  'flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none active:bg-zinc-950/5',
-                  !open && hoveredInGroup ? 'bg-zinc-100' : 'hover:bg-zinc-50',
-                )}
-              >
-                <motion.span
-                  className="inline-flex origin-center"
-                  initial={false}
-                  animate={{ rotate: open ? 90 : 0 }}
-                  transition={disclosureTransition}
-                >
-                  <ChevronRightIcon className="size-4 flex-none" />
-                </motion.span>
-                <ActionTypeLabel actionType={actionLabelKey(changes[0])} />
-                <span>Same tag changes</span>
-                <Badge>{changes.length}</Badge>
-              </Headless.DisclosureButton>
-              <MarkSeenButton
-                label={`Mark all ${changes.length} seen`}
-                onClick={() =>
-                  markAllSeen(
-                    userKey,
-                    changesetId,
-                    changes.map((change) => objectRefKey(change.type, change.id)),
-                  )
-                }
-              />
-            </div>
-            {open ? (
-              <div className="mt-1 border-t font-mono">
-                <TagRows
-                  rows={mutations}
-                  emptyLabel="No tag changes"
-                  highlightedKey={highlightTagKey}
-                  onKeyClick={selectGroupTag}
-                  noteCountByKey={groupNoteCountByKey}
-                  onNoteCountClick={addNoteOnGroupTag}
-                  onAddNote={addNoteOnGroupTag}
-                  activeNoteKey={activeNoteKey}
-                />
-              </div>
-            ) : null}
-            <Headless.DisclosurePanel static>
-              <motion.div
-                initial={false}
-                animate={open ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
-                transition={disclosureTransition}
-                className="overflow-hidden"
-                inert={!open}
-              >
-                <ul>
-                  {memberStates.map(({ change }) => (
-                    <ElementChangeRow
-                      key={`${change.type}/${change.id}`}
-                      change={change}
-                      changesetId={changesetId}
-                      selected={selected}
-                      selectedRef={selectedRef}
-                      selectRef={selectRef}
-                      deepLinkReveal={deepLinkReveal}
-                      zoomToAndSelect={zoomToAndSelect}
-                      showTags={false}
-                      objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
-                    />
-                  ))}
-                </ul>
-              </motion.div>
-            </Headless.DisclosurePanel>
-          </>
-        )}
-      </Headless.Disclosure>
+        <div className="mt-1 border-t font-mono">
+          <TagRows
+            rows={mutations}
+            emptyLabel="No tag changes"
+            highlightedKey={highlightTagKey}
+            onKeyClick={selectGroupTag}
+            noteCountByKey={groupNoteCountByKey}
+            onNoteCountClick={addNoteOnGroupTag}
+            onAddNote={addNoteOnGroupTag}
+            activeNoteKey={activeNoteKey}
+          />
+        </div>
+        <ul>
+          {memberStates.map(({ change }) => (
+            <ElementChangeRow
+              key={`${change.type}/${change.id}`}
+              change={change}
+              changesetId={changesetId}
+              selected={selected}
+              selectedRef={selectedRef}
+              selectRef={selectRef}
+              deepLinkReveal={deepLinkReveal}
+              zoomToAndSelect={zoomToAndSelect}
+              showTags={false}
+              objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
+            />
+          ))}
+        </ul>
+      </motion.div>
     </li>
   )
 }

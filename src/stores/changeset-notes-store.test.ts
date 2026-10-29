@@ -85,6 +85,15 @@ describe('changeset notes store', () => {
     expect(getSeenState('alice', 1).unseenOverrides).toEqual([])
   })
 
+  test('markAllUnseen un-sees every object, including automatically seen ones', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.markAllSeen('alice', 1, ['node/5', 'node/6'])
+    actions.markAllUnseen('alice', 1, ['node/5', 'node/6'])
+    expect(getSeenState('alice', 1).seenMap).toEqual({})
+    expect(getSeenState('alice', 1).unseenOverrides).toEqual(['node/5', 'node/6'])
+  })
+
   test('saving a note on an un-seen minor move marks it seen again', () => {
     resetChangesetNotesStoreForTests()
     const actions = getChangesetNotesActions()
