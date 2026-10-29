@@ -535,7 +535,10 @@ function TagMutationGroup({
   }
   if (prevOpenRequest !== openRequest) {
     setPrevOpenRequest(openRequest)
-    if (forceOpen) setOpen(true)
+    if (forceOpen) {
+      setOpen(true)
+      setClosingAfterSeen(false)
+    }
   }
 
   function toggleOpen() {

@@ -1,3 +1,5 @@
+import { textOf, type TagRowText } from '../tagRowText.ts'
+
 /**
  * Which tags hold street-level photos, and which photo ids their values name. Pure: nothing is
  * requested here, and the photo viewer libraries only load once a photo is opened.
@@ -86,25 +88,9 @@ export function streetImageryRefsOfTag(key: string, value: string): StreetImager
   return streetImageryIdsOfValue(provider, value).map((id) => ({ provider, id }))
 }
 
-type PhotoTagRow = {
-  kind: 'added' | 'removed' | 'changed' | 'renamed' | 'unchanged'
-  key: string
-  value?: unknown
-  rawValue?: string
-  oldValue?: unknown
-  newValue?: unknown
-  rawOld?: string
-  rawNew?: string
-}
-
 export type StreetImageryRowPhoto = StreetImageryRef & {
   /** From the value before the change (a removed row, or the old value of a changed row). */
   old: boolean
-}
-
-function stringValue(raw: string | undefined, value: unknown) {
-  if (raw != null) return raw
-  return typeof value === 'string' ? value : undefined
 }
 
 /**
@@ -112,7 +98,7 @@ function stringValue(raw: string | undefined, value: unknown) {
  * value of a changed row adds the photos that the change dropped, and a removed row shows its old
  * photos. A value that is not plain text names no photo.
  */
-export function streetImageryPhotosOfRow(row: PhotoTagRow): StreetImageryRowPhoto[] {
+export function streetImageryPhotosOfRow(row: TagRowText): StreetImageryRowPhoto[] {
   const provider = streetImageryProviderOfKey(row.key)
   if (provider == null) return []
 
@@ -120,15 +106,13 @@ export function streetImageryPhotosOfRow(row: PhotoTagRow): StreetImageryRowPhot
     value == null ? [] : streetImageryIdsOfValue(provider, value)
 
   if (row.kind === 'changed') {
-    const current = idsOf(stringValue(row.rawNew, row.newValue))
-    const dropped = idsOf(stringValue(row.rawOld, row.oldValue)).filter(
-      (id) => !current.includes(id),
-    )
+    const current = idsOf(textOf(row.newValue, row.rawNew))
+    const dropped = idsOf(textOf(row.oldValue, row.rawOld)).filter((id) => !current.includes(id))
     return [
       ...current.map((id) => ({ provider, id, old: false })),
       ...dropped.map((id) => ({ provider, id, old: true })),
     ]
   }
   const old = row.kind === 'removed'
-  return idsOf(stringValue(row.rawValue, row.value)).map((id) => ({ provider, id, old }))
+  return idsOf(textOf(row.value, row.rawValue)).map((id) => ({ provider, id, old }))
 }

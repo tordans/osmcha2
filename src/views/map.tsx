@@ -89,7 +89,6 @@ import {
   clearMainMapDebugExposure,
   exposeMainMapForDebugging,
 } from './exposeMainMapForDebugging.ts'
-import { OsmNoteMarker } from './OsmNoteMarker.tsx'
 import { ChangesetPinMarkers, PinPlacementOverlay } from './PinPlacementOverlay.tsx'
 import { runReviewCamera } from './reviewCamera.ts'
 import {
@@ -106,8 +105,8 @@ import {
 } from './spyglassOverlay.ts'
 import { SpyglassOverlay } from './SpyglassOverlay.tsx'
 import { openStreetImageryPhotoFromClick } from './streetImageryMapClick.ts'
-import { StreetImageryPhotoMarker } from './StreetImageryPhotoMarker.tsx'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
+import { OsmNoteMarker, StreetImageryPhotoMarker } from './TemporaryPinMarkers.tsx'
 import { useJumpToWorkArea } from './useWorkAreaMap.ts'
 import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
 

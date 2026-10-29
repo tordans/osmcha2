@@ -1,6 +1,7 @@
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import { defaultShouldDehydrateQuery, type Query } from '@tanstack/react-query'
 import { del, get, set } from 'idb-keyval'
+import { STREET_IMAGERY_PACKAGE_QUERY_KEYS } from '../components/street_imagery/streetImageryLayerSettings.ts'
 import { PERSIST_MAX_AGE_MS } from './cachePolicy.ts'
 
 const PERSIST_KEY = 'osmcha-query-cache'
@@ -23,12 +24,10 @@ const queryPersister = createAsyncStoragePersister({
  * build, which change with every deploy) and the street-level photos (the package's per-viewport
  * lists are large and age fast; a photo's own data is cheap to load again).
  */
-const NOT_PERSISTED_QUERY_KEYS = new Set([
+const NOT_PERSISTED_QUERY_KEYS = new Set<string>([
   'changesetMap',
   'trafficSigns',
-  'provider-photos',
-  'provider-sequences',
-  'provider-map-features',
+  ...STREET_IMAGERY_PACKAGE_QUERY_KEYS,
   'streetImageryPhoto',
 ])
 

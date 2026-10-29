@@ -13,7 +13,7 @@ import {
   useOsmNoteOpen,
 } from '../../stores/osm-note-store.ts'
 import { formatLocalDateTime } from '../../utils/datetime.ts'
-import { showOsmNoteOnMap } from '../../views/osmNoteCamera.ts'
+import { flyToTemporaryPin } from '../../views/temporaryPinCamera.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { LinkifyText } from '../text/LinkifyText.tsx'
 import { Badge } from '../ui/badge.tsx'
@@ -52,8 +52,9 @@ function ExactDate({ iso }: { iso: string }) {
 function NoteThread({ comments }: { comments: OsmNoteComment[] }) {
   return (
     <ol className="mt-5 flex flex-col gap-4 border-t border-zinc-950/10 pt-4">
-      {comments.map((comment) => (
-        <li key={`${comment.date}-${comment.action}-${comment.user ?? ''}`} className="min-w-0">
+      {comments.map((comment, index) => (
+        // The thread only grows at its end, and two comments can share date, action and user.
+        <li key={index} className="min-w-0">
           <p className="flex flex-wrap items-baseline gap-x-1.5 text-sm/6">
             <span className="font-semibold text-zinc-950">
               {comment.user ? (
@@ -122,7 +123,7 @@ export function OsmNoteDialog() {
   const noteId = useOsmNoteId()
   const open = useOsmNoteOpen()
   const marker = useOsmNoteMarker()
-  const { close, clearMarker } = useOsmNoteActions()
+  const { close, showMarker, clearMarker } = useOsmNoteActions()
   const { mainMap } = useMap()
   const query = useOsmNote(noteId, open)
   const note = query.data
@@ -131,7 +132,8 @@ export function OsmNoteDialog() {
     const map = mainMap?.getMap()
     if (!note || !map) return
     close()
-    showOsmNoteOnMap(map, { id: note.id, lat: note.lat, lng: note.lng })
+    showMarker({ id: note.id, lat: note.lat, lng: note.lng })
+    flyToTemporaryPin(map, note)
   }
 
   const markerShown = marker != null && marker.id === noteId

@@ -1,3 +1,5 @@
+import { textOf, type TagRowText } from '../tagRowText.ts'
+
 /**
  * Which tag rows hold traffic signs, and which value to read the signs from. Pure: the sign catalogue
  * (`@osm-traffic-signs/converter`) is only loaded once a row matches, see `resolveTrafficSigns.ts`.
@@ -8,32 +10,14 @@ export function isTrafficSignKey(key: string) {
   return key.split(':').includes('traffic_sign')
 }
 
-type TrafficSignRow = {
-  kind: 'added' | 'removed' | 'changed' | 'renamed' | 'unchanged'
-  key: string
-  value?: unknown
-  rawValue?: string
-  oldValue?: unknown
-  newValue?: unknown
-  rawOld?: string
-  rawNew?: string
-}
-
-function stringValue(raw: string | undefined, value: unknown) {
-  if (raw != null) return raw
-  return typeof value === 'string' ? value : undefined
-}
-
 /**
  * The value to show signs for: the new value of a changed row, the old value of a removed row, else
  * the value itself. `undefined` when the key is no traffic sign key or the value is no plain text.
  */
-export function trafficSignValueOfRow(row: TrafficSignRow) {
+export function trafficSignValueOfRow(row: TagRowText) {
   if (!isTrafficSignKey(row.key)) return undefined
   const value =
-    row.kind === 'changed'
-      ? stringValue(row.rawNew, row.newValue)
-      : stringValue(row.rawValue, row.value)
+    row.kind === 'changed' ? textOf(row.newValue, row.rawNew) : textOf(row.value, row.rawValue)
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined
 }

@@ -7,6 +7,16 @@ export const STREET_IMAGERY_LAYER_PROVIDERS: readonly StreetImageryProvider[] = 
   'panoramax',
 ]
 
+/**
+ * Query keys of the package's per-viewport photo, sequence and feature lists. New keys on every pan:
+ * kept briefly and never persisted.
+ */
+export const STREET_IMAGERY_PACKAGE_QUERY_KEYS = [
+  'provider-photos',
+  'provider-sequences',
+  'provider-map-features',
+] as const
+
 export type StreetImageryPhotoKind = 'all' | 'flat' | 'pano'
 
 export const STREET_IMAGERY_PHOTO_KINDS: readonly StreetImageryPhotoKind[] = ['all', 'flat', 'pano']

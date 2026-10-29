@@ -5,6 +5,7 @@ import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { orderTagRows, tagRowKeys, type TagRow } from './changeset/changesetElements.ts'
 import { StreetImageryChips } from './street_imagery/StreetImageryChips.tsx'
 import { streetImageryPhotosOfRow } from './street_imagery/streetImageryTags.ts'
+import { textOf } from './tagRowText.ts'
 import { TrafficSignChips } from './traffic_signs/TrafficSignChips.tsx'
 import { countryPrefixOfValue, trafficSignValueOfRow } from './traffic_signs/trafficSignRows.ts'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
@@ -69,11 +70,6 @@ const ROW_STYLE: Record<
     markerText: '',
     word: '',
   },
-}
-
-function textOf(value: ReactNode, raw?: string) {
-  if (raw != null) return raw
-  return typeof value === 'string' ? value : undefined
 }
 
 function wrapClass(value: ReactNode, raw?: string) {

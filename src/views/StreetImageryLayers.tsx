@@ -18,6 +18,7 @@ import {
   photoTypesOfKind,
   STREET_IMAGERY_LAYER_PROVIDERS,
   STREET_IMAGERY_MIN_ZOOM,
+  STREET_IMAGERY_PACKAGE_QUERY_KEYS,
 } from '../components/street_imagery/streetImageryLayerSettings.ts'
 import { configureStreetImagery } from '../components/street_imagery/streetImageryRuntime.ts'
 import type { StreetImageryProvider } from '../components/street_imagery/streetImageryTags.ts'
@@ -39,8 +40,7 @@ registerProviderAdapters([mapillaryAdapter, panoramaxAdapter])
 // The package keys its provider queries by viewport and zoom, so every pan makes new ones. The app
 // keeps queries for a week by default; keep these for two minutes, and never refetch them while
 // they are kept: the package caches the tiles itself.
-const PACKAGE_QUERY_KEYS = ['provider-photos', 'provider-sequences', 'provider-map-features']
-for (const key of PACKAGE_QUERY_KEYS) {
+for (const key of STREET_IMAGERY_PACKAGE_QUERY_KEYS) {
   queryClient.setQueryDefaults([key], { staleTime: Infinity, gcTime: 2 * 60 * 1000 })
 }
 
@@ -82,13 +82,12 @@ function openPhotoFromClick(event: MapLayerMouseEvent) {
     ],
     { layers },
   )
-  const hit = queryStreetImageryFeatures({ features }).find(
-    (item) =>
-      item.kind === 'photo' && item.photoId !== undefined && isLayerProvider(item.providerId),
-  )
-  if (!hit?.photoId || !isLayerProvider(hit.providerId)) return false
-  getStreetImageryViewerActions().openPhoto({ provider: hit.providerId, id: hit.photoId })
-  return true
+  for (const item of queryStreetImageryFeatures({ features })) {
+    if (item.kind !== 'photo' || !item.photoId || !isLayerProvider(item.providerId)) continue
+    getStreetImageryViewerActions().openPhoto({ provider: item.providerId, id: item.photoId })
+    return true
+  }
+  return false
 }
 
 /**

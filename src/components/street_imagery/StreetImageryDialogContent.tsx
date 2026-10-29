@@ -9,7 +9,7 @@ import {
   useStreetImageryViewerPhoto,
 } from '../../stores/street-imagery-viewer-store.ts'
 import { formatLocalDateTime } from '../../utils/datetime.ts'
-import { showStreetImageryPhotoOnMap } from '../../views/streetImageryCamera.ts'
+import { flyToTemporaryPin } from '../../views/temporaryPinCamera.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { Button } from '../ui/button.tsx'
 import { Dialog, DialogTitle } from '../ui/dialog.tsx'
@@ -66,7 +66,7 @@ function PhotoFacts({ photo }: { photo: NormalizedPhoto }) {
 
 function PhotoBody({ photoRef }: { photoRef: StreetImageryRef }) {
   const open = useStreetImageryViewerOpen()
-  const { close } = useStreetImageryViewerActions()
+  const { close, showMarker } = useStreetImageryViewerActions()
   const { mainMap } = useMap()
   const query = useStreetImageryPhoto(photoRef, open)
   // The photo the viewer shows now: stepping along the sequence changes it.
@@ -80,12 +80,9 @@ function PhotoBody({ photoRef }: { photoRef: StreetImageryRef }) {
     const map = mainMap?.getMap()
     if (!shown || !map) return
     close()
-    showStreetImageryPhotoOnMap(map, {
-      provider: photoRef.provider,
-      id: shown.photoId,
-      lng: shown.lngLat[0],
-      lat: shown.lngLat[1],
-    })
+    const position = { lng: shown.lngLat[0], lat: shown.lngLat[1] }
+    showMarker({ provider: photoRef.provider, id: shown.photoId, ...position })
+    flyToTemporaryPin(map, position)
   }
 
   return (
