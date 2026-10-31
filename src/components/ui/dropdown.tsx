@@ -9,14 +9,20 @@ import { Link } from './link'
 export const chromeDropdownMenuClassName =
   'w-72 max-w-[calc(100vw-1rem)] max-h-[min(32rem,calc(100dvh-5rem))]'
 
+type MenuBag = { open: boolean; close: () => void }
+
 export function Dropdown({
   backdrop = true,
+  className,
   children,
-  ...props
-}: { backdrop?: boolean } & Headless.MenuProps<'div'>) {
+}: {
+  backdrop?: boolean
+  className?: string
+  children?: React.ReactNode | ((bag: MenuBag) => React.ReactNode)
+}) {
   return (
-    <Headless.Menu as="div" {...props}>
-      {(bag: { open: boolean; close: () => void }) => (
+    <Headless.Menu as="div" className={className}>
+      {(bag: MenuBag) => (
         <>
           {backdrop && bag.open ? (
             <div aria-hidden className={flyoutBackdropClassName} onClick={() => bag.close()} />
