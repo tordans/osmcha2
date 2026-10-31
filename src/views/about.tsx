@@ -13,7 +13,7 @@ import { Code, Text, TextLink } from '../components/ui/text.tsx'
 const ABOUT_MD_URL = 'https://github.com/OSMCha/osmcha-frontend/blob/main/ABOUT.md'
 
 const SHORTCUTS: Array<{ group: string; action: string; keys: string }> = [
-  { group: 'Changeset list', action: 'Previous changeset', keys: '↑' },
+  { group: 'Changeset list', action: 'Previous changeset', keys: '↑ or ←' },
   { group: 'Changeset list', action: 'Next changeset', keys: '↓ or →' },
   { group: 'Changeset list', action: 'Refresh changeset list', keys: 'R' },
   { group: 'Changeset detail', action: 'Open in JOSM', keys: 'J' },
@@ -26,6 +26,13 @@ const SHORTCUTS: Array<{ group: string; action: string; keys: string }> = [
   { group: 'Changeset detail', action: 'Mark Needs a look', keys: 'B' },
   { group: 'Changeset detail', action: 'Undo or clear review', keys: 'U or C' },
   { group: 'Changeset detail', action: 'Filter edits of the current changeset’s user', keys: 'A' },
+  { group: 'Review elements', action: 'Mark as seen and go to the next unseen', keys: 'S' },
+  { group: 'Review elements', action: 'Mark as not seen', keys: 'Shift+S' },
+  { group: 'Review elements', action: 'Next element or group', keys: '.' },
+  { group: 'Review elements', action: 'Previous element or group', keys: ',' },
+  { group: 'Review elements', action: 'Step into a group', keys: 'Enter' },
+  { group: 'Review elements', action: 'Back to the group, or deselect', keys: 'Esc' },
+  { group: 'Review elements', action: 'Add a note on the selected element', keys: 'N' },
   { group: 'Panels', action: 'Toggle Changes tab', keys: '1' },
   { group: 'Panels', action: 'Toggle Discussion tab', keys: '2' },
   { group: 'Panels', action: 'Toggle Map controls', keys: '8' },
@@ -48,6 +55,10 @@ export function About() {
 
       <section className="flex flex-col gap-3">
         <Subheading>Keyboard shortcuts</Subheading>
+        <Text>
+          To review a changeset, press S again and again: each press marks the highlighted element
+          or group as seen and moves on to the next unseen one.
+        </Text>
         <Table striped>
           <TableHead>
             <TableRow>

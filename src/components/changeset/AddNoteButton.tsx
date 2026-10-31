@@ -1,5 +1,11 @@
 import clsx from 'clsx'
 import type { MouseEvent, ReactNode } from 'react'
+import {
+  bindingKey,
+  REVIEW_ADD_NOTE,
+  REVIEW_MARK_SEEN,
+  REVIEW_MARK_UNSEEN,
+} from '../../config/bindings.ts'
 import { TouchTarget } from '../ui/button.tsx'
 import { ChatBubbleLeftIcon, CircleCheckIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -8,6 +14,11 @@ const iconButtonClassName = clsx(
   'relative isolate inline-flex shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none',
   'focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
 )
+
+/** The key that does what a seen button would do now. */
+function seenKey(seen: boolean) {
+  return bindingKey(seen ? REVIEW_MARK_UNSEEN : REVIEW_MARK_SEEN)
+}
 
 function toneClassName(pressed: boolean, tone: 'note' | 'seen') {
   if (!pressed) {
@@ -118,7 +129,7 @@ export function MarkSeenButton({
   return (
     <ReviewIconButton
       label={label}
-      tooltip={label}
+      tooltip={`${label} (${seenKey(pressed)})`}
       pressed={pressed}
       tone="seen"
       rounded="md"
@@ -157,7 +168,7 @@ export function ObjectReviewActions({
     >
       <ReviewIconButton
         label={notePressed ? `Close note on ${objectLabel}` : `Add a note on ${objectLabel}`}
-        tooltip={notePressed ? 'Close note (N)' : 'Add a note (N)'}
+        tooltip={`${notePressed ? 'Close note' : 'Add a note'} (${bindingKey(REVIEW_ADD_NOTE)})`}
         pressed={notePressed}
         tone="note"
         grouped
@@ -172,7 +183,7 @@ export function ObjectReviewActions({
       </ReviewIconButton>
       <ReviewIconButton
         label={seen ? `Mark ${objectLabel} as not seen` : `Mark ${objectLabel} as seen`}
-        tooltip={seen ? 'Mark as not seen (S)' : 'Mark as seen (S)'}
+        tooltip={`${seen ? 'Mark as not seen' : 'Mark as seen'} (${seenKey(seen)})`}
         pressed={seen}
         tone="seen"
         grouped

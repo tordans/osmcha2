@@ -1,8 +1,8 @@
 import * as Headless from '@headlessui/react'
-import { useHotkeys } from '@tanstack/react-hotkeys'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Fragment, memo, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { Fragment, memo, use, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { collectGroupThreads, withoutGroupNotes } from '../../notes/groupNotes.ts'
 import {
   flattenObjectNotes,
   locateNotes,
@@ -11,7 +11,6 @@ import {
   type ObjectNotes,
 } from '../../notes/locateNotes.ts'
 import {
-  draftsForObject,
   effectiveSeenAt,
   isObjectSeenCollapsed,
   latestForeignNoteAt,
@@ -24,10 +23,9 @@ import {
   useChangesetHoverActions,
   useIsAnyElementHovered,
   useIsElementHovered,
-  useListScrollTarget,
+  useIsListScrollTarget,
 } from '../../stores/changeset-hover-store.ts'
 import {
-  getChangesetDraft,
   getSeenState,
   useChangesetNotesActions,
   useDraftsForObjects,
@@ -38,7 +36,7 @@ import {
   useSeenMap,
   useUnseenOverrides,
 } from '../../stores/changeset-notes-store.ts'
-import { getFocusedObject, useReviewFocusActions } from '../../stores/review-focus-store.ts'
+import { useIsGroupCursor, useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Loading } from '../loading.tsx'
@@ -52,8 +50,6 @@ import { ActionIcon, ActionTypeLabel } from './ActionTypeLabel.tsx'
 import { MarkSeenButton, ObjectReviewActions } from './AddNoteButton.tsx'
 import {
   buildElementChanges,
-  groupChangesByTagMutation,
-  groupElementChanges,
   mergeFlaggedFeatures,
   tagMutationRows,
   tagRowKeys,
@@ -64,16 +60,23 @@ import {
   type NodeStats,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
+import { presetContextOf } from './elementPresets.ts'
 import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
 import { formatMoveMeters, MINOR_MOVES_EXPLANATION } from './minorMoves.ts'
 import { NoteEditor } from './NoteEditor.tsx'
 import {
   ChangesetNotesSection,
   ChangesNotesHeader,
+  GroupNotesBlock,
   NotesBlock,
   OtherNotesSection,
 } from './NotesBlock.tsx'
-import { NOTE_THREAD_FLASH_MS, noteThreadDomId } from './noteThreadDom.ts'
+import {
+  flashNoteThreadElement,
+  groupThreadDomId,
+  NOTE_THREAD_FLASH_MS,
+  noteThreadDomId,
+} from './noteThreadDom.ts'
 import {
   estimatedChangeRowPx,
   estimatedGroupPx,
@@ -81,14 +84,23 @@ import {
   offscreenRowStyle,
 } from './offscreenRows.ts'
 import { refParamFromElement, tagGroupContainsRef } from './refSelection.ts'
-import { changeRowDomId, workAreaSectionDomId } from './scrollChildIntoScroller.ts'
-import { groupChangesByWorkArea } from './workAreaChanges.ts'
+import {
+  changeRowDomId,
+  groupHeaderTarget,
+  workAreaSectionDomId,
+} from './scrollChildIntoScroller.ts'
+import { TAG_GROUP_CODE_STYLE, TAG_GROUP_EDGE, TAG_GROUP_FILL } from './tagGroupColor.ts'
+import { changeKey, tagGroupsOf, type ChangeListItem, type TagGroups } from './tagGroups.ts'
+import { PresetContextValue, usePresetLine, useSharedPresetLine } from './usePresetLine.ts'
+import { MoveOnAfterSeenContext, useReviewCursorKeys } from './useReviewCursorKeys.ts'
 
 const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
 const NO_FLAGGED: NonNullable<DetailsChangesProps['features']> = []
 const NO_REVIEWED: NonNullable<DetailsChangesProps['reviewedFeatures']> = []
 const NO_REASONS: NonNullable<DetailsChangesProps['reasons']> = []
+const NO_WORK_AREAS: WorkArea[] = []
+const TAG_GROUP_EXPLANATION = 'Same tag changes: all of these objects got the same edit.'
 /** List items (rows or groups) in the first render: more than two phone screens. */
 const FIRST_RENDER_LIST_ITEMS = 20
 /** Pause before a fully seen group folds away, so the rows show their new state first. */
@@ -111,6 +123,8 @@ type DetailsChangesProps = {
   deepLinkReveal?: RefParam | null
   deepLinkEpoch?: number
   zoomToAndSelect: (type: string, id: number, key?: string) => void
+  zoomToGroup: (members: readonly ElementChange[]) => void
+  clearSelection: () => void
 }
 
 function listedObjectsFromChanges(changes: ElementChange[]) {
@@ -186,9 +200,12 @@ function reviewState(
   objectNotes: ObjectNotes | undefined,
   drafts: DraftNote[],
   currentUser?: string,
+  /** The notes the row itself shows, when some live elsewhere (see `withoutGroupNotes`). */
+  shownNotes: ObjectNotes | undefined = objectNotes,
 ) {
   const notes = flattenObjectNotes(objectNotes)
-  const hasNotes = notes.length > 0 || drafts.some((note) => note.body.trim())
+  const hasNotes =
+    flattenObjectNotes(shownNotes).length > 0 || drafts.some((note) => note.body.trim())
   const collapsed = isObjectSeenCollapsed({
     seenAt: effectiveSeenAt({
       seenAt,
@@ -200,14 +217,22 @@ function reviewState(
   return { collapsed, hasNotes, drafts }
 }
 
-function isCompactReviewRow(collapsed: boolean, editing: boolean, drafts: Array<{ body: string }>) {
-  return collapsed && !editing && !drafts.some((note) => note.body.trim())
+function isCompactReviewRow(collapsed: boolean, editing: boolean, hasNotes: boolean) {
+  return collapsed && !editing && !hasNotes
 }
 
-export function DetailsChanges({
+export function DetailsChanges(props: DetailsChangesProps) {
+  return (
+    <PresetContextValue value={presetContextOf(props.adiff?.actions)}>
+      <ChangesPanel {...props} />
+    </PresetContextValue>
+  )
+}
+
+function ChangesPanel({
   changesetId,
   adiff,
-  workAreas = [],
+  workAreas = NO_WORK_AREAS,
   activeWorkArea = null,
   jumpToWorkArea,
   features = NO_FLAGGED,
@@ -219,12 +244,13 @@ export function DetailsChanges({
   deepLinkReveal,
   deepLinkEpoch = 0,
   zoomToAndSelect,
+  zoomToGroup,
+  clearSelection,
 }: DetailsChangesProps) {
   const { data: discussion } = useChangesetDiscussion(changesetId, {
     pollWhileActive: true,
   })
   const userKey = useNotesUserKey()
-  const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
   const { requestFinishFocus } = useReviewFocusActions()
   // Explicit: the compiler does not memoize these here, and new change objects re-render every row.
   const flagged = useMemo(
@@ -243,38 +269,28 @@ export function DetailsChanges({
   const totalNotes = countLocatedNotes(located)
   const currentUser = userKey === 'anonymous' ? undefined : userKey
 
-  useHotkeys([
-    {
-      hotkey: 'N',
-      callback: () => {
-        const focusedObject = getFocusedObject()
-        if (!focusedObject || focusedObject.changesetId !== changesetId) return
-        const nextRef = refParamFromElement(focusedObject.type, focusedObject.id)
-        if (nextRef) toggleEditor(userKey, changesetId, nextRef)
-      },
-    },
-    {
-      hotkey: 'S',
-      callback: () => {
-        const focusedObject = getFocusedObject()
-        if (!focusedObject || focusedObject.changesetId !== changesetId) return
-        const objectKey = objectRefKey(focusedObject.type, focusedObject.id)
-        const change = changes.find(
-          (item) => item.type === focusedObject.type && item.id === focusedObject.id,
-        )
-        if (!change) return
-        const { collapsed } = reviewState(
-          change,
-          objectSeenOf(getSeenState(userKey, changesetId), objectKey),
-          located.byObject.get(objectKey),
-          draftsForObject(getChangesetDraft(userKey, changesetId), change.type, change.id),
-          currentUser,
-        )
-        if (collapsed) markUnseen(userKey, changesetId, objectKey)
-        else markSeen(userKey, changesetId, objectKey)
-      },
-    },
-  ])
+  const tagGroups = tagGroupsOf(changes, workAreas)
+
+  function isUnseen(change: ElementChange) {
+    const objectKey = objectRefKey(change.type, change.id)
+    return !reviewState(
+      change,
+      objectSeenOf(getSeenState(userKey, changesetId), objectKey),
+      located.byObject.get(objectKey),
+      [],
+      currentUser,
+    ).collapsed
+  }
+
+  const moveOnAfterSeen = useReviewCursorKeys({
+    changesetId,
+    userKey,
+    tagGroups,
+    isUnseen,
+    zoomToAndSelect,
+    zoomToGroup,
+    clearSelection,
+  })
 
   if (!adiff) {
     return <Loading className="pt-10" />
@@ -289,54 +305,63 @@ export function DetailsChanges({
   }
 
   return (
-    <section className="flex flex-col gap-2.5 p-2.5">
-      <ChangesNotesHeader count={totalNotes} />
-      <ChangesetNotesSection notes={located.changesetNotes} />
-      {workAreas.length > 1 ? (
-        groupChangesByWorkArea(changes, workAreas).map(({ area, changes: areaChanges }) => (
-          <section
-            key={area?.id ?? 'elsewhere'}
-            id={area ? workAreaSectionDomId(area.id) : undefined}
-            aria-label={area ? `Area ${area.id}` : 'Other'}
-          >
-            <WorkAreaHeading
-              area={area}
-              count={areaChanges.length}
-              current={area != null && activeWorkArea === area.id}
-              onJump={jumpToWorkArea}
-            />
-            <ChangeList
-              changes={areaChanges}
-              changesetId={changesetId}
-              userKey={userKey}
-              selected={selected}
-              selectedRef={selectedRef}
-              selectRef={selectRef}
-              deepLinkReveal={deepLinkReveal}
-              deepLinkEpoch={deepLinkEpoch}
-              zoomToAndSelect={zoomToAndSelect}
-              notesByObject={located.byObject}
-            />
-          </section>
-        ))
-      ) : (
-        <ChangeList
-          changes={changes}
+    <MoveOnAfterSeenContext value={moveOnAfterSeen}>
+      <section className="flex flex-col gap-2.5 p-2.5">
+        <ChangesNotesHeader count={totalNotes} />
+        <ChangesetNotesSection notes={located.changesetNotes} />
+        {tagGroups.sectioned ? (
+          tagGroups.sections.map(({ area, changes: areaChanges, items, minorMoves }) => (
+            <section
+              key={area?.id ?? 'elsewhere'}
+              id={area ? workAreaSectionDomId(area.id) : undefined}
+              aria-label={area ? `Area ${area.id}` : 'Other'}
+            >
+              <WorkAreaHeading
+                area={area}
+                count={areaChanges.length}
+                current={area != null && activeWorkArea === area.id}
+                onJump={jumpToWorkArea}
+              />
+              <ChangeList
+                items={items}
+                minorMoves={minorMoves}
+                tagGroups={tagGroups}
+                changesetId={changesetId}
+                userKey={userKey}
+                selected={selected}
+                selectedRef={selectedRef}
+                selectRef={selectRef}
+                deepLinkReveal={deepLinkReveal}
+                deepLinkEpoch={deepLinkEpoch}
+                zoomToAndSelect={zoomToAndSelect}
+                notesByObject={located.byObject}
+              />
+            </section>
+          ))
+        ) : (
+          <ChangeList
+            items={tagGroups.sections[0]?.items ?? []}
+            minorMoves={tagGroups.sections[0]?.minorMoves ?? []}
+            tagGroups={tagGroups}
+            changesetId={changesetId}
+            userKey={userKey}
+            selected={selected}
+            selectedRef={selectedRef}
+            selectRef={selectRef}
+            deepLinkReveal={deepLinkReveal}
+            deepLinkEpoch={deepLinkEpoch}
+            zoomToAndSelect={zoomToAndSelect}
+            notesByObject={located.byObject}
+          />
+        )}
+        <OtherNotesSection notes={located.unmatched} />
+        <FinishReviewCard changesetId={changesetId} selectRef={selectRef} />
+        <UnsentNotesBar
           changesetId={changesetId}
-          userKey={userKey}
-          selected={selected}
-          selectedRef={selectedRef}
-          selectRef={selectRef}
-          deepLinkReveal={deepLinkReveal}
-          deepLinkEpoch={deepLinkEpoch}
-          zoomToAndSelect={zoomToAndSelect}
-          notesByObject={located.byObject}
+          onFinish={() => requestFinishFocus(changesetId)}
         />
-      )}
-      <OtherNotesSection notes={located.unmatched} />
-      <FinishReviewCard changesetId={changesetId} selectRef={selectRef} />
-      <UnsentNotesBar changesetId={changesetId} onFinish={() => requestFinishFocus(changesetId)} />
-    </section>
+      </section>
+    </MoveOnAfterSeenContext>
   )
 }
 
@@ -393,7 +418,9 @@ function WorkAreaHeading({
 }
 
 function ChangeList({
-  changes,
+  items,
+  minorMoves,
+  tagGroups,
   changesetId,
   userKey,
   selected,
@@ -404,7 +431,9 @@ function ChangeList({
   zoomToAndSelect,
   notesByObject,
 }: {
-  changes: ElementChange[]
+  items: ChangeListItem[]
+  minorMoves: ElementChange[]
+  tagGroups: TagGroups
   changesetId: number
   userKey: string
   selected?: AdiffAction | null
@@ -415,11 +444,6 @@ function ChangeList({
   zoomToAndSelect: (type: string, id: number, key?: string) => void
   notesByObject: Map<string, ObjectNotes>
 }) {
-  const listedChanges = changes.filter((change) => change.minorMove == null)
-  const minorMoves = changes.filter((change) => change.minorMove != null)
-  const items = groupElementChanges(listedChanges).flatMap(([, actionChanges]) =>
-    groupChangesByTagMutation(actionChanges),
-  )
   const selectedIndex = items.findIndex((group) =>
     group.some((change) => isSelected(change, selected)),
   )
@@ -453,6 +477,7 @@ function ChangeList({
             <TagMutationGroup
               key={group.map((change) => `${change.type}/${change.id}`).join(',')}
               changes={group}
+              code={tagGroups.groupByMember.get(changeKey(group[0]))?.code}
               changesetId={changesetId}
               userKey={userKey}
               selected={selected}
@@ -509,19 +534,19 @@ function rowSelection(
 function elementRowHighlightClassName(selected: boolean, hovered: boolean) {
   if (selected) {
     // Inside the row only: an outer ring is cut off where the list clips its sides.
-    return 'bg-yellow-50 inset-ring-2 inset-ring-yellow-400'
+    // The yellow ring says where the cursor is; a focus ring on top would only repeat it.
+    return 'bg-yellow-50 inset-ring-2 inset-ring-yellow-400 outline-hidden'
   }
   if (hovered) return 'bg-zinc-100'
   return 'hover:bg-zinc-50 active:bg-zinc-950/5'
 }
 
-function elementRowPaddingClassName(selected: boolean, compact: boolean) {
-  if (compact) return selected ? 'px-3 py-2' : 'px-2 py-0.5'
-  return selected ? 'px-3 py-2.5' : 'px-2 py-1'
-}
+/** Same in every state: the selection's inset ring takes no space, so the content must not shift. */
+const ELEMENT_ROW_PADDING_CLASS_NAME = 'px-2 py-1'
 
 function TagMutationGroup({
   changes,
+  code,
   changesetId,
   userKey,
   selected,
@@ -533,6 +558,8 @@ function TagMutationGroup({
   notesByObject,
 }: {
   changes: NonEmptyArray<ElementChange>
+  /** Short group name, shared with the map outline (see `tagGroups.ts`). */
+  code?: string
   changesetId: number
   userKey: string
   selected?: AdiffAction | null
@@ -546,38 +573,38 @@ function TagMutationGroup({
   const seenMap = useSeenMap(userKey, changesetId)
   const unseenOverrides = useUnseenOverrides(userKey, changesetId)
   const groupDrafts = useDraftsForObjects(userKey, changesetId, objectKeysOf(changes))
-  const { markAllSeen, markAllUnseen, toggleEditor } = useChangesetNotesActions()
+  const { markAllSeen, markAllUnseen, toggleEditor, openOrCreateEditor } =
+    useChangesetNotesActions()
+  const moveOnAfterSeen = use(MoveOnAfterSeenContext)
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const hoveredInGroup = useIsAnyElementHovered(changes)
-  const listScrollTarget = useListScrollTarget()
   const currentUser = userKey === 'anonymous' ? undefined : userKey
   const mutations = tagMutationRows(changes[0].tags)
+  const sharedPresetLine = useSharedPresetLine(changes)
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
   const containsSelected = selectedInGroup != null
-  const scrollTargetInGroup =
-    listScrollTarget != null &&
-    changes.some(
-      (change) => change.type === listScrollTarget.type && change.id === listScrollTarget.id,
-    )
+  const cursorOnGroup = useIsGroupCursor(changeKey(changes[0]))
   const revealInGroup = tagGroupContainsRef(changes, deepLinkReveal)
-  const disclosureKey = selectedInGroup
-    ? `${selectedInGroup.type}/${selectedInGroup.id}`
-    : scrollTargetInGroup && listScrollTarget
-      ? `${listScrollTarget.type}/${listScrollTarget.id}`
-      : 'none'
+  const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
   const groupNoteCountByKey = aggregateNoteCountByKey(changes, notesByObject)
   const highlightTagKey = revealInGroup && deepLinkReveal?.key ? deepLinkReveal.key : undefined
+  // The notes about the whole group live in the group panel; the member rows leave them out.
+  const groupThreads = collectGroupThreads(changes, notesByObject)
   const memberStates = changes
-    .map((change) => ({
-      change,
-      ...reviewState(
+    .map((change) => {
+      const notes = notesByObject.get(objectRefKey(change.type, change.id))
+      return {
         change,
-        objectSeenOf({ seenMap, unseenOverrides }, objectRefKey(change.type, change.id)),
-        notesByObject.get(objectRefKey(change.type, change.id)),
-        draftsOn(groupDrafts, change.type, change.id),
-        currentUser,
-      ),
-    }))
+        ...reviewState(
+          change,
+          objectSeenOf({ seenMap, unseenOverrides }, objectRefKey(change.type, change.id)),
+          notes,
+          draftsOn(groupDrafts, change.type, change.id).filter((note) => note.group == null),
+          currentUser,
+          withoutGroupNotes(notes),
+        ),
+      }
+    })
     .sort((left, right) => Number(right.hasNotes) - Number(left.hasNotes))
   const editingNote =
     openEditorNoteId != null ? groupDrafts.find((note) => note.id === openEditorNoteId) : undefined
@@ -586,14 +613,39 @@ function TagMutationGroup({
     changes.some(
       (change) => change.type === editingNote.ref?.type && change.id === editingNote.ref.id,
     )
-  const allMembersCompact = memberStates.every((member) =>
-    isCompactReviewRow(member.collapsed, false, member.drafts),
-  )
-  const keepOpen = editingInGroup || memberStates.some((member) => member.hasNotes)
-  const forceOpen =
-    keepOpen || (!allMembersCompact && (containsSelected || scrollTargetInGroup || revealInGroup))
-  const activeNoteKey = editingInGroup ? editingNote?.ref?.key : undefined
+  const groupEditingNote = editingInGroup && editingNote?.group != null ? editingNote : undefined
+  const groupHasNotes =
+    groupThreads.length > 0 ||
+    groupDrafts.some((note) => note.group != null && note.body.trim() !== '')
+  const keepOpen = editingInGroup || groupHasNotes || memberStates.some((member) => member.hasNotes)
+  const forceOpen = keepOpen || containsSelected || revealInGroup
+  const activeNoteKey = groupEditingNote?.ref?.key
   const allSeen = memberStates.every((member) => member.collapsed)
+  const [flashKey, setFlashKey] = useState<string | null>(null)
+  const [flashNonce, setFlashNonce] = useState(0)
+  const [flashedReveal, setFlashedReveal] = useState<RefParam | null>(null)
+  // A link to a group note: flash its thread once, as soon as the notes are there.
+  if (
+    revealInGroup &&
+    deepLinkReveal?.key != null &&
+    flashedReveal !== deepLinkReveal &&
+    groupThreads.some((thread) => thread.key === deepLinkReveal.key)
+  ) {
+    setFlashedReveal(deepLinkReveal)
+    setFlashKey(deepLinkReveal.key)
+    setFlashNonce((nonce) => nonce + 1)
+  }
+
+  useEffect(
+    function clearGroupThreadFlash() {
+      if (flashKey == null) return
+      const timeout = window.setTimeout(() => setFlashKey(null), NOTE_THREAD_FLASH_MS)
+      return function cancelGroupThreadFlash() {
+        window.clearTimeout(timeout)
+      }
+    },
+    [flashKey, flashNonce],
+  )
 
   // Open until every member is seen. Seeing the last one closes the group after a pause, so the
   // rows first show their new state and the group then folds away.
@@ -607,6 +659,10 @@ function TagMutationGroup({
     if (allSeen && !keepOpen) {
       setOpen(false)
       setClosingAfterSeen(true)
+    }
+    if (!allSeen) {
+      setOpen(true)
+      setClosingAfterSeen(false)
     }
   }
   if (prevOpenRequest !== openRequest) {
@@ -626,10 +682,9 @@ function TagMutationGroup({
     const objectKeys = changes.map((change) => objectRefKey(change.type, change.id))
     if (allSeen) {
       markAllUnseen(userKey, changesetId, objectKeys)
-      setOpen(true)
-      setClosingAfterSeen(false)
     } else {
       markAllSeen(userKey, changesetId, objectKeys)
+      moveOnAfterSeen({ on: 'group', changes })
     }
   }
 
@@ -637,6 +692,8 @@ function TagMutationGroup({
     ? { ...disclosureTransition, delay: SEEN_FOLD_DELAY_S }
     : disclosureTransition
   const panelId = `same-tags-${changes[0].type}-${changes[0].id}`
+  const groupTarget = groupHeaderTarget(changes[0])
+  const groupLabel = `${code ? `Group ${code}: ` : ''}${changes.length} elements with the same tag changes`
 
   function targetChangeForTag(key: string) {
     if (selectedInGroup) return selectedInGroup
@@ -652,32 +709,84 @@ function TagMutationGroup({
     zoomToAndSelect(target.type, target.id, key)
   }
 
+  /** The ref a note on the whole group gets: its first member and the tag, as posted in the link. */
+  function groupNoteRef(key: string) {
+    return refParamFromElement(changes[0].type, changes[0].id, key)
+  }
+
+  /** Opens the editor in the group panel. No member is selected: the note is not about one. */
   function addNoteOnGroupTag(key: string) {
-    const target = targetChangeForTag(key)
-    const nextRef = refParamFromElement(target.type, target.id, key)
-    if (!nextRef) return
-    selectRef(nextRef)
-    toggleEditor(userKey, changesetId, nextRef)
+    const nextRef = groupNoteRef(key)
+    if (nextRef) toggleEditor(userKey, changesetId, nextRef, changes.length)
+  }
+
+  function replyOnGroupThread(key: string) {
+    const nextRef = groupNoteRef(key)
+    if (nextRef) openOrCreateEditor(userKey, changesetId, nextRef, changes.length)
+  }
+
+  /** The note count badge: select the target, scroll to the thread and flash it. No editor. */
+  function showGroupTagThread(key: string) {
+    if (groupThreads.some((thread) => thread.key === key)) {
+      const target = targetChangeForTag(key)
+      const nextRef = refParamFromElement(target.type, target.id, key)
+      if (nextRef) selectRef(nextRef)
+      document
+        .getElementById(groupThreadDomId(changes[0].type, changes[0].id, key))
+        ?.scrollIntoView({ block: 'nearest' })
+      setFlashKey(key)
+      setFlashNonce((nonce) => nonce + 1)
+      return
+    }
+    // A note on one member's own row: select that member, its row shows the thread.
+    const owner =
+      changes.find(
+        (change) =>
+          (withoutGroupNotes(notesByObject.get(objectRefKey(change.type, change.id)))?.byKey.get(
+            key,
+          )?.length ?? 0) > 0,
+      ) ?? targetChangeForTag(key)
+    const nextRef = refParamFromElement(owner.type, owner.id, key)
+    if (nextRef) selectRef(nextRef)
+    const thread = document.getElementById(noteThreadDomId(owner.type, owner.id, key))
+    thread?.scrollIntoView({ block: 'nearest' })
+    flashNoteThreadElement(thread)
   }
 
   return (
     <li
-      className={clsx('px-2 py-2', !containsSelected && OFFSCREEN_ROW_CLASSNAME)}
+      className={clsx(
+        'px-2',
+        // Closed groups stack tightly; only an open one needs air around it.
+        open ? 'py-2' : 'py-px',
+        !containsSelected && !cursorOnGroup && OFFSCREEN_ROW_CLASSNAME,
+      )}
       style={offscreenRowStyle(
         open
           ? estimatedGroupPx({ members: changes.length, tagRows: mutations.length })
           : estimatedGroupPx({ members: 0, tagRows: 0 }),
       )}
     >
-      <div className="flex items-center gap-2">
+      {/* The review cursor's place in the group: focused itself, so Enter is not the button's. */}
+      <div
+        id={changeRowDomId(groupTarget.type, groupTarget.id)}
+        role="group"
+        aria-label={groupLabel}
+        aria-current={cursorOnGroup || undefined}
+        tabIndex={-1}
+        className={clsx(
+          '-mx-1 flex items-center gap-2 rounded px-1',
+          cursorOnGroup && elementRowHighlightClassName(true, false),
+        )}
+      >
         <button
           type="button"
           aria-expanded={open}
           aria-controls={panelId}
-          aria-label={`${changes.length} elements with the same tag changes`}
+          aria-label={groupLabel}
           onClick={toggleOpen}
           className={clsx(
-            'flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none active:bg-zinc-950/5',
+            'flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium select-none active:bg-zinc-950/5 sm:min-h-8',
             !open && hoveredInGroup ? 'bg-zinc-100' : 'hover:bg-zinc-50',
           )}
         >
@@ -690,8 +799,10 @@ function TagMutationGroup({
             <ChevronRightIcon className="size-4 flex-none" />
           </motion.span>
           <ActionTypeLabel actionType={actionLabelKey(changes[0])} />
-          <span>Same tag changes</span>
-          <Badge>{changes.length}</Badge>
+          {code ? <TagGroupCode code={code} /> : null}
+          <span className="truncate" title={sharedPresetLine}>
+            {changes.length}× {sharedPresetLine ?? 'Same tag changes'}
+          </span>
         </button>
         <MarkSeenButton
           label={allSeen ? `Mark all ${changes.length} unseen` : `Mark all ${changes.length} seen`}
@@ -707,18 +818,42 @@ function TagMutationGroup({
         className="overflow-hidden"
         inert={!open}
       >
-        <div className="mt-1 border-t font-mono">
+        <p className={clsx(typeScale.small, 'px-1 pt-1 pb-3 pl-7 text-zinc-500')}>
+          {TAG_GROUP_EXPLANATION}
+        </p>
+        <div className="border-t font-mono">
           <TagRows
             rows={mutations}
             emptyLabel="No tag changes"
             highlightedKey={highlightTagKey}
             onKeyClick={selectGroupTag}
             noteCountByKey={groupNoteCountByKey}
-            onNoteCountClick={addNoteOnGroupTag}
+            onNoteCountClick={showGroupTagThread}
             onAddNote={addNoteOnGroupTag}
             activeNoteKey={activeNoteKey}
           />
         </div>
+        {groupEditingNote ? (
+          <div className="mt-1">
+            <NoteEditor
+              changesetId={changesetId}
+              note={groupEditingNote}
+              autoFocus={!prefersTouchInput()}
+            />
+          </div>
+        ) : null}
+        <GroupNotesBlock
+          first={changes[0]}
+          memberCount={changes.length}
+          threads={groupThreads}
+          drafts={groupDrafts.filter(
+            (note) => note.group != null && note.id !== groupEditingNote?.id,
+          )}
+          flashKey={flashKey}
+          editingKey={activeNoteKey}
+          onReply={replyOnGroupThread}
+          onHeaderClick={selectGroupTag}
+        />
         <ul>
           {memberStates.map(({ change }) => (
             <ElementChangeRow
@@ -730,12 +865,31 @@ function TagMutationGroup({
               selectRef={selectRef}
               zoomToAndSelect={zoomToAndSelect}
               showTags={false}
+              showPreset={sharedPresetLine == null}
+              groupNotesInPanel
               objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
             />
           ))}
         </ul>
       </motion.div>
     </li>
+  )
+}
+
+/** The group's short name: a soft badge in the group's colour, like its shape on the map. */
+function TagGroupCode({ code }: { code: string }) {
+  return (
+    <span
+      className="rounded-md px-[5px] py-px text-sm/5 font-semibold sm:text-xs/5"
+      style={{
+        ...TAG_GROUP_CODE_STYLE,
+        backgroundColor: TAG_GROUP_FILL,
+        boxShadow: `inset 0 0 0 1px ${TAG_GROUP_EDGE}`,
+      }}
+    >
+      <span aria-hidden>{code}</span>
+      <span className="sr-only">Group {code}</span>
+    </span>
   )
 }
 
@@ -769,13 +923,7 @@ function MinorMovesGroup({
   const groupDrafts = useDraftsForObjects(userKey, changesetId, objectKeysOf(changes))
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
   const hoveredInGroup = useIsAnyElementHovered(changes)
-  const listScrollTarget = useListScrollTarget()
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
-  const scrollTargetInGroup =
-    listScrollTarget != null &&
-    changes.some(
-      (change) => change.type === listScrollTarget.type && change.id === listScrollTarget.id,
-    )
   const editingNote =
     openEditorNoteId != null ? groupDrafts.find((note) => note.id === openEditorNoteId) : undefined
   const editingInGroup =
@@ -792,16 +940,11 @@ function MinorMovesGroup({
     editingInGroup ||
     hasNotes ||
     selectedInGroup != null ||
-    scrollTargetInGroup ||
     tagGroupContainsRef(changes, deepLinkReveal)
-  const disclosureKey = selectedInGroup
-    ? `${selectedInGroup.type}/${selectedInGroup.id}`
-    : scrollTargetInGroup && listScrollTarget
-      ? `${listScrollTarget.type}/${listScrollTarget.id}`
-      : 'none'
+  const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
 
   return (
-    <li className="px-2 py-2">
+    <li className="px-2 py-px">
       <Headless.Disclosure
         key={`${disclosureKey}:${forceOpen ? 'open' : 'closed'}:${deepLinkEpoch ?? 0}`}
         defaultOpen={forceOpen}
@@ -811,7 +954,7 @@ function MinorMovesGroup({
             <Headless.DisclosureButton
               aria-label={`${changes.length} minor moves`}
               className={clsx(
-                'flex min-h-11 w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium text-zinc-600 select-none active:bg-zinc-950/5',
+                'flex min-h-11 w-full min-w-0 cursor-pointer touch-manipulation items-center gap-2 rounded px-1 text-left text-sm font-medium text-zinc-600 select-none active:bg-zinc-950/5 sm:min-h-8',
                 !open && hoveredInGroup ? 'bg-zinc-100' : 'hover:bg-zinc-50',
               )}
             >
@@ -826,9 +969,6 @@ function MinorMovesGroup({
               <span>Minor moves</span>
               <Badge>{changes.length}</Badge>
             </Headless.DisclosureButton>
-            <p className={clsx(typeScale.small, 'px-1 pl-6 text-zinc-500')}>
-              {MINOR_MOVES_EXPLANATION}
-            </p>
             <Headless.DisclosurePanel static>
               <motion.div
                 initial={false}
@@ -837,6 +977,9 @@ function MinorMovesGroup({
                 className="overflow-hidden"
                 inert={!open}
               >
+                <p className={clsx(typeScale.small, 'px-1 pt-1 pb-3 pl-7 text-zinc-500')}>
+                  {MINOR_MOVES_EXPLANATION}
+                </p>
                 <ul>
                   {changes.map((change) => (
                     <ElementChangeRow
@@ -847,6 +990,7 @@ function MinorMovesGroup({
                       {...rowSelection(change, selected, selectedRef, deepLinkReveal)}
                       selectRef={selectRef}
                       zoomToAndSelect={zoomToAndSelect}
+                      showPreset={false}
                       objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
                     />
                   ))}
@@ -870,6 +1014,8 @@ const ElementChangeRow = memo(function ElementChangeRow({
   deepLinkReveal,
   zoomToAndSelect,
   showTags = true,
+  showPreset = true,
+  groupNotesInPanel = false,
   objectNotes,
 }: {
   change: ElementChange
@@ -881,6 +1027,10 @@ const ElementChangeRow = memo(function ElementChangeRow({
   deepLinkReveal?: RefParam | null
   zoomToAndSelect: (type: string, id: number, key?: string) => void
   showTags?: boolean
+  /** False in a group that shows the shared preset once, and in minor moves. */
+  showPreset?: boolean
+  /** In a group's panel: the notes about the whole group show there, not in this row. */
+  groupNotesInPanel?: boolean
   objectNotes?: ObjectNotes
 }) {
   const objectKey = objectRefKey(change.type, change.id)
@@ -888,17 +1038,21 @@ const ElementChangeRow = memo(function ElementChangeRow({
   const unseenOverride = useIsUnseenOverride(userKey, changesetId, objectKey)
   const objectDrafts = useObjectDrafts(userKey, changesetId, change.type, change.id)
   const openEditorNoteId = useOpenEditorNoteId(changesetId)
-  const { markSeen, markUnseen, toggleEditor } = useChangesetNotesActions()
-  const { setFocusedObject } = useReviewFocusActions()
+  const { markSeen, markUnseen, toggleEditor, openOrCreateEditor } = useChangesetNotesActions()
   const { setHover } = useChangesetHoverActions()
+  const moveOnAfterSeen = use(MoveOnAfterSeenContext)
   const hovered = useIsElementHovered(change.type, change.id)
   const currentUser = userKey === 'anonymous' ? undefined : userKey
+  const pickedOnMap = useIsListScrollTarget(change.type, change.id)
+  // Seen state looks at all notes; what the row shows leaves out the group's, which are in the panel.
+  const shownNotes = groupNotesInPanel ? withoutGroupNotes(objectNotes) : objectNotes
   const { collapsed, hasNotes, drafts } = reviewState(
     change,
     { seenAt, unseenOverride },
     objectNotes,
-    objectDrafts,
+    groupNotesInPanel ? objectDrafts.filter((note) => note.group == null) : objectDrafts,
     currentUser,
+    shownNotes,
   )
   const editingNote =
     openEditorNoteId != null ? drafts.find((note) => note.id === openEditorNoteId) : undefined
@@ -962,6 +1116,13 @@ const ElementChangeRow = memo(function ElementChangeRow({
     if (!nextRef) return
     selectRef(nextRef)
     toggleEditor(userKey, changesetId, nextRef)
+  }
+
+  /** The note count badge: select the tag, scroll to its thread and flash it. No editor. */
+  function showNoteThreadOnTag(key: string) {
+    const nextRef = refParamFromElement(change.type, change.id, key)
+    if (!nextRef) return
+    selectRef(nextRef)
     document.getElementById(noteThreadDomId(change.type, change.id, key))?.scrollIntoView({
       block: 'nearest',
     })
@@ -969,12 +1130,29 @@ const ElementChangeRow = memo(function ElementChangeRow({
     setFlashNonce((nonce) => nonce + 1)
   }
 
-  function toggleSeen() {
-    if (collapsed) markUnseen(userKey, changesetId, objectKey)
-    else markSeen(userKey, changesetId, objectKey)
+  /** The Reply action of a thread: the object's own, or one on a tag. */
+  function replyOnThread(key?: string) {
+    const nextRef = refParamFromElement(change.type, change.id, key)
+    if (!nextRef) return
+    selectRef(nextRef)
+    openOrCreateEditor(userKey, changesetId, nextRef)
   }
 
-  const compact = isCompactReviewRow(collapsed, editingNote != null, drafts)
+  function toggleSeen() {
+    if (collapsed) {
+      markUnseen(userKey, changesetId, objectKey)
+      return
+    }
+    markSeen(userKey, changesetId, objectKey)
+    moveOnAfterSeen({ on: 'row', changes: [change] })
+  }
+
+  // Picked on the map: show what it is, even when it counts as seen.
+  const compact =
+    isCompactReviewRow(collapsed, editingNote != null, hasNotes) && !(currentSelect && pickedOnMap)
+
+  const presetLine = usePresetLine(change, showPreset && !compact)
+  const elementName = `${change.type}/${change.id}`
 
   const objectNoteOpen = editingNote != null && editingNote.ref?.key == null
 
@@ -987,7 +1165,7 @@ const ElementChangeRow = memo(function ElementChangeRow({
         data-osm-element={`${change.type}/${change.id}`}
         className={clsx(
           'group relative flex w-full cursor-pointer touch-manipulation items-center gap-1 rounded',
-          elementRowPaddingClassName(currentSelect, true),
+          ELEMENT_ROW_PADDING_CLASS_NAME,
           elementRowHighlightClassName(currentSelect, hovered),
           !currentSelect && OFFSCREEN_ROW_CLASSNAME,
         )}
@@ -995,19 +1173,12 @@ const ElementChangeRow = memo(function ElementChangeRow({
         onClick={() => zoomToAndSelect(change.type, change.id)}
         onMouseEnter={() => setHover({ type: change.type, id: change.id })}
         onMouseLeave={() => setHover(null)}
-        onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
       >
         <ActionTypeLabel actionType={actionLabelKey(change)} muted />
         <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
           {change.type}/{change.id}
         </span>
         {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
-        {hasNotes ? (
-          <Badge>
-            {flattenObjectNotes(objectNotes).length +
-              drafts.filter((note) => note.body.trim()).length}
-          </Badge>
-        ) : null}
         <div className="ml-auto">
           <ObjectReviewActions
             objectLabel={`${change.type}/${change.id}`}
@@ -1030,7 +1201,7 @@ const ElementChangeRow = memo(function ElementChangeRow({
       data-osm-element={`${change.type}/${change.id}`}
       className={clsx(
         'group relative flex w-full cursor-pointer touch-manipulation flex-col items-start justify-between gap-0.5 rounded',
-        elementRowPaddingClassName(currentSelect, false),
+        ELEMENT_ROW_PADDING_CLASS_NAME,
         elementRowHighlightClassName(currentSelect, hovered),
         !currentSelect && OFFSCREEN_ROW_CLASSNAME,
       )}
@@ -1039,25 +1210,32 @@ const ElementChangeRow = memo(function ElementChangeRow({
           compact: false,
           tagRows: showTags ? change.tags.length : 0,
           extraLines: (change.splitFrom != null ? 1 : 0) + (change.splitInto ? 1 : 0),
+          presetLine: presetLine != null,
         }),
       )}
       onClick={() => zoomToAndSelect(change.type, change.id)}
       onMouseEnter={() => setHover({ type: change.type, id: change.id })}
       onMouseLeave={() => setHover(null)}
-      onFocus={() => setFocusedObject({ changesetId, type: change.type, id: change.id })}
     >
       <div className="flex w-full items-center justify-between gap-1">
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
           <ActionTypeLabel actionType={actionLabelKey(change)} />
-          <span className="truncate">
-            {change.type}/{change.id}
+          <span className="truncate" title={presetLine}>
+            {presetLine ?? elementName}
           </span>
-          {change.version != null ? <span className="text-zinc-500">#{change.version}</span> : null}
         </h3>
         <div
           className="flex shrink-0 items-center justify-end gap-1"
           onClick={(event) => event.stopPropagation()}
         >
+          {change.version != null ? (
+            <span
+              className={clsx(typeScale.small, 'text-zinc-500')}
+              title={`Version ${change.version} of this object`}
+            >
+              v{change.version}
+            </span>
+          ) : null}
           {change.flagged ? (
             <Tooltip
               content={flaggedLabel || 'Flagged feature'}
@@ -1137,6 +1315,12 @@ const ElementChangeRow = memo(function ElementChangeRow({
           />
         </div>
       </div>
+      {presetLine ? (
+        // Under the name: past the 14px action icon and its 4px gap, close to the title it belongs to.
+        <p className={clsx(typeScale.small, '-mt-1 mb-1 w-full truncate pl-4.5 text-zinc-500')}>
+          {elementName}
+        </p>
+      ) : null}
       {/* Own line: next to the id it squeezed the id out on narrow rows. */}
       {change.splitFrom != null ? (
         <p className={clsx(typeScale.small, ACTION.split.tagText)}>
@@ -1162,8 +1346,8 @@ const ElementChangeRow = memo(function ElementChangeRow({
             emptyLabel="No tags"
             highlightedKey={flash && selectedRef?.key && shouldReveal ? selectedRef.key : undefined}
             onKeyClick={(key) => zoomToAndSelect(change.type, change.id, key)}
-            noteCountByKey={noteCountByKey(objectNotes)}
-            onNoteCountClick={addNoteOnTag}
+            noteCountByKey={noteCountByKey(shownNotes)}
+            onNoteCountClick={showNoteThreadOnTag}
             onAddNote={addNoteOnTag}
             activeNoteKey={editingNote?.ref?.key}
           />
@@ -1176,9 +1360,13 @@ const ElementChangeRow = memo(function ElementChangeRow({
         type={change.type}
         id={change.id}
         tags={change.tags.flatMap((tag) => tagRowKeys(tag).map((key) => ({ key })))}
-        notes={objectNotes}
+        notes={shownNotes}
+        drafts={drafts.filter((note) => note.id !== editingNote?.id)}
         flashKey={flashKey}
         selectRef={selectRef}
+        onReply={replyOnThread}
+        editingKey={editingNote?.ref?.key}
+        editingObject={objectNoteOpen}
       />
     </li>
   )

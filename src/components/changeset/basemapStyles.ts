@@ -130,20 +130,20 @@ export async function resolveBasemapStyle(styleId: string): Promise<maplibre.Sty
     return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }
 
-  const { eliSourceId, getLayerHydrated, getRasterLayerSpec, getRasterSourceSpec } = await loadEli()
-  const layer = await getLayerHydrated(eliId)
-  if (!layer) {
+  const eli = await loadEli().catch(() => null)
+  const layer = await eli?.getLayerHydrated(eliId)
+  if (!eli || !layer) {
     return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }
 
-  const sourceId = eliSourceId(layer)
+  const sourceId = eli.eliSourceId(layer)
   return {
     version: 8,
     sources: {
-      [sourceId]: getRasterSourceSpec(layer),
+      [sourceId]: eli.getRasterSourceSpec(layer),
     },
     layers: [
-      getRasterLayerSpec(layer, { id: 'imagery', source: sourceId }),
+      eli.getRasterLayerSpec(layer, { id: 'imagery', source: sourceId }),
     ] as maplibre.StyleSpecification['layers'],
   }
 }

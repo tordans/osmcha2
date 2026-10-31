@@ -42,6 +42,11 @@ export function changeRowDomId(type: string, id: number) {
   return `change-row-${type}-${id}`
 }
 
+/** Scroll target of a group's header, named after the group's first member. */
+export function groupHeaderTarget(firstMember: { type: string; id: number }) {
+  return { type: `group-${firstMember.type}`, id: firstMember.id }
+}
+
 export function workAreaSectionDomId(areaId: number) {
   return `work-area-${areaId}`
 }

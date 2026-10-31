@@ -24,8 +24,9 @@ import {
   getReviewWidth,
   usePaneLayoutActions,
 } from '../../stores/pane-layout-store.ts'
+import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
-import { flyMapToAdiffElement } from '../../views/changesetCamera.ts'
+import { flyMapToAdiffElement, flyMapToAdiffElements } from '../../views/changesetCamera.ts'
 import {
   clearSelectedFeatureState,
   setSelectedFeatureState,
@@ -36,11 +37,12 @@ import { useActiveWorkArea, useJumpToWorkArea } from '../../views/useWorkAreaMap
 import { DebugDataHelper } from '../debug/DebugDataHelper.tsx'
 import { OsmNoteDialog } from '../osm_notes/OsmNoteDialog.tsx'
 import { StreetImageryDialog } from '../street_imagery/StreetImageryDialog.tsx'
-import { buildElementChanges, type AdiffAction } from './changesetElements.ts'
+import { buildElementChanges, type AdiffAction, type ElementChange } from './changesetElements.ts'
 import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
 import { refDeepLinkKey, refParamFromElement, refsEqual } from './refSelection.ts'
 import { ReviewColumn } from './ReviewColumn.tsx'
+import { changeKey } from './tagGroups.ts'
 import { WorkAreaBar } from './WorkAreaBar.tsx'
 import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
@@ -96,6 +98,7 @@ function Changeset({
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null)
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
+  const { setGroupCursor } = useReviewFocusActions()
   const activeWorkArea = useActiveWorkArea(workAreas)
   const jumpToWorkArea = useJumpToWorkArea(workAreas)
   const showWorkAreas = ready && workAreas.length > 1
@@ -135,7 +138,10 @@ function Changeset({
   if (!revealPending) {
     if (!applyKey) {
       if (appliedDeepLinkKey != null) setAppliedDeepLinkKey(null)
-    } else if (inAppDeepLinkKey !== urlDeepLinkKey && appliedDeepLinkKey !== applyKey) {
+    } else if (inAppDeepLinkKey === urlDeepLinkKey) {
+      // Remember the in-app selection: while the next one waits for the URL, this key is still in it.
+      if (appliedDeepLinkKey !== applyKey) setAppliedDeepLinkKey(applyKey)
+    } else if (appliedDeepLinkKey !== applyKey) {
       setAppliedDeepLinkKey(applyKey)
       setDeepLinkEpoch((epoch) => epoch + 1)
       setBindingsState({
@@ -174,6 +180,21 @@ function Changeset({
     selectRef(null)
     if (!mainMap || !mapLoaded || !viewer) return
     clearSelectedFeatureState(mainMap.getMap(), viewer.geojson)
+  }
+
+  /** Put the review cursor on a group: no member selected, the map fits all of them. */
+  function zoomToGroup(members: readonly ElementChange[]) {
+    clearSelection()
+    const [firstMember] = members
+    if (firstMember) setGroupCursor(changeKey(firstMember))
+    if (!mainMap || !mapLoaded || !viewer) return
+    const map = mainMap.getMap()
+    runReviewCamera((bottomInset) => {
+      flyMapToAdiffElements(map, viewer, new Set(members.map(changeKey)), {
+        staged: true,
+        bottomInset,
+      })
+    })
   }
 
   return (
@@ -248,6 +269,7 @@ function Changeset({
             deepLinkReveal={deepLinkReveal}
             deepLinkEpoch={deepLinkEpoch}
             zoomToAndSelect={zoomToAndSelect}
+            zoomToGroup={zoomToGroup}
             clearSelection={clearSelection}
           />
         </>

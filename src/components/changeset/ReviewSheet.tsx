@@ -199,7 +199,7 @@ export function ReviewSheet({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-xl">
-          <div onPointerDown={startSheetDrag} className="relative shrink-0 touch-none">
+          <div onPointerDown={startSheetDrag} className="relative shrink-0 touch-none bg-zinc-50">
             {/* The strip the map position leaves visible; measured for the stops. */}
             <div
               ref={stripRef}

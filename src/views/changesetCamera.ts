@@ -270,6 +270,19 @@ export function flyMapToAdiffElement(
   return flyMapToFitFeatures(map, featuresToFitForNote(viewer, { type, id }, pin), options)
 }
 
+/** Fly the camera to all of `elementKeys` (`node/123`), such as the members of a tag group. */
+export function flyMapToAdiffElements(
+  map: Map,
+  viewer: ChangesetAdiffViewer,
+  elementKeys: ReadonlySet<string>,
+  options?: FlyFitOptions,
+) {
+  const features = viewer.geojson.features.filter((feature) =>
+    elementKeys.has(`${feature.properties?.type}/${feature.properties?.id}`),
+  )
+  return flyMapToFitFeatures(map, features, options)
+}
+
 /** Fly the camera to a pin-only note (no object `ref`). */
 export function flyMapToPin(map: Map, pin: PinParam, options?: FlyFitOptions) {
   return flyMapToFitFeatures(map, [pinPointFeature(pin)], options)

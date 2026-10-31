@@ -2,13 +2,17 @@ import { create } from 'zustand'
 
 export type ChangesetHover = { type: string; id: number }
 
+/** `focus`: also move DOM focus there, for moves of the review cursor. */
+export type ListScrollTarget = ChangesetHover & { focus?: boolean }
+
 interface ChangesetHoverStore {
   hover: ChangesetHover | null
-  listScrollTarget: ChangesetHover | null
+  listScrollTarget: ListScrollTarget | null
   listScrollNonce: number
   actions: {
     setHover: (hover: ChangesetHover | null) => void
-    requestListScroll: (target: ChangesetHover) => void
+    requestListScroll: (target: ListScrollTarget) => void
+    clearListScrollTarget: () => void
   }
 }
 
@@ -29,6 +33,7 @@ const useChangesetHoverStore = create<ChangesetHoverStore>()((set) => ({
         listScrollTarget: target,
         listScrollNonce: state.listScrollNonce + 1,
       })),
+    clearListScrollTarget: () => set({ listScrollTarget: null }),
   },
 }))
 
@@ -47,6 +52,12 @@ export const useIsAnyElementHovered = (elements: readonly ChangesetHover[]) =>
   })
 
 export const useListScrollTarget = () => useChangesetHoverStore((state) => state.listScrollTarget)
+
+/** Re-renders only when this element becomes or stops being the scroll target. */
+export const useIsListScrollTarget = (type: string, id: number) =>
+  useChangesetHoverStore(
+    (state) => state.listScrollTarget?.type === type && state.listScrollTarget.id === id,
+  )
 
 export const useListScrollNonce = () => useChangesetHoverStore((state) => state.listScrollNonce)
 

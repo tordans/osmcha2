@@ -12,7 +12,6 @@ import {
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import { useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
-import { isOsmSandboxAuth } from '../../notes/osmAuthConfig.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
 import type { RefParam } from '../../routing/refParam.ts'
@@ -20,6 +19,7 @@ import {
   useChangesetHoverActions,
   useListScrollNonce,
   useListScrollTarget,
+  type ListScrollTarget,
 } from '../../stores/changeset-hover-store.ts'
 import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
@@ -28,7 +28,7 @@ import { moveReviewSheet, resetReviewSheet } from '../../views/reviewCamera.ts'
 import { Badge } from '../ui/badge.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
-import { buildElementChanges, type AdiffAction } from './changesetElements.ts'
+import { buildElementChanges, type AdiffAction, type ElementChange } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
@@ -67,6 +67,7 @@ type ReviewColumnProps = {
   deepLinkReveal?: RefParam | null
   deepLinkEpoch?: number
   zoomToAndSelect: (type: string, id: number, key?: string) => void
+  zoomToGroup: (members: readonly ElementChange[]) => void
   /** Deselect, also on the map (phone element card ×). */
   clearSelection: () => void
 }
@@ -89,6 +90,7 @@ export function ReviewColumn({
   deepLinkReveal,
   deepLinkEpoch = 0,
   zoomToAndSelect,
+  zoomToGroup,
   clearSelection,
 }: ReviewColumnProps) {
   const queryClient = useQueryClient()
@@ -111,24 +113,31 @@ export function ReviewColumn({
     pollWhileActive: true,
   })
   const discussions = discussion?.changeset?.comments || []
+  const hasDiscussion = discussions.length > 0
 
   /**
    * Scroll the Changes list to a row. Phones keep the sheet where it is: the list is laid
    * out while hidden, and a page load starts in the list anyway.
    */
-  const revealChangeRow = useEffectEvent((target: { type: string; id: number }) => {
+  const revealChangeRow = useEffectEvent((target: ListScrollTarget) => {
     if (!bindingsState[CHANGESET_DETAILS_DETAILS.label]) {
       exclusiveKeyToggle(CHANGESET_DETAILS_DETAILS.label)
     }
 
     const rowId = changeRowDomId(target.type, target.id)
     let frame = 0
+    let focusPending = target.focus === true
 
     function attempt(remaining: number) {
       const scroller = changesScrollerRef.current
       const row = document.getElementById(rowId)
       if (scroller && row instanceof HTMLElement && row.getBoundingClientRect().height > 0) {
         scrollChildIntoScroller(scroller, row, 8, stickyTopOf(scroller))
+        // A row in a group that is only just opening is still inert and takes focus a frame later.
+        if (focusPending && !row.closest('[inert]')) {
+          row.focus({ preventScroll: true })
+          focusPending = document.activeElement !== row
+        }
       }
       if (remaining <= 0) return
       frame = requestAnimationFrame(() => attempt(remaining - 1))
@@ -144,18 +153,25 @@ export function ReviewColumn({
     return resetReviewSheet
   }, [])
 
+  // Apart from the deep link: the selection follows a list scroll, and must not stop its frames.
   useLayoutEffect(
-    function scrollSelectedChangeIntoView() {
+    function scrollRequestedChangeIntoView() {
       if (listScrollNonce > lastScrolledNonceRef.current && listScrollTarget) {
         lastScrolledNonceRef.current = listScrollNonce
         return revealChangeRow(listScrollTarget)
       }
+    },
+    [listScrollNonce, listScrollTarget],
+  )
+
+  useLayoutEffect(
+    function scrollDeepLinkedChangeIntoView() {
       if (deepLinkEpoch > lastScrolledDeepLinkRef.current && selectedRef) {
         lastScrolledDeepLinkRef.current = deepLinkEpoch
         return revealChangeRow({ type: selectedRef.type, id: selectedRef.id })
       }
     },
-    [listScrollNonce, listScrollTarget, deepLinkEpoch, selectedRef],
+    [deepLinkEpoch, selectedRef],
   )
 
   function revealDiscussionNote(target: NoteTarget) {
@@ -165,6 +181,8 @@ export function ReviewColumn({
   }
 
   function selectPanel(label: string) {
+    // The tabs only exist with a discussion to switch to; the hotkeys follow them.
+    if (!hasDiscussion) return
     const turningOn = !bindingsState[label]
     exclusiveKeyToggle(label)
     if (turningOn && getReviewSheetPosition() === 'map') moveReviewSheet('list')
@@ -200,13 +218,6 @@ export function ReviewColumn({
       bodySlot={headerBodySlot}
     />
   )
-
-  const sandboxNote =
-    import.meta.env.DEV && isOsmSandboxAuth() ? (
-      <p className="px-2.5 pb-1 text-xs text-amber-800">
-        Discussion posts go to the OSM sandbox, not osm.org.
-      </p>
-    ) : null
 
   const tabs = (
     <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-2.5">
@@ -270,6 +281,8 @@ export function ReviewColumn({
             deepLinkReveal={deepLinkReveal}
             deepLinkEpoch={deepLinkEpoch}
             zoomToAndSelect={zoomToAndSelect}
+            zoomToGroup={zoomToGroup}
+            clearSelection={clearSelection}
           />
         </motion.div>
       ) : discussionActive ? (
@@ -306,7 +319,6 @@ export function ReviewColumn({
       : undefined
 
   if (!desktop) {
-    const hasDiscussion = discussions.length > 0
     return (
       <ReviewSheet
         summary={sheetSummary(changesetCount, discussions.length)}
@@ -325,8 +337,7 @@ export function ReviewColumn({
         stickyTopPx={hasDiscussion ? 44 : 0}
       >
         <div ref={setHeaderBodySlot} />
-        {sandboxNote}
-        {/* Phones switch tabs only when there is a discussion to switch to. Sticks below the menus. */}
+        {/* Sticks below the menus. */}
         {hasDiscussion ? (
           <div className="sticky top-0 z-20 border-b border-zinc-200 bg-white">{tabs}</div>
         ) : null}
@@ -344,10 +355,9 @@ export function ReviewColumn({
     >
       <div className={clsx('flex min-h-0 flex-1 flex-col', paneCardClipClassName)}>
         {header}
-        {sandboxNote}
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-zinc-200">{tabs}</div>
+          {hasDiscussion ? <div className="shrink-0 border-b border-zinc-200">{tabs}</div> : null}
 
           <div
             ref={changesScrollerRef}

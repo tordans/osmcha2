@@ -7,7 +7,7 @@ Zustand v5 stores, one file per concern, named `{domain}-store.ts`. Each store k
 
 ## Deliberate exception: `get*` accessors
 
-Each store also exports non-reactive accessors, such as `getAuthToken`, `getAuthActions`, `getMapStyle`, `getListWidth`, `getListPaneOpen`, `getOpenEditor`, `getChangesetDraft` and `getFocusedObject`. They wrap `useXStore.getState()`. The stock Zustand skill does not allow this, but this repo keeps them on purpose, for code that runs outside React: event handlers, route loaders and the request layer in `src/network/request.ts`.
+Each store also exports non-reactive accessors, such as `getAuthToken`, `getAuthActions`, `getMapStyle`, `getListWidth`, `getListPaneOpen`, `getOpenEditor`, `getChangesetDraft` and `getGroupCursorKey`. They wrap `useXStore.getState()`. The stock Zustand skill does not allow this, but this repo keeps them on purpose, for code that runs outside React: event handlers, route loaders and the request layer in `src/network/request.ts`.
 
 Rules:
 

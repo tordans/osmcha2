@@ -100,3 +100,38 @@ export const FILTER_BY_USER: HotkeyBinding = {
   label: 'FILTER_BY_USER',
   hotkeys: ['A'],
 }
+
+export const REVIEW_MARK_SEEN: HotkeyBinding = {
+  label: 'REVIEW_MARK_SEEN',
+  hotkeys: ['S'],
+}
+
+export const REVIEW_MARK_UNSEEN: HotkeyBinding = {
+  label: 'REVIEW_MARK_UNSEEN',
+  hotkeys: ['Shift+S'],
+}
+
+export const REVIEW_NEXT_STEP: HotkeyBinding = {
+  label: 'REVIEW_NEXT_STEP',
+  hotkeys: ['.'],
+}
+
+export const REVIEW_PREVIOUS_STEP: HotkeyBinding = {
+  label: 'REVIEW_PREVIOUS_STEP',
+  hotkeys: [','],
+}
+
+export const REVIEW_STEP_INTO: HotkeyBinding = {
+  label: 'REVIEW_STEP_INTO',
+  hotkeys: ['Enter'],
+}
+
+export const REVIEW_STEP_OUT: HotkeyBinding = {
+  label: 'REVIEW_STEP_OUT',
+  hotkeys: ['Escape'],
+}
+
+export const REVIEW_ADD_NOTE: HotkeyBinding = {
+  label: 'REVIEW_ADD_NOTE',
+  hotkeys: ['N'],
+}

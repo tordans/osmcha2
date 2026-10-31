@@ -27,6 +27,7 @@ import {
   refDeepLinkKey,
   refParamFromElement,
 } from '../components/changeset/refSelection.ts'
+import type { TagGroups } from '../components/changeset/tagGroups.ts'
 import { onViewportEditorLayersMoveEnd } from '../components/changeset/useViewportEditorLayers.ts'
 import { onDebugMapInspectorMoveEnd } from '../components/debug/DebugDataHelper.tsx'
 import { Loading } from '../components/loading.tsx'
@@ -56,6 +57,7 @@ import {
   useMapStyle,
   waitForMapStyleHydration,
 } from '../stores/map-style-store.ts'
+import { useGroupCursorKey } from '../stores/review-focus-store.ts'
 import { useStreetImageryLayerOn } from '../stores/street-imagery-layer-store.ts'
 import {
   CHANGESET_MAP_ID,
@@ -113,6 +115,8 @@ import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
 
 // The street photo layer, the package and its providers load when a provider is first switched on.
 const StreetImageryLayers = lazy(() => import('./StreetImageryLayers.tsx'))
+// The outline around a selected "Same tag changes" group; Bubble Sets loads with the first one.
+const TagGroupOutline = lazy(() => import('./TagGroupOutline.tsx'))
 
 const changesetRouteApi = getRouteApi('/changesets/$id')
 
@@ -194,6 +198,8 @@ interface CMapProps {
   viewer: ChangesetAdiffViewer | null
   /** The first area is the initial view; far-apart edits make a whole-changeset fit unreadable. */
   workAreas: WorkArea[]
+  /** The Changes list's groups and their codes; the group under the cursor gets an outline. */
+  tagGroups: TagGroups
   selectRef: (ref: RefParam | null) => void
   inAppDeepLinkKey: string | null
 }
@@ -203,6 +209,7 @@ function CMap({
   imageryUsed,
   viewer,
   workAreas,
+  tagGroups,
   selectRef,
   inAppDeepLinkKey,
 }: CMapProps) {
@@ -254,6 +261,12 @@ function CMap({
   const { setHover, requestListScroll } = useChangesetHoverActions()
   const jumpToWorkArea = useJumpToWorkArea(workAreas)
   const viewBounds = workAreas[0]?.bounds ?? null
+  const selectedRef = parseRefParam(refSearch ?? '')
+  const selectedKey = selectedRef ? `${selectedRef.type}/${selectedRef.id}` : null
+  // The review cursor on a group shows its outline as a selected member does.
+  const groupCursorKey = useGroupCursorKey()
+  const outlinedKey = groupCursorKey ?? selectedKey
+  const selectedTagGroup = outlinedKey ? tagGroups.groupByMember.get(outlinedKey) : undefined
 
   const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
@@ -312,9 +325,9 @@ function CMap({
         const imageryKey = `${changesetId}:${imageryUsed ?? ''}`
         if (matchedImageryUsedRef.current !== imageryKey) {
           matchedImageryUsedRef.current = imageryKey
-          const matchedStyleId = imageryUsed
-            ? matchImageryUsedStyleId(imageryUsed, (await loadEli()).getLayers())
-            : null
+          // Without the index the changeset's imagery is unknown; the map still gets its style.
+          const eli = imageryUsed ? await loadEli().catch(() => null) : null
+          const matchedStyleId = eli ? matchImageryUsedStyleId(imageryUsed, eli.getLayers()) : null
           if (cancelled) return
           if (matchedStyleId && matchedStyleId !== getMapStyle()) {
             getMapStyleActions().setStyle(matchedStyleId)
@@ -696,6 +709,16 @@ function CMap({
                 beforeId={firstFeatureLayerId}
                 onJump={jumpToWorkArea}
               />
+            ) : null}
+            {selectedTagGroup ? (
+              // Keyed: the previous group's outline goes at once, not when the next one is computed.
+              <Suspense key={selectedTagGroup.code} fallback={null}>
+                <TagGroupOutline
+                  viewer={viewer}
+                  group={selectedTagGroup}
+                  beforeId={firstFeatureLayerId}
+                />
+              </Suspense>
             ) : null}
             {/* compact = ⓘ toggle (also collapses on pan). MapLibre still starts expanded. */}
             <AttributionControl compact position="bottom-left" />

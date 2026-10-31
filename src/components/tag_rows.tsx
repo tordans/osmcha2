@@ -192,7 +192,6 @@ export function TagRows({
 
   const { mutations, unchanged } = orderTagRows(rows)
   const ordered = [...mutations, ...unchanged]
-  const dividerAt = mutations.length > 0 && unchanged.length > 0 ? mutations.length : -1
 
   return (
     <dl
@@ -205,7 +204,7 @@ export function TagRows({
         className,
       )}
     >
-      {ordered.map((row, index) => {
+      {ordered.map((row) => {
         const style = ROW_STYLE[row.kind]
         const keys = tagRowKeys(row)
         const highlighted = highlightedKey != null && keys.includes(highlightedKey)
@@ -213,16 +212,6 @@ export function TagRows({
         const noteCount = keys.reduce((sum, key) => sum + (noteCountByKey?.[key] ?? 0), 0)
         return (
           <Fragment key={row.key}>
-            {index === dividerAt ? (
-              <div
-                className={clsx(
-                  'col-span-5 border-b border-zinc-950/5 px-1 pt-2 pb-0.5 font-sans text-zinc-500',
-                  typeScale.small,
-                )}
-              >
-                Unchanged
-              </div>
-            ) : null}
             <div
               className={clsx(
                 'group/tag-row col-span-5 grid grid-cols-subgrid items-center gap-x-1.5 border-b border-zinc-950/5 px-1 py-0.5',

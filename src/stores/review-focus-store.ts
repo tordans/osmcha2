@@ -1,24 +1,26 @@
 import { create } from 'zustand'
 
-type FocusedObject = { changesetId: number; type: string; id: number }
-
 interface ReviewFocusStore {
-  focusedObject: FocusedObject | null
+  /**
+   * The "Same tag changes" group under the review cursor, by the `node/123`-style key of its first
+   * member. A cursor on a row is the URL `ref` instead; see `reviewCursorOf`.
+   */
+  groupCursorKey: string | null
   /** Changeset whose Post notes card scrolls into view once it renders; cleared after. */
   finishFocusRequest: number | null
   actions: {
-    setFocusedObject: (focused: FocusedObject | null) => void
+    setGroupCursor: (key: string | null) => void
     requestFinishFocus: (changesetId: number) => void
     clearFinishFocusRequest: () => void
   }
 }
 
-/** Not persisted: kept apart from the notes store so focus changes do not rewrite all drafts. */
+/** Not persisted: kept apart from the notes store so cursor moves do not rewrite all drafts. */
 const useReviewFocusStore = create<ReviewFocusStore>()((set) => ({
-  focusedObject: null,
+  groupCursorKey: null,
   finishFocusRequest: null,
   actions: {
-    setFocusedObject: (focused) => set({ focusedObject: focused }),
+    setGroupCursor: (key) => set({ groupCursorKey: key }),
     requestFinishFocus: (changesetId) => set({ finishFocusRequest: changesetId }),
     clearFinishFocusRequest: () =>
       set((state) => (state.finishFocusRequest == null ? state : { finishFocusRequest: null })),
@@ -27,17 +29,23 @@ const useReviewFocusStore = create<ReviewFocusStore>()((set) => ({
 
 export const useFinishFocusRequest = () => useReviewFocusStore((state) => state.finishFocusRequest)
 
+export const useGroupCursorKey = () => useReviewFocusStore((state) => state.groupCursorKey)
+
+/** Re-renders only when this group gets or loses the cursor. */
+export const useIsGroupCursor = (key: string) =>
+  useReviewFocusStore((state) => state.groupCursorKey === key)
+
 export const useReviewFocusActions = () => useReviewFocusStore((state) => state.actions)
 
 export function getReviewFocusActions() {
   return useReviewFocusStore.getState().actions
 }
 
-/** Read at keypress time so the Changes list does not re-render on every row focus. */
-export function getFocusedObject() {
-  return useReviewFocusStore.getState().focusedObject
+/** Read at keypress time: the review keys act on the cursor as it is now. */
+export function getGroupCursorKey() {
+  return useReviewFocusStore.getState().groupCursorKey
 }
 
 export function resetReviewFocusStoreForTests() {
-  useReviewFocusStore.setState({ focusedObject: null, finishFocusRequest: null })
+  useReviewFocusStore.setState({ groupCursorKey: null, finishFocusRequest: null })
 }
