@@ -107,7 +107,10 @@ import {
   type InspectHoverItem,
 } from './spyglassOverlay.ts'
 import { SpyglassOverlay } from './SpyglassOverlay.tsx'
-import { openStreetImageryPhotoFromClick } from './streetImageryMapClick.ts'
+import {
+  isStreetImageryPhotoUnder,
+  openStreetImageryPhotoFromClick,
+} from './streetImageryMapClick.ts'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
 import { OsmNoteMarker, StreetImageryPhotoMarker } from './TemporaryPinMarkers.tsx'
 import { useJumpToWorkArea } from './useWorkAreaMap.ts'
@@ -597,10 +600,10 @@ function CMap({
     const hoverFeatures = event.features?.filter(isReviewVisible)
 
     if (nextFeatureId == null) {
+      // A changeset feature wins over a photo; context lines below a photo do not.
+      if (openStreetImageryPhotoFromClick(event)) return
       // Spyglass / noop are inspect-only. Do not treat them as an empty-map deselect.
       if (inspectHoverFromFeatures(hoverFeatures)) return
-      // A changeset feature wins over a photo; only an empty spot may hit a photo of the street layer.
-      if (openStreetImageryPhotoFromClick(event)) return
       lastClickFeatureIdRef.current = null
       selectRef(null)
       clearSelectedFeatureState(map, geojson)
@@ -621,12 +624,10 @@ function CMap({
   function handleMouseMove(event: MapLayerMouseEvent) {
     const placingPin = Boolean(pinPlacement)
     const hoverFeatures = event.features?.filter(isReviewVisible)
-    setCursor(
-      cursorForMapHover(hoverFeatures, {
-        pinPlacement: placingPin,
-        overlayActive,
-      }),
-    )
+    const cursor = cursorForMapHover(hoverFeatures, { pinPlacement: placingPin })
+    // The same order as a click: a changeset feature, then a photo, then what can only be inspected.
+    const overPhoto = cursor !== 'pointer' && !placingPin && isStreetImageryPhotoUnder(event)
+    setCursor(overPhoto ? 'pointer' : cursor)
     if (placingPin) {
       setInspectHover(null)
       setInspectPoint(null)
@@ -729,7 +730,7 @@ function CMap({
             <StreetImageryPhotoMarker changesetId={changesetId} />
           </Map>
         ) : null}
-        {overlayActive && inspectHover && inspectPoint ? (
+        {inspectHover && inspectPoint ? (
           <SpyglassInspectFlyout hover={inspectHover} point={inspectPoint} />
         ) : null}
       </div>

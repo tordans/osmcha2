@@ -1,10 +1,22 @@
-import { PhotoDateRangeFilter } from '@osm-editor-kit/street-imagery-react'
+import {
+  PhotoDateRangeFilter,
+  useAllProviderPhotos,
+  useMapViewportBbox,
+} from '@osm-editor-kit/street-imagery-react'
 import {
   useEffectiveStreetImageryDate,
   useStreetImageryDate,
   useStreetImageryLayerActions,
+  useStreetImageryPhotoKind,
+  useStreetImageryProvidersOn,
 } from '../../stores/street-imagery-layer-store.ts'
-import { DEFAULT_PHOTO_MAX_AGE_YEARS } from './streetImageryLayerSettings.ts'
+import { CHANGESET_MAP_ID } from '../../views/changesetAdiffViewer.ts'
+import { useMapZoom } from '../../views/useMapZoom.ts'
+import { DEFAULT_PHOTO_MAX_AGE_YEARS, photoTypesOfKind } from './streetImageryLayerSettings.ts'
+import { configureStreetImageryLayer } from './streetImageryProviders.ts'
+
+// This chunk can arrive before the map's layer does.
+configureStreetImageryLayer()
 
 /**
  * The package's date slider for the photo layer, in a chunk of its own: it loads when the panel
@@ -14,12 +26,20 @@ export default function StreetImageryDateFilter() {
   const date = useEffectiveStreetImageryDate()
   const chosen = useStreetImageryDate()
   const { setDate } = useStreetImageryLayerActions()
+  // The bars show what the view holds before the date filter, so they answer "which range?". Same
+  // providers, view and zoom as the map's layer: its queries answer, nothing loads twice.
+  const providers = useStreetImageryProvidersOn()
+  const bbox = useMapViewportBbox(CHANGESET_MAP_ID)
+  const zoom = useMapZoom(CHANGESET_MAP_ID)
+  const photoKind = useStreetImageryPhotoKind()
+  const { photos } = useAllProviderPhotos(providers, bbox, zoom, photoTypesOfKind(photoKind))
 
   return (
     <div className="space-y-2">
       <PhotoDateRangeFilter
         value={date}
         onChange={setDate}
+        capturedAt={photos.map((photo) => photo.capturedAt)}
         yearLines={[1, 2, 3, 4]}
         recommendedMaxAgeYears={DEFAULT_PHOTO_MAX_AGE_YEARS}
       />

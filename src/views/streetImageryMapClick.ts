@@ -1,6 +1,9 @@
 import type { MapLayerMouseEvent } from 'maplibre-gl'
 
-type PhotoClickHandler = (event: MapLayerMouseEvent) => boolean
+type PhotoClickHandler = {
+  open: (event: MapLayerMouseEvent) => boolean
+  isOver: (event: MapLayerMouseEvent) => boolean
+}
 
 let handler: PhotoClickHandler | null = null
 
@@ -18,5 +21,10 @@ export function setStreetImageryClickHandler(next: PhotoClickHandler | null) {
  * changeset feature under the finger wins over a photo.
  */
 export function openStreetImageryPhotoFromClick(event: MapLayerMouseEvent) {
-  return handler?.(event) ?? false
+  return handler?.open(event) ?? false
+}
+
+/** Whether a click here would open a photo, for the cursor. `false` while the layer is off. */
+export function isStreetImageryPhotoUnder(event: MapLayerMouseEvent) {
+  return handler?.isOver(event) ?? false
 }

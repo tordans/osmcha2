@@ -18,17 +18,24 @@ const sizes = {
 export function Dialog({
   size = 'lg',
   className,
+  backdropClassName,
   children,
   ...props
-}: { size?: keyof typeof sizes; className?: string; children: React.ReactNode } & Omit<
-  Headless.DialogProps,
-  'as' | 'className'
->) {
+}: {
+  size?: keyof typeof sizes
+  className?: string
+  backdropClassName?: string
+  children: React.ReactNode
+} & Omit<Headless.DialogProps, 'as' | 'className'>) {
   return (
-    <Headless.Dialog {...props}>
+    // Above the map buttons and the phone's review sheet, which have a z-index of their own.
+    <Headless.Dialog {...props} className="relative z-50">
       <Headless.DialogBackdrop
         transition
-        className="fixed inset-0 flex w-screen justify-center overflow-y-auto bg-zinc-950/25 px-2 py-2 transition duration-100 focus:outline-0 data-closed:opacity-0 data-enter:ease-out data-leave:ease-in sm:px-6 sm:py-8 lg:px-8 lg:py-16"
+        className={clsx(
+          'fixed inset-0 flex w-screen justify-center overflow-y-auto bg-zinc-950/25 px-2 py-2 transition duration-100 focus:outline-0 data-closed:opacity-0 data-enter:ease-out data-leave:ease-in sm:px-6 sm:py-8 lg:px-8 lg:py-16',
+          backdropClassName,
+        )}
       />
 
       <div className="fixed inset-0 w-screen overflow-y-auto pt-6 sm:pt-0">

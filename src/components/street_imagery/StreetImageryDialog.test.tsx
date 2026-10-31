@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { act } from 'react'
 import { MapProvider } from 'react-map-gl/maplibre'
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { getStreetImageryViewerActions } from '../../stores/street-imagery-viewer-store.ts'
 import { StreetImageryDialog } from './StreetImageryDialog.tsx'
 
@@ -65,6 +65,14 @@ afterEach(() => {
 })
 
 describe('StreetImageryDialog', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }))
+  })
+
   test('renders nothing and requests nothing until a photo is opened', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
@@ -82,7 +90,7 @@ describe('StreetImageryDialog', () => {
     )
 
     expect(await screen.findByTestId('viewer')).toBeTruthy()
-    expect(screen.getByText('Panoramax photo')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Panoramax photo' })).toBeTruthy()
     expect(screen.getByText('by Kartierer')).toBeTruthy()
     expect(screen.getByRole('link', { name: /Open on Panoramax/ }).getAttribute('href')).toContain(
       `#pic=${PANORAMAX_ID}`,

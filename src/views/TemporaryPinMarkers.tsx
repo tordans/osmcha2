@@ -10,37 +10,33 @@ import {
 } from '../stores/street-imagery-viewer-store.ts'
 
 type TemporaryPinMarkerProps = {
-  changesetId: number | null
   lat: number
   lng: number
   label: string
   icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
   dotClassName: string
   onOpen: () => void
-  onClear: () => void
 }
 
-/**
- * A marker that "Show on map" of a quick view puts on the map. Tapping it opens the quick view
- * again; it goes away when the changeset changes.
- */
+/** Lives in the always mounted parent: a cleanup in the marker would run with the marker itself. */
+function useClearOnChangesetChange(changesetId: number | null, clear: () => void) {
+  useEffect(
+    function clearMarkerWhenChangesetChanges() {
+      return clear
+    },
+    [changesetId, clear],
+  )
+}
+
+/** A marker that "Show on map" of a quick view puts on the map. Tapping it opens the quick view again. */
 function TemporaryPinMarker({
-  changesetId,
   lat,
   lng,
   label,
   icon: Icon,
   dotClassName,
   onOpen,
-  onClear,
 }: TemporaryPinMarkerProps) {
-  useEffect(
-    function clearMarkerWhenChangesetChanges() {
-      return onClear
-    },
-    [changesetId, onClear],
-  )
-
   return (
     <Marker
       latitude={lat}
@@ -74,17 +70,16 @@ function TemporaryPinMarker({
 export function OsmNoteMarker({ changesetId }: { changesetId: number | null }) {
   const marker = useOsmNoteMarker()
   const { openNote, clearMarker } = useOsmNoteActions()
+  useClearOnChangesetChange(changesetId, clearMarker)
   if (!marker) return null
   return (
     <TemporaryPinMarker
-      changesetId={changesetId}
       lat={marker.lat}
       lng={marker.lng}
       label={`OSM note #${marker.id}, show details`}
       icon={ChatBubbleLeftIcon}
       dotClassName="bg-amber-500"
       onOpen={() => openNote(marker.id)}
-      onClear={clearMarker}
     />
   )
 }
@@ -93,17 +88,16 @@ export function OsmNoteMarker({ changesetId }: { changesetId: number | null }) {
 export function StreetImageryPhotoMarker({ changesetId }: { changesetId: number | null }) {
   const marker = useStreetImageryMarker()
   const { openPhoto, clearMarker } = useStreetImageryViewerActions()
+  useClearOnChangesetChange(changesetId, clearMarker)
   if (!marker) return null
   return (
     <TemporaryPinMarker
-      changesetId={changesetId}
       lat={marker.lat}
       lng={marker.lng}
       label={`${STREET_IMAGERY_PROVIDER_LABEL[marker.provider]} photo ${marker.id}, show photo`}
       icon={CameraIcon}
       dotClassName="bg-sky-600"
       onOpen={() => openPhoto({ provider: marker.provider, id: marker.id })}
-      onClear={clearMarker}
     />
   )
 }

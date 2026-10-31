@@ -29,7 +29,7 @@ export const SPYGLASS_ATTRIBUTION =
 /**
  * Off until spyglass.jochentopf.com allow-lists this site. Its tile CORS covers
  * localhost only, so the overlay loads in dev (through a proxy) but never on
- * GitHub Pages. The Filter map panel links to Spyglass instead. Set to `true`
+ * GitHub Pages. The changeset menu's map locations link to Spyglass instead. Set to `true`
  * once the origin is allow-listed; the overlay code is kept for that day.
  */
 export const SPYGLASS_OVERLAY_AVAILABLE: boolean = false
@@ -95,7 +95,6 @@ export function changesetInspectLayerIds(
   options: { overlayActive: boolean; showNoop: boolean; spyglassMounted: boolean },
 ): string[] {
   const ids = changesetClickableLayerIds(layers)
-  if (!options.overlayActive) return ids
   if (options.showNoop) ids.push(...CHANGESET_NOOP_LAYER_IDS)
   if (options.spyglassMounted) ids.push(...SPYGLASS_LAYER_IDS)
   return ids
@@ -103,12 +102,12 @@ export function changesetInspectLayerIds(
 
 export function cursorForMapHover(
   features: Array<InspectableMapFeature> | undefined,
-  options: { pinPlacement: boolean; overlayActive: boolean },
+  options: { pinPlacement: boolean },
 ): 'crosshair' | 'pointer' | 'help' | 'default' {
   if (options.pinPlacement) return 'crosshair'
   const hits = features ?? []
   if (hits.some((feature) => isClickableMapFeature(feature))) return 'pointer'
-  if (options.overlayActive && hits.some((feature) => isInspectMapFeature(feature))) return 'help'
+  if (hits.some((feature) => isInspectMapFeature(feature))) return 'help'
   return 'default'
 }
 

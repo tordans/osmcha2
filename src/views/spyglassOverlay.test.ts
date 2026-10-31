@@ -77,7 +77,7 @@ describe('isClickableMapFeature', () => {
 })
 
 describe('changesetInspectLayerIds', () => {
-  test('matches clickable when the overlay is off', () => {
+  test('keeps noop hover when the overlay is off, without spyglass layers', () => {
     expect(
       changesetInspectLayerIds(viewerLayers, {
         overlayActive: false,
@@ -129,7 +129,6 @@ describe('cursorForMapHover', () => {
     expect(
       cursorForMapHover([{ layer: { id: 'changeset-way-new' } }], {
         pinPlacement: true,
-        overlayActive: true,
       }),
     ).toBe('crosshair')
   })
@@ -138,7 +137,7 @@ describe('cursorForMapHover', () => {
     expect(
       cursorForMapHover(
         [{ layer: { id: SPYGLASS_WAY_HIT_LAYER_ID } }, { layer: { id: 'changeset-way-new' } }],
-        { pinPlacement: false, overlayActive: true },
+        { pinPlacement: false },
       ),
     ).toBe('pointer')
   })
@@ -147,13 +146,11 @@ describe('cursorForMapHover', () => {
     expect(
       cursorForMapHover([{ layer: { id: SPYGLASS_NODE_HIT_LAYER_ID } }], {
         pinPlacement: false,
-        overlayActive: true,
       }),
     ).toBe('help')
     expect(
       cursorForMapHover([{ layer: { id: 'changeset-way-unchanged' } }], {
         pinPlacement: false,
-        overlayActive: true,
       }),
     ).toBe('help')
   })
@@ -167,20 +164,9 @@ describe('cursorForMapHover', () => {
             properties: { action: 'noop', type: 'way', id: 1 },
           },
         ],
-        { pinPlacement: false, overlayActive: true },
+        { pinPlacement: false },
       ),
     ).toBe('help')
-    expect(
-      cursorForMapHover(
-        [
-          {
-            layer: { id: 'changeset-way-bg' },
-            properties: { action: 'noop', type: 'way', id: 1 },
-          },
-        ],
-        { pinPlacement: false, overlayActive: false },
-      ),
-    ).toBe('default')
   })
 
   test('treats halo hits on create/modify/delete as clickable', () => {
@@ -192,20 +178,17 @@ describe('cursorForMapHover', () => {
             properties: { action: 'create', type: 'way', id: 1 },
           },
         ],
-        { pinPlacement: false, overlayActive: true },
+        { pinPlacement: false },
       ),
     ).toBe('pointer')
   })
 
   test('defaults when there are no inspectable hits', () => {
-    expect(cursorForMapHover([], { pinPlacement: false, overlayActive: true })).toBe('default')
-    expect(cursorForMapHover(undefined, { pinPlacement: false, overlayActive: true })).toBe(
-      'default',
-    )
+    expect(cursorForMapHover([], { pinPlacement: false })).toBe('default')
+    expect(cursorForMapHover(undefined, { pinPlacement: false })).toBe('default')
     expect(
       cursorForMapHover([{ layer: { id: 'changeset-overlay-bg' } }], {
         pinPlacement: false,
-        overlayActive: true,
       }),
     ).toBe('default')
   })

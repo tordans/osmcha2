@@ -2,8 +2,10 @@ import type { DateRange } from '@osm-editor-kit/street-imagery'
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 import {
   DEFAULT_PHOTO_DATE,
+  STREET_IMAGERY_LAYER_PROVIDERS,
   STREET_IMAGERY_PHOTO_KINDS,
   type StreetImageryPhotoKind,
 } from '../components/street_imagery/streetImageryLayerSettings.ts'
@@ -73,6 +75,12 @@ const useStreetImageryLayerStore = create<StreetImageryLayerStore>()(
 export const useMapillaryLayerOn = () => useStreetImageryLayerStore((state) => state.mapillary)
 
 export const usePanoramaxLayerOn = () => useStreetImageryLayerStore((state) => state.panoramax)
+
+/** The providers that are switched on. */
+export const useStreetImageryProvidersOn = () =>
+  useStreetImageryLayerStore(
+    useShallow((state) => STREET_IMAGERY_LAYER_PROVIDERS.filter((provider) => state[provider])),
+  )
 
 /** At least one provider is on: the layer is on. */
 export const useStreetImageryLayerOn = () =>
