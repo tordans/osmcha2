@@ -1,14 +1,17 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { composeDiscussionPost, parseDiscussionNotes } from '../../notes/discussionNotes.ts'
 import { authenticateOsm, osmAuthAuthenticated } from '../../notes/osmAuthClient.ts'
-import { canUseOsmAuthFromThisBuild, isOsmSandboxAuth } from '../../notes/osmAuthConfig.ts'
+import {
+  canUseOsmAuthFromThisBuild,
+  isOsmSandboxAuth,
+  osmAuthUrl,
+} from '../../notes/osmAuthConfig.ts'
 import { submitDiscussionPost } from '../../notes/submitDiscussionPost.ts'
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
-import { osmUsernameQueryOptions } from '../../query/options/osmAuth.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 import {
   draftHasUnsentNotes,
@@ -48,8 +51,6 @@ export function FinishReviewCard({
   const parsed = parseDiscussionNotes(composed, { changesetId })
   const canPost = canUseOsmAuthFromThisBuild()
   const signedInToOsm = canPost && osmAuthAuthenticated()
-  const osmUsernameQuery = useQuery(osmUsernameQueryOptions(signedInToOsm))
-  const osmUser = osmUsernameQuery.data ?? null
 
   // One-shot: a request made from the Discussion tab waits until this card has mounted.
   useEffect(
@@ -98,17 +99,14 @@ export function FinishReviewCard({
       },
     )
     if (!authResult) return
-    await queryClient.fetchQuery(osmUsernameQueryOptions(true))
     await postToOsm()
   }
 
-  const identity = !canPost
-    ? import.meta.env.DEV
+  const postingUnavailable = canPost
+    ? null
+    : import.meta.env.DEV
       ? 'Local builds post only to the OSM sandbox. Set VITE_OSM_OAUTH_CLIENT_ID and sandbox auth URLs.'
       : 'OpenStreetMap posting is not configured.'
-    : signedInToOsm
-      ? `Will post as ${osmUser ?? 'you'} on OpenStreetMap`
-      : 'Sign in with OpenStreetMap to post'
 
   return (
     <section
@@ -181,10 +179,21 @@ export function FinishReviewCard({
           )
         ) : null}
       </div>
-      <p className={clsx('mt-2 text-zinc-600', typeScale.small)}>{identity}</p>
+      {postingUnavailable ? (
+        <p className={clsx('mt-2 text-zinc-600', typeScale.small)}>{postingUnavailable}</p>
+      ) : null}
       {isOsmSandboxAuth() && import.meta.env.DEV ? (
         <p className={clsx('mt-1 text-amber-800', typeScale.small)}>
-          Discussion posts go to the OSM sandbox, not osm.org.
+          Discussion posts go to the{' '}
+          <a
+            href={`${osmAuthUrl()}/changeset/${changesetId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            OSM sandbox
+          </a>
+          , not osm.org.
         </p>
       ) : null}
       {previewOpen && composed ? (
