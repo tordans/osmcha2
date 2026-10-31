@@ -13,7 +13,7 @@ export function Dropdown({
   backdrop = true,
   children,
   ...props
-}: { backdrop?: boolean } & Headless.MenuProps) {
+}: { backdrop?: boolean } & Headless.MenuProps<'div'>) {
   return (
     <Headless.Menu as="div" {...props}>
       {(bag: { open: boolean; close: () => void }) => (

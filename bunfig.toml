@@ -61,7 +61,27 @@ minimumReleaseAgeExcludes = [
   "@vitest/snapshot",
   "@vitest/spy",
   "@vitest/utils",
+  # Our own packages, which we always trust, and the tagging schema we follow closely.
   "@osm-editor-kit/maplibre-editor-layer-index",
+  "@osm-editor-kit/osm-changeset",
+  "@osm-editor-kit/osm-coverage",
+  "@osm-editor-kit/osm-data",
+  "@osm-editor-kit/osm-editor-links",
+  "@osm-editor-kit/osm-lane-diagram",
+  "@osm-editor-kit/osm-lanes",
+  "@osm-editor-kit/osm-map-url",
+  "@osm-editor-kit/osm-maplibre",
+  "@osm-editor-kit/osm-oauth",
+  "@osm-editor-kit/osm-route-snapper",
+  "@osm-editor-kit/osm-sidepath-tags",
+  "@osm-editor-kit/osm-surface-quality",
+  "@osm-editor-kit/osm-tag-syntax",
+  "@osm-editor-kit/osm-ui",
+  "@osm-editor-kit/osm-way-chain",
+  "@osm-editor-kit/osm-way-edit",
+  "@osm-editor-kit/street-imagery",
+  "@osm-editor-kit/street-imagery-react",
+  "@openstreetmap/id-tagging-schema",
 ]
 
 # Global virtual store — install once, link everywhere (requires isolated linker). Local/dev only.

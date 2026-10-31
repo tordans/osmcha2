@@ -6,8 +6,14 @@ type RouterLinkProps = LinkComponentProps<'a'> & {
 
 /** Typed router `<a>` without `forwardRef` (React 19 takes `ref` as a prop). */
 function RouterLink({ ref, children, ...options }: RouterLinkProps) {
-  const { type: _type, ...anchorProps } = useLinkProps(options, ref)
-  const { disabled: _disabled, children: _children, ...rest } = anchorProps
+  // The hook types its ref as a plain `Element`; it hands it to the `<a>` below.
+  const { type: _type, ...anchorProps } = useLinkProps(options, ref as React.Ref<Element>)
+  // `disabled` comes along at runtime and is no attribute of an `<a>`.
+  const {
+    disabled: _disabled,
+    children: _children,
+    ...rest
+  } = anchorProps as typeof anchorProps & { disabled?: boolean }
   const content =
     typeof children === 'function'
       ? children({
