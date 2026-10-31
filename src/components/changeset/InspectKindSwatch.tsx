@@ -6,7 +6,7 @@ export function InspectKindSwatch({
   kind,
   className,
 }: {
-  kind: 'noop' | 'spyglass'
+  kind: 'noop' | 'spyglass' | 'surroundings'
   className?: string
 }) {
   return (

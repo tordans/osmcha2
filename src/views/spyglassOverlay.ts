@@ -2,6 +2,8 @@ import {
   CHANGESET_OVERLAY_BG_LAYER_ID,
   changesetInteractiveLayerIds,
 } from './changesetAdiffViewer.ts'
+import { parseSurroundingsTags } from './surroundingsBoxes.ts'
+import { SURROUNDINGS_LAYER_IDS } from './surroundingsLayerIds.ts'
 
 export const SPYGLASS_MIN_ZOOM = 15
 export const SPYGLASS_MAX_ZOOM = 18
@@ -62,7 +64,7 @@ const NON_TAG_KEYS = new Set([
 export type SpyglassOverlayState = 'off' | 'armed' | 'active'
 
 export type InspectHoverItem = {
-  kind: 'spyglass' | 'noop'
+  kind: 'spyglass' | 'noop' | 'surroundings'
   type: string
   id: number | string
   tags: Array<[string, string]>
@@ -92,11 +94,17 @@ export function changesetClickableLayerIds(layers: Array<{ id: string }>): strin
 
 export function changesetInspectLayerIds(
   layers: Array<{ id: string }>,
-  options: { overlayActive: boolean; showNoop: boolean; spyglassMounted: boolean },
+  options: {
+    overlayActive: boolean
+    showNoop: boolean
+    spyglassMounted: boolean
+    surroundingsShown: boolean
+  },
 ): string[] {
   const ids = changesetClickableLayerIds(layers)
   if (options.showNoop) ids.push(...CHANGESET_NOOP_LAYER_IDS)
-  if (options.spyglassMounted) ids.push(...SPYGLASS_LAYER_IDS)
+  if (options.overlayActive && options.spyglassMounted) ids.push(...SPYGLASS_LAYER_IDS)
+  if (options.surroundingsShown) ids.push(...SURROUNDINGS_LAYER_IDS)
   return ids
 }
 
@@ -192,6 +200,10 @@ function isSpyglassLayerId(id: string | undefined): boolean {
   return id != null && SPYGLASS_LAYER_IDS.includes(id)
 }
 
+function isSurroundingsLayerId(id: string | undefined): boolean {
+  return id != null && SURROUNDINGS_LAYER_IDS.includes(id)
+}
+
 function isChangesetLayerId(id: string | undefined): boolean {
   return (
     id != null &&
@@ -208,7 +220,11 @@ function isChangesetNoopFeature(feature: InspectableMapFeature): boolean {
 }
 
 function isInspectMapFeature(feature: InspectableMapFeature): boolean {
-  return isSpyglassLayerId(layerIdOf(feature)) || isChangesetNoopFeature(feature)
+  return (
+    isSpyglassLayerId(layerIdOf(feature)) ||
+    isSurroundingsLayerId(layerIdOf(feature)) ||
+    isChangesetNoopFeature(feature)
+  )
 }
 
 export function isClickableMapFeature(feature: InspectableMapFeature): boolean {
@@ -224,6 +240,12 @@ function layerIdOf(feature: InspectableMapFeature): string | undefined {
 
 function parseInspectFeature(feature: InspectableMapFeature): InspectHoverItem | null {
   const layerId = layerIdOf(feature)
+  if (isSurroundingsLayerId(layerId)) {
+    const { osmType, osmId, tags } = feature.properties ?? {}
+    if (typeof osmType !== 'string' || typeof osmId !== 'number') return null
+    return { kind: 'surroundings', type: osmType, id: osmId, tags: parseSurroundingsTags(tags) }
+  }
+
   const tags = inspectTagsFromProperties(feature.properties, {
     skipMetadataKeys: !isSpyglassLayerId(layerId),
   })

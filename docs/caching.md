@@ -131,6 +131,10 @@ On boot we restore IndexedDB (`osmcha-query-cache`) **before** the router starts
 
 ---
 
+## Surroundings
+
+`['surroundings']` is not persisted with the rest: it holds one entry with all loaded boxes, keeps them in its own IndexedDB store for **1 hour**, and its query only reads that store. Requests start from a click on the map button, see [surroundings](surroundings.md).
+
 ## Changing this
 
 1. Edit the named policy in `cachePolicy.ts`, or add one.

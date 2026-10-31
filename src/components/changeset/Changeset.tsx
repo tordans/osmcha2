@@ -42,6 +42,7 @@ import { exclusiveKeyToggleState } from './exclusiveKeyToggle.ts'
 import { MapOptions } from './map_options.tsx'
 import { refDeepLinkKey, refParamFromElement, refsEqual } from './refSelection.ts'
 import { ReviewColumn } from './ReviewColumn.tsx'
+import { SurroundingsButton } from './SurroundingsButton.tsx'
 import { changeKey } from './tagGroups.ts'
 import { WorkAreaBar } from './WorkAreaBar.tsx'
 import { groupChangesByWorkArea } from './workAreaChanges.ts'
@@ -223,7 +224,15 @@ function Changeset({
                   ? currentChangeset.properties.imagery_used
                   : null
               }
-            />
+            >
+              {viewer ? (
+                <SurroundingsButton
+                  viewer={viewer}
+                  workAreas={workAreas}
+                  selectedKey={selectedObjectKey}
+                />
+              ) : null}
+            </MapOptions>
           )}
         </div>
       </div>

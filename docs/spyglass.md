@@ -4,7 +4,9 @@ How OSMCha v2 shows live tagged OSM objects on the changeset map: an opt-in over
 
 Canonical code: [`src/views/spyglassOverlay.ts`](../src/views/spyglassOverlay.ts), [`src/views/SpyglassOverlay.tsx`](../src/views/SpyglassOverlay.tsx), [`src/views/map.tsx`](../src/views/map.tsx), [`src/routing/layersParam.ts`](../src/routing/layersParam.ts), [`src/components/changeset/map_options.tsx`](../src/components/changeset/map_options.tsx). **Update this page when overlay toggle, zoom floor, hover flyout, tile source, or noop hover changes.**
 
-> **Status: switched off.** Spyglass serves its tiles to allow-listed origins only (localhost, see Tile probe), so the overlay cannot load on GitHub Pages. `SPYGLASS_OVERLAY_AVAILABLE` in `spyglassOverlay.ts` is `false`: nothing is mounted, the Vite proxy is gone, and the Filter map panel shows a note with a link that opens the current map view in Spyglass. Unchanged-element hover still works. We would like the overlay back; it needs this site's origin on the Spyglass allow-list. The rest of this page describes the overlay as built, for the day the flag is flipped.
+> **In use instead:** [Surroundings](surroundings.md) load the same kind of context from Postpass, on demand.
+>
+> **Status: switched off.** Spyglass serves its tiles to allow-listed origins only (localhost, see Tile probe), so the overlay cannot load on GitHub Pages. `SPYGLASS_OVERLAY_AVAILABLE` in `spyglassOverlay.ts` is `false`: nothing is mounted, the Vite proxy is gone, and the changeset menu links to the map location in Spyglass (Open map location). Unchanged-element hover still works. We would like the overlay back; it needs this site's origin on the Spyglass allow-list. The rest of this page describes the overlay as built, for the day the flag is flipped.
 
 ---
 
@@ -53,8 +55,8 @@ Spyglass also comes up in passing on [#6641](https://github.com/openstreetmap/op
 
 ### Use
 
-- Opt-in overlay on the changeset map, current viewport only. On by default; off is `?layers=` without the `spyglass` token (omit `layers` when every changeset layer is on and spyglass is on).
-- Hover flyout (`flyoutSurfaceClassName`). Same hover for adiff `noop` (dedicated unchanged layers and halo layers with `action=noop`), and only while the overlay is on. Spyglass hover hits the transparent hit layers, not the thin paint. Lists up to 20 unique objects with tags; remaining objects are `+N more`. A violet dot marks unchanged (same as the overlay); a zinc dot marks Spyglass.
+- Opt-in overlay on the changeset map, current viewport only. On by default; off is `?layers=` without the `spyglass` token (omit `layers` at the default: every changeset layer except `noop`, and spyglass on).
+- Hover flyout (`flyoutSurfaceClassName`). Same hover for adiff `noop` (dedicated unchanged layers and halo layers with `action=noop`), whether or not the overlay is on; it only needs the Unchanged filter, which is off by default. Spyglass hover hits the transparent hit layers, not the thin paint. Lists up to 20 unique objects with tags; remaining objects are `+N more`. A violet dot marks unchanged (same as the overlay); a zinc dot marks Spyglass.
 - Cursor `help` on spyglass and noop. `pointer` wins if a clickable changeset feature is under the cursor.
 - Clicks never select spyglass or noop, including when the overlay is off. An inspect-only click does not clear the selected changeset `ref`.
 

@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth.ts'
 import { useChangeset } from '../../query/hooks/useChangeset.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { useChangesetMap } from '../../query/hooks/useChangesetMap.ts'
+import { useClearSurroundings, useSurroundingsBoxes } from '../../query/hooks/useSurroundings.ts'
 import { filtersFromSearch } from '../../routing/filterSearch.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { XMarkIcon } from '../ui/icons.ts'
@@ -76,6 +77,8 @@ export function onDebugMapInspectorMoveEnd() {
 }
 
 function DebugDataHelperActive({ changesetId, selected }: Props) {
+  const surroundingsCount = Object.keys(useSurroundingsBoxes()).length
+  const clearSurroundings = useClearSurroundings()
   const [show, setShow] = useState(false)
   const [mapSnapshot, setMapSnapshot] = useState<unknown>(undefined)
   const changesetQuery = useChangeset(changesetId)
@@ -146,6 +149,17 @@ function DebugDataHelperActive({ changesetId, selected }: Props) {
           <JsonDetails title="Selected map feature" data={selected} />
           <JsonDetails title="Auth user" data={authDump} />
           <JsonDetails title="Map inspector" data={mapSnapshot} />
+          <button
+            type="button"
+            disabled={surroundingsCount === 0}
+            onClick={clearSurroundings}
+            className={clsx(
+              'mt-1 text-left',
+              surroundingsCount > 0 ? 'cursor-pointer hover:underline' : 'text-zinc-400',
+            )}
+          >
+            Clear surroundings ({surroundingsCount})
+          </button>
         </>
       )}
     </div>

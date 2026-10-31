@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ArrowSquareOut,
   ArrowsSplit,
+  BoundingBox,
   BugBeetle,
   CalendarBlank,
   CaretDown,
@@ -68,6 +69,7 @@ export const LanguageIcon = appIcon(Translate)
 export const LinkIcon = appIcon(Link)
 export const MapPinIcon = appIcon(MapPin)
 export const MapIcon = appIcon(MapTrifold)
+export const SurroundingsIcon = appIcon(BoundingBox)
 export const LoaderCircleIcon = appIcon(CircleNotch)
 export const PanelLeftCloseIcon = appIcon(Sidebar)
 export const PanelLeftOpenIcon = appIcon(Sidebar)

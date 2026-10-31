@@ -59,6 +59,7 @@ import {
 } from '../stores/map-style-store.ts'
 import { useGroupCursorKey } from '../stores/review-focus-store.ts'
 import { useStreetImageryLayerOn } from '../stores/street-imagery-layer-store.ts'
+import { useSurroundingsVisible } from '../stores/surroundings-store.ts'
 import {
   CHANGESET_MAP_ID,
   CHANGESET_SOURCE_ID,
@@ -112,6 +113,7 @@ import {
   openStreetImageryPhotoFromClick,
 } from './streetImageryMapClick.ts'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
+import { SurroundingsLayers } from './SurroundingsLayers.tsx'
 import { OsmNoteMarker, StreetImageryPhotoMarker } from './TemporaryPinMarkers.tsx'
 import { useJumpToWorkArea } from './useWorkAreaMap.ts'
 import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
@@ -505,11 +507,15 @@ function CMap({
   const overlayActive = overlayState === 'active'
   const showActions = viewer?.options.showActions
   const showNoop = Array.isArray(showActions) && showActions.includes('noop')
+  const surroundingsVisible = useSurroundingsVisible()
+  // After the map's load: restored cells are there at once, the changeset layers come later.
+  const surroundingsShown = surroundingsVisible && mapLoaded && firstFeatureLayerId != null
   const clickableLayerIds = changesetClickableLayerIds(layers)
   const interactiveLayerIds = changesetInspectLayerIds(layers, {
     overlayActive,
     showNoop,
     spyglassMounted: SPYGLASS_OVERLAY_AVAILABLE,
+    surroundingsShown,
   })
   const initialViewState = parsedCamera
     ? { longitude: parsedCamera.lng, latitude: parsedCamera.lat, zoom: parsedCamera.zoom }
@@ -602,7 +608,7 @@ function CMap({
     if (nextFeatureId == null) {
       // A changeset feature wins over a photo; context lines below a photo do not.
       if (openStreetImageryPhotoFromClick(event)) return
-      // Spyglass / noop are inspect-only. Do not treat them as an empty-map deselect.
+      // Spyglass / surroundings / noop are inspect-only. Do not treat them as an empty-map deselect.
       if (inspectHoverFromFeatures(hoverFeatures)) return
       lastClickFeatureIdRef.current = null
       selectRef(null)
@@ -704,6 +710,7 @@ function CMap({
             {SPYGLASS_OVERLAY_AVAILABLE && overlayActive && firstFeatureLayerId ? (
               <SpyglassOverlay beforeId={firstFeatureLayerId} />
             ) : null}
+            {surroundingsShown ? <SurroundingsLayers beforeId={firstFeatureLayerId} /> : null}
             {workAreas.length > 1 ? (
               <WorkAreaOutlines
                 areas={workAreas}

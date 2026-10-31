@@ -21,14 +21,16 @@ const queryPersister = createAsyncStoragePersister({
 
 /**
  * Not persisted: the changeset map (parsed trees are large), the sign results (asset URLs of this
- * build, which change with every deploy) and the street-level photos (the package's per-viewport
- * lists are large and age fast; a photo's own data is cheap to load again).
+ * build, which change with every deploy), the street-level photos (the package's per-viewport
+ * lists are large and age fast; a photo's own data is cheap to load again) and the surroundings,
+ * which keep their own store with a shorter life.
  */
 const NOT_PERSISTED_QUERY_KEYS = new Set<string>([
   'changesetMap',
   'trafficSigns',
   ...STREET_IMAGERY_PACKAGE_QUERY_KEYS,
   'streetImageryPhoto',
+  'surroundings',
 ])
 
 function shouldPersistQuery(query: Query) {

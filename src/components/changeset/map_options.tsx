@@ -16,7 +16,6 @@ import {
   type MapLayers,
   type ReviewFilter,
 } from '../../routing/layersParam.ts'
-import { parseMapParam } from '../../routing/mapParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStyle, useMapStyleActions } from '../../stores/map-style-store.ts'
 import {
@@ -26,13 +25,21 @@ import {
   useStreetImageryLayerOn,
   useStreetImageryPhotoKind,
 } from '../../stores/street-imagery-layer-store.ts'
+import { useSurroundingsActions, useSurroundingsVisible } from '../../stores/surroundings-store.ts'
 import { SEEN_FILTER } from '../../views/changesetSeenStyle.ts'
 import type { StreetImageryPhotoKind } from '../street_imagery/streetImageryLayerSettings.ts'
 import { Checkbox, CheckboxField } from '../ui/checkbox.tsx'
 import { Divider } from '../ui/divider.tsx'
 import { Label } from '../ui/fieldset.tsx'
 import { flyoutSurfaceClassName } from '../ui/flyout.ts'
-import { CameraIcon, CircleCheckIcon, FunnelIcon, GlobeAltIcon, StarIcon } from '../ui/icons.ts'
+import {
+  CameraIcon,
+  CircleCheckIcon,
+  FunnelIcon,
+  GlobeAltIcon,
+  StarIcon,
+  SurroundingsIcon,
+} from '../ui/icons.ts'
 import { Radio, RadioField } from '../ui/radio.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ACTION } from './actionColors.ts'
@@ -51,7 +58,6 @@ import {
   resolveImageryUsed,
   type ImageryUsedResolution,
 } from './matchImageryUsed.ts'
-import { openInUrls } from './openInUrls.ts'
 import { useViewportEditorLayers } from './useViewportEditorLayers.ts'
 
 // The date slider comes with the street-imagery package; it loads when the panel first shows it.
@@ -82,7 +88,7 @@ function buildTopImageryRows(resolution: ImageryUsedResolution): TopImageryRow[]
   return rows
 }
 
-const mapControlButtonClassName =
+export const mapControlButtonClassName =
   'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100'
 
 const mapControlPanelClassName = clsx(
@@ -145,19 +151,11 @@ type MapFilterOptionsProps = {
 }
 
 function MapFilterOptions({ ref }: MapFilterOptionsProps) {
-  const { layers: layersSearch, map: mapSearch } = changesetRouteApi.useSearch()
+  const { layers: layersSearch } = changesetRouteApi.useSearch()
   const navigate = changesetRouteApi.useNavigate()
-  const { id: changesetId } = changesetRouteApi.useParams()
-  const { mainMap } = useMap()
-  const mapLoaded = useMapLoaded()
   const layers = parseLayersParam(layersSearch)
-  // `?map=` is missing until the first pan; fall back to the live camera for the Spyglass link.
-  const liveCenter = mapLoaded ? mainMap?.getCenter() : undefined
-  const camera =
-    parseMapParam(mapSearch ?? '') ??
-    (mainMap && liveCenter
-      ? { zoom: mainMap.getZoom(), lat: liveCenter.lat, lng: liveCenter.lng }
-      : null)
+  const surroundingsVisible = useSurroundingsVisible()
+  const { setVisible: setSurroundingsVisible } = useSurroundingsActions()
 
   function toggleLayer(token: MapLayerToken) {
     void navigate({
@@ -282,24 +280,19 @@ function MapFilterOptions({ ref }: MapFilterOptionsProps) {
             <MapLayerCheckbox token="relation" layers={layers} onToggle={toggleLayer}>
               Relations
             </MapLayerCheckbox>
-            <div className="pt-1 text-sm/5 text-zinc-500">
-              <span className="inline-flex items-center gap-1.5 font-medium text-zinc-700">
-                <InspectKindSwatch kind="spyglass" />
-                OSM context (Spyglass)
-              </span>
-              <p>
-                Not available here yet. Spyglass serves its tiles to allow-listed sites only, and
-                OSMCha2 is not one of them.
-              </p>
-              <a
-                href={openInUrls(changesetId, camera).spyglass}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-zinc-400 underline-offset-2 hover:text-zinc-700 hover:decoration-zinc-600"
-              >
-                Open this map view in Spyglass
-              </a>
-            </div>
+            <CheckboxField className="min-h-11 items-center sm:min-h-0 sm:items-start">
+              <Checkbox checked={surroundingsVisible} onChange={setSurroundingsVisible} />
+              <Label>
+                <Tooltip
+                  as="span"
+                  content="Show the OSM objects loaded with the map button."
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <SurroundingsIcon className="size-4 text-zinc-700" />
+                  Surroundings
+                </Tooltip>
+              </Label>
+            </CheckboxField>
           </div>
         </section>
       </Headless.PopoverPanel>
@@ -699,11 +692,14 @@ function MapStreetImageryOptions() {
 type MapOptionsProps = {
   imageryUsed?: string | null
   ref?: React.Ref<HTMLButtonElement>
+  /** Further map buttons, above the panels. */
+  children?: React.ReactNode
 }
 
-export function MapOptions({ imageryUsed, ref }: MapOptionsProps) {
+export function MapOptions({ imageryUsed, ref, children }: MapOptionsProps) {
   return (
     <Headless.PopoverGroup className="flex flex-col gap-2">
+      {children}
       <MapFilterOptions ref={ref} />
       <MapImageryOptions imageryUsed={imageryUsed} />
       <MapStreetImageryOptions />

@@ -16,6 +16,7 @@ import {
   isClickableMapFeature,
   spyglassEnabledAtZoom,
 } from './spyglassOverlay.ts'
+import { SURROUNDINGS_LAYER_IDS, SURROUNDINGS_LINE_HIT_LAYER_ID } from './surroundingsLayerIds.ts'
 
 const viewerLayers = [
   { id: 'changeset-overlay-bg' },
@@ -83,6 +84,18 @@ describe('changesetInspectLayerIds', () => {
         overlayActive: false,
         showNoop: true,
         spyglassMounted: true,
+        surroundingsShown: false,
+      }),
+    ).toEqual(['changeset-way-new', 'changeset-node-tagged', ...CHANGESET_NOOP_LAYER_IDS])
+  })
+
+  test('matches clickable when noop is hidden and the overlay is off', () => {
+    expect(
+      changesetInspectLayerIds(viewerLayers, {
+        overlayActive: false,
+        showNoop: false,
+        spyglassMounted: true,
+        surroundingsShown: false,
       }),
     ).toEqual(['changeset-way-new', 'changeset-node-tagged'])
   })
@@ -92,6 +105,7 @@ describe('changesetInspectLayerIds', () => {
       overlayActive: true,
       showNoop: false,
       spyglassMounted: true,
+      surroundingsShown: false,
     })
     expect(ids).toEqual(['changeset-way-new', 'changeset-node-tagged', ...SPYGLASS_LAYER_IDS])
     expect(ids).not.toContain(SPYGLASS_WAY_LAYER_ID)
@@ -104,6 +118,7 @@ describe('changesetInspectLayerIds', () => {
         overlayActive: true,
         showNoop: true,
         spyglassMounted: true,
+        surroundingsShown: false,
       }),
     ).toEqual([
       'changeset-way-new',
@@ -119,6 +134,7 @@ describe('changesetInspectLayerIds', () => {
         overlayActive: true,
         showNoop: true,
         spyglassMounted: false,
+        surroundingsShown: false,
       }),
     ).toEqual(['changeset-way-new', 'changeset-node-tagged', ...CHANGESET_NOOP_LAYER_IDS])
   })
@@ -533,5 +549,44 @@ describe('untagged way vertices', () => {
     expect(
       isClickableMapFeature({ ...vertex, properties: { ...vertex.properties, clickable: true } }),
     ).toBe(true)
+  })
+})
+
+describe('surroundings on the map', () => {
+  const hit = {
+    layer: { id: SURROUNDINGS_LINE_HIT_LAYER_ID },
+    properties: { osmType: 'way', osmId: 7, tags: '{"type":"yes","highway":"residential"}' },
+  }
+
+  test('their hit layers join the inspect layers only while they are shown', () => {
+    const options = { overlayActive: false, showNoop: false, spyglassMounted: false }
+    expect(changesetInspectLayerIds(viewerLayers, { ...options, surroundingsShown: true })).toEqual(
+      expect.arrayContaining(SURROUNDINGS_LAYER_IDS),
+    )
+    expect(
+      changesetInspectLayerIds(viewerLayers, { ...options, surroundingsShown: false }),
+    ).not.toEqual(expect.arrayContaining(SURROUNDINGS_LAYER_IDS))
+  })
+
+  test('hover lists all tags, also those named like our own properties', () => {
+    expect(inspectHoverFromFeatures([hit])).toEqual({
+      items: [
+        {
+          kind: 'surroundings',
+          type: 'way',
+          id: 7,
+          tags: [
+            ['type', 'yes'],
+            ['highway', 'residential'],
+          ],
+        },
+      ],
+      extraCount: 0,
+    })
+  })
+
+  test('a click never selects them, the cursor offers inspecting', () => {
+    expect(isClickableMapFeature(hit)).toBe(false)
+    expect(cursorForMapHover([hit], { pinPlacement: false })).toBe('help')
   })
 })
