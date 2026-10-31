@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { clear, createStore, del, entries, set } from 'idb-keyval'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
@@ -34,20 +34,22 @@ async function restoreBoxes() {
   return boxes
 }
 
+const boxesQuery = queryOptions({
+  queryKey,
+  queryFn: () => restoreBoxes().catch(() => NO_BOXES),
+  networkMode: 'always',
+  retry: false,
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: Number.POSITIVE_INFINITY,
+})
+
 /**
  * All loaded boxes, in one entry like the coverage of route-tracer. The query only restores them;
  * new boxes come from the click in `useLoadSurroundings`. Not tied to a changeset: the next one in
  * the same place finds its boxes here.
  */
 export function useSurroundingsBoxes() {
-  const { data } = useQuery({
-    queryKey,
-    queryFn: () => restoreBoxes().catch(() => NO_BOXES),
-    networkMode: 'always',
-    retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
-  })
+  const { data } = useQuery(boxesQuery)
   return data ?? NO_BOXES
 }
 
@@ -75,11 +77,18 @@ export function useLoadSurroundings() {
   function keepBox(box: LoadedBox) {
     const key = boxKey(box)
     queryClient.setQueryData<LoadedBoxes>(queryKey, (boxes = NO_BOXES) => {
-      const kept = Object.entries({ ...boxes, [key]: box }).toSorted(
+      const sorted = Object.entries({ ...boxes, [key]: box }).toSorted(
         ([, left], [, right]) => right.loadedAt - left.loadedAt,
       )
-      for (const [droppedKey] of kept.slice(MAX_KEPT_BOXES)) void del(droppedKey, boxStore)
-      return Object.fromEntries(kept.slice(0, MAX_KEPT_BOXES))
+      // An expired box was loaded anew around the same changes: it must not stay drawn beside it.
+      const kept = sorted
+        .filter(([, item]) => box.loadedAt - item.loadedAt < SURROUNDINGS_MAX_AGE_MS)
+        .slice(0, MAX_KEPT_BOXES)
+      const keptKeys = new Set(kept.map(([keptKey]) => keptKey))
+      for (const [boxKeyOf] of sorted) {
+        if (!keptKeys.has(boxKeyOf)) void del(boxKeyOf, boxStore)
+      }
+      return Object.fromEntries(kept)
     })
     // Without the store the box is only gone after a reload.
     set(key, box, boxStore).catch(() => undefined)
@@ -89,6 +98,8 @@ export function useLoadSurroundings() {
     mutationFn: async (boxes: readonly LngLatBox[]) => {
       const controller = new AbortController()
       abortRef.current = controller
+      // The restore replaces the entry: it has to be done before the first box goes in.
+      await queryClient.ensureQueryData(boxesQuery)
       let truncated = false
       for (const box of boxes) {
         const result = await fetchSurroundings(box, controller.signal)

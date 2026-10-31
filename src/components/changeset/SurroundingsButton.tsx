@@ -25,9 +25,7 @@ import { mapControlButtonClassName } from './map_options.tsx'
 import { changeKey, tagGroupsOf } from './tagGroups.ts'
 
 const TOOLTIP = {
-  ready:
-    'Load the OSM objects around the changes in this view. Uses the public Postpass service. The map stays where it is.',
-  more: `Load more OSM objects around the changes in this view, ${MAX_BOXES_PER_CLICK} areas per click. Uses the public Postpass service.`,
+  ready: `Load the OSM objects around the changes in this view, up to ${MAX_BOXES_PER_CLICK} areas per click. Uses the public Postpass service. The map stays where it is.`,
   loading: 'Loading the OSM objects around the changes…',
   done: 'Nothing new to load here. Move to other changes to load their surroundings.',
 }
@@ -67,23 +65,19 @@ export function SurroundingsButton({
   const focusKeys = focusGroup?.memberKeys ?? (focusKey ? [focusKey] : [])
 
   const missing = view
-    ? boxesFor(
-        missingPoints({
-          byElement,
-          focusKeys,
-          view,
-          loaded: Object.values(loaded).filter(
-            (box) => view.at - box.loadedAt < SURROUNDINGS_MAX_AGE_MS,
-          ),
-        }),
-        MAX_BOXES_PER_CLICK + 1,
-      )
+    ? missingPoints({
+        byElement,
+        focusKeys,
+        view,
+        loaded: Object.values(loaded).filter(
+          (box) => view.at - box.loadedAt < SURROUNDINGS_MAX_AGE_MS,
+        ),
+      })
     : []
   const wantsClick = missing.length > 0 && !loading
 
   function tooltip() {
     if (loading) return TOOLTIP.loading
-    if (missing.length > MAX_BOXES_PER_CLICK) return TOOLTIP.more
     return wantsClick ? TOOLTIP.ready : TOOLTIP.done
   }
 
@@ -94,7 +88,7 @@ export function SurroundingsButton({
         aria-label={wantsClick ? 'Load surroundings' : 'Surroundings'}
         aria-disabled={!wantsClick}
         onClick={() => {
-          if (wantsClick) load(missing.slice(0, MAX_BOXES_PER_CLICK))
+          if (wantsClick) load(boxesFor(missing, MAX_BOXES_PER_CLICK))
         }}
         className={clsx(mapControlButtonClassName, 'relative', !wantsClick && 'cursor-default')}
       >

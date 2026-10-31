@@ -25,6 +25,7 @@ import { useAuthToken } from '../stores/auth-store.ts'
 import { useChangesetHoverActions } from '../stores/changeset-hover-store.ts'
 import { useReadChangesetsActions } from '../stores/read-changesets-store.ts'
 import { useReviewFocusActions } from '../stores/review-focus-store.ts'
+import { getStreetImageryViewerActions } from '../stores/street-imagery-viewer-store.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import { changesetWorkAreas } from './changesetWorkAreas.ts'
 import { CMap } from './map.tsx'
@@ -67,6 +68,8 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
         setGroupCursor(null)
         // Otherwise the review column of the next changeset would act on it when it mounts.
         clearListScrollTarget()
+        // The photo window leaves the list usable; its photo belongs to this changeset's place.
+        getStreetImageryViewerActions().close()
       }
     },
     [setGroupCursor, clearListScrollTarget],

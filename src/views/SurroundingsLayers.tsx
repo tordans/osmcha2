@@ -79,14 +79,25 @@ export function SurroundingsLayers({ beforeId }: { beforeId: string }) {
   const oldest = view ? oldestTimestampInView(boxes, view) : null
   const ageText = oldest ? `OSM data ${formatDistanceToNow(new Date(oldest))} old` : null
 
-  // Our styles have no glyphs, so the label is an image for the map to place on the frame.
+  // Our styles have no glyphs, so the label is an image for the map to place on the frame. A new
+  // style forgets it and asks again.
   useEffect(
-    function drawAgeLabel() {
+    function keepAgeLabelImage() {
       const target = map?.getMap()
       if (!target || !ageText) return
       const { image, pixelRatio } = surroundingsLabelImage(ageText)
-      if (target.hasImage(LABEL_IMAGE_ID)) target.removeImage(LABEL_IMAGE_ID)
-      target.addImage(LABEL_IMAGE_ID, image, { pixelRatio })
+      function addLabelImage() {
+        if (target?.hasImage(LABEL_IMAGE_ID)) target.removeImage(LABEL_IMAGE_ID)
+        target?.addImage(LABEL_IMAGE_ID, image, { pixelRatio })
+      }
+      function onImageMissing({ id }: { id: string }) {
+        if (id === LABEL_IMAGE_ID) addLabelImage()
+      }
+      addLabelImage()
+      target.on('styleimagemissing', onImageMissing)
+      return function stopKeepingAgeLabelImage() {
+        target.off('styleimagemissing', onImageMissing)
+      }
     },
     [map, ageText],
   )

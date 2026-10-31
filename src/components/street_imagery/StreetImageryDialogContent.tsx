@@ -155,11 +155,16 @@ function PhotoBody({
   /** For a note: the link to the photo on screen, and the way back to where notes are written. */
   function copyLink() {
     if (!shownRef) return
-    void navigator.clipboard.writeText(streetImageryPhotoPageUrl(shownRef)).then(() => {
-      toast('Link to this photo copied', {
-        action: { label: 'Back to review', onClick: onBackToReview },
-      })
-    })
+    navigator.clipboard.writeText(streetImageryPhotoPageUrl(shownRef)).then(
+      () => {
+        toast('Link to this photo copied', {
+          action: { label: 'Back to review', onClick: onBackToReview },
+        })
+      },
+      () => {
+        toast.error('The browser did not allow copying the link')
+      },
+    )
   }
 
   return (

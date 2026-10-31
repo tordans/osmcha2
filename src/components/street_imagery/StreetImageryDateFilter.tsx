@@ -12,7 +12,11 @@ import {
 } from '../../stores/street-imagery-layer-store.ts'
 import { CHANGESET_MAP_ID } from '../../views/changesetAdiffViewer.ts'
 import { useMapZoom } from '../../views/useMapZoom.ts'
-import { DEFAULT_PHOTO_MAX_AGE_YEARS, photoTypesOfKind } from './streetImageryLayerSettings.ts'
+import {
+  DEFAULT_PHOTO_MAX_AGE_YEARS,
+  photoTypesOfKind,
+  STREET_IMAGERY_MIN_ZOOM,
+} from './streetImageryLayerSettings.ts'
 import { configureStreetImageryLayer } from './streetImageryProviders.ts'
 
 // This chunk can arrive before the map's layer does.
@@ -32,7 +36,13 @@ export default function StreetImageryDateFilter() {
   const bbox = useMapViewportBbox(CHANGESET_MAP_ID)
   const zoom = useMapZoom(CHANGESET_MAP_ID)
   const photoKind = useStreetImageryPhotoKind()
-  const { photos } = useAllProviderPhotos(providers, bbox, zoom, photoTypesOfKind(photoKind))
+  const { photos } = useAllProviderPhotos(
+    providers,
+    // Below this the map's layer asks for nothing, and a wide view would ask for far too much.
+    zoom >= STREET_IMAGERY_MIN_ZOOM ? bbox : null,
+    zoom,
+    photoTypesOfKind(photoKind),
+  )
 
   return (
     <div className="space-y-2">
