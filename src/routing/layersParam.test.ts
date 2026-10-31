@@ -116,7 +116,7 @@ describe('serializeLayersParam', () => {
         showSeen: true,
         showUnseen: false,
       }),
-    ).toBe('create,modify,delete,noop,node,way,relation,no-unseen')
+    ).toBe('create,modify,delete,node,way,relation,no-unseen')
   })
 })
 
@@ -147,10 +147,12 @@ describe('toggleMapLayer', () => {
 
   test('hides a type or action', () => {
     expect(toggleMapLayer(DEFAULT_MAP_LAYERS, 'node').showElements).toEqual(['way', 'relation'])
+    expect(toggleMapLayer(DEFAULT_MAP_LAYERS, 'modify').showActions).toEqual(['create', 'delete'])
     expect(toggleMapLayer(DEFAULT_MAP_LAYERS, 'noop').showActions).toEqual([
       'create',
       'modify',
       'delete',
+      'noop',
     ])
   })
 

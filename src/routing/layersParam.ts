@@ -38,7 +38,8 @@ export type ReviewFilter = 'unseen' | 'seen'
 
 export const DEFAULT_MAP_LAYERS: MapLayers = {
   showElements: [...ELEMENT_TOKENS],
-  showActions: [...ACTION_TOKENS],
+  // Unchanged elements are context around the edits; they stay off until asked for.
+  showActions: ACTION_TOKENS.filter((token) => token !== 'noop'),
   spyglass: true,
   showSeen: false,
   showUnseen: true,

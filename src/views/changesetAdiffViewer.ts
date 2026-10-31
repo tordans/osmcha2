@@ -1,7 +1,11 @@
 import { MapLibreAugmentedDiffViewer } from '@osmcha/maplibre-adiff-viewer'
 import { useMemo } from 'react'
 import { remapAdiffActionLayers } from '../components/changeset/actionColors.ts'
-import type { ParsedAdiff } from '../components/changeset/changesetElements.ts'
+import {
+  isNoopAction,
+  type AdiffAction,
+  type ParsedAdiff,
+} from '../components/changeset/changesetElements.ts'
 import {
   annotateNodeClickability,
   applyNodeClickabilityStyle,
@@ -55,6 +59,46 @@ export function splitChangesetFeatureLayers<T extends { id: string }>(layers: T[
   }
 }
 
+/** Dashed: context around an edit, not an edit. */
+function dashUnchangedLayers<T extends { id: string; paint?: Record<string, unknown> }>(
+  layers: T[],
+) {
+  return layers.map((layer) =>
+    layer.id === 'changeset-way-unchanged'
+      ? { ...layer, paint: { ...layer.paint, 'line-dasharray': [2, 2] } }
+      : layer,
+  )
+}
+
+/**
+ * The adiff lists a way as `modify` when one of its nodes changed, even with the way itself the same:
+ * same version, tags and geometry. The viewer only treats relations like that as context; do the
+ * same for the rest, so the map's Unchanged filter decides on all of them alike.
+ */
+export function unchangedModifiesAsContext(
+  geojson: GeoJSON.FeatureCollection,
+  actions: AdiffAction[],
+): GeoJSON.FeatureCollection {
+  const unchanged = new Set(
+    actions
+      .filter((action) => action.type === 'modify' && isNoopAction(action))
+      .map((action) => `${action.new?.type}/${action.new?.id}`),
+  )
+  if (unchanged.size === 0) return geojson
+  const isUnchanged = ({ properties }: GeoJSON.Feature) =>
+    unchanged.has(`${properties?.type}/${properties?.id}`)
+  return {
+    ...geojson,
+    features: geojson.features.flatMap((feature) => {
+      if (!isUnchanged(feature)) return [feature]
+      if (feature.properties?.side === 'old') return []
+      return [
+        { ...feature, properties: { ...feature.properties, action: 'noop', side: undefined } },
+      ]
+    }),
+  }
+}
+
 /** Construct the viewer as a GeoJSON + layer-spec factory. Never call addTo/refresh. */
 export function useChangesetAdiffViewer(
   adiff: ParsedAdiff | null | undefined,
@@ -69,9 +113,13 @@ export function useChangesetAdiffViewer(
     )
     return {
       adiff: viewer.adiff,
-      geojson: annotateNodeClickability(viewer.geojson, viewer.adiff.actions),
+      geojson: annotateNodeClickability(
+        unchangedModifiesAsContext(viewer.geojson, viewer.adiff.actions),
+        viewer.adiff.actions,
+      ),
       options: viewer.options,
-      layers: () => applyNodeClickabilityStyle(remapAdiffActionLayers(viewer.layers())),
+      layers: () =>
+        dashUnchangedLayers(applyNodeClickabilityStyle(remapAdiffActionLayers(viewer.layers()))),
     }
   }, [adiff, showElements, showActions])
 }
