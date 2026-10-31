@@ -1,10 +1,13 @@
-import { getRouteApi } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { getRouteApi, useMatch, useRouter } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useFilters } from '../../hooks/useFilters.ts'
 import type { AoiFeature } from '../../network/aoi.ts'
 import { useAOI, useAllAOIs } from '../../query/hooks/useAOI.ts'
-import { stripFilterSearch, withFilters } from '../../routing/filterSearch.ts'
+import { changesetsPageQueryOptions } from '../../query/options/changesetsPage.ts'
+import { filtersFromSearch, stripFilterSearch, withFilters } from '../../routing/filterSearch.ts'
+import type { OsmchaSearch } from '../../routing/searchSchemas.ts'
 import {
   chromeDropdownMenuClassName,
   Dropdown,
@@ -56,6 +59,9 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   const uid = user?.uid
   const search = rootRouteApi.useSearch()
   const navigate = rootRouteApi.useNavigate()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const openChangesetId = useMatch({ from: '/changesets/$id', shouldThrow: false })?.params.id
   const { filters, aoiId } = useFilters()
   const { data: aoi } = useAOI(aoiId)
   const { data } = useAllAOIs()
@@ -83,42 +89,68 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
       ? [{ id: aoiId, properties: { name: selectedName || undefined } }, ...aois]
       : aois
 
-  const goRecent = () => {
-    void navigate({
-      to: '/',
-      search: stripFilterSearch({ ...search, aoi: undefined, page: undefined }),
+  const goToList = (nextSearch: OsmchaSearch) =>
+    navigate({ to: '/', search: nextSearch, replace: true })
+
+  // The open changeset stays open when the first page of the new list contains it.
+  const switchList = async (nextSearch: OsmchaSearch) => {
+    if (openChangesetId == null) {
+      void goToList(nextSearch)
+      return
+    }
+
+    await navigate({
+      to: '/changesets/$id',
+      params: { id: openChangesetId },
+      search: nextSearch,
       replace: true,
     })
+    const stayedAt = router.state.location.href
+    const firstPage = await queryClient
+      .fetchQuery(
+        changesetsPageQueryOptions({
+          pageIndex: 0,
+          filters: filtersFromSearch(nextSearch),
+          aoiId: nextSearch.aoi ?? null,
+        }),
+      )
+      .catch(() => null)
+    // Unknown when the list failed to load: stay.
+    if (!firstPage) return
+    const inList = firstPage.features?.some((feature) => feature.id === openChangesetId)
+
+    // The user may have moved on while the list loaded.
+    if (!inList && router.state.location.href === stayedAt) void goToList(nextSearch)
+  }
+
+  const goRecent = () => {
+    void switchList(stripFilterSearch({ ...search, aoi: undefined, page: undefined }))
   }
 
   const goMyChangesets = () => {
     if (uid == null) return
-    void navigate({
-      to: '/',
-      search: withFilters(
+    void switchList(
+      withFilters(
         { ...search, aoi: undefined, page: undefined },
         {
           uids: [{ label: String(uid), value: String(uid) }],
           date__gte: [{ label: '', value: '' }],
         },
       ),
-      replace: true,
-    })
+    )
   }
 
   const goMyReviews = () => {
     if (!username) return
-    void navigate({
-      to: '/',
-      search: withFilters(
+    void switchList(
+      withFilters(
         { ...search, aoi: undefined, page: undefined },
         {
           checked_by: [{ label: username, value: username }],
           date__gte: [{ label: '', value: '' }],
         },
       ),
-      replace: true,
-    })
+    )
   }
 
   const goNew = () => {
@@ -130,11 +162,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   }
 
   const goSelect = (id: string) => {
-    void navigate({
-      to: '/',
-      search: stripFilterSearch({ ...search, aoi: id, page: undefined }),
-      replace: true,
-    })
+    void switchList(stripFilterSearch({ ...search, aoi: id, page: undefined }))
   }
 
   return (
