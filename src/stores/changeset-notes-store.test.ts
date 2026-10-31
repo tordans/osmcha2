@@ -46,6 +46,15 @@ describe('changeset notes store', () => {
     expect(getChangesetDraft('alice', 1)?.notes).toHaveLength(0)
   })
 
+  test('writing a group note marks all objects of the group seen', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    const note = { id: 'n', ref: { type: 'node' as const, id: 5, key: 'man_made' }, group: 2 }
+    actions.upsertDraftNote('alice', 1, { ...note, body: 'both' }, ['node/5', 'node/6'])
+    const { seenMap } = getSeenState('alice', 1)
+    expect(Object.keys(seenMap ?? {}).toSorted()).toEqual(['node/5', 'node/6'])
+  })
+
   test('a group draft is posted with its group size', () => {
     resetChangesetNotesStoreForTests()
     const actions = getChangesetNotesActions()

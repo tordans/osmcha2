@@ -183,7 +183,13 @@ interface ChangesetNotesStore {
     markAllSeen: (userKey: string, changesetId: number, objectKeys: string[]) => void
     markAllUnseen: (userKey: string, changesetId: number, objectKeys: string[]) => void
     setIntro: (userKey: string, changesetId: number, intro: string) => void
-    upsertDraftNote: (userKey: string, changesetId: number, note: DraftNote) => void
+    upsertDraftNote: (
+      userKey: string,
+      changesetId: number,
+      note: DraftNote,
+      /** The objects a group note is about, all seen with it. Default: the note's own object. */
+      groupObjectKeys?: readonly string[],
+    ) => void
     removeDraftNote: (userKey: string, changesetId: number, noteId: string) => void
     openOrCreateEditor: (
       userKey: string,
@@ -297,7 +303,7 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
               ),
             }
           }),
-        upsertDraftNote: (userKey, changesetId, note) =>
+        upsertDraftNote: (userKey, changesetId, note, groupObjectKeys) =>
           set((state) => {
             const user = userOf(state.byUser, userKey)
             const draft = draftOf(user, changesetId)
@@ -310,13 +316,14 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             if (note.body.trim() && note.ref) {
               const id = changesetIdKey(changesetId)
               const seenMap = { ...nextUser.seen[id] }
-              const objectKey = objectKeyFromRef(note.ref)
-              seenMap[objectKey] = new Date().toISOString()
+              const objectKeys = groupObjectKeys ?? [objectKeyFromRef(note.ref)]
+              const seenAt = new Date().toISOString()
+              for (const objectKey of objectKeys) seenMap[objectKey] = seenAt
               nextUser = writeSeen(
                 nextUser,
                 changesetId,
                 seenMap,
-                withoutOverrides(nextUser, changesetId, [objectKey]),
+                withoutOverrides(nextUser, changesetId, [...objectKeys]),
               )
             }
             return { byUser: writeUser(state.byUser, userKey, nextUser) }

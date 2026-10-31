@@ -16,10 +16,13 @@ export function NoteEditor({
   changesetId,
   note,
   autoFocus = false,
+  groupObjectKeys,
 }: {
   changesetId: number
   note: DraftNote
   autoFocus?: boolean
+  /** A note about a whole group: writing it marks all of these seen, not just the first one. */
+  groupObjectKeys?: readonly string[]
 }) {
   const userKey = useNotesUserKey()
   const pinPlacement = usePinPlacement()
@@ -79,7 +82,12 @@ export function NoteEditor({
         }
         value={note.body}
         onChange={(event) =>
-          upsertDraftNote(userKey, changesetId, { ...note, body: event.target.value })
+          upsertDraftNote(
+            userKey,
+            changesetId,
+            { ...note, body: event.target.value },
+            groupObjectKeys,
+          )
         }
       />
       {placing ? (

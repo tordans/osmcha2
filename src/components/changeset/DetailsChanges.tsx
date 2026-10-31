@@ -839,6 +839,7 @@ function TagMutationGroup({
               changesetId={changesetId}
               note={groupEditingNote}
               autoFocus={!prefersTouchInput()}
+              groupObjectKeys={changes.map(changeKey)}
             />
           </div>
         ) : null}
