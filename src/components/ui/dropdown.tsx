@@ -21,14 +21,14 @@ export function Dropdown({
   children?: React.ReactNode | ((bag: MenuBag) => React.ReactNode)
 }) {
   return (
-    <Headless.Menu as="div" className={className}>
+    <Headless.Menu>
       {(bag: MenuBag) => (
-        <>
+        <div className={className}>
           {backdrop && bag.open ? (
             <div aria-hidden className={flyoutBackdropClassName} onClick={() => bag.close()} />
           ) : null}
           {typeof children === 'function' ? children(bag) : children}
-        </>
+        </div>
       )}
     </Headless.Menu>
   )
