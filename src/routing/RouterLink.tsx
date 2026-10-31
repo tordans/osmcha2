@@ -13,15 +13,15 @@ function RouterLink({ ref, children, ...options }: RouterLinkProps) {
     disabled: _disabled,
     children: _children,
     ...rest
-  } = anchorProps as typeof anchorProps & { disabled?: boolean }
+  } = anchorProps as Record<string, unknown>
   const content =
     typeof children === 'function'
       ? children({
-          isActive: (rest as { 'data-status'?: string })['data-status'] === 'active',
+          isActive: rest['data-status'] === 'active',
         })
       : children
 
-  return <a {...rest}>{content}</a>
+  return <a {...(rest as React.ComponentProps<'a'>)}>{content}</a>
 }
 
 const TypedRouterLink = RouterLink as LinkComponent<'a'>
