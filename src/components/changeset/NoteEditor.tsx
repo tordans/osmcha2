@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { pinNumberForNote, useChangesetNumberedPins } from '../../notes/changesetPins.ts'
+import { groupNoteTargetLabel } from '../../notes/groupNotes.ts'
 import type { DraftNote } from '../../notes/reviewSeen.ts'
 import { useNotesUserKey } from '../../notes/useNotesUserKey.ts'
 import { serializePinParam } from '../../routing/pinParam.ts'
@@ -26,6 +27,11 @@ export function NoteEditor({
   const pinNumber = pinNumberForNote(numberedPins, note.id)
   const { upsertDraftNote, setPinPlacement, clearPin } = useChangesetNotesActions()
   const placing = pinPlacement?.noteId === note.id && pinPlacement.changesetId === changesetId
+  // A group has no single place: no pin for a note about all of its objects.
+  const groupTarget =
+    note.group != null && note.ref?.key != null
+      ? groupNoteTargetLabel(note.ref.key, note.group)
+      : null
 
   return (
     <div
@@ -33,7 +39,9 @@ export function NoteEditor({
       onClick={(event) => event.stopPropagation()}
     >
       <div className="mb-1.5 flex flex-wrap items-center gap-1">
-        {note.ref ? (
+        {groupTarget != null ? (
+          <span className={clsx('font-mono', typeScale.small)}>{groupTarget}</span>
+        ) : note.ref ? (
           <>
             <span className={clsx('font-mono', typeScale.small)}>
               {note.ref.type}/{note.ref.id}
@@ -43,7 +51,7 @@ export function NoteEditor({
         ) : (
           <span className={clsx(typeScale.small, 'text-zinc-500')}>This changeset</span>
         )}
-        {note.pin ? (
+        {groupTarget != null ? null : note.pin ? (
           <RemovablePinBadge
             number={pinNumber ?? undefined}
             onRemove={() => clearPin(userKey, changesetId, note.id)}
@@ -66,7 +74,9 @@ export function NoteEditor({
       <Textarea
         autoFocus={autoFocus}
         rows={3}
-        placeholder="Write a note for this object…"
+        placeholder={
+          groupTarget != null ? 'Write a note for these objects…' : 'Write a note for this object…'
+        }
         value={note.body}
         onChange={(event) =>
           upsertDraftNote(userKey, changesetId, { ...note, body: event.target.value })
@@ -88,6 +98,7 @@ export function NoteEditor({
 
 export function noteTargetLabel(note: DraftNote) {
   if (!note.ref) return note.pin ? `Pin ${serializePinParam(note.pin)}` : 'Changeset'
+  if (note.group != null && note.ref.key) return groupNoteTargetLabel(note.ref.key, note.group)
   return note.ref.key
     ? `${serializeRefParam({ type: note.ref.type, id: note.ref.id })} › ${note.ref.key}`
     : serializeRefParam(note.ref)

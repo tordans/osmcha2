@@ -36,6 +36,8 @@ const draftNoteSchema = z.object({
   id: z.string(),
   body: z.string(),
   ref: refSchema.optional(),
+  // Added later: drafts saved before it have none and stay object or tag notes.
+  group: z.number().int().min(2).optional(),
   pin: pinSchema.optional(),
 })
 
@@ -150,8 +152,21 @@ function newNoteId() {
   return crypto.randomUUID()
 }
 
-function noteMatchesRef(note: DraftNote, ref: RefParam) {
-  return note.ref?.type === ref.type && note.ref.id === ref.id && note.ref.key === ref.key
+/**
+ * A group note and a plain note on the same tag are different drafts. The group's size is not
+ * compared: a draft for the group stays that group's draft when the group grows or shrinks.
+ */
+function noteMatchesRef(note: DraftNote, ref: RefParam, group?: number) {
+  return (
+    note.ref?.type === ref.type &&
+    note.ref.id === ref.id &&
+    note.ref.key === ref.key &&
+    (note.group != null) === (group != null)
+  )
+}
+
+function newDraftNote(ref: RefParam, group?: number): DraftNote {
+  return { id: newNoteId(), body: '', ref, ...(group ? { group } : {}) }
 }
 
 function draftNoteIsBlank(note: DraftNote) {
@@ -170,8 +185,13 @@ interface ChangesetNotesStore {
     setIntro: (userKey: string, changesetId: number, intro: string) => void
     upsertDraftNote: (userKey: string, changesetId: number, note: DraftNote) => void
     removeDraftNote: (userKey: string, changesetId: number, noteId: string) => void
-    openOrCreateEditor: (userKey: string, changesetId: number, ref: RefParam) => void
-    toggleEditor: (userKey: string, changesetId: number, ref: RefParam) => void
+    openOrCreateEditor: (
+      userKey: string,
+      changesetId: number,
+      ref: RefParam,
+      group?: number,
+    ) => void
+    toggleEditor: (userKey: string, changesetId: number, ref: RefParam, group?: number) => void
     setOpenEditor: (open: OpenEditor | null) => void
     setPinPlacement: (placement: PinPlacement | null) => void
     placePin: (pin: PinParam) => void
@@ -325,15 +345,15 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
               ),
             }
           }),
-        openOrCreateEditor: (userKey, changesetId, ref) =>
+        openOrCreateEditor: (userKey, changesetId, ref, group) =>
           set((state) => {
             const user = userOf(state.byUser, userKey)
             const draft = draftOf(user, changesetId)
-            const existing = draft.notes.find((note) => noteMatchesRef(note, ref))
+            const existing = draft.notes.find((note) => noteMatchesRef(note, ref, group))
             if (existing) {
               return { openEditor: { changesetId, noteId: existing.id }, pinPlacement: null }
             }
-            const note: DraftNote = { id: newNoteId(), body: '', ref }
+            const note = newDraftNote(ref, group)
             return {
               openEditor: { changesetId, noteId: note.id },
               pinPlacement: null,
@@ -344,11 +364,11 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
               ),
             }
           }),
-        toggleEditor: (userKey, changesetId, ref) =>
+        toggleEditor: (userKey, changesetId, ref, group) =>
           set((state) => {
             const user = userOf(state.byUser, userKey)
             const draft = draftOf(user, changesetId)
-            const existing = draft.notes.find((note) => noteMatchesRef(note, ref))
+            const existing = draft.notes.find((note) => noteMatchesRef(note, ref, group))
             const isOpen =
               existing != null &&
               state.openEditor?.changesetId === changesetId &&
@@ -371,7 +391,7 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             if (existing) {
               return { openEditor: { changesetId, noteId: existing.id }, pinPlacement: null }
             }
-            const note: DraftNote = { id: newNoteId(), body: '', ref }
+            const note = newDraftNote(ref, group)
             return {
               openEditor: { changesetId, noteId: note.id },
               pinPlacement: null,

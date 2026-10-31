@@ -77,6 +77,19 @@ describe('filtersFromSearch', () => {
     })
   })
 
+  it('ignores group, the size of a posted group note link, so it is not a filter', () => {
+    expect(
+      filtersFromSearch({
+        page: 1,
+        ref: 'node/1/man_made',
+        group: '2',
+        uids: '11881',
+      } as OsmchaSearch),
+    ).toEqual({
+      uids: [{ label: '11881', value: '11881' }],
+    })
+  })
+
   it('rebuilds order_by from order=date,desc', () => {
     expect(filtersFromSearch({ page: 1, order: 'date,desc' } as OsmchaSearch)).toEqual({
       order_by: [{ label: '-date', value: '-date' }],

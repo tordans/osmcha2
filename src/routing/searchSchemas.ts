@@ -9,9 +9,14 @@ export const osmchaSearchSchema = z
     map: z.string().optional(),
     /** Object/tag address: `way/123` or `way/123/highway`. */
     ref: z.string().optional(),
+    /**
+     * Size of the "Same tag changes" group a note is about; only read from posted links. The router
+     * parses `group=2` as a number, so it is coerced back to a string.
+     */
+    group: z.coerce.string().optional().catch(undefined),
     /** Note pin: `lat,lng` at five decimals. */
     pin: z.string().optional(),
-    /** Map layers: comma-separated tokens; omit at full style layers + spyglass + Unseen review filter. Seen-only adds `no-unseen`. */
+    /** Map layers: comma-separated tokens; omit at the default layers (Unchanged off) + spyglass + Unseen review filter. Seen-only adds `no-unseen`. */
     layers: z.string().optional(),
     /** List sort: `order=date,desc` (field,direction). */
     order: z.string().optional(),
@@ -34,6 +39,7 @@ export const searchParamsRegistry = [
   'map',
   'order',
   'ref',
+  'group',
   'pin',
   'layers',
 ] as const

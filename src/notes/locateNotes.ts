@@ -145,6 +145,7 @@ function publishedNote(
   if (comment.date) published.date = comment.date
   if (comment.id !== undefined) published.postId = comment.id
   if (note.ref) published.ref = note.ref
+  if (note.group) published.group = note.group
   if (note.pin) published.pin = note.pin
   return published
 }

@@ -156,6 +156,11 @@ function InterpretedNoteGroup({ note, onReveal }: { note: ParsedNote; onReveal: 
               {note.ref.type}/{note.ref.id}
             </span>
             {note.ref.key ? <Badge className="font-mono">{note.ref.key}</Badge> : null}
+            {note.group ? (
+              <span className={clsx('text-zinc-500', typeScale.small)}>
+                + {note.group - 1} more
+              </span>
+            ) : null}
           </>
         ) : null}
         {note.pin ? (
@@ -176,7 +181,7 @@ function InterpretedNoteGroup({ note, onReveal }: { note: ParsedNote; onReveal: 
 function noteGroupKey(note: ParsedNote, index: number) {
   const ref = note.ref ? `${note.ref.type}/${note.ref.id}/${note.ref.key ?? ''}` : 'changeset'
   const pin = note.pin ? serializePinParam(note.pin) : ''
-  return `${index}-${ref}-${pin}`
+  return `${index}-${ref}-${note.group ?? ''}-${pin}`
 }
 
 function noteRevealLabel(note: ParsedNote) {
@@ -184,7 +189,7 @@ function noteRevealLabel(note: ParsedNote) {
   if (note.ref) {
     parts.push(
       note.ref.key
-        ? `${note.ref.type}/${note.ref.id} ${note.ref.key}`
+        ? `${note.ref.type}/${note.ref.id} ${note.ref.key}${note.group ? ` and ${note.group - 1} more` : ''}`
         : `${note.ref.type}/${note.ref.id}`,
     )
   }

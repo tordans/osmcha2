@@ -43,6 +43,44 @@ describe('objectRefKey', () => {
   })
 })
 
+describe('locateNotes with a group note', () => {
+  test('lands under its first member with the group size; a note on the object stays a plain tag note', () => {
+    const located = locateNotes(
+      [
+        {
+          id: 1,
+          user: 'alice',
+          date: '2026-08-01T12:00:00Z',
+          text: see('ref=node/1/man_made&group=2', 'For both.'),
+        },
+        { id: 2, user: 'bob', text: see('ref=node/2/man_made', 'Just this one.') },
+      ],
+      listed(
+        [
+          ['node', 1],
+          ['node', 2],
+        ],
+        [
+          ['node/1', ['man_made']],
+          ['node/2', ['man_made']],
+        ],
+      ),
+    )
+    expect(located.byObject.get('node/1')?.byKey.get('man_made')).toEqual([
+      expect.objectContaining({
+        author: 'alice',
+        body: 'For both.',
+        ref: { type: 'node', id: 1, key: 'man_made' },
+        group: 2,
+      }),
+    ])
+    const own = located.byObject.get('node/2')?.byKey.get('man_made')
+    expect(own).toHaveLength(1)
+    expect(own?.[0]).not.toHaveProperty('group')
+    expect(located.unmatched).toEqual([])
+  })
+})
+
 describe('locateNotes', () => {
   test('places intro plus groups: intro and pin-only on the changeset, listed object and tag attached', () => {
     const text = `Thanks for the mapping.

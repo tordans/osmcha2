@@ -36,6 +36,23 @@ describe('seeLabel', () => {
   })
 })
 
+describe('seeLabel for a group', () => {
+  test('names the first member and how many more the group has', () => {
+    expect(seeLabel({ ref: { type: 'node', id: 14331471295, key: 'man_made' }, group: 2 })).toBe(
+      '`node/14331471295` > `man_made` + 1 more',
+    )
+    expect(seeLabel({ ref: { type: 'node', id: 1, key: 'man_made' }, group: 873, pin })).toBe(
+      '📍 `node/1` > `man_made` + 872 more',
+    )
+  })
+
+  test('ignores a group of one, one without a tag key, and one that is not a size', () => {
+    expect(seeLabel({ ref: { type: 'node', id: 1, key: 'a' }, group: 1 })).toBe('`node/1` > `a`')
+    expect(seeLabel({ ref: { type: 'node', id: 1 }, group: 5 })).toBe('`node/1`')
+    expect(seeLabel({ ref: { type: 'node', id: 1, key: 'a' }, group: 2.5 })).toBe('`node/1` > `a`')
+  })
+})
+
 describe('noteSeeUrl', () => {
   test('omits absent query keys and strips a trailing origin slash', () => {
     expect(
@@ -238,6 +255,73 @@ Still first.
   })
 })
 
+describe('group notes', () => {
+  const groupUrl = `${ORIGIN}/changesets/${CHANGESET_ID}?ref=node/14331471295/man_made&group=2`
+
+  test('compose writes the first member, the key, the group size and a readable label', () => {
+    const posted = compose({
+      notes: [
+        { ref: { type: 'node', id: 14331471295, key: 'man_made' }, group: 2, body: 'Wrong.' },
+      ],
+    })
+    expect(posted).toBe(`See \`node/14331471295\` > \`man_made\` + 1 more ${groupUrl}\nWrong.`)
+  })
+
+  test('compose puts group before pin, and never lists members', () => {
+    const posted = compose({
+      notes: [
+        { ref: { type: 'node', id: 1, key: 'man_made' }, group: 873, pin, body: 'Everywhere.' },
+      ],
+    })
+    expect(posted).toBe(
+      `See 📍 \`node/1\` > \`man_made\` + 872 more ${ORIGIN}/changesets/${CHANGESET_ID}?ref=node/1/man_made&group=873&pin=52.52014,13.40521\nEverywhere.`,
+    )
+    expect(posted.length).toBeLessThan(200)
+  })
+
+  test('parse reads the group size and round-trips with compose', () => {
+    const notes: ComposeNote[] = [
+      { ref: { type: 'node', id: 14331471295, key: 'man_made' }, group: 2, body: 'Group.' },
+      { ref: { type: 'node', id: 7, key: 'man_made' }, body: 'Just this one.' },
+      { ref: { type: 'way', id: 9, key: 'highway' }, group: 40, pin, body: 'Group with pin.' },
+    ]
+    const parsed = parse(compose({ notes }))
+    expect(parsed.notes).toEqual(notes)
+  })
+
+  test('parse does not rely on the label', () => {
+    expect(parse(`See ${groupUrl}\nNo label.`).notes).toEqual([
+      { ref: { type: 'node', id: 14331471295, key: 'man_made' }, group: 2, body: 'No label.' },
+    ])
+    expect(parse(`See something else entirely ${groupUrl}\nOdd label.`).notes[0]?.group).toBe(2)
+  })
+
+  test('an invalid group is ignored and the note stays a normal tag note', () => {
+    for (const bad of ['', '0', '1', '-3', 'abc', '2.5', '1e3', '99999999999999999999', '2%20']) {
+      const parsed = parse(
+        `See ${ORIGIN}/changesets/${CHANGESET_ID}?ref=node/1/man_made&group=${bad}\nBody.`,
+      )
+      expect(parsed.notes).toEqual([
+        { ref: { type: 'node', id: 1, key: 'man_made' }, body: 'Body.' },
+      ])
+    }
+  })
+
+  test('a group without a tag key is ignored: only tag rows form groups', () => {
+    expect(
+      parse(`See ${ORIGIN}/changesets/${CHANGESET_ID}?ref=node/1&group=3\nBody.`).notes,
+    ).toEqual([{ ref: { type: 'node', id: 1 }, body: 'Body.' }])
+  })
+
+  test('a post from before groups still parses as before', () => {
+    expect(
+      parse(
+        `See \`node/1\` > \`man_made\` ${ORIGIN}/changesets/${CHANGESET_ID}?ref=node/1/man_made\nOld.`,
+      ).notes,
+    ).toEqual([{ ref: { type: 'node', id: 1, key: 'man_made' }, body: 'Old.' }])
+  })
+})
+
 describe('composeDiscussionPost', () => {
   test('round-trips N notes: same targets and bodies; intro-only gets a footer, grouped posts do not', () => {
     const notes: ComposeNote[] = [
@@ -301,6 +385,7 @@ describe('composeDiscussionPost', () => {
 function omitBody(target: NoteTarget & { body: string }): NoteTarget {
   const next: NoteTarget = {}
   if (target.ref) next.ref = target.ref
+  if (target.group) next.group = target.group
   if (target.pin) next.pin = target.pin
   return next
 }

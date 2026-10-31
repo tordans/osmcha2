@@ -9,6 +9,11 @@ import { parseRefParam, serializeRefParam, type RefParam } from '../routing/refP
 export type NoteTarget = {
   /** Absent means the note is changeset-level (pin-only). */
   ref?: RefParam
+  /**
+   * Size of the "Same tag changes" group the note is about, only with a `ref` that has a key.
+   * `ref` then names the group's first member. Always 2 or more; never a member list.
+   */
+  group?: number
   pin?: PinParam
 }
 
@@ -24,6 +29,22 @@ export type ParsedDiscussionPost = {
 
 export type ComposeNote = NoteTarget & {
   body: string
+}
+
+/** Far above any real group; anything bigger is a typo, not a group size. */
+const GROUP_SIZE_MAX = 1_000_000
+
+/** A group size from a `group` query value, or undefined for anything that is not one (2 or more). */
+function parseGroupParam(value: string | null | undefined): number | undefined {
+  if (value == null || !/^\d+$/.test(value)) return undefined
+  const size = Number(value)
+  return Number.isSafeInteger(size) && size >= 2 && size <= GROUP_SIZE_MAX ? size : undefined
+}
+
+/** The group size of a target when it is meaningful: a tag note (`ref.key`) and a size of 2 or more. */
+function groupOfTarget(target: NoteTarget): number | undefined {
+  if (!target.ref?.key || target.group == null) return undefined
+  return parseGroupParam(String(target.group))
 }
 
 const SEE_URL_IN_LINE = /https?:\/\/\S+/i
@@ -94,7 +115,12 @@ function classifySeeLine(line: string, changesetId: number, linkHosts: readonly 
     const ref = parseRefParam(url.searchParams.get('ref') ?? '')
     if (!ref) return { kind: 'skip' }
     const pin = hasPin ? (parsePinParam(url.searchParams.get('pin') ?? '') ?? undefined) : undefined
-    return { kind: 'note', target: pin ? { ref, pin } : { ref } }
+    // An invalid or misplaced `group` is dropped: the note stays a normal object or tag note.
+    const group = ref.key ? parseGroupParam(url.searchParams.get('group')) : undefined
+    return {
+      kind: 'note',
+      target: { ref, ...(group ? { group } : {}), ...(pin ? { pin } : {}) },
+    }
   }
 
   const pin = parsePinParam(url.searchParams.get('pin') ?? '')
@@ -150,9 +176,11 @@ export function parseDiscussionNotes(
 }
 
 export function seeLabel(target: NoteTarget): string {
+  const group = groupOfTarget(target)
+  const groupSuffix = group ? ` + ${group - 1} more` : ''
   const objectLabel = target.ref
     ? target.ref.key
-      ? `\`${target.ref.type}/${target.ref.id}\` > \`${target.ref.key}\``
+      ? `\`${target.ref.type}/${target.ref.id}\` > \`${target.ref.key}\`${groupSuffix}`
       : `\`${serializeRefParam(target.ref)}\``
     : ''
   if (target.pin && objectLabel) return `📍 ${objectLabel}`
@@ -170,6 +198,8 @@ export function noteSeeUrl(options: {
   const query: string[] = []
   if (options.target.ref) {
     query.push(`ref=${encodeNoteQueryValue(serializeRefParam(options.target.ref))}`)
+    const group = groupOfTarget(options.target)
+    if (group) query.push(`group=${group}`)
   }
   if (options.target.pin) {
     query.push(`pin=${encodeNoteQueryValue(serializePinParam(options.target.pin))}`)
@@ -200,8 +230,10 @@ export function composeDiscussionPost(input: {
   if (intro) sections.push(intro)
 
   for (const note of notes) {
+    const group = groupOfTarget(note)
     const target: NoteTarget = {
       ...(note.ref ? { ref: note.ref } : {}),
+      ...(group ? { group } : {}),
       ...(note.pin ? { pin: note.pin } : {}),
     }
     const header = `See ${seeLabel(target)} ${noteSeeUrl({ origin, changesetId: input.changesetId, target })}`

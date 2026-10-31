@@ -8,6 +8,8 @@ export type DraftNote = {
   id: string
   body: string
   ref?: RefParam
+  /** Group size when the note is about a whole "Same tag changes" group; see `NoteTarget.group`. */
+  group?: number
   pin?: { lat: number; lng: number }
 }
 

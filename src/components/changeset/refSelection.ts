@@ -16,13 +16,17 @@ export function actionMatchingRef(
   )
 }
 
-/** Set `ref` in search, or omit it. Leaves `pin` and other keys untouched. */
+/**
+ * Set `ref` in search, or omit it. Leaves `pin` and other keys untouched. Drops `group`: it only
+ * describes the posted link's `ref` and the app never writes it.
+ */
 export function searchWithRef<T extends object>(search: T, ref: RefParam | null): T {
+  const { group: _group, ...withoutGroup } = search as T & { group?: string }
   if (!ref) {
-    const { ref: _ref, ...rest } = search as T & { ref?: string }
+    const { ref: _ref, ...rest } = withoutGroup as typeof withoutGroup & { ref?: string }
     return rest as T
   }
-  return { ...search, ref: serializeRefParam(ref) }
+  return { ...withoutGroup, ref: serializeRefParam(ref) } as T
 }
 
 /**

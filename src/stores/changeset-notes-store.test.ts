@@ -21,6 +21,40 @@ describe('changeset notes store', () => {
     expect(draftHasUnsentNotes(draft)).toBe(false)
   })
 
+  test('a group note and a plain note on the same tag are separate drafts', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    const ref = { type: 'node' as const, id: 5, key: 'man_made' }
+    actions.openOrCreateEditor('alice', 1, ref, 3)
+    // The group grew: still the same draft.
+    actions.openOrCreateEditor('alice', 1, ref, 4)
+    actions.openOrCreateEditor('alice', 1, ref)
+    const notes = getChangesetDraft('alice', 1)?.notes ?? []
+    expect(notes).toHaveLength(2)
+    expect(notes.map((note) => note.group)).toEqual([3, undefined])
+    expect(notes[1]).not.toHaveProperty('group')
+  })
+
+  test('toggleEditor on a group note closes it again when it is empty', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    const ref = { type: 'node' as const, id: 5, key: 'man_made' }
+    actions.toggleEditor('alice', 1, ref, 2)
+    expect(getChangesetDraft('alice', 1)?.notes[0]?.group).toBe(2)
+    actions.toggleEditor('alice', 1, ref, 2)
+    expect(getOpenEditor()).toBeNull()
+    expect(getChangesetDraft('alice', 1)?.notes).toHaveLength(0)
+  })
+
+  test('a group draft is posted with its group size', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.openOrCreateEditor('alice', 1, { type: 'node', id: 5, key: 'man_made' }, 2)
+    const note = getChangesetDraft('alice', 1)?.notes[0]
+    actions.upsertDraftNote('alice', 1, { ...note!, body: 'both are wrong' })
+    expect(postableDraftNotes(getChangesetDraft('alice', 1))[0]?.group).toBe(2)
+  })
+
   test('saving a non-empty body marks the object seen and is postable', () => {
     resetChangesetNotesStoreForTests()
     const actions = getChangesetNotesActions()

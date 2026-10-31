@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import type { MouseEvent, ReactNode } from 'react'
+import { groupNoteTargetLabel, type GroupThread } from '../../notes/groupNotes.ts'
 import type { ObjectNotes, PublishedNote } from '../../notes/locateNotes.ts'
 import type { DraftNote } from '../../notes/reviewSeen.ts'
 import { serializePinParam } from '../../routing/pinParam.ts'
@@ -10,7 +11,7 @@ import { LinkifyText } from '../text/LinkifyText.tsx'
 import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { typeScale } from '../ui/typography.ts'
 import type { OsmElementType } from './changesetElements.ts'
-import { noteThreadDomId } from './noteThreadDom.ts'
+import { groupThreadDomId, noteThreadDomId } from './noteThreadDom.ts'
 import { refParamFromElement } from './refSelection.ts'
 import { UserOSMLink } from './user_osm_link.tsx'
 
@@ -65,18 +66,49 @@ function MiniThreadHeader({ label, onClick }: { label: string; onClick?: () => v
   return <div className={className}>{label}</div>
 }
 
+function ReplyButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className={clsx(
+        typeScale.small,
+        "relative mt-0.5 cursor-pointer touch-manipulation bg-transparent p-0 font-medium text-zinc-600 select-none after:absolute after:-inset-x-2 after:-inset-y-2.5 after:content-[''] hover:text-zinc-950 hover:underline",
+      )}
+      onClick={onClick}
+    >
+      Reply
+    </button>
+  )
+}
+
+/** A note that is written but not posted, with its editor closed. */
+function UnsentNote({ body }: { body: string }) {
+  return (
+    <div className={clsx(typeScale.small, 'rounded-sm bg-blue-50 px-1 py-1')}>
+      <p className="font-medium text-blue-800">Unsent</p>
+      <p className="break-words text-zinc-800">{body}</p>
+    </div>
+  )
+}
+
 function MiniThread({
   id,
   header,
   notes,
   flash,
   onHeaderClick,
+  replyLabel,
+  onReply,
 }: {
   id: string
   header: string
   notes: PublishedNote[]
   flash?: boolean
   onHeaderClick?: () => void
+  /** With `onReply`: the thread offers a Reply action; the editor is not open for it yet. */
+  replyLabel?: string
+  onReply?: () => void
 }) {
   if (notes.length === 0) return null
   return (
@@ -90,6 +122,7 @@ function MiniThread({
           <NoteEntry key={`${note.postId ?? 'post'}-${note.date ?? ''}-${index}`} note={note} />
         ))}
       </div>
+      {onReply && replyLabel ? <ReplyButton label={replyLabel} onClick={onReply} /> : null}
     </div>
   )
 }
@@ -118,6 +151,9 @@ export function NotesBlock({
   drafts = [],
   flashKey,
   selectRef,
+  onReply,
+  editingKey,
+  editingObject = false,
 }: {
   type: OsmElementType
   id: number
@@ -126,6 +162,12 @@ export function NotesBlock({
   drafts?: DraftNote[]
   flashKey?: string | null
   selectRef: (ref: RefParam | null) => void
+  /** Opens the editor for a thread: the tag's key, or none for the object's own thread. */
+  onReply?: (key?: string) => void
+  /** The tag whose editor is open; its thread offers no Reply. */
+  editingKey?: string
+  /** The object's own editor is open. */
+  editingObject?: boolean
 }) {
   const tagThreads = tags
     .map((tag) => ({ key: tag.key, notes: notes?.byKey.get(tag.key) ?? [] }))
@@ -145,13 +187,12 @@ export function NotesBlock({
             const nextRef = refParamFromElement(type, id)
             if (nextRef) selectRef(nextRef)
           }}
+          replyLabel={`Reply on ${type}/${id}`}
+          onReply={onReply && !editingObject ? () => onReply() : undefined}
         />
       ) : null}
       {closedDrafts.map((draft) => (
-        <div key={draft.id} className={clsx(typeScale.small, 'rounded-sm bg-blue-50 px-1 py-1')}>
-          <p className="font-medium text-blue-800">Unsent</p>
-          <p className="break-words text-zinc-800">{draft.body}</p>
-        </div>
+        <UnsentNote key={draft.id} body={draft.body} />
       ))}
       {tagThreads.map((thread) => (
         <MiniThread
@@ -164,6 +205,56 @@ export function NotesBlock({
             const nextRef = refParamFromElement(type, id, thread.key)
             if (nextRef) selectRef(nextRef)
           }}
+          replyLabel={`Reply on ${thread.key}`}
+          onReply={onReply && editingKey !== thread.key ? () => onReply(thread.key) : undefined}
+        />
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The notes about a whole "Same tag changes" group, in the group panel above its member rows.
+ * `first` is the group's first member; it names the threads' DOM ids.
+ */
+export function GroupNotesBlock({
+  first,
+  memberCount,
+  threads,
+  drafts,
+  flashKey,
+  editingKey,
+  onReply,
+  onHeaderClick,
+}: {
+  first: { type: string; id: number }
+  memberCount: number
+  threads: GroupThread[]
+  /** Group notes whose editor is closed. */
+  drafts: DraftNote[]
+  flashKey?: string | null
+  /** The tag whose group editor is open; its thread offers no Reply. */
+  editingKey?: string
+  onReply: (key: string) => void
+  onHeaderClick: (key: string) => void
+}) {
+  const closedDrafts = drafts.filter((draft) => draft.body.trim())
+  if (threads.length === 0 && closedDrafts.length === 0) return null
+  return (
+    <div className="w-full border-t border-zinc-950/10 pt-1" onClick={stopRowClick}>
+      {closedDrafts.map((draft) => (
+        <UnsentNote key={draft.id} body={draft.body} />
+      ))}
+      {threads.map((thread) => (
+        <MiniThread
+          key={thread.key}
+          id={groupThreadDomId(first.type, first.id, thread.key)}
+          header={groupNoteTargetLabel(thread.key, memberCount)}
+          notes={thread.notes}
+          flash={flashKey === thread.key}
+          onHeaderClick={() => onHeaderClick(thread.key)}
+          replyLabel={`Reply on ${groupNoteTargetLabel(thread.key, memberCount)}`}
+          onReply={editingKey === thread.key ? undefined : () => onReply(thread.key)}
         />
       ))}
     </div>

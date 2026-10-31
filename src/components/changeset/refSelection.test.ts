@@ -49,6 +49,12 @@ describe('searchWithRef', () => {
     })
   })
 
+  test("drops group from a posted link: it only described that link's ref", () => {
+    const search = { page: 1, ref: 'node/1/man_made', group: '2' }
+    expect(searchWithRef(search, { type: 'node', id: 9 })).toEqual({ page: 1, ref: 'node/9' })
+    expect(searchWithRef(search, null)).toEqual({ page: 1 })
+  })
+
   test('omits ref when cleared and does not drop pin', () => {
     expect(searchWithRef({ page: 1, ref: 'way/1', pin: '52.52,13.40' }, null)).toEqual({
       page: 1,
