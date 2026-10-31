@@ -113,6 +113,19 @@ describe('changesetWorkAreas', () => {
   })
 })
 
+describe('changesetWorkAreas with minor moves', () => {
+  const places = [node(1, 13.4, 52.5), node(2, 13.401, 52.5), node(3, 13.5, 52.6)]
+
+  test('a minor move does not stretch the area', () => {
+    const [area] = changesetWorkAreas(places, new Set(['node/3']))
+    expect(area?.bounds[2]).toBeCloseTo(13.401)
+  })
+
+  test('only minor moves still give areas', () => {
+    expect(changesetWorkAreas(places, new Set(['node/1', 'node/2', 'node/3']))).toHaveLength(2)
+  })
+})
+
 describe('activeWorkArea', () => {
   const areas = changesetWorkAreas(delftAndHuizhou)
 

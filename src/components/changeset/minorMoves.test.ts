@@ -162,7 +162,8 @@ describe('minor way moves', () => {
   })
 
   test('a way with rewritten nodes is neither moved nor minor', () => {
-    const after = [...line({ lat: METER_LAT }), { ref: 4, lon: 10, lat: LAT + METER_LAT }]
+    const after = line({ lat: METER_LAT })
+    after[1] = { ...after[1]!, ref: 4 }
     const change = only([wayAction(line(), after)])
     expect(change.geometry).toBe('rewritten')
     expect(change.minorMove).toBeUndefined()
@@ -227,5 +228,40 @@ describe('hausdorffMeters', () => {
   test('is undefined without a line to measure against', () => {
     expect(hausdorffMeters([at(0, 0)], [at(0, 0), at(10, 0)])).toBeUndefined()
     expect(hausdorffMeters([], [])).toBeUndefined()
+  })
+})
+
+describe('a way that only got a connection point', () => {
+  function wayChange(before: Node[], after: Node[]) {
+    const action = {
+      type: 'modify',
+      old: { type: 'way', id: 7, version: 1, nodes: before, tags: {} },
+      new: { type: 'way', id: 7, version: 2, nodes: after, tags: {} },
+    } as unknown as AdiffAction
+    return buildElementChanges([action])[0]
+  }
+
+  const [first, second, third] = line() as [Node, Node, Node]
+  const inserted = { ref: 9, lon: 10 + 50 * METER_LON, lat: LAT + 0.5 * METER_LAT }
+
+  test('counts as a minor move when the line stays within the limit', () => {
+    const change = wayChange([first, second, third], [first, inserted, second, third])
+    expect(change?.geometry).toBe('rewritten')
+    expect(change?.minorMove?.meters).toBeCloseTo(0.5, 1)
+  })
+
+  test('stays a reshape when the new node bends the line', () => {
+    const bent = { ...inserted, lat: LAT + 10 * METER_LAT }
+    expect(wayChange([first, second, third], [first, bent, second, third])?.minorMove).toBe(
+      undefined,
+    )
+  })
+
+  test('stays a reshape when a node left the way, like an undone junction', () => {
+    expect(wayChange([first, second, third], [first, third])?.minorMove).toBe(undefined)
+  })
+
+  test('stays a reshape when the way was reversed', () => {
+    expect(wayChange([first, second, third], [third, second, first])?.minorMove).toBe(undefined)
   })
 })

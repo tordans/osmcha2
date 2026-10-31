@@ -4,11 +4,11 @@ import type { AdiffAction, ElementChange, LonLat } from './changesetElements.ts'
 
 /** A node moved this far or less (and nothing else changed) needs no review. */
 export const MINOR_NODE_MOVE_METERS = 2
-/** A line or area whose shape shifted this far or less (and nothing else changed) needs no review. */
+/** A line or area whose shape changed this far or less (and nothing else changed) needs no review. */
 export const MINOR_WAY_MOVE_METERS = 2
 
 /** Shown under the "Minor moves" heading. Both limits are 2 m today. */
-export const MINOR_MOVES_EXPLANATION = `Moved less than ${MINOR_NODE_MOVE_METERS} m; marked as seen automatically.`
+export const MINOR_MOVES_EXPLANATION = `Moved or reshaped by less than ${MINOR_NODE_MOVE_METERS} m; marked as seen automatically.`
 
 type Point = { x: number; y: number }
 
@@ -31,6 +31,25 @@ function wayVertices(element: AdiffAction['old']): LonLat[] | undefined {
     vertices.push(at)
   }
   return vertices
+}
+
+function nodeRef(node: { ref?: number } | number): number | undefined {
+  return typeof node === 'number' ? node : node.ref
+}
+
+/**
+ * Every old node is still there in the same order, only with new nodes between them. That is a way
+ * getting a connection point. Removed nodes (a junction undone) and a reversed direction are not.
+ */
+function onlyInsertedNodes(action: AdiffAction): boolean {
+  const oldRefs = (action.old?.nodes ?? []).map(nodeRef)
+  const newRefs = (action.new?.nodes ?? []).map(nodeRef)
+  const kept = new Set(oldRefs)
+  const keptInNewOrder = newRefs.filter((ref) => kept.has(ref))
+  return (
+    keptInNewOrder.length === oldRefs.length &&
+    oldRefs.every((ref, index) => ref === keptInNewOrder[index])
+  )
 }
 
 function distanceToSegment(point: Point, start: Point, end: Point): number {
@@ -88,7 +107,8 @@ export function hausdorffMeters(before: LonLat[], after: LonLat[]): number | und
 
 /**
  * How far a modified node, line or area was moved, when that is a minor move: only the position
- * changed (`geometry` is 'moved', no tag changed) and it moved no more than the limit. Undefined
+ * changed (`geometry` is 'moved', or 'rewritten' with only inserted nodes; no tag changed) and it
+ * moved no more than the limit. Undefined
  * otherwise, also when coordinates are missing. `geometry` and `tagsChanged` come from the caller,
  * which already classified the action.
  */
@@ -96,7 +116,10 @@ export function minorMoveOf(
   action: AdiffAction,
   { geometry, tagsChanged }: { geometry: ElementChange['geometry']; tagsChanged: boolean },
 ): ElementChange['minorMove'] {
-  if (action.type !== 'modify' || geometry !== 'moved' || tagsChanged) return undefined
+  if (action.type !== 'modify' || tagsChanged) return undefined
+  if (geometry !== 'moved' && !(geometry === 'rewritten' && onlyInsertedNodes(action))) {
+    return undefined
+  }
 
   if (action.new?.type === 'node') {
     const before = lonLatOf(action.old)

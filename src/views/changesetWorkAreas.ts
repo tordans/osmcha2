@@ -206,10 +206,15 @@ function clusterBoxes(boxes: readonly Box[], gap: number) {
 /**
  * Split a changeset's edits into the places where the work happened. A changeset
  * that reads well in one view stays one area; far-apart edits each get their own.
+ * `minorMoveKeys` need no review: they don't shape the areas, unless nothing else changed.
  */
-export function changesetWorkAreas(features: readonly ChangesetViewFeature[]) {
+export function changesetWorkAreas(
+  features: readonly ChangesetViewFeature[],
+  minorMoveKeys: ReadonlySet<string> = new Set(),
+) {
   const changed = changedEditFeatures(features)
-  const clustered = withoutRelationEnvelopes(changed)
+  const reviewable = changed.filter((feature) => !minorMoveKeys.has(elementKey(feature) ?? ''))
+  const clustered = withoutRelationEnvelopes(reviewable.length > 0 ? reviewable : changed)
   const elements = elementBounds(clustered)
   if (elements.length === 0) return []
 
@@ -243,8 +248,8 @@ export function changesetWorkAreas(features: readonly ChangesetViewFeature[]) {
     }))
     .sort((a, b) => b.elementKeys.size - a.elementKeys.size || a.bounds[0] - b.bounds[0])
 
-  // Relations kept out of the clustering still belong to the area they touch.
-  // Without relation envelopes removed, the element list is the same one, so reuse it.
+  // Relations and minor moves kept out of the clustering still belong to the area they touch.
+  // When nothing was kept out, the element list is the same one, so reuse it.
   const allElements = clustered.length === changed.length ? elements : elementBounds(changed)
   for (const element of allElements) {
     if (areas.some((area) => area.elementKeys.has(element.key))) continue
