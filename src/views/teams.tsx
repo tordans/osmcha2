@@ -69,7 +69,7 @@ export function MappingTeams() {
                           search={listSearchFromFilters({
                             mapping_teams: [{ label: team.name, value: team.name }],
                           })}
-                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5 active:bg-zinc-950/5"
                         >
                           <FunnelIcon className="size-4" />
                           Changesets
@@ -77,7 +77,7 @@ export function MappingTeams() {
                         <RouterLink
                           to="/teams/$id"
                           params={{ id: team.id }}
-                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
+                          className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5 active:bg-zinc-950/5"
                         >
                           <PencilSquareIcon className="size-4" />
                           Edit

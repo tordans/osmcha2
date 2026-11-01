@@ -16,7 +16,7 @@ export function SortHeader({ label, sorted, onSort, className }: SortHeaderProps
     >
       <button
         type="button"
-        className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-1 select-none"
+        className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-1 select-none active:opacity-60"
         onClick={() => onSort()}
       >
         {label}

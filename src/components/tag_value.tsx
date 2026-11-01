@@ -52,6 +52,7 @@ export function TagValue({ k, v }: TagValueProps) {
             href={/^https?:\/\//i.test(chunk) ? chunk : placeholderUrl.replaceAll('$1', chunk)}
             target="_blank"
             rel="noreferrer"
+            className="active:opacity-60"
           >
             {chunk}
           </a>

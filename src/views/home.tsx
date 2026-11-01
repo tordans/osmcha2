@@ -5,7 +5,7 @@ import { Text } from '../components/ui/text.tsx'
 import { appVersionLabel, donateUrl, githubContributingUrl } from '../config/constants.ts'
 
 const footerLinkClassName =
-  'inline-flex min-h-11 items-center text-base/6 text-zinc-500 underline decoration-zinc-950/20 sm:text-sm/6 hover-fine:decoration-zinc-950/50'
+  'inline-flex min-h-11 items-center text-base/6 text-zinc-500 underline decoration-zinc-950/20 sm:text-sm/6 hover-fine:decoration-zinc-950/50 active:opacity-60'
 
 export function Home() {
   return (

@@ -87,7 +87,7 @@ export function Header({
             search={stripFilterSearch({ ...search, aoi: aoiId, page: undefined })}
             data-panel-origin="filters"
             aria-label={`Edit saved filter ${aoiName || aoiId}`}
-            className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950"
+            className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950 active:bg-zinc-950/5"
           >
             <PencilSquareIcon className="size-4" />
             Edit

@@ -64,7 +64,7 @@ export function WorkAreaOutlines({
               onPointerDown={suppressNextMapClick}
               onClick={() => onJump(area)}
               // The label is 20px tall; the invisible pseudo element makes the tap area 44px.
-              className="relative -ml-1.5 cursor-pointer touch-manipulation rounded-t-md bg-fuchsia-600 px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-white select-none before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:bg-fuchsia-700"
+              className="relative -ml-1.5 origin-bottom-left cursor-pointer touch-manipulation rounded-t-md bg-fuchsia-600 px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-white transition-transform duration-100 select-none before:absolute before:inset-x-0 before:-inset-y-3 before:content-[''] hover:bg-fuchsia-700 active:scale-[0.97] active:bg-fuchsia-800"
             >
               Area {area.id}
             </button>

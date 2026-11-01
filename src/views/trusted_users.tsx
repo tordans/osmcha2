@@ -77,7 +77,7 @@ export function TrustedUsers() {
               search={listSearchFromFilters({
                 users: [{ label: username, value: username }],
               })}
-              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5 active:bg-zinc-950/5"
             >
               Changesets
             </RouterLink>

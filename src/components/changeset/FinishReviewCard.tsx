@@ -130,7 +130,10 @@ export function FinishReviewCard({
             >
               <button
                 type="button"
-                className={clsx('min-w-0 flex-1 cursor-pointer text-left', typeScale.small)}
+                className={clsx(
+                  'min-w-0 flex-1 cursor-pointer rounded-sm text-left select-none active:bg-zinc-950/5',
+                  typeScale.small,
+                )}
                 onClick={() => {
                   if (note.ref) selectRef(note.ref)
                   setOpenEditor({ changesetId, noteId: note.id })
@@ -189,7 +192,7 @@ export function FinishReviewCard({
             href={`${osmAuthUrl()}/changeset/${changesetId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline"
+            className="underline active:opacity-60"
           >
             OSM sandbox
           </a>
@@ -227,7 +230,7 @@ export function UnsentNotesBar({
       <button
         type="button"
         className={clsx(
-          'flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-md bg-blue-50 px-3 text-left text-blue-800',
+          'flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-md bg-blue-50 px-3 text-left text-blue-800 select-none active:bg-blue-100',
           typeScale.small,
         )}
         onClick={onFinish}

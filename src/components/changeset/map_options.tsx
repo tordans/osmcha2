@@ -89,7 +89,7 @@ function buildTopImageryRows(resolution: ImageryUsedResolution): TopImageryRow[]
 }
 
 export const mapControlButtonClassName =
-  'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none active:bg-zinc-100'
+  'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-zinc-950/10 touch-manipulation select-none transition-transform duration-100 active:scale-[0.97] active:bg-zinc-100'
 
 const mapControlPanelClassName = clsx(
   'z-40 max-h-[min(70dvh,36rem)] w-80 overflow-y-auto rounded-xl p-3',
@@ -106,7 +106,7 @@ const imageryPanelClassName = clsx(
 function imageryLayerButtonClassName(active: boolean) {
   return clsx(
     'flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-base select-none',
-    active ? 'bg-zinc-950/5 font-medium' : 'active:bg-zinc-950/5',
+    active ? 'bg-zinc-950/5 font-medium active:bg-zinc-950/10' : 'active:bg-zinc-950/5',
   )
 }
 
@@ -463,7 +463,7 @@ function DateChip({
       title={chip.used ? `${chip.name} (used in this changeset)` : chip.name}
       onClick={() => setStyle(chip.styleId)}
       className={clsx(
-        'inline-flex min-h-9 cursor-pointer touch-manipulation items-center gap-1 rounded-md px-2.5 text-sm tabular-nums ring-1 select-none',
+        'inline-flex min-h-9 cursor-pointer touch-manipulation items-center gap-1 rounded-md px-2.5 text-sm tabular-nums ring-1 transition-transform duration-100 select-none active:scale-[0.97]',
         active
           ? 'bg-zinc-900 font-medium text-white ring-zinc-900'
           : 'bg-white text-zinc-700 ring-zinc-950/15 active:bg-zinc-100',
@@ -510,7 +510,7 @@ function ImageryRowView({
         onClick={() => setStyle(row.styleId)}
         className={clsx(
           'flex min-h-11 w-full cursor-pointer touch-manipulation items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-base select-none',
-          shown ? 'font-medium' : 'active:bg-zinc-950/5',
+          shown ? 'font-medium active:bg-zinc-950/10' : 'active:bg-zinc-950/5',
         )}
       >
         <span className="min-w-0 break-words">

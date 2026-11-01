@@ -51,7 +51,9 @@ function Discussions({
           aria-pressed={!discussionRaw}
           className={clsx(
             'min-h-11 flex-1 cursor-pointer touch-manipulation rounded-md px-3 text-sm font-medium select-none',
-            !discussionRaw ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-600',
+            !discussionRaw
+              ? 'bg-white text-zinc-950 shadow-sm'
+              : 'text-zinc-600 active:bg-zinc-950/5',
           )}
           onClick={() => setDiscussionRaw(false)}
         >
@@ -62,7 +64,9 @@ function Discussions({
           aria-pressed={discussionRaw}
           className={clsx(
             'min-h-11 flex-1 cursor-pointer touch-manipulation rounded-md px-3 text-sm font-medium select-none',
-            discussionRaw ? 'bg-white text-zinc-950 shadow-sm' : 'text-zinc-600',
+            discussionRaw
+              ? 'bg-white text-zinc-950 shadow-sm'
+              : 'text-zinc-600 active:bg-zinc-950/5',
           )}
           onClick={() => setDiscussionRaw(true)}
         >

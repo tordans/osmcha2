@@ -401,7 +401,7 @@ function ReviewTab({
           'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
           current
             ? 'border-blue-500 bg-blue-50 text-blue-700'
-            : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700',
+            : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 active:bg-zinc-950/5',
         )}
       >
         {children}

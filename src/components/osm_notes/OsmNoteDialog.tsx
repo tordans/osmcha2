@@ -63,7 +63,7 @@ function NoteThread({ comments }: { comments: OsmNoteComment[] }) {
                     href={comment.userUrl ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline"
+                    className="hover:underline active:opacity-60"
                   >
                     {comment.user}
                   </a>

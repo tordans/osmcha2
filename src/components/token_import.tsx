@@ -234,7 +234,7 @@ function BookmarkletDragLink({ href, label }: { href: string; label: string }) {
       href="https://osmcha.org/"
       draggable
       title="Drag to your bookmarks bar"
-      className="inline-flex min-h-11 cursor-grab touch-manipulation items-center justify-center rounded-lg border border-dashed border-zinc-950/20 bg-zinc-50 px-3 text-sm/6 font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5 active:cursor-grabbing"
+      className="inline-flex min-h-11 cursor-grab touch-manipulation items-center justify-center rounded-lg border border-dashed border-zinc-950/20 bg-zinc-50 px-3 text-sm/6 font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5 active:cursor-grabbing active:bg-zinc-950/5"
       onClick={(event) => {
         event.preventDefault()
       }}

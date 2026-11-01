@@ -34,7 +34,7 @@ export function StreetImageryChips({ photos }: { photos: StreetImageryRowPhoto[]
               }}
               className={clsx(
                 'inline-flex min-h-7 max-w-full cursor-pointer touch-manipulation items-center gap-1 rounded-md bg-white px-1.5 py-0.5 text-[11px] leading-tight text-zinc-800 ring-1 ring-zinc-950/10',
-                'hover:bg-zinc-50 hover:ring-zinc-950/20 focus-visible:outline-2 focus-visible:outline-blue-500',
+                'transition-transform duration-100 hover:bg-zinc-50 hover:ring-zinc-950/20 focus-visible:outline-2 focus-visible:outline-blue-500 active:scale-[0.97] active:bg-zinc-100',
                 photo.old && 'opacity-60',
               )}
             >

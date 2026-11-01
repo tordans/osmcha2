@@ -1402,7 +1402,7 @@ function WayLinks({ ids, onSelect }: { ids: number[]; onSelect: (id: number) => 
       <button
         type="button"
         aria-label={`Show way/${id} on map`}
-        className="relative cursor-pointer touch-manipulation underline decoration-dotted underline-offset-2 select-none after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-['']"
+        className="relative cursor-pointer touch-manipulation underline decoration-dotted underline-offset-2 select-none after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-[''] active:opacity-60"
         onClick={(event) => {
           event.stopPropagation()
           onSelect(id)

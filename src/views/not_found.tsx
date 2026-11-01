@@ -10,7 +10,10 @@ export function NotFound() {
       <p className="text-sm text-zinc-600">
         There's nothing at <code className="font-mono">{pathname}</code>.
       </p>
-      <RouterLink to="/" className="mt-2 text-sm font-semibold text-zinc-950 underline">
+      <RouterLink
+        to="/"
+        className="mt-2 text-sm font-semibold text-zinc-950 underline active:opacity-60"
+      >
         Go to the changeset list
       </RouterLink>
     </div>

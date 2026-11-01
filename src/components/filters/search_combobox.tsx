@@ -107,7 +107,7 @@ export function SearchCombobox({
             onEnter(event.currentTarget.value)
           }}
         />
-        <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex cursor-pointer touch-manipulation items-center px-2 select-none">
+        <Headless.ComboboxButton className="group absolute inset-y-0 right-0 flex cursor-pointer touch-manipulation items-center px-2 select-none active:opacity-60">
           <ChevronsUpDownIcon
             className="size-5 text-zinc-500 group-data-hover:text-zinc-700 sm:size-4"
             aria-hidden="true"

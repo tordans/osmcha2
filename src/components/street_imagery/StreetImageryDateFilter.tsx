@@ -57,7 +57,7 @@ export default function StreetImageryDateFilter() {
         <button
           type="button"
           onClick={() => setDate(null)}
-          className="min-h-9 cursor-pointer touch-manipulation text-sm text-zinc-600 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-900"
+          className="min-h-9 cursor-pointer touch-manipulation text-sm text-zinc-600 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-900 active:opacity-60"
         >
           Back to the last {DEFAULT_PHOTO_MAX_AGE_YEARS} years
         </button>

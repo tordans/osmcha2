@@ -109,7 +109,7 @@ export function WorkAreaBar({
           onMouseEnter={() => setHovered(tab.key)}
           className={clsx(
             tabLayoutClassName,
-            'cursor-pointer touch-manipulation snap-start rounded-md text-zinc-700 select-none',
+            'cursor-pointer touch-manipulation snap-start rounded-md text-zinc-700 select-none active:bg-zinc-950/5',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
           )}
         >

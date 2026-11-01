@@ -51,11 +51,11 @@ function TemporaryPinMarker({
       <button
         type="button"
         aria-label={label}
-        className="flex size-11 cursor-pointer touch-manipulation items-center justify-center rounded-full"
+        className="group flex size-11 cursor-pointer touch-manipulation items-center justify-center rounded-full"
       >
         <span
           className={clsx(
-            'flex size-8 items-center justify-center rounded-full text-white shadow-md ring-2 ring-white',
+            'flex size-8 items-center justify-center rounded-full text-white shadow-md ring-2 ring-white transition-transform duration-100 group-active:scale-90',
             dotClassName,
           )}
         >

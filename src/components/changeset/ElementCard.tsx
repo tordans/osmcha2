@@ -52,7 +52,7 @@ export function ElementCard({
         type="button"
         aria-label={`Show ${label} in the list`}
         onClick={onOpen}
-        className="flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation flex-col items-start justify-center gap-0.5 px-3 py-2 text-left select-none"
+        className="flex min-h-11 min-w-0 flex-1 cursor-pointer touch-manipulation flex-col items-start justify-center gap-0.5 rounded-l-xl px-3 py-2 text-left select-none active:bg-zinc-950/5"
       >
         <span className="flex w-full min-w-0 items-center gap-1.5 text-sm font-medium text-zinc-950">
           <Badge color={ACTION[actionKey].token}>{ACTION[actionKey].label}</Badge>

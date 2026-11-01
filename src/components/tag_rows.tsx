@@ -32,7 +32,7 @@ const ROW_STYLE: Record<
 > = {
   added: {
     row: 'bg-green-50',
-    hover: 'hover:bg-green-100',
+    hover: 'hover:bg-green-100 active:bg-green-100',
     key: 'text-green-800',
     marker: 'text-green-800',
     markerText: '+',
@@ -40,7 +40,7 @@ const ROW_STYLE: Record<
   },
   removed: {
     row: 'bg-red-50',
-    hover: 'hover:bg-red-100',
+    hover: 'hover:bg-red-100 active:bg-red-100',
     key: 'text-red-800',
     marker: 'text-red-800',
     markerText: '−',
@@ -48,7 +48,7 @@ const ROW_STYLE: Record<
   },
   changed: {
     row: 'bg-amber-50',
-    hover: 'hover:bg-amber-100',
+    hover: 'hover:bg-amber-100 active:bg-amber-100',
     key: 'text-zinc-800',
     marker: 'text-amber-800',
     markerText: '~',
@@ -56,7 +56,7 @@ const ROW_STYLE: Record<
   },
   renamed: {
     row: 'bg-amber-50',
-    hover: 'hover:bg-amber-100',
+    hover: 'hover:bg-amber-100 active:bg-amber-100',
     key: 'text-zinc-800',
     marker: 'text-amber-800',
     markerText: '→',
@@ -64,7 +64,7 @@ const ROW_STYLE: Record<
   },
   unchanged: {
     row: '',
-    hover: 'hover:bg-zinc-50',
+    hover: 'hover:bg-zinc-50 active:bg-zinc-100',
     key: 'text-zinc-800',
     marker: '',
     markerText: '',
@@ -337,7 +337,10 @@ function TagNoteCountBadge({
     <button
       type="button"
       aria-label={label}
-      className={clsx(className, 'cursor-pointer hover:bg-zinc-600/20')}
+      className={clsx(
+        className,
+        'cursor-pointer transition-transform duration-100 hover:bg-zinc-600/20 active:scale-[0.97] active:bg-zinc-600/20',
+      )}
       onClick={(event) => {
         event.stopPropagation()
         onNoteCountClick(tagKey)

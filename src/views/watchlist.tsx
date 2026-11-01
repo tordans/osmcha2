@@ -92,7 +92,7 @@ export function Watchlist() {
               search={listSearchFromFilters({
                 users: [{ label: listed.username, value: listed.username }],
               })}
-              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5"
+              className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center rounded-lg px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/5 active:bg-zinc-950/5"
             >
               Changesets
             </RouterLink>
@@ -186,7 +186,7 @@ export function Watchlist() {
                 search={listSearchFromFilters({
                   blacklist: [{ label: 'Yes', value: 'True' }],
                 })}
-                className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5"
+                className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-zinc-950/10 px-3 text-sm font-semibold text-zinc-950 select-none hover:bg-zinc-950/2.5 active:bg-zinc-950/5"
               >
                 <FunnelIcon className="size-4" />
                 View changesets from users on your watchlist

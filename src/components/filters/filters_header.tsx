@@ -145,7 +145,7 @@ export function FiltersHeader({
           to="/"
           search={search}
           aria-label="Close filters"
-          className="inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none"
+          className="inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none active:opacity-60"
         >
           <XMarkIcon className="size-5" />
         </RouterLink>

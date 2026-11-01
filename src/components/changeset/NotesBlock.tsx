@@ -54,7 +54,7 @@ function MiniThreadHeader({ label, onClick }: { label: string; onClick?: () => v
     typeScale.small,
     'max-w-full font-mono font-medium break-all text-zinc-800',
     onClick &&
-      "relative cursor-pointer bg-transparent p-0 text-left after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-[''] hover:underline",
+      "relative cursor-pointer bg-transparent p-0 text-left after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-[''] hover:underline active:opacity-60",
   )
   if (onClick) {
     return (
@@ -73,7 +73,7 @@ function ReplyButton({ label, onClick }: { label: string; onClick: () => void })
       aria-label={label}
       className={clsx(
         typeScale.small,
-        "relative mt-0.5 cursor-pointer touch-manipulation bg-transparent p-0 font-medium text-zinc-600 select-none after:absolute after:-inset-x-2 after:-inset-y-2.5 after:content-[''] hover:text-zinc-950 hover:underline",
+        "relative mt-0.5 cursor-pointer touch-manipulation bg-transparent p-0 font-medium text-zinc-600 select-none after:absolute after:-inset-x-2 after:-inset-y-2.5 after:content-[''] hover:text-zinc-950 hover:underline active:opacity-60",
       )}
       onClick={onClick}
     >
@@ -287,7 +287,7 @@ export function OtherNotesSection({ notes }: { notes: PublishedNote[] }) {
                 rel="noopener noreferrer"
                 className={clsx(
                   typeScale.small,
-                  'font-mono font-medium break-all text-blue-700 underline',
+                  'font-mono font-medium break-all text-blue-700 underline active:opacity-60',
                 )}
               >
                 {serializeRefParam(ref)}
