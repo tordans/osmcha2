@@ -1,14 +1,14 @@
-import type { RegisterableHotkey } from '@tanstack/react-hotkeys'
+import type { RegisterableHotkeyChord } from '@tanstack/react-hotkeys'
 import type { NonEmptyArray } from '../utils/nonEmptyArray.ts'
 
 export type HotkeyBinding = {
   label: string
-  hotkeys: NonEmptyArray<RegisterableHotkey>
+  hotkeys: NonEmptyArray<RegisterableHotkeyChord>
 }
 
 export function bindingKey(binding: HotkeyBinding): string {
   const [hotkey] = binding.hotkeys
-  return typeof hotkey === 'string' ? hotkey : hotkey.key
+  return typeof hotkey === 'string' ? hotkey : (hotkey.key ?? '')
 }
 
 export const FILTER_BINDING: HotkeyBinding = {
