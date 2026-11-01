@@ -1,5 +1,5 @@
 import type { NormalizedPhoto } from '@osm-editor-kit/street-imagery'
-import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react'
+import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react/viewer'
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import {

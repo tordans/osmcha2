@@ -7,7 +7,7 @@ import { getStreetImageryViewerActions } from '../../stores/street-imagery-viewe
 import { StreetImageryDialog } from './StreetImageryDialog.tsx'
 
 // The viewer needs WebGL; the dialog around it is what is tested here.
-vi.mock('@osm-editor-kit/street-imagery-react', () => ({
+vi.mock('@osm-editor-kit/street-imagery-react/viewer', () => ({
   StreetLevelImageryViewer: ({ photo }: { photo: { photoId: string } }) => (
     <div data-testid="viewer">{photo.photoId}</div>
   ),
