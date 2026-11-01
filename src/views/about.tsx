@@ -33,6 +33,7 @@ const SHORTCUTS: Array<{ group: string; action: string; keys: string }> = [
   { group: 'Review elements', action: 'Step into a group', keys: 'Enter' },
   { group: 'Review elements', action: 'Back to the group, or deselect', keys: 'Esc' },
   { group: 'Review elements', action: 'Add a note on the selected element', keys: 'N' },
+  { group: 'Street photos', action: 'Previous or next opened photo', keys: '[ or ]' },
   { group: 'Panels', action: 'Toggle Changes tab', keys: '1' },
   { group: 'Panels', action: 'Toggle Discussion tab', keys: '2' },
   { group: 'Panels', action: 'Toggle Map controls', keys: '8' },

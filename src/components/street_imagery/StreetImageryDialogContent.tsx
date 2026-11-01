@@ -3,6 +3,12 @@ import {
   type NormalizedPhoto,
   type PhotoView,
 } from '@osm-editor-kit/street-imagery'
+import {
+  getViewpointSession,
+  useCanGoBack,
+  useCanGoForward,
+  type ViewpointHistoryEntry,
+} from '@osm-editor-kit/street-imagery-react'
 import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react/viewer'
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
@@ -20,6 +26,7 @@ import mapillaryLogoUrl from '../../assets/mapillary-logo.svg'
 import { isDesktopLayout, useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
 import {
+  getStreetImageryViewerActions,
   useStreetImageryViewerActions,
   useStreetImageryViewerOpen,
   useStreetImageryViewerPhoto,
@@ -31,7 +38,9 @@ import { RelativeTime } from '../relative_time.tsx'
 import { Button } from '../ui/button.tsx'
 import { Dialog, DialogTitle } from '../ui/dialog.tsx'
 import {
+  ArrowLeftIcon,
   ArrowPathIcon,
+  ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   ClipboardIcon,
   LoaderCircleIcon,
@@ -105,6 +114,24 @@ function PhotoCredit({
   )
 }
 
+function showHistoryPhoto(entry: ViewpointHistoryEntry | null) {
+  if (!entry) return
+  const { providerId, photoId } = entry.photo
+  // History only holds photos that this dialog showed, so of the providers it knows.
+  getStreetImageryViewerActions().openPhoto({
+    provider: providerId as StreetImageryRef['provider'],
+    id: photoId,
+  })
+}
+
+function goBack() {
+  showHistoryPhoto(getViewpointSession().actions.back())
+}
+
+function goForward() {
+  showHistoryPhoto(getViewpointSession().actions.forward())
+}
+
 function WindowTitle({ className, children }: { className?: string; children: ReactNode }) {
   return <h2 className={className}>{children}</h2>
 }
@@ -138,10 +165,21 @@ function PhotoBody({
   // Stepping along the sequence moves on from the photo that was opened.
   const pageUrl = shown ? providerExternalLink(shown, view) : streetImageryPhotoPageUrl(photoRef)
   const panelTopRef = useRef<HTMLDivElement>(null)
+  const canGoBack = useCanGoBack()
+  const canGoForward = useCanGoForward()
   const lng = shown?.lngLat[0]
   const lat = shown?.lngLat[1]
   const shownId = shown?.photoId
   const map = mainMap?.getMap()
+
+  // Every photo shown goes into the package's history; going back to one only moves through it.
+  useEffect(
+    function rememberPhoto() {
+      if (open && shown)
+        getViewpointSession().actions.showPhoto({ photo: shown, directionKey: null })
+    },
+    [open, shown],
+  )
 
   // A pin marks the place of the photo on screen, and the map keeps it in view: on phones in the
   // free part above the panel, on desktop anywhere.
@@ -184,15 +222,33 @@ function PhotoBody({
       >
         <Title className="sr-only">{label} photo</Title>
         <PhotoCredit provider={photoRef.provider} label={label} photo={shown} />
-        <Button
-          plain
-          type="button"
-          aria-label="Close"
-          onClick={onDismiss}
-          className="-mr-2 min-w-9"
-        >
-          <XMarkIcon />
-        </Button>
+        <div className="-mr-2 flex shrink-0 items-center gap-0.5">
+          <Button
+            plain
+            type="button"
+            aria-label="Previous photo"
+            title="Previous photo ([)"
+            disabled={!canGoBack}
+            onClick={goBack}
+            className="min-w-9"
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <Button
+            plain
+            type="button"
+            aria-label="Next photo"
+            title="Next photo (])"
+            disabled={!canGoForward}
+            onClick={goForward}
+            className="min-w-9"
+          >
+            <ArrowRightIcon />
+          </Button>
+          <Button plain type="button" aria-label="Close" onClick={onDismiss} className="min-w-9">
+            <XMarkIcon />
+          </Button>
+        </div>
       </div>
 
       {query.isLoading ? (
@@ -307,20 +363,33 @@ export default function StreetImageryDialogContent() {
     leaveTo(sheetBeforeRef.current)
   }
 
-  // The window leaves the page usable, so Esc is not a modal's. It must not reach the review keys.
   useEffect(
-    function closeWindowOnEscape() {
+    function forgetHistoryWhenClosed() {
+      if (!open) getViewpointSession().actions.reset()
+    },
+    [open],
+  )
+
+  // The window leaves the page usable, so these keys are not a modal's. Esc must not reach the
+  // review keys.
+  useEffect(
+    function handleWindowKeys() {
       if (!desktop || !open) return
-      function closeOnEscape(event: KeyboardEvent) {
-        if (event.key !== 'Escape' || document.querySelector('[role="dialog"], [role="menu"]'))
+      function onKeyDown(event: KeyboardEvent) {
+        if (document.querySelector('[role="dialog"], [role="menu"]')) return
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          close()
+          clearMarker()
           return
-        event.preventDefault()
-        close()
-        clearMarker()
+        }
+        if (event.target instanceof Element && event.target.closest('input, textarea')) return
+        if (event.key === '[') goBack()
+        if (event.key === ']') goForward()
       }
-      document.addEventListener('keydown', closeOnEscape, { capture: true })
-      return function stopClosingOnEscape() {
-        document.removeEventListener('keydown', closeOnEscape, { capture: true })
+      document.addEventListener('keydown', onKeyDown, { capture: true })
+      return function stopHandlingWindowKeys() {
+        document.removeEventListener('keydown', onKeyDown, { capture: true })
       }
     },
     [desktop, open, close, clearMarker],
