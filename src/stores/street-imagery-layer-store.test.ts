@@ -40,30 +40,28 @@ describe('parsePersistedStreetImageryLayer', () => {
   it('reads a stored value', () => {
     expect(
       parsePersistedStreetImageryLayer({
-        mapillary: true,
-        panoramax: false,
         photoKind: 'pano',
         date: { from: '2024-01-31', to: '2025-02-01' },
       }),
     ).toEqual({
-      mapillary: true,
-      panoramax: false,
       photoKind: 'pano',
       date: { from: '2024-01-31', to: '2025-02-01' },
     })
   })
 
+  it('ignores providers stored by older versions: they start off', () => {
+    expect(
+      parsePersistedStreetImageryLayer({ mapillary: true, panoramax: true, photoKind: 'pano' }),
+    ).toEqual({ photoKind: 'pano', date: null })
+  })
+
   it('falls back field by field', () => {
     expect(
       parsePersistedStreetImageryLayer({
-        mapillary: 'yes',
-        panoramax: true,
         photoKind: 'sphere',
         date: { from: '2024-02-30', to: '2025-02-01' },
       }),
     ).toEqual({
-      mapillary: false,
-      panoramax: true,
       photoKind: 'all',
       date: { from: undefined, to: '2025-02-01' },
     })
@@ -71,12 +69,7 @@ describe('parsePersistedStreetImageryLayer', () => {
 
   it('never throws on junk', () => {
     for (const junk of [undefined, null, 'x', 7, []]) {
-      expect(parsePersistedStreetImageryLayer(junk)).toEqual({
-        mapillary: false,
-        panoramax: false,
-        photoKind: 'all',
-        date: null,
-      })
+      expect(parsePersistedStreetImageryLayer(junk)).toEqual({ photoKind: 'all', date: null })
     }
   })
 })

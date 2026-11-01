@@ -15,8 +15,6 @@ const day = z.iso.date()
 
 /** Read field by field: a stored value that does not fit is dropped and its default is used. */
 const persistedSchema = z.object({
-  mapillary: z.boolean().catch(false),
-  panoramax: z.boolean().catch(false),
   photoKind: z.enum(STREET_IMAGERY_PHOTO_KINDS).catch('all'),
   date: z
     .object({ from: day.optional().catch(undefined), to: day.optional().catch(undefined) })
@@ -27,6 +25,8 @@ const persistedSchema = z.object({
 type Persisted = z.infer<typeof persistedSchema>
 
 interface StreetImageryLayerStore extends Persisted {
+  mapillary: boolean
+  panoramax: boolean
   actions: {
     setProviderOn: (provider: StreetImageryProvider, on: boolean) => void
     setPhotoKind: (kind: StreetImageryPhotoKind) => void
@@ -44,7 +44,10 @@ export function parsePersistedStreetImageryLayer(value: unknown): Persisted {
 const useStreetImageryLayerStore = create<StreetImageryLayerStore>()(
   persist(
     (set, get) => ({
-      // Both providers are off until someone switches one on: nothing is requested before that.
+      // Both providers are off on every page load until someone switches one on: nothing is
+      // requested before that.
+      mapillary: false,
+      panoramax: false,
       ...parsePersistedStreetImageryLayer(undefined),
       actions: {
         setProviderOn: (provider, on) => {
@@ -58,12 +61,7 @@ const useStreetImageryLayerStore = create<StreetImageryLayerStore>()(
     }),
     {
       name: 'street-imagery-layer',
-      partialize: ({ mapillary, panoramax, photoKind, date }) => ({
-        mapillary,
-        panoramax,
-        photoKind,
-        date,
-      }),
+      partialize: ({ photoKind, date }) => ({ photoKind, date }),
       merge: (persistedState, currentState) => ({
         ...currentState,
         ...parsePersistedStreetImageryLayer(persistedState),
