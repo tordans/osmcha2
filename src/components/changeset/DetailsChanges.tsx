@@ -95,7 +95,7 @@ import { changeKey, tagGroupsOf, type ChangeListItem, type TagGroups } from './t
 import { PresetContextValue, usePresetLine, useSharedPresetLine } from './usePresetLine.ts'
 import { MoveOnAfterSeenContext, useReviewCursorKeys } from './useReviewCursorKeys.ts'
 
-const disclosureTransition = { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
+const disclosureTransition = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const }
 const DEEP_LINK_FLASH_MS = 2000
 const NO_FLAGGED: NonNullable<DetailsChangesProps['features']> = []
 const NO_REVIEWED: NonNullable<DetailsChangesProps['reviewedFeatures']> = []
