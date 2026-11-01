@@ -7,7 +7,6 @@ import {
   getViewpointSession,
   useCanGoBack,
   useCanGoForward,
-  type ViewpointHistoryEntry,
 } from '@osm-editor-kit/street-imagery-react'
 import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react/viewer'
 import { useQuery } from '@tanstack/react-query'
@@ -27,6 +26,8 @@ import { isDesktopLayout, useDesktopLayout } from '../../layout/useDesktopLayout
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
 import {
   getStreetImageryViewerActions,
+  getStreetImageryViewerState,
+  useStreetImageryPlacePhotos,
   useStreetImageryViewerActions,
   useStreetImageryViewerOpen,
   useStreetImageryViewerPhoto,
@@ -114,22 +115,30 @@ function PhotoCredit({
   )
 }
 
-function showHistoryPhoto(entry: ViewpointHistoryEntry | null) {
-  if (!entry) return
-  const { providerId, photoId } = entry.photo
-  // History only holds photos that this dialog showed, so of the providers it knows.
-  getStreetImageryViewerActions().openPhoto({
-    provider: providerId as StreetImageryRef['provider'],
-    id: photoId,
-  })
+/** Through the photos of a place when the viewer shows one, else through the photos opened. */
+function movePhoto(offset: -1 | 1) {
+  const { photo, placePhotos } = getStreetImageryViewerState()
+  const { showPhoto } = getStreetImageryViewerActions()
+  if (placePhotos) {
+    const next = placePhotos[placePhotos.findIndex(({ id }) => id === photo?.id) + offset]
+    if (next) showPhoto({ provider: next.provider, id: next.id })
+    return
+  }
+  const { back, forward } = getViewpointSession().actions
+  const entry = offset < 0 ? back() : forward()
+  if (entry) {
+    // History only holds photos that this dialog showed, so of the providers it knows.
+    const provider = entry.photo.providerId as StreetImageryRef['provider']
+    showPhoto({ provider, id: entry.photo.photoId })
+  }
 }
 
 function goBack() {
-  showHistoryPhoto(getViewpointSession().actions.back())
+  movePhoto(-1)
 }
 
 function goForward() {
-  showHistoryPhoto(getViewpointSession().actions.forward())
+  movePhoto(1)
 }
 
 function WindowTitle({ className, children }: { className?: string; children: ReactNode }) {
@@ -165,8 +174,12 @@ function PhotoBody({
   // Stepping along the sequence moves on from the photo that was opened.
   const pageUrl = shown ? providerExternalLink(shown, view) : streetImageryPhotoPageUrl(photoRef)
   const panelTopRef = useRef<HTMLDivElement>(null)
-  const canGoBack = useCanGoBack()
-  const canGoForward = useCanGoForward()
+  const historyHasBack = useCanGoBack()
+  const historyHasForward = useCanGoForward()
+  const placePhotos = useStreetImageryPlacePhotos()
+  const placeIndex = placePhotos?.findIndex(({ id }) => id === photoRef.id) ?? -1
+  const canGoBack = placePhotos ? placeIndex > 0 : historyHasBack
+  const canGoForward = placePhotos ? placeIndex < placePhotos.length - 1 : historyHasForward
   const lng = shown?.lngLat[0]
   const lat = shown?.lngLat[1]
   const shownId = shown?.photoId
@@ -223,6 +236,14 @@ function PhotoBody({
         <Title className="sr-only">{label} photo</Title>
         <PhotoCredit provider={photoRef.provider} label={label} photo={shown} />
         <div className="-mr-2 flex shrink-0 items-center gap-0.5">
+          {placePhotos ? (
+            <span
+              className="mr-1 text-sm/6 text-zinc-500 tabular-nums"
+              title="Photos looking at this place"
+            >
+              {placeIndex + 1} / {placePhotos.length}
+            </span>
+          ) : null}
           <Button
             plain
             type="button"
@@ -295,6 +316,7 @@ function PhotoBody({
               onEaseMapToPoint={ignoreMapEase}
               onViewerPhoto={setViewed}
               onViewerView={setView}
+              lookAtBearing={placePhotos?.[placeIndex]?.bearing}
               hideAttribution
             />
           </div>

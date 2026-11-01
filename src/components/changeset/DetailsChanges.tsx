@@ -83,6 +83,7 @@ import {
   OFFSCREEN_ROW_CLASSNAME,
   offscreenRowStyle,
 } from './offscreenRows.ts'
+import { PhotosOfPlaceButton } from './PhotosOfPlaceButton.tsx'
 import { refParamFromElement, tagGroupContainsRef } from './refSelection.ts'
 import {
   changeRowDomId,
@@ -1300,6 +1301,7 @@ const ElementChangeRow = memo(function ElementChangeRow({
               </Badge>
             </Tooltip>
           ) : null}
+          <PhotosOfPlaceButton change={change} />
           <DropdownOpenElement
             changesetId={changesetId}
             type={change.type}

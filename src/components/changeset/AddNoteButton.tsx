@@ -29,7 +29,7 @@ function toneClassName(pressed: boolean, tone: 'note' | 'seen') {
     : 'bg-zinc-800 text-white active:bg-zinc-900'
 }
 
-function ReviewIconButton({
+export function ReviewIconButton({
   label,
   tooltip,
   pressed,
