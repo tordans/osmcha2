@@ -1,4 +1,8 @@
-import type { NormalizedPhoto } from '@osm-editor-kit/street-imagery'
+import {
+  providerExternalLink,
+  type NormalizedPhoto,
+  type PhotoView,
+} from '@osm-editor-kit/street-imagery'
 import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react/viewer'
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
@@ -125,12 +129,14 @@ function PhotoBody({
   const query = useStreetImageryPhoto(photoRef, open)
   // The photo the viewer shows now: stepping along the sequence changes it.
   const [viewed, setViewed] = useState<NormalizedPhoto | null>(null)
+  // Zoom and pan inside that photo: the links open the same view.
+  const [view, setView] = useState<PhotoView | null>(null)
   const photo = query.data
   const shown = viewed ?? photo
   const label = STREET_IMAGERY_PROVIDER_LABEL[photoRef.provider]
   const notFound = query.error instanceof StreetImageryPhotoNotFoundError
   // Stepping along the sequence moves on from the photo that was opened.
-  const shownRef = shown ? { provider: photoRef.provider, id: shown.photoId } : null
+  const pageUrl = shown ? providerExternalLink(shown, view) : streetImageryPhotoPageUrl(photoRef)
   const panelTopRef = useRef<HTMLDivElement>(null)
   const lng = shown?.lngLat[0]
   const lat = shown?.lngLat[1]
@@ -154,8 +160,7 @@ function PhotoBody({
 
   /** For a note: the link to the photo on screen, and the way back to where notes are written. */
   function copyLink() {
-    if (!shownRef) return
-    navigator.clipboard.writeText(streetImageryPhotoPageUrl(shownRef)).then(
+    navigator.clipboard.writeText(pageUrl).then(
       () => {
         toast('Link to this photo copied', {
           action: { label: 'Back to review', onClick: onBackToReview },
@@ -233,6 +238,7 @@ function PhotoBody({
               onPhotoSelected={ignorePhotoSelection}
               onEaseMapToPoint={ignoreMapEase}
               onViewerPhoto={setViewed}
+              onViewerView={setView}
               hideAttribution
             />
           </div>
@@ -243,7 +249,7 @@ function PhotoBody({
           <Button
             type="button"
             color="blue"
-            disabled={!shownRef}
+            disabled={!shown}
             onClick={copyLink}
             className={ACTION_BUTTON_CLASS_NAME}
           >
@@ -252,7 +258,7 @@ function PhotoBody({
           </Button>
           <Button
             color="white"
-            href={streetImageryPhotoPageUrl(shownRef ?? photoRef)}
+            href={pageUrl}
             target="_blank"
             rel="noopener noreferrer"
             className={ACTION_BUTTON_CLASS_NAME}
