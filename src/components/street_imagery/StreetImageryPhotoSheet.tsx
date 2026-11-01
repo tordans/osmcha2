@@ -75,7 +75,7 @@ export function StreetImageryPhotoSheet({
         mini ? miniOffset : 0,
         reduceMotion ? { duration: 0 } : SHEET_SPRING,
       )
-      controls.then(() => setSettledMini(mini))
+      void controls.then(() => setSettledMini(mini))
       return function stopMoving() {
         controls.stop()
       }
