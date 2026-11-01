@@ -9,7 +9,7 @@ Live preview: [tordans.github.io/osmcha2](https://tordans.github.io/osmcha2/).
 
 ## Development
 
-1. Install [Bun](https://bun.sh) ≥ 1.3.14 (see [`.tool-versions`](./.tool-versions)).
+1. Install [Bun](https://bun.sh) 1.4.4 (see [`.tool-versions`](./.tool-versions)).
 2. `bun install`
 3. `bun run dev` — http://127.0.0.1:5287
 4. `bun run check` before a commit; CI runs `bun run check-ci` then `bun run build`. Push runs `bun run check-pre-push` via Husky.
