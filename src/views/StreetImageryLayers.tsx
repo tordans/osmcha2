@@ -1,13 +1,14 @@
-import { MAP_FEATURE_COLOR, photoTypeColorExpression } from '@osm-editor-kit/street-imagery'
+import { ageBandColorExpression, MAP_FEATURE_COLOR } from '@osm-editor-kit/street-imagery'
 import {
   queryStreetImageryFeatures,
   StreetLevelImagerySourcesAndLayers,
   streetImageryInteractiveLayerIds,
   useMapViewportBbox,
 } from '@osm-editor-kit/street-imagery-react'
-import type { MapLayerMouseEvent } from 'maplibre-gl'
-import { useEffect } from 'react'
+import type { ExpressionSpecification, MapLayerMouseEvent } from 'maplibre-gl'
+import { useEffect, useState } from 'react'
 import {
+  photoAgeCutoff,
   photoTypesOfKind,
   STREET_IMAGERY_LAYER_PROVIDERS,
   STREET_IMAGERY_MIN_ZOOM,
@@ -85,6 +86,7 @@ function isOverPhoto(event: MapLayerMouseEvent) {
 export default function StreetImageryLayers({ beforeId }: { beforeId?: string }) {
   const providers = useStreetImageryProvidersOn()
   const photoKind = useStreetImageryPhotoKind()
+  const [now] = useState(() => Date.now())
   const date = useEffectiveStreetImageryDate()
   const bbox = useMapViewportBbox(CHANGESET_MAP_ID)
   const zoom = useMapZoom(CHANGESET_MAP_ID)
@@ -104,7 +106,11 @@ export default function StreetImageryLayers({ beforeId }: { beforeId?: string })
       filter={{ photoTypes: photoTypesOfKind(photoKind), date }}
       options={{
         minZoom: STREET_IMAGERY_MIN_ZOOM,
-        photoCircleColor: photoTypeColorExpression,
+        // The package types its expression loosely, so that its core needs no MapLibre types.
+        photoCircleColor: ageBandColorExpression(
+          photoAgeCutoff(date, now),
+          now,
+        ) as ExpressionSpecification,
         mapFeatureCircleColor: MAP_FEATURE_COLOR,
         beforeId,
       }}

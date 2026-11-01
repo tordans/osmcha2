@@ -1,4 +1,6 @@
 import {
+  AGE_BAND_COLORS,
+  ageBand,
   providerExternalLink,
   type NormalizedPhoto,
   type PhotoView,
@@ -24,6 +26,7 @@ import { toast } from 'sonner'
 import mapillaryLogoUrl from '../../assets/mapillary-logo.svg'
 import { isDesktopLayout, useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
+import { useEffectiveStreetImageryDate } from '../../stores/street-imagery-layer-store.ts'
 import {
   getStreetImageryViewerActions,
   getStreetImageryViewerState,
@@ -48,6 +51,7 @@ import {
   XMarkIcon,
 } from '../ui/icons.ts'
 import { useDraggableWindow } from '../ui/useDraggableWindow.ts'
+import { photoAgeCutoff } from './streetImageryLayerSettings.ts'
 import {
   fetchStreetImageryPhoto,
   StreetImageryPhotoNotFoundError,
@@ -95,6 +99,12 @@ function PhotoCredit({
   label: string
   photo: NormalizedPhoto | null | undefined
 }) {
+  const date = useEffectiveStreetImageryDate()
+  const [now] = useState(() => Date.now())
+  // The same rating as the colours on the map; what is too old only shows here, the map filters it.
+  const band =
+    photo?.capturedAt != null ? ageBand(photo.capturedAt, photoAgeCutoff(date, now), now) : null
+
   return (
     // div, not p: RelativeTime's tooltip renders a div.
     <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-sm/6 text-zinc-700">
@@ -104,8 +114,22 @@ function PhotoCredit({
         <span className="font-medium">{label}</span>
       )}
       {photo?.capturedAt != null ? (
-        <span>
-          <RelativeTime datetime={new Date(photo.capturedAt)} addSuffix={false} /> old
+        <span
+          className={clsx(
+            'inline-flex items-center gap-1.5',
+            band === 'outdated' && 'font-medium text-red-700',
+          )}
+        >
+          {band ? (
+            <span
+              aria-hidden
+              className="size-2 rounded-full"
+              style={{ backgroundColor: AGE_BAND_COLORS[band] }}
+            />
+          ) : null}
+          <span>
+            <RelativeTime datetime={new Date(photo.capturedAt)} addSuffix={false} /> old
+          </span>
         </span>
       ) : null}
       {photo?.creatorName ? <span>by {photo.creatorName}</span> : null}

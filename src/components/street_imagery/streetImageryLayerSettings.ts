@@ -44,6 +44,14 @@ export function dayYearsAgo(years: number, now: Date) {
   return day.toISOString().slice(0, 10)
 }
 
+/**
+ * From when on a photo counts as recent enough, in ms: the start of the date filter, else the
+ * default. The map colours by it and the photo window rates by it, so both say the same.
+ */
+export function photoAgeCutoff(date: DateRange, now: number) {
+  return Date.parse(date.from ?? dayYearsAgo(DEFAULT_PHOTO_MAX_AGE_YEARS, new Date(now)))
+}
+
 /** Photos from the last two years. No end: new photos show too. */
 export function defaultPhotoDate(now: Date = new Date()): DateRange {
   return { from: dayYearsAgo(DEFAULT_PHOTO_MAX_AGE_YEARS, now) }
