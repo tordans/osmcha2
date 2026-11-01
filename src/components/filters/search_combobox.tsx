@@ -84,6 +84,7 @@ export function SearchCombobox({
       >
         <Headless.ComboboxInput
           aria-label={ariaLabel || placeholder}
+          enterKeyHint="search"
           displayValue={(option: SearchOption | null) => option?.label ?? ''}
           placeholder={placeholder}
           className={clsx(

@@ -38,6 +38,7 @@ import {
 } from '../../stores/changeset-notes-store.ts'
 import { useIsGroupCursor, useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+import { prefersTouchInput } from '../../utils/prefersTouchInput.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
@@ -1452,9 +1453,4 @@ function NodeStatsTooltip({ stats }: { stats: NodeStats }) {
       </p>
     </div>
   )
-}
-
-/** Touch screens: focusing a field opens the keyboard, which a stray tap should not do. */
-function prefersTouchInput() {
-  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }

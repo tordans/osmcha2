@@ -36,6 +36,9 @@ export function TrustedListUser({ onSave }: { onSave: (username: string) => void
             onChange={(event) => field.handleChange(event.target.value)}
             placeholder="Username"
             type="text"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         )}
       </form.Field>

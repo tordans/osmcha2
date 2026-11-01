@@ -134,6 +134,9 @@ export default function NewTeam(props: NewTeamProps) {
                             type="text"
                             required
                             placeholder="Username"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
                             value={field.state.value ?? ''}
                             onBlur={field.handleBlur}
                             onChange={(event) => field.handleChange(event.target.value)}
@@ -154,6 +157,10 @@ export default function NewTeam(props: NewTeamProps) {
                           <Input
                             type="text"
                             placeholder="User UID"
+                            inputMode="numeric"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
                             value={field.state.value ?? ''}
                             onBlur={field.handleBlur}
                             onChange={(event) => field.handleChange(event.target.value)}

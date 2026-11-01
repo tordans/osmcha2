@@ -160,6 +160,7 @@ export function MultiSelect({
         <div className="flex items-center gap-2">
           <Input
             name={name}
+            enterKeyHint="done"
             value={inputValue}
             placeholder={placeholder}
             onChange={(event) => setInputValue(event.target.value)}

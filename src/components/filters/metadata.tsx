@@ -181,6 +181,9 @@ export function MetadataFilter({ name, value, onChange }: MetadataFilterProps) {
           <Text className="mb-2">API metadata string. Unsupported lookups stay here.</Text>
           <Input
             aria-label="Raw metadata filter query"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={rawInputValue}
             onChange={(event) => commitRaw(event.target.value)}
           />
@@ -239,6 +242,9 @@ function MetadataRowFields({
           {customKey ? (
             <Input
               aria-label="Custom changeset tag key"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="Custom key"
               value={row.key}
               invalid={Boolean(error && !row.key.trim())}
@@ -273,6 +279,9 @@ function MetadataRowFields({
         ) : (
           <Input
             aria-label="Changeset tag value"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             type={row.operator === 'min' || row.operator === 'max' ? 'number' : 'text'}
             placeholder={config?.placeholder ?? 'Value'}
             value={row.value}

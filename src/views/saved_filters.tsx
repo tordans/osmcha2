@@ -62,6 +62,7 @@ function SaveButton({ onCreate }: { onCreate: (value: string) => void }) {
           <Input
             className="min-w-40 flex-1"
             placeholder="Filter name"
+            enterKeyHint="done"
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={(event) => field.handleChange(event.target.value)}

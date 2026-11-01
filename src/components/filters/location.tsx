@@ -450,6 +450,7 @@ function LocationSelectInner({
         <div className="flex max-w-sm items-center gap-2">
           <Input
             name="area_lt"
+            inputMode="numeric"
             type="number"
             min={1}
             max={100}

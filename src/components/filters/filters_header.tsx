@@ -7,6 +7,7 @@ import { useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { stripFilterSearch } from '../../routing/filterSearch.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import { aoiFeedUrl } from '../../utils/aoiFeedUrl.ts'
+import { prefersTouchInput } from '../../utils/prefersTouchInput.ts'
 import { Button } from '../ui/button.tsx'
 import { Heading } from '../ui/heading.tsx'
 import { LinkIcon, RssIcon, XMarkIcon } from '../ui/icons.ts'
@@ -63,9 +64,10 @@ function SaveAOI({ name, aoiList, aoiId, updateAOI, createAOI }: SaveAOIProps) {
         <form.Field name="name">
           {(field) => (
             <Input
-              autoFocus
+              autoFocus={!prefersTouchInput()}
               value={field.state.value}
               aria-label="Saved filter name"
+              enterKeyHint="done"
               onFocus={(event) => event.currentTarget.select()}
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}

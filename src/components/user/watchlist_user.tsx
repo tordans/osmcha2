@@ -114,6 +114,9 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
             onChange={(event) => field.handleChange(event.target.value)}
             placeholder="Username"
             type="text"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         )}
       </form.Field>
@@ -136,6 +139,10 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
             onChange={(event) => field.handleChange(event.target.value)}
             placeholder="UID"
             type="text"
+            inputMode="numeric"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         )}
       </form.Field>
