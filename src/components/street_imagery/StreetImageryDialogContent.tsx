@@ -13,17 +13,11 @@ import {
 import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react/viewer'
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ComponentType,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { useEffect, useRef, useState, type HTMLAttributes, type RefObject } from 'react'
 import { useMap } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
-import mapillaryLogoUrl from '../../assets/mapillary-logo.svg'
+import mapillaryIconUrl from '../../assets/mapillary-icon.svg'
 import { isDesktopLayout, useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
 import { useEffectiveStreetImageryDate } from '../../stores/street-imagery-layer-store.ts'
@@ -40,7 +34,6 @@ import { keepInViewAbovePanel } from '../../views/temporaryPinCamera.ts'
 import type { SheetPosition } from '../changeset/reviewSheetSnap.ts'
 import { RelativeTime } from '../relative_time.tsx'
 import { Button } from '../ui/button.tsx'
-import { Dialog, DialogTitle } from '../ui/dialog.tsx'
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -57,6 +50,7 @@ import {
   StreetImageryPhotoNotFoundError,
   streetImageryPhotoPageUrl,
 } from './streetImageryPhoto.ts'
+import { StreetImageryPhotoSheet } from './StreetImageryPhotoSheet.tsx'
 import { configureStreetImagery } from './streetImageryRuntime.ts'
 import { STREET_IMAGERY_PROVIDER_LABEL, type StreetImageryRef } from './streetImageryTags.ts'
 
@@ -68,10 +62,12 @@ configureStreetImagery()
  */
 const WINDOW_FRAME_CLASS_NAME =
   "after:pointer-events-none after:absolute after:inset-0 after:z-20 after:rounded-2xl after:ring-2 after:ring-white after:content-[''] after:ring-inset"
-const DIALOG_FRAME_CLASS_NAME =
-  "sm:after:pointer-events-none sm:after:absolute sm:after:inset-0 sm:after:z-20 sm:after:rounded-2xl sm:after:ring-2 sm:after:ring-white sm:after:content-[''] sm:after:ring-inset"
 
-const ACTION_BUTTON_CLASS_NAME = 'flex-1 whitespace-nowrap max-sm:text-sm/5 min-[56rem]:flex-none'
+/** Over a photo: only the icon until the width that has room for the words. */
+const ICON_BUTTON_CLASS_NAME = 'whitespace-nowrap max-[55.99rem]:size-11 max-[55.99rem]:p-0'
+const BUTTON_LABEL_CLASS_NAME = 'max-[55.99rem]:hidden'
+
+const SHEET_ENTER_TRANSITION = { type: 'spring', visualDuration: 0.35, bounce: 0 } as const
 
 // The dialog follows the photo itself (`followPhoto`): the viewer need not ease the map.
 function ignorePhotoSelection() {}
@@ -107,9 +103,9 @@ function PhotoCredit({
 
   return (
     // div, not p: RelativeTime's tooltip renders a div.
-    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-sm/6 text-zinc-700">
+    <div className="flex min-w-0 items-center gap-x-1.5 text-sm/6 whitespace-nowrap text-zinc-700">
       {provider === 'mapillary' ? (
-        <img src={mapillaryLogoUrl} alt="Mapillary" className="h-3.5" />
+        <img src={mapillaryIconUrl} alt="Mapillary" className="size-3.5 shrink-0" />
       ) : (
         <span className="font-medium">{label}</span>
       )}
@@ -132,8 +128,10 @@ function PhotoCredit({
           </span>
         </span>
       ) : null}
-      {photo?.creatorName ? <span>by {photo.creatorName}</span> : null}
-      {photo?.isPano ? <span className="text-zinc-500">360°</span> : null}
+      {photo?.creatorName ? <span className="truncate">by {photo.creatorName}</span> : null}
+      {photo?.isPano == null ? null : (
+        <span className="text-zinc-500">{photo.isPano ? '360°' : 'Flat'}</span>
+      )}
       {provider === 'mapillary' ? <span className="text-zinc-500">CC BY-SA</span> : null}
     </div>
   )
@@ -165,26 +163,28 @@ function goForward() {
   movePhoto(1)
 }
 
-function WindowTitle({ className, children }: { className?: string; children: ReactNode }) {
-  return <h2 className={className}>{children}</h2>
-}
-
 function PhotoBody({
   photoRef,
   onDismiss,
   onBackToReview,
-  Title,
   dragHandle,
+  headerRef,
+  panelTop,
+  settledMini,
 }: {
   photoRef: StreetImageryRef
   onDismiss: () => void
   onBackToReview: () => void
-  Title: ComponentType<{ className?: string; children: ReactNode }>
-  /** In the desktop window: the header moves it. */
+  /** The header moves the desktop window or the phone sheet. */
   dragHandle?: HTMLAttributes<HTMLDivElement>
+  headerRef?: RefObject<HTMLDivElement | null>
+  /** On phones: where the sheet starts on screen. */
+  panelTop?: () => number | null
+  /** On phones: the sheet has stopped small. */
+  settledMini?: boolean
 }) {
   const open = useStreetImageryViewerOpen()
-  const { showMarker } = useStreetImageryViewerActions()
+  const { setShownPhoto } = useStreetImageryViewerActions()
   const { mainMap } = useMap()
   const query = useStreetImageryPhoto(photoRef, open)
   // The photo the viewer shows now: stepping along the sequence changes it.
@@ -197,16 +197,12 @@ function PhotoBody({
   const notFound = query.error instanceof StreetImageryPhotoNotFoundError
   // Stepping along the sequence moves on from the photo that was opened.
   const pageUrl = shown ? providerExternalLink(shown, view) : streetImageryPhotoPageUrl(photoRef)
-  const panelTopRef = useRef<HTMLDivElement>(null)
   const historyHasBack = useCanGoBack()
   const historyHasForward = useCanGoForward()
   const placePhotos = useStreetImageryPlacePhotos()
   const placeIndex = placePhotos?.findIndex(({ id }) => id === photoRef.id) ?? -1
   const canGoBack = placePhotos ? placeIndex > 0 : historyHasBack
   const canGoForward = placePhotos ? placeIndex < placePhotos.length - 1 : historyHasForward
-  const lng = shown?.lngLat[0]
-  const lat = shown?.lngLat[1]
-  const shownId = shown?.photoId
   const map = mainMap?.getMap()
 
   // Every photo shown goes into the package's history; going back to one only moves through it.
@@ -218,19 +214,19 @@ function PhotoBody({
     [open, shown],
   )
 
-  // A pin marks the place of the photo on screen, and the map keeps it in view: on phones in the
-  // free part above the panel, on desktop anywhere.
+  // The map marks the photo on screen and keeps it in view: on phones in the free part above the
+  // panel, on desktop anywhere.
   useEffect(
     function followPhoto() {
-      const panelTop = isDesktopLayout()
-        ? window.innerHeight
-        : panelTopRef.current?.getBoundingClientRect().top
-      if (!open || !map || panelTop == null) return
-      if (lng == null || lat == null || shownId == null) return
-      showMarker({ provider: photoRef.provider, id: shownId, lng, lat })
-      keepInViewAbovePanel(map, { lng, lat }, panelTop)
+      if (!open || !shown) return
+      setShownPhoto(shown)
+      const top = isDesktopLayout() ? window.innerHeight : panelTop?.()
+      if (!map || top == null) return
+      const [lng, lat] = shown.lngLat
+      keepInViewAbovePanel(map, { lng, lat }, top)
     },
-    [open, map, lng, lat, shownId, photoRef.provider, showMarker],
+    // `settledMini`: the free part changes with the sheet.
+    [open, map, shown, panelTop, settledMini, setShownPhoto],
   )
 
   /** For a note: the link to the photo on screen, and the way back to where notes are written. */
@@ -250,16 +246,16 @@ function PhotoBody({
   return (
     <div className="flex flex-col">
       <div
-        ref={panelTopRef}
+        ref={headerRef}
         className={clsx(
-          'flex items-center justify-between gap-2 px-4 py-1.5',
+          'flex flex-col px-4 min-[56rem]:flex-row min-[56rem]:items-center min-[56rem]:justify-between min-[56rem]:gap-2 min-[56rem]:py-1.5',
           dragHandle && 'cursor-move touch-none select-none',
         )}
         {...dragHandle}
       >
-        <Title className="sr-only">{label} photo</Title>
+        <h2 className="sr-only">{label} photo</h2>
         <PhotoCredit provider={photoRef.provider} label={label} photo={shown} />
-        <div className="-mr-2 flex shrink-0 items-center gap-0.5">
+        <div className="-mr-2 flex shrink-0 items-center justify-end gap-0.5">
           {placePhotos ? (
             <span
               className="mr-1 text-sm/6 text-zinc-500 tabular-nums"
@@ -275,7 +271,7 @@ function PhotoBody({
             title="Previous photo ([)"
             disabled={!canGoBack}
             onClick={goBack}
-            className="min-w-9"
+            className="min-w-11 min-[56rem]:min-w-9"
           >
             <ArrowLeftIcon />
           </Button>
@@ -286,11 +282,17 @@ function PhotoBody({
             title="Next photo (])"
             disabled={!canGoForward}
             onClick={goForward}
-            className="min-w-9"
+            className="min-w-11 min-[56rem]:min-w-9"
           >
             <ArrowRightIcon />
           </Button>
-          <Button plain type="button" aria-label="Close" onClick={onDismiss} className="min-w-9">
+          <Button
+            plain
+            type="button"
+            aria-label="Close"
+            onClick={onDismiss}
+            className="min-w-11 min-[56rem]:min-w-9"
+          >
             <XMarkIcon />
           </Button>
         </div>
@@ -332,7 +334,7 @@ function PhotoBody({
         {photo ? (
           // The panels set their own 4:3 shape; the dialog sets the height instead, so a wide
           // dialog does not make the viewer taller than the screen.
-          <div className="relative h-[min(56dvh,36rem)] overflow-hidden sm:h-[min(68dvh,44rem)] [&>div]:aspect-auto! [&>div]:h-full! [&>div]:rounded-none!">
+          <div className="street-photo-viewer relative h-[min(56dvh,36rem)] overflow-hidden sm:h-[min(68dvh,44rem)] [&>div]:aspect-auto! [&>div]:h-full! [&>div]:rounded-none!">
             <StreetLevelImageryViewer
               photo={photo}
               groupPhotos={[]}
@@ -345,49 +347,50 @@ function PhotoBody({
             />
           </div>
         ) : null}
-        {/* In the photo's corner from the width where they stay clear of the viewer's controls at
-            its top centre; under the photo before that. */}
-        <div className="flex gap-2 px-4 py-3 min-[56rem]:absolute min-[56rem]:top-2 min-[56rem]:left-2 min-[56rem]:z-10 min-[56rem]:p-0">
+        {/* In the photo's corner, clear of the viewer's own controls; below what stands in for
+            the photo when it did not load. */}
+        <div className={clsx('flex gap-2', photo ? 'absolute top-2 left-2 z-10' : 'px-4 py-3')}>
           <Button
             type="button"
             color="blue"
+            aria-label="Copy link"
             disabled={!shown}
             onClick={copyLink}
-            className={ACTION_BUTTON_CLASS_NAME}
+            className={clsx(photo && ICON_BUTTON_CLASS_NAME)}
           >
             <ClipboardIcon />
-            Copy link
+            <span className={clsx(photo && BUTTON_LABEL_CLASS_NAME)}>Copy link</span>
           </Button>
           <Button
             color="white"
             href={pageUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={ACTION_BUTTON_CLASS_NAME}
+            aria-label={`Open on ${label}`}
+            className={clsx(photo && ICON_BUTTON_CLASS_NAME)}
           >
             <ArrowTopRightOnSquareIcon />
-            <span className="min-[56rem]:hidden">{label}</span>
-            <span className="max-[55.99rem]:hidden">Open on {label}</span>
+            <span className={clsx(photo && BUTTON_LABEL_CLASS_NAME)}>Open on {label}</span>
           </Button>
         </div>
       </div>
-      <div className="pb-[env(safe-area-inset-bottom)]" />
     </div>
   )
 }
 
 /**
- * The dialog of `StreetImageryDialog`, in its own chunk with the viewer. A bottom sheet on phones
- * (the Catalyst dialog sits at the bottom there) that leaves the top of the map free and undimmed,
- * so that the photo's place shows. On desktop a window that can be moved and leaves the map usable.
+ * The viewer of `StreetImageryDialog`, in its own chunk with the viewer. A bottom sheet on phones
+ * that can go small, so that the photo's place shows. On desktop a window that can be moved. Both
+ * leave the map usable.
  */
 export default function StreetImageryDialogContent() {
   const photo = useStreetImageryViewerPhoto()
   const open = useStreetImageryViewerOpen()
-  const { close, clearMarker } = useStreetImageryViewerActions()
+  const { close } = useStreetImageryViewerActions()
   const sheetBeforeRef = useRef<SheetPosition | null>(null)
   const desktop = useDesktopLayout()
   const { style, dragHandle } = useDraggableWindow()
+  const reduceMotion = useReducedMotion()
 
   useEffect(
     function clearTheMapOnPhones() {
@@ -398,10 +401,9 @@ export default function StreetImageryDialogContent() {
     [open],
   )
 
-  /** Leaves the photo for `sheet`. The pin only marks its place while it is open. */
+  /** Leaves the photo for `sheet`. */
   function leaveTo(sheet: SheetPosition | null) {
     close()
-    clearMarker()
     if (sheet && !isDesktopLayout()) moveReviewSheet(sheet)
   }
 
@@ -420,13 +422,12 @@ export default function StreetImageryDialogContent() {
   // review keys.
   useEffect(
     function handleWindowKeys() {
-      if (!desktop || !open) return
+      if (!open) return
       function onKeyDown(event: KeyboardEvent) {
         if (document.querySelector('[role="dialog"], [role="menu"]')) return
         if (event.key === 'Escape') {
           event.preventDefault()
           close()
-          clearMarker()
           return
         }
         if (event.target instanceof Element && event.target.closest('input, textarea')) return
@@ -438,7 +439,7 @@ export default function StreetImageryDialogContent() {
         document.removeEventListener('keydown', onKeyDown, { capture: true })
       }
     },
-    [desktop, open, close, clearMarker],
+    [open, close],
   )
 
   if (desktop) {
@@ -455,7 +456,6 @@ export default function StreetImageryDialogContent() {
           photoRef={photo}
           onDismiss={onDismiss}
           onBackToReview={() => leaveTo('list')}
-          Title={WindowTitle}
           dragHandle={dragHandle}
         />
       </section>
@@ -463,25 +463,32 @@ export default function StreetImageryDialogContent() {
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onDismiss}
-      size="5xl"
-      backdropClassName="max-sm:bg-transparent"
-      className={clsx(
-        'relative max-h-[74dvh] overflow-y-auto [--gutter:0px]! sm:max-h-[85dvh]',
-        DIALOG_FRAME_CLASS_NAME,
-      )}
-    >
-      {photo ? (
-        <PhotoBody
-          key={`${photo.provider}/${photo.id}`}
-          photoRef={photo}
-          onDismiss={onDismiss}
-          onBackToReview={() => leaveTo('list')}
-          Title={DialogTitle}
-        />
+    <AnimatePresence>
+      {open && photo ? (
+        <motion.div
+          key="photo-sheet"
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={reduceMotion ? { duration: 0 } : SHEET_ENTER_TRANSITION}
+          className="fixed inset-x-0 bottom-0 z-50"
+        >
+          <StreetImageryPhotoSheet>
+            {({ headerRef, startDrag, panelTop, settledMini }) => (
+              <PhotoBody
+                key={`${photo.provider}/${photo.id}`}
+                photoRef={photo}
+                onDismiss={onDismiss}
+                onBackToReview={() => leaveTo('list')}
+                dragHandle={{ onPointerDown: startDrag }}
+                headerRef={headerRef}
+                panelTop={panelTop}
+                settledMini={settledMini}
+              />
+            )}
+          </StreetImageryPhotoSheet>
+        </motion.div>
       ) : null}
-    </Dialog>
+    </AnimatePresence>
   )
 }

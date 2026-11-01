@@ -59,6 +59,7 @@ import {
 } from '../stores/map-style-store.ts'
 import { useGroupCursorKey } from '../stores/review-focus-store.ts'
 import { useStreetImageryLayerOn } from '../stores/street-imagery-layer-store.ts'
+import { useStreetImageryViewerOpen } from '../stores/street-imagery-viewer-store.ts'
 import { useSurroundingsVisible } from '../stores/surroundings-store.ts'
 import {
   CHANGESET_MAP_ID,
@@ -114,7 +115,7 @@ import {
 } from './streetImageryMapClick.ts'
 import { shouldIgnoreMapClick } from './suppressMapClick.ts'
 import { SurroundingsLayers } from './SurroundingsLayers.tsx'
-import { OsmNoteMarker, StreetImageryPhotoMarker } from './TemporaryPinMarkers.tsx'
+import { OsmNoteMarker } from './TemporaryPinMarkers.tsx'
 import { useJumpToWorkArea } from './useWorkAreaMap.ts'
 import { WorkAreaOutlines } from './WorkAreaOutlines.tsx'
 
@@ -248,7 +249,8 @@ function CMap({
   const [inspectHover, setInspectHover] = useState<InspectHover | null>(null)
   const [inspectPoint, setInspectPoint] = useState<{ x: number; y: number } | null>(null)
   const pinPlacement = usePinPlacement()
-  const streetImageryOn = useStreetImageryLayerOn()
+  const streetImageryLayerOn = useStreetImageryLayerOn()
+  const streetImageryViewerOpen = useStreetImageryViewerOpen()
   const mapLayers = parseLayersParam(layersSearch)
   const spyglassEnabled = mapLayers.spyglass
   const userKey = useNotesUserKey()
@@ -702,7 +704,7 @@ function CMap({
                 beforeId={firstFeatureLayerId}
               />
             ) : null}
-            {streetImageryOn ? (
+            {streetImageryLayerOn || streetImageryViewerOpen ? (
               <Suspense fallback={null}>
                 <StreetImageryLayers beforeId={firstFeatureLayerId} />
               </Suspense>
@@ -734,7 +736,6 @@ function CMap({
             <PinPlacementOverlay />
             <ChangesetPinMarkers changesetId={changesetId} />
             <OsmNoteMarker changesetId={changesetId} />
-            <StreetImageryPhotoMarker changesetId={changesetId} />
           </Map>
         ) : null}
         {inspectHover && inspectPoint ? (

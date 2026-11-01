@@ -111,3 +111,31 @@ table {
 th {
   text-align: left;
 }
+
+/* The viewer's sequence controls, kept to previous and next: play and its speed are of no use here. */
+.street-photo-viewer .mapillary-sequence-play,
+.street-photo-viewer .mapillary-sequence-play-inactive,
+.street-photo-viewer .mapillary-sequence-stop,
+.street-photo-viewer .mapillary-sequence-controls {
+  display: none !important;
+}
+
+.street-photo-viewer .mapillary-sequence-step-next,
+.street-photo-viewer .mapillary-sequence-step-next-inactive,
+.street-photo-viewer .mapillary-sequence-step-next-highlight,
+.street-photo-viewer .mapillary-sequence-step-prev,
+.street-photo-viewer .mapillary-sequence-step-prev-inactive,
+.street-photo-viewer .mapillary-sequence-step-prev-highlight {
+  width: 50% !important;
+}
+
+/* On phones big enough for a thumb, and at the right: the top left holds the link buttons. */
+@media (width < 56rem) {
+  .street-photo-viewer .mapillary-sequence-stepper {
+    left: auto !important;
+    right: 8px;
+    transform: none !important;
+    width: 100px !important;
+    height: 44px !important;
+  }
+}

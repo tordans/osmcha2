@@ -1,13 +1,8 @@
 import clsx from 'clsx'
 import { useEffect, type ComponentType } from 'react'
 import { Marker, type MarkerEvent } from 'react-map-gl/maplibre'
-import { STREET_IMAGERY_PROVIDER_LABEL } from '../components/street_imagery/streetImageryTags.ts'
-import { CameraIcon, ChatBubbleLeftIcon } from '../components/ui/icons.ts'
+import { ChatBubbleLeftIcon } from '../components/ui/icons.ts'
 import { useOsmNoteActions, useOsmNoteMarker } from '../stores/osm-note-store.ts'
-import {
-  useStreetImageryMarker,
-  useStreetImageryViewerActions,
-} from '../stores/street-imagery-viewer-store.ts'
 
 type TemporaryPinMarkerProps = {
   lat: number
@@ -80,24 +75,6 @@ export function OsmNoteMarker({ changesetId }: { changesetId: number | null }) {
       icon={ChatBubbleLeftIcon}
       dotClassName="bg-amber-500"
       onOpen={() => openNote(marker.id)}
-    />
-  )
-}
-
-/** The marker of the street photo viewer. Render inside `<Map>`. */
-export function StreetImageryPhotoMarker({ changesetId }: { changesetId: number | null }) {
-  const marker = useStreetImageryMarker()
-  const { openPhoto, clearMarker } = useStreetImageryViewerActions()
-  useClearOnChangesetChange(changesetId, clearMarker)
-  if (!marker) return null
-  return (
-    <TemporaryPinMarker
-      lat={marker.lat}
-      lng={marker.lng}
-      label={`${STREET_IMAGERY_PROVIDER_LABEL[marker.provider]} photo ${marker.id}, show photo`}
-      icon={CameraIcon}
-      dotClassName="bg-sky-600"
-      onOpen={() => openPhoto({ provider: marker.provider, id: marker.id })}
     />
   )
 }
