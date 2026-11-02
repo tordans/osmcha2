@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { Fragment, type ReactNode } from 'react'
+import type { LonLat } from '../presets/types.ts'
 import { ACTION } from './changeset/actionColors.ts'
 import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { orderTagRows, tagRowKeys, type TagRow } from './changeset/changesetElements.ts'
@@ -10,6 +11,8 @@ import { TrafficSignChips } from './traffic_signs/TrafficSignChips.tsx'
 import { countryPrefixOfValue, trafficSignValueOfRow } from './traffic_signs/trafficSignRows.ts'
 import { ArrowRightIcon, ChatBubbleLeftIcon } from './ui/icons.ts'
 import { typeScale } from './ui/typography.ts'
+import { WikidataButtons, WikidataRowData } from './wikidata/WikidataRowData.tsx'
+import { wikidataItemsOfRow } from './wikidata/wikidataTags.ts'
 
 export type TagRowsItem =
   | { kind: 'added'; key: string; value: ReactNode; rawValue?: string }
@@ -163,6 +166,16 @@ function TagRowPhotos({ row }: { row: TagRowsItem }) {
   return <StreetImageryChips photos={streetImageryPhotosOfRow(row)} />
 }
 
+/** What Wikidata says about the items in the value, on its own grid line below it. */
+function TagRowInfo({ row, location }: { row: TagRowsItem; location?: LonLat }) {
+  return <WikidataRowData items={wikidataItemsOfRow(row)} location={location} />
+}
+
+/** The mini button of `TagRowInfo`, next to the value. */
+function TagRowInfoButton({ row }: { row: TagRowsItem }) {
+  return <WikidataButtons items={wikidataItemsOfRow(row)} />
+}
+
 export function TagRows({
   rows,
   emptyLabel,
@@ -173,6 +186,7 @@ export function TagRows({
   onNoteCountClick,
   onAddNote,
   activeNoteKey,
+  location,
 }: {
   rows: TagRowsItem[]
   emptyLabel?: string
@@ -183,6 +197,8 @@ export function TagRows({
   onNoteCountClick?: (key: string) => void
   onAddNote?: (key: string) => void
   activeNoteKey?: string
+  /** Of the object the tags are on: Wikidata's location is compared with it. */
+  location?: LonLat
 }) {
   if (rows.length === 0) {
     return emptyLabel ? (
@@ -295,9 +311,12 @@ export function TagRows({
                   count={noteCount}
                   onNoteCountClick={onNoteCountClick}
                 />
+                {/* Last: open, it joins the right edge of the card below. */}
+                <TagRowInfoButton row={row} />
               </dd>
               <TagRowSigns row={row} />
               <TagRowPhotos row={row} />
+              <TagRowInfo row={row} location={location} />
             </div>
           </Fragment>
         )

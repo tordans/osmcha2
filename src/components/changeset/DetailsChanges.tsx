@@ -61,7 +61,7 @@ import {
   type NodeStats,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
-import { presetContextOf } from './elementPresets.ts'
+import { locationOf, presetContextOf } from './elementPresets.ts'
 import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
 import { formatMoveMeters, MINOR_MOVES_EXPLANATION } from './minorMoves.ts'
 import { NoteEditor } from './NoteEditor.tsx'
@@ -1354,6 +1354,7 @@ const ElementChangeRow = memo(function ElementChangeRow({
             onNoteCountClick={showNoteThreadOnTag}
             onAddNote={addNoteOnTag}
             activeNoteKey={editingNote?.ref?.key}
+            location={locationOf(change)}
           />
         </div>
       ) : null}
