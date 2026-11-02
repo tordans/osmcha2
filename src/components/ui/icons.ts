@@ -22,6 +22,7 @@ import {
   FlagPennant,
   Funnel,
   Globe,
+  Info,
   Link,
   MapPin,
   MapTrifold,
@@ -66,6 +67,7 @@ export const GlobeAltIcon = appIcon(Globe)
 export const HandThumbDownIcon = appIcon(ThumbsDown)
 export const HandThumbUpIcon = appIcon(ThumbsUp)
 export const LanguageIcon = appIcon(Translate)
+export const InformationCircleIcon = appIcon(Info)
 export const LinkIcon = appIcon(Link)
 export const MapPinIcon = appIcon(MapPin)
 export const MapIcon = appIcon(MapTrifold)

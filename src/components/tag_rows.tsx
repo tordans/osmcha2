@@ -4,6 +4,8 @@ import type { LonLat } from '../presets/types.ts'
 import { ACTION } from './changeset/actionColors.ts'
 import { AddNoteButton } from './changeset/AddNoteButton.tsx'
 import { orderTagRows, tagRowKeys, type TagRow } from './changeset/changesetElements.ts'
+import { OsmWikiButton, OsmWikiRowData } from './osm_wiki/OsmWikiRowData.tsx'
+import { osmWikiReferenceOfRow } from './osm_wiki/osmWikiTags.ts'
 import { StreetImageryChips } from './street_imagery/StreetImageryChips.tsx'
 import { streetImageryPhotosOfRow } from './street_imagery/streetImageryTags.ts'
 import { textOf } from './tagRowText.ts'
@@ -166,14 +168,18 @@ function TagRowPhotos({ row }: { row: TagRowsItem }) {
   return <StreetImageryChips photos={streetImageryPhotosOfRow(row)} />
 }
 
-/** What Wikidata says about the items in the value, on its own grid line below it. */
+/** What Wikidata or, for a row without items, the OSM Wiki says, on its own grid line below it. */
 function TagRowInfo({ row, location }: { row: TagRowsItem; location?: LonLat }) {
-  return <WikidataRowData items={wikidataItemsOfRow(row)} location={location} />
+  const items = wikidataItemsOfRow(row)
+  if (items.length > 0) return <WikidataRowData items={items} location={location} />
+  return <OsmWikiRowData reference={osmWikiReferenceOfRow(row)} />
 }
 
 /** The mini button of `TagRowInfo`, next to the value. */
 function TagRowInfoButton({ row }: { row: TagRowsItem }) {
-  return <WikidataButtons items={wikidataItemsOfRow(row)} />
+  const items = wikidataItemsOfRow(row)
+  if (items.length > 0) return <WikidataButtons items={items} />
+  return <OsmWikiButton reference={osmWikiReferenceOfRow(row)} />
 }
 
 export function TagRows({
