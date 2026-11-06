@@ -20,15 +20,18 @@ export function PrimaryLine({ user, uid, comment }: PrimaryLineProps) {
           <StarIcon
             variant="fill"
             className="ml-1 inline-block size-4 align-text-bottom text-yellow-500"
+            aria-hidden="true"
           />
         )}
+        {isInTrustedlist && <span className="sr-only"> (trusted user)</span>}
         {isInWatchlist && (
           <ExclamationTriangleIcon
             variant="fill"
             className="ml-1 inline-block size-4 align-text-bottom text-red-500"
+            aria-hidden="true"
           />
         )}
-        :
+        {isInWatchlist && <span className="sr-only"> (on watchlist)</span>}:
       </strong>{' '}
       {comment || 'NO COMMENT'}
     </p>

@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { BrandMark } from '../../layout/Logo.tsx'
 import { isOsmOAuthHost } from '../../utils/auth.ts'
@@ -27,11 +26,8 @@ type Props = {
 function List({ currentPage, activeChangesetId, loading, location }: Props) {
   const { token } = useAuth()
   const localOAuth = isOsmOAuthHost()
-  const activeRef = useRef<HTMLElement | null>(null)
-
-  function handleScroll(r: HTMLElement | null) {
+  function scrollActiveRowIntoView(r: HTMLElement | null) {
     if (!r) return
-    activeRef.current = r
     if (!elementInViewport(r)) {
       r.scrollIntoView({ block: 'end', behavior: 'smooth' })
     }
@@ -54,6 +50,14 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
 
   const features = currentPage?.features
 
+  if (features && features.length === 0) {
+    return (
+      <p className="flex flex-1 items-start justify-center bg-white px-4 py-9 text-center text-zinc-500">
+        No changesets match these filters.
+      </p>
+    )
+  }
+
   return (
     <ul
       aria-label="Changesets"
@@ -66,7 +70,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
           properties={f.properties}
           changesetId={f.id}
           data={f}
-          inputRef={f.id === activeChangesetId ? handleScroll : undefined}
+          inputRef={f.id === activeChangesetId ? scrollActiveRowIntoView : undefined}
           key={f.id}
         />
       ))}
