@@ -13,7 +13,9 @@ export const useIsUserListed = (
   const trustedlist = userDetails?.whitelists || []
 
   const isInTrustedlist = Array.isArray(trustedlist) && trustedlist.includes(username)
-  const isInWatchlist = Array.isArray(watchlist) && watchlist.some((user) => user.uid === uid)
+  // The API sends `uid` as a string or a number; compare as strings so both match.
+  const isInWatchlist =
+    Array.isArray(watchlist) && watchlist.some((user) => String(user.uid) === String(uid))
 
   return [isInTrustedlist, isInWatchlist]
 }

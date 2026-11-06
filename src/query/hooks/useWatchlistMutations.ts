@@ -1,18 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { deleteFromWatchList, postUserToWatchList } from '../../network/osmcha_watchlist.ts'
+import {
+  deleteFromWatchList,
+  postUserToWatchList,
+  type WatchlistUser,
+} from '../../network/osmcha_watchlist.ts'
 
-interface WatchlistUser {
-  username: string
-  uid: string
-  date?: string
-}
+type WatchlistUserInput = { username: string; uid: string }
 
 export function useAddToWatchlist() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ username, uid }: WatchlistUser) =>
+    mutationFn: ({ username, uid }: WatchlistUserInput) =>
       postUserToWatchList({ watchlist_user: { username, uid } }),
     onMutate: async ({ username, uid }) => {
       await queryClient.cancelQueries({ queryKey: ['watchlist'] })
@@ -51,8 +51,9 @@ export function useRemoveFromWatchlist() {
       await queryClient.cancelQueries({ queryKey: ['watchlist'] })
       const previous = queryClient.getQueryData(['watchlist'])
 
+      // The API sends `uid` as a string or a number; compare as strings so the row goes away.
       queryClient.setQueryData(['watchlist'], (old: WatchlistUser[] = []) =>
-        old.filter((u) => u.uid !== uid),
+        old.filter((u) => String(u.uid) !== uid),
       )
 
       return { previous }
