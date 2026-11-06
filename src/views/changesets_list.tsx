@@ -33,7 +33,7 @@ function ChangesetsList() {
   const aoiOrderBy = typeof orderByFilter === 'string' ? orderByFilter : null
 
   const {
-    data: currentPage,
+    data: changesetsPage,
     isLoading,
     isFetching,
     dataUpdatedAt,
@@ -44,8 +44,6 @@ function ChangesetsList() {
     aoiId,
   })
   const listIsStale = useStaleAfter(dataUpdatedAt, LIST_REFRESH_HINT_MS)
-
-  const changesetsPage = currentPage
 
   function goUpDownToChangeset(direction: number) {
     if (!changesetsPage?.features) return
@@ -78,16 +76,15 @@ function ChangesetsList() {
     }
   }
 
-  const handleFilterOrderBy = (selected: Array<any>) => {
-    const newFilters = { ...filters, order_by: selected }
-    setFilters(newFilters)
+  function handleFilterOrderBy(selected: Array<any>) {
+    setFilters({ ...filters, order_by: selected })
   }
 
   function reloadChangesetsPageData() {
     void refetch()
   }
 
-  const handleChangePage = (newPageIndex: number) => {
+  function handleChangePage(newPageIndex: number) {
     setPage(newPageIndex + 1)
   }
 
@@ -114,11 +111,6 @@ function ChangesetsList() {
     })),
   ])
 
-  const listLocation = {
-    pathname: filtersRouteMatch ? '/filters' : '/',
-    search: '',
-  }
-
   return (
     <div className="changesets-list flex h-full min-h-0 flex-col">
       <Header
@@ -137,7 +129,7 @@ function ChangesetsList() {
         loading={isLoading}
         currentPage={changesetsPage}
         pageIndex={pageIndex}
-        location={listLocation.pathname}
+        location={filtersRouteMatch ? '/filters' : '/'}
       />
       <Footer
         pageIndex={pageIndex}

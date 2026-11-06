@@ -1,5 +1,5 @@
 export function elementInViewport(element: HTMLElement) {
-  var rect = element.getBoundingClientRect()
+  const rect = element.getBoundingClientRect()
   return (
     rect.top >= 0 &&
     rect.left >= 0 &&

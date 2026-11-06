@@ -74,8 +74,8 @@ export async function completeOAuthLogin(code: string) {
     return token
   } catch (error) {
     console.error('Login error:', error)
-    const err = error as Error
-    toast.error('Login failed', { description: err.message })
+    const description = error instanceof Error ? error.message : String(error)
+    toast.error('Login failed', { description })
     throw error
   }
 }

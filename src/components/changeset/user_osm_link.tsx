@@ -10,7 +10,7 @@ interface UserOSMLinkProps {
 export const UserOSMLink = ({ userName, linkClasses, children }: UserOSMLinkProps) => {
   if (!userName) return null
 
-  const url = `https://www.openstreetmap.org/user/${userName}`
+  const url = `https://www.openstreetmap.org/user/${encodeURIComponent(userName)}`
 
   if (linkClasses) {
     return (

@@ -29,9 +29,7 @@ export function appEntryUrl(
   origin: string = typeof window !== 'undefined' ? window.location.origin : '',
   base: string = typeof import.meta !== 'undefined' ? import.meta.env.BASE_URL : '/',
 ): string {
-  const normalized = base.endsWith('/') ? base : `${base}/`
-  if (normalized === '/') return `${origin}/`
-  return `${origin}${normalized}`
+  return base.endsWith('/') ? `${origin}${base}` : `${origin}${base}/`
 }
 
 /** Extract a DRF token from a bookmarklet postMessage payload, or null if invalid. */
