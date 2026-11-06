@@ -14,7 +14,14 @@ import { StreetLevelImageryViewer } from '@osm-editor-kit/street-imagery-react/v
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useEffect, useRef, useState, type HTMLAttributes, type RefObject } from 'react'
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type HTMLAttributes,
+  type RefObject,
+} from 'react'
 import { useMap } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 import mapillaryIconUrl from '../../assets/mapillary-icon.svg'
@@ -418,6 +425,9 @@ export default function StreetImageryDialogContent() {
     [open],
   )
 
+  // Esc leaves like the close button: on phones the review sheet goes back to where it was.
+  const dismissByKey = useEffectEvent(onDismiss)
+
   // The window leaves the page usable, so these keys are not a modal's. Esc must not reach the
   // review keys.
   useEffect(
@@ -427,10 +437,16 @@ export default function StreetImageryDialogContent() {
         if (document.querySelector('[role="dialog"], [role="menu"]')) return
         if (event.key === 'Escape') {
           event.preventDefault()
-          close()
+          dismissByKey()
           return
         }
-        if (event.target instanceof Element && event.target.closest('input, textarea')) return
+        // Typing, and shortcuts like Ctrl+[, are not stepping through photos.
+        if (event.ctrlKey || event.metaKey || event.altKey) return
+        if (
+          event.target instanceof Element &&
+          event.target.closest('input, textarea, select, [contenteditable="true"]')
+        )
+          return
         if (event.key === '[') goBack()
         if (event.key === ']') goForward()
       }
@@ -439,7 +455,7 @@ export default function StreetImageryDialogContent() {
         document.removeEventListener('keydown', onKeyDown, { capture: true })
       }
     },
-    [open, close],
+    [open],
   )
 
   if (desktop) {
