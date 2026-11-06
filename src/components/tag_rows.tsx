@@ -101,7 +101,7 @@ function TagChange({
       >
         {oldValue}
       </span>
-      <ArrowRightIcon className="size-3 flex-none text-zinc-400" />
+      <ArrowRightIcon className="size-3 flex-none text-zinc-400" aria-hidden />
       <span
         className={clsx('min-w-0', ACTION.create.tagText, wrapClass(newValue, rawNew))}
         dir="auto"

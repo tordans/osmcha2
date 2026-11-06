@@ -21,9 +21,9 @@ export function SortHeader({ label, sorted, onSort, className }: SortHeaderProps
       >
         {label}
         {sorted === 'asc' ? (
-          <ChevronUpIcon className="size-4" />
+          <ChevronUpIcon className="size-4" aria-hidden />
         ) : sorted === 'desc' ? (
-          <ChevronDownIcon className="size-4" />
+          <ChevronDownIcon className="size-4" aria-hidden />
         ) : null}
       </button>
     </TableHeader>

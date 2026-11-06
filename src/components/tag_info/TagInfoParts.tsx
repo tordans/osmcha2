@@ -115,7 +115,7 @@ export function TagInfoCard({
           title={reloadLabel}
           disabled={reloading}
           onClick={onReload}
-          className="relative inline-flex cursor-pointer touch-manipulation text-zinc-500 after:absolute after:-inset-2.5 after:content-[''] hover:text-zinc-900 active:opacity-60 disabled:cursor-default"
+          className="relative inline-flex cursor-pointer touch-manipulation text-zinc-500 after:absolute after:-inset-2.5 after:content-[''] hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-blue-500 active:opacity-60 disabled:cursor-default"
         >
           <ArrowPathIcon className={clsx('size-3.5', reloading && 'animate-spin')} aria-hidden />
         </button>

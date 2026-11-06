@@ -11,9 +11,10 @@ export function Loading({ height, className = '' }: LoadingProps) {
     <div
       style={{ height: height || 'auto' }}
       className={clsx(className, 'flex flex-1 flex-col items-center justify-center')}
-      aria-busy="true"
+      role="status"
+      aria-label="Loading"
     >
-      <LoaderCircleIcon className="size-8 animate-spin text-zinc-400" aria-label="Loading" />
+      <LoaderCircleIcon className="size-8 animate-spin text-zinc-400" aria-hidden />
     </div>
   )
 }
