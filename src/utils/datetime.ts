@@ -1,4 +1,4 @@
-import { TZDate, tz } from '@date-fns/tz'
+import { tz } from '@date-fns/tz'
 import {
   differenceInHours,
   differenceInMinutes,
@@ -7,7 +7,6 @@ import {
   formatDistanceStrict,
   isValid,
   parseISO,
-  startOfDay,
 } from 'date-fns'
 
 /** Browser IANA zone, falling back to UTC when unavailable (SSR / tests). */
@@ -24,29 +23,40 @@ export function formatLocalDateTime(date: Date, timeZone: string = browserTimeZo
   return `${format(date, 'd MMM yyyy, HH:mm:ss', { in: tz(timeZone) })} ${timeZone}`
 }
 
-/** Calendar `yyyy-MM-dd` in `timeZone` (not a UTC slice). */
-export function formatLocalDate(date: Date, timeZone: string = browserTimeZone()): string {
-  return format(date, 'yyyy-MM-dd', { in: tz(timeZone) })
+/** Calendar `yyyy-MM-dd` of `date` in UTC, the day OSM and the server count by. */
+export function formatUtcDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
 }
 
-/** Local midnight for a stored `yyyy-MM-dd` calendar day. */
-export function localDateFromIsoDate(
-  isoDate: string,
-  timeZone: string = browserTimeZone(),
-): Date | null {
-  const [year, month, day] = isoDate.split('-').map(Number)
-  if (!year || !month || !day) return null
-  const date = new TZDate(year, month - 1, day, 0, 0, 0, timeZone)
-  return isValid(date) ? date : null
+/**
+ * The first (`start`) or last (`end`) second of the UTC day `yyyy-MM-dd`, so a range of days
+ * includes both ends. `null` for a malformed day.
+ */
+export function utcDayEdge(isoDate: string, edge: 'start' | 'end'): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate)
+  if (!match) return null
+  const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])]
+  const date =
+    edge === 'start'
+      ? new Date(Date.UTC(year, month - 1, day))
+      : new Date(Date.UTC(year, month - 1, day, 23, 59, 59))
+  return isValid(date) && formatUtcDate(date) === isoDate ? date : null
 }
 
-/** Start of the calendar day in `timeZone` for `date`. */
-export function startOfLocalDay(
-  date: Date = new Date(),
-  timeZone: string = browserTimeZone(),
-): Date {
-  return startOfDay(new TZDate(date, timeZone))
+/** Whether `timeZone` is UTC at `date` (no offset to explain). */
+export function isUtcAt(date: Date, timeZone: string = browserTimeZone()): boolean {
+  return (
+    format(date, 'yyyy-MM-dd HH:mm', { in: tz(timeZone) }) ===
+    format(date, 'yyyy-MM-dd HH:mm', { in: tz('UTC') })
+  )
 }
+
+/** Wall-clock day and minute in `timeZone`, e.g. `1 Oct 2025, 02:00`. */
+export function formatLocalDayTime(date: Date, timeZone: string = browserTimeZone()): string {
+  return format(date, 'd MMM yyyy, HH:mm', { in: tz(timeZone) })
+}
+
+export { browserTimeZone }
 
 /** Parse OSM / ISO-8601 timestamps (`…Z`, offsets, optional fractional seconds). */
 export function parseOsmDate(value: string): Date {

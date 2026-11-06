@@ -1,8 +1,8 @@
+import { useState } from 'react'
 import filters from '../../config/filters.json'
-import { startOfLocalDay } from '../../utils/datetime.ts'
 import { Button } from '../ui/button.tsx'
 import { Subheading } from '../ui/heading.tsx'
-import { ChangesetDateFilter, DateField, parseStoredDate } from './date.tsx'
+import { ChangesetDateFilter, DateField, parseStoredDate, UtcDateRangeHint } from './date.tsx'
 import type { Filter, FilterOption, Filters } from './filterTypes.ts'
 import { LocationSelect } from './location.tsx'
 import { Meta } from './meta.tsx'
@@ -58,6 +58,9 @@ export function FiltersList({
   handleApply,
   handleClear,
 }: FiltersListProps) {
+  // The latest day the date fields offer, fixed when the panel opens.
+  const [today] = useState(() => new Date())
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-16">
@@ -148,7 +151,6 @@ export function FiltersList({
 
       const gteValue = currentFilters[`${config.name}__gte`]
       const lteValue = currentFilters[`${config.name}__lte`]
-      const today = startOfLocalDay()
       const gteDate = parseStoredDate(gteValue?.[0]?.value as string | undefined) ?? undefined
       const lteDate = parseStoredDate(lteValue?.[0]?.value as string | undefined) ?? undefined
       return (
@@ -161,6 +163,7 @@ export function FiltersList({
           <div className="grid grid-cols-2 gap-2">
             <DateField
               name={`${config.name}__gte`}
+              edge="start"
               display={config.display}
               value={gteValue}
               placeholder="From"
@@ -169,6 +172,7 @@ export function FiltersList({
             />
             <DateField
               name={`${config.name}__lte`}
+              edge="end"
               display={config.display}
               value={lteValue}
               placeholder="To"
@@ -177,6 +181,7 @@ export function FiltersList({
               max={today}
             />
           </div>
+          {gteDate || lteDate ? <UtcDateRangeHint from={gteDate} to={lteDate} /> : null}
         </Wrapper>
       )
     }

@@ -1,6 +1,13 @@
 import * as Headless from '@headlessui/react'
 import { isValid, parseISO } from 'date-fns'
-import { formatLocalDate, localDateFromIsoDate, startOfLocalDay } from '../../utils/datetime.ts'
+import { useState } from 'react'
+import {
+  browserTimeZone,
+  formatLocalDayTime,
+  formatUtcDate,
+  isUtcAt,
+  utcDayEdge,
+} from '../../utils/datetime.ts'
 import { getDefaultFromDate, lastDaysFilter } from '../../utils/filters.ts'
 import { Button } from '../ui/button.tsx'
 import { Label } from '../ui/fieldset.tsx'
@@ -14,6 +21,8 @@ const DEFAULT_LAST_DAYS = 7
 
 type DateFieldProps = {
   name: string
+  /** `start` writes the first second of the UTC day, `end` the last, so both days count. */
+  edge: 'start' | 'end'
   display: string
   placeholder?: string
   value?: Filter
@@ -43,6 +52,7 @@ export function parseStoredDate(value?: string): Date | null {
 
 export function DateField({
   name,
+  edge,
   display,
   placeholder,
   value,
@@ -59,17 +69,17 @@ export function DateField({
       type="date"
       name={name}
       className={className}
-      value={selected ? formatLocalDate(selected) : ''}
+      value={selected ? formatUtcDate(selected) : ''}
       placeholder={placeholder || display}
-      min={min ? formatLocalDate(min) : undefined}
-      max={max ? formatLocalDate(max) : undefined}
+      min={min ? formatUtcDate(min) : undefined}
+      max={max ? formatUtcDate(max) : undefined}
       onChange={(event) => {
         const raw = event.target.value
         if (!raw) {
           onChange(name)
           return
         }
-        const date = localDateFromIsoDate(raw)
+        const date = utcDayEdge(raw, edge)
         if (!date) {
           onChange(name)
           return
@@ -78,6 +88,35 @@ export function DateField({
         onChange(name, [{ label: next, value: next }])
       }}
     />
+  )
+}
+
+/**
+ * Says that the fields are UTC days, the days OSM stores changesets in and the server filters by,
+ * and when the chosen range starts and ends on the browser's clock.
+ */
+export function UtcDateRangeHint({ from, to }: { from?: Date; to?: Date }) {
+  const timeZone = browserTimeZone()
+  const edges = [from, to].filter((date) => date != null)
+  const showLocal = edges.some((date) => !isUtcAt(date, timeZone))
+  let local: string | null = null
+  if (showLocal && from && to) {
+    local = `${formatLocalDayTime(from, timeZone)} to ${formatLocalDayTime(to, timeZone)}`
+  } else if (showLocal && from) {
+    local = `from ${formatLocalDayTime(from, timeZone)}`
+  } else if (showLocal && to) {
+    local = `until ${formatLocalDayTime(to, timeZone)}`
+  }
+  return (
+    <p className="text-sm/5 text-zinc-500">
+      Days in UTC, like OSM changeset times.
+      {local ? (
+        <>
+          <br />
+          Your time ({timeZone}): <span className="text-zinc-700 tabular-nums">{local}</span>
+        </>
+      ) : null}
+    </p>
   )
 }
 
@@ -104,7 +143,7 @@ export function ChangesetDateFilter({ filters, display, onChange }: ChangesetDat
   const defaultDate = getDefaultFromDate().date__gte
   const gteValue = filters.date__gte || defaultDate
   const lteValue = filters.date__lte
-  const today = startOfLocalDay()
+  const [today] = useState(() => new Date())
   const gteDate = parseStoredDate(gteValue?.[0]?.value as string | undefined) ?? undefined
   const lteDate = parseStoredDate(lteValue?.[0]?.value as string | undefined) ?? undefined
 
@@ -178,33 +217,40 @@ export function ChangesetDateFilter({ filters, display, onChange }: ChangesetDat
           </div>
           <DateField
             name="date__lte"
+            edge="end"
             display={display}
             value={lteValue}
             placeholder="To"
             onChange={onChange}
             max={today}
           />
+          {lteDate ? <UtcDateRangeHint to={lteDate} /> : null}
         </>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <DateField
-            name="date__gte"
-            display={display}
-            value={gteValue}
-            placeholder="From"
-            onChange={onChange}
-            max={lteDate || today}
-          />
-          <DateField
-            name="date__lte"
-            display={display}
-            value={lteValue}
-            placeholder="To"
-            onChange={onChange}
-            min={gteDate}
-            max={today}
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <DateField
+              name="date__gte"
+              edge="start"
+              display={display}
+              value={gteValue}
+              placeholder="From"
+              onChange={onChange}
+              max={lteDate || today}
+            />
+            <DateField
+              name="date__lte"
+              edge="end"
+              display={display}
+              value={lteValue}
+              placeholder="To"
+              onChange={onChange}
+              min={gteDate}
+              max={today}
+            />
+          </div>
+          {gteDate || lteDate ? <UtcDateRangeHint from={gteDate} to={lteDate} /> : null}
+        </>
       )}
     </div>
   )

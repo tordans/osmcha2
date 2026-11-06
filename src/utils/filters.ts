@@ -1,7 +1,7 @@
 import { sub } from 'date-fns'
 import { z } from 'zod'
 import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from '../config/constants.ts'
-import { startOfLocalDay } from './datetime.ts'
+import { formatUtcDate, utcDayEdge } from './datetime.ts'
 
 const filterOptionSchema = z.object({
   label: z.unknown(),
@@ -23,8 +23,9 @@ export function validateFilters(filters: unknown): boolean {
 const geometryJsonSchema = z.union([z.array(z.unknown()), z.record(z.string(), z.unknown())])
 
 export function getDefaultFromDate(extraDays = 0): any {
-  const localMidnight = startOfLocalDay(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
-  const value = localMidnight.toISOString()
+  // The start of a UTC day, like the From field writes it.
+  const day = formatUtcDate(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
+  const value = utcDayEdge(day, 'start')!.toISOString()
   return {
     date__gte: [{ label: value, value }],
   }

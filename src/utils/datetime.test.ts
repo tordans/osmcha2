@@ -1,13 +1,13 @@
-import { TZDate } from '@date-fns/tz'
 import { describe, expect, test } from 'vitest'
 import {
   formatAccountAge,
   formatShortAgo,
-  formatLocalDate,
   formatLocalDateTime,
-  localDateFromIsoDate,
+  formatLocalDayTime,
+  formatUtcDate,
+  isUtcAt,
   parseOsmDate,
-  startOfLocalDay,
+  utcDayEdge,
 } from './datetime.ts'
 
 const INSTANT = '2026-08-16T06:49:10.000Z'
@@ -32,29 +32,30 @@ describe('formatLocalDateTime', () => {
   })
 })
 
-describe('formatLocalDate', () => {
-  test('uses the calendar day in the given zone, not the UTC date', () => {
-    const lateUtc = parseOsmDate('2026-08-16T22:30:00.000Z')
-    expect(formatLocalDate(lateUtc, 'UTC')).toBe('2026-08-16')
-    expect(formatLocalDate(lateUtc, 'Europe/Berlin')).toBe('2026-08-17')
+describe('formatUtcDate', () => {
+  test('is the UTC calendar day, whatever the browser zone', () => {
+    expect(formatUtcDate(parseOsmDate('2026-08-16T22:30:00.000Z'))).toBe('2026-08-16')
   })
 })
 
-describe('localDateFromIsoDate', () => {
-  test('is local midnight in the given zone', () => {
-    const berlin = localDateFromIsoDate('2026-08-16', 'Europe/Berlin')
-    expect(berlin).toBeInstanceOf(TZDate)
-    expect(berlin?.toISOString()).toBe('2026-08-16T00:00:00.000+02:00')
+describe('utcDayEdge', () => {
+  test('is the first and last second of the UTC day', () => {
+    expect(utcDayEdge('2025-10-01', 'start')?.toISOString()).toBe('2025-10-01T00:00:00.000Z')
+    expect(utcDayEdge('2025-10-01', 'end')?.toISOString()).toBe('2025-10-01T23:59:59.000Z')
+  })
+
+  test('is null for a day that does not exist', () => {
+    expect(utcDayEdge('2025-02-30', 'start')).toBeNull()
+    expect(utcDayEdge('', 'end')).toBeNull()
   })
 })
 
-describe('startOfLocalDay', () => {
-  test('is midnight in the given zone', () => {
-    const lateUtc = parseOsmDate('2026-08-16T22:30:00.000Z')
-    expect(startOfLocalDay(lateUtc, 'UTC').toISOString()).toBe('2026-08-16T00:00:00.000+00:00')
-    expect(startOfLocalDay(lateUtc, 'Europe/Berlin').toISOString()).toBe(
-      '2026-08-17T00:00:00.000+02:00',
-    )
+describe('isUtcAt and formatLocalDayTime', () => {
+  test('tell the browser time of a UTC day edge', () => {
+    const start = parseOsmDate('2025-10-01T00:00:00Z')
+    expect(isUtcAt(start, 'UTC')).toBe(true)
+    expect(isUtcAt(start, 'Asia/Kolkata')).toBe(false)
+    expect(formatLocalDayTime(start, 'Asia/Kolkata')).toBe('1 Oct 2025, 05:30')
   })
 })
 
