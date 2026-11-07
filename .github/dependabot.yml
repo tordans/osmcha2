@@ -1,5 +1,5 @@
 # FMC Dependabot defaults (tech-stack), tuned for this Vite SPA.
-# Schedule: first Friday of each month, 07:00 Europe/Berlin (cron FRI#1).
+# Schedule: first Thursday of each month, 07:00 Europe/Berlin (cron THU#1).
 # See FixMyBerlin/fixmyskills tech-stack/references/dependabot.md
 version: 2
 updates:
@@ -8,7 +8,7 @@ updates:
       - /
     schedule:
       interval: cron
-      cronjob: '0 7 * * FRI#1'
+      cronjob: '0 7 * * THU#1'
       timezone: Europe/Berlin
     cooldown:
       default-days: 5
@@ -113,7 +113,7 @@ updates:
     directory: /
     schedule:
       interval: cron
-      cronjob: '0 7 * * FRI#1'
+      cronjob: '0 7 * * THU#1'
       timezone: Europe/Berlin
     cooldown:
       default-days: 5
