@@ -76,6 +76,7 @@ import {
   isChangesetCameraAnimating,
   jumpMapToChangesetBounds,
 } from './changesetCamera.ts'
+import { SelectedWayDirection } from './changesetDirectionLayer.tsx'
 import { CHANGESET_EMPHASIS_LAYERS } from './changesetEmphasisLayers.ts'
 import {
   clearSelectedFeatureState,
@@ -696,6 +697,7 @@ function CMap({
               {coreLayers.map((layer) => (
                 <Layer key={layer.id} {...(layer as LayerProps)} />
               ))}
+              <SelectedWayDirection />
             </Source>
             <HoverFeatureStateSync viewer={viewer} styleEpoch={styleEpoch} />
             {overlayBg && firstFeatureLayerId ? (
