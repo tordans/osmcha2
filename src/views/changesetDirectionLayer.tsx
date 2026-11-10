@@ -1,4 +1,4 @@
-import type { Map } from 'maplibre-gl'
+import type { ExpressionSpecification, Map } from 'maplibre-gl'
 import { useEffect } from 'react'
 import { Layer, type LayerProps, useMap } from 'react-map-gl/maplibre'
 import { CHANGESET_SOURCE_ID } from './changesetAdiffViewer.ts'
@@ -14,13 +14,13 @@ const ARROW_IMAGE_ID = 'changeset-direction-arrow'
 const ARROW_SPACING_PX = 56
 
 /** The new version of a way, or the old one of a deleted way: the line the reviewer judges. */
-const CURRENT_SIDE = [
+const CURRENT_SIDE: ExpressionSpecification = [
   'any',
   ['==', ['get', 'side'], 'new'],
   ['==', ['get', 'action'], 'delete'],
-] as const
+]
 
-const CHANGESET_DIRECTION_LAYER = {
+const CHANGESET_DIRECTION_LAYER: LayerProps = {
   id: CHANGESET_DIRECTION_LAYER_ID,
   type: 'symbol',
   source: CHANGESET_SOURCE_ID,
@@ -42,7 +42,7 @@ const CHANGESET_DIRECTION_LAYER = {
   paint: {
     'icon-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 1, 0],
   },
-} as const
+}
 
 /** iD's one-way arrow (svg/defs), 10 × 5 units, pointing along the way */
 const ARROW_PATH = 'M 6,3 L 0,3 L 0,2 L 6,2 L 5,0 L 10,2.5 L 5,5 z'
@@ -106,5 +106,5 @@ function useDirectionArrowImage() {
 /** Inside the changeset Source, above the colored lines. */
 export function SelectedWayDirection() {
   useDirectionArrowImage()
-  return <Layer {...(CHANGESET_DIRECTION_LAYER as unknown as LayerProps)} />
+  return <Layer {...CHANGESET_DIRECTION_LAYER} />
 }
