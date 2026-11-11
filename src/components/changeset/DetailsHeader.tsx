@@ -65,6 +65,7 @@ import { typeScale } from '../ui/typography.ts'
 import { changesetTagsForDisplay } from './changesetTags.ts'
 import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
+import { isOwnChangeset, OWN_CHANGESET_REVIEW_MESSAGE } from './ownChangeset.ts'
 import { type NamedTag, REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
 import { Tags } from './tags.tsx'
 import TranslateButton from './translate_button.tsx'
@@ -232,6 +233,10 @@ export function DetailsHeader({
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
   const [isInTrustedlist, isInWatchlist] = useIsUserListed(osmUser, uid, token)
+  const ownChangeset = isOwnChangeset(user, {
+    username: properties.user,
+    uid: properties.uid ?? userDetails?.uid,
+  })
   const addToWatchlistMutation = useAddToWatchlist()
   const removeFromWatchlistMutation = useRemoveFromWatchlist()
   const addToTrustedlistMutation = useAddToTrustedlist()
@@ -294,6 +299,10 @@ export function DetailsHeader({
       toast.error('Username not available')
       return
     }
+    if (ownChangeset) {
+      toast.error(OWN_CHANGESET_REVIEW_MESSAGE)
+      return
+    }
     if (hasLeftoverTags) {
       setLeftoverAlertOpen(true)
       return
@@ -315,6 +324,10 @@ export function DetailsHeader({
     }
     if (value === false) {
       requestLooksOk()
+      return
+    }
+    if (ownChangeset && value === true) {
+      toast.error(OWN_CHANGESET_REVIEW_MESSAGE)
       return
     }
     markHarmfulMutation.mutate({
@@ -890,12 +903,16 @@ export function DetailsHeader({
             ) : null}
           </>
         ) : (
-          <>
+          <OwnChangesetHint own={ownChangeset}>
             <Button
               outline
               aria-label="Nothing stood out; I think this is OK"
               onClick={() => requestLooksOk()}
-              className="min-h-11 cursor-pointer touch-manipulation select-none"
+              disabled={ownChangeset}
+              className={clsx(
+                'min-h-11 touch-manipulation select-none',
+                ownChangeset ? 'pointer-events-none' : 'cursor-pointer',
+              )}
             >
               <CircleCheckIcon
                 data-slot="icon"
@@ -907,7 +924,11 @@ export function DetailsHeader({
               <DropdownButton
                 outline
                 aria-label="Something here is worth checking or discussing"
-                className="min-h-11 cursor-pointer touch-manipulation select-none"
+                disabled={ownChangeset}
+                className={clsx(
+                  'min-h-11 touch-manipulation select-none',
+                  ownChangeset ? 'pointer-events-none' : 'cursor-pointer',
+                )}
               >
                 <FlagIcon
                   data-slot="icon"
@@ -982,7 +1003,7 @@ export function DetailsHeader({
                 </DropdownSection>
               </DropdownMenu>
             </Dropdown>
-          </>
+          </OwnChangesetHint>
         )}
       </div>
 
@@ -1037,5 +1058,19 @@ export function DetailsHeader({
       {pair}
       {body}
     </header>
+  )
+}
+
+/** The review buttons are off on one's own changesets; hovering them says why. */
+function OwnChangesetHint({ own, children }: { own: boolean; children: React.ReactNode }) {
+  if (!own) return <>{children}</>
+  return (
+    <Tooltip
+      as="span"
+      content={OWN_CHANGESET_REVIEW_MESSAGE}
+      className="cursor-not-allowed! flex-wrap gap-2"
+    >
+      {children}
+    </Tooltip>
   )
 }
