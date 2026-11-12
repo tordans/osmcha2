@@ -49,7 +49,7 @@ function selectedFilterLabel({
   if (isMyChangesets) return 'My Changesets'
   if (isMyReviews) return 'My Reviews'
   if (isRecent) return 'Recent'
-  return 'Select filter'
+  return 'Custom filter'
 }
 
 export function FiltersMenu({ pending = false }: { pending?: boolean }) {
@@ -76,7 +76,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
     !isSaved && uid != null && String(filterValue(filters, 'uids')) === String(uid)
   const isMyReviews =
     !isSaved && Boolean(username) && filterValue(filters, 'checked_by') === username
-  const isRecent = !isSaved && !filters.uids && !filters.checked_by
+  const isRecent = !isSaved && Object.keys(filters).every((key) => key === 'order_by')
   const triggerLabel = selectedFilterLabel({
     savedName: isSaved ? (selectedName ?? undefined) : undefined,
     isMyChangesets,

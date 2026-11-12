@@ -73,6 +73,9 @@ export function Header({
   const effectiveOrderBy = aoiId ? aoiOrderBy : filters?.order_by?.[0]?.value
   const selected = options.find((option) => option.value === effectiveOrderBy) ?? null
 
+  // The sort order has its own menu; any other filter can be edited in the filter form.
+  const hasListFilters = Object.keys(filters ?? {}).some((key) => key !== 'order_by')
+
   const changesetCount = numberWithCommas(currentPage?.count ?? 0)
 
   return (
@@ -81,12 +84,16 @@ export function Header({
         <div className="min-w-0 flex-1">
           <FiltersMenu pending={pending} />
         </div>
-        {aoiId ? (
+        {aoiId || hasListFilters ? (
           <RouterLink
             to="/filters"
-            search={stripFilterSearch({ ...search, aoi: aoiId, page: undefined })}
+            search={
+              aoiId
+                ? stripFilterSearch({ ...search, aoi: aoiId, page: undefined })
+                : { ...search, page: undefined }
+            }
             data-panel-origin="filters"
-            aria-label={`Edit saved filter ${aoiName || aoiId}`}
+            aria-label={aoiId ? `Edit saved filter ${aoiName || aoiId}` : 'Edit filter'}
             className="relative isolate inline-flex h-8 shrink-0 cursor-pointer touch-manipulation items-center gap-1 rounded-lg px-2 text-sm/6 font-medium text-zinc-600 select-none hover:bg-zinc-950/5 hover:text-zinc-950 active:bg-zinc-950/5"
           >
             <PencilSquareIcon className="size-4" />
