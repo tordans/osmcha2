@@ -9,18 +9,29 @@ interface ListPaneStore {
   }
 }
 
-function isChangesetPath(pathname: string) {
-  return pathname.startsWith('/changesets/')
+/** GitHub Pages serves the app under `/osmcha2`; `window.location` keeps that prefix. */
+function stripBasePath(pathname: string, base: string) {
+  const prefix = base.replace(/\/+$/, '')
+  if (prefix === '' || !pathname.startsWith(prefix)) return pathname
+  const rest = pathname.slice(prefix.length)
+  return rest === '' || rest.startsWith('/') ? rest || '/' : pathname
 }
 
-/** Closed on changeset URLs so a deep link focuses the map; otherwise open. */
-export function defaultListPaneOpen(pathname: string) {
-  return !isChangesetPath(pathname)
+function isChangesetPath(pathname: string, base: string = import.meta.env.BASE_URL ?? '/') {
+  return stripBasePath(pathname, base).startsWith('/changesets/')
+}
+
+/**
+ * Closed on changeset URLs so a deep link focuses the map, even when the URL also
+ * carries a list (`aoi`, filters). List mode starts once the reviewer opens the list.
+ */
+export function defaultListPaneOpen(pathname: string, base?: string) {
+  return !isChangesetPath(pathname, base)
 }
 
 /** Collapse is only allowed while a changeset is selected. */
-export function effectiveListPaneOpen(pathname: string, storedOpen: boolean) {
-  return isChangesetPath(pathname) ? storedOpen : true
+export function effectiveListPaneOpen(pathname: string, storedOpen: boolean, base?: string) {
+  return isChangesetPath(pathname, base) ? storedOpen : true
 }
 
 function initialListPaneOpen() {

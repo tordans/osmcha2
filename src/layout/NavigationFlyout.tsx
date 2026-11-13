@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
+import { useSelectedList } from '../components/list/useSelectedList.ts'
 import { TokenImport } from '../components/token_import.tsx'
 import { Avatar } from '../components/ui/avatar.tsx'
 import { Button } from '../components/ui/button.tsx'
@@ -26,6 +27,7 @@ import { isAccountPath } from '../routing/filterSearch.ts'
 import { useAuthActions } from '../stores/auth-store.ts'
 import { useListPaneActions, useListPaneCanCollapse } from '../stores/list-pane-store.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
+import { ListButtonLabel } from './ListButtonLabel.tsx'
 import { Logo } from './Logo.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -96,20 +98,22 @@ function CollapseListButton() {
 
 function ExpandListButton() {
   const { expand } = useListPaneActions()
+  const { label } = useSelectedList()
   const prefetchChangesetsPage = usePrefetchChangesetsPage()
 
   return (
     <Button
       outline
-      aria-label="Show changeset list"
+      aria-label={`Show changeset list: ${label}`}
       aria-expanded={false}
       aria-controls="changeset-list-pane"
-      className={chromeIconButtonClassName}
+      className="min-h-9 bg-zinc-100 py-1 sm:py-1"
       onMouseEnter={prefetchChangesetsPage}
       onFocus={prefetchChangesetsPage}
       onClick={expand}
     >
       <PanelLeftOpenIcon data-slot="icon" />
+      <ListButtonLabel />
     </Button>
   )
 }

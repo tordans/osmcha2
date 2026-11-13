@@ -2,9 +2,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useMatch, useRouter } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useAuth } from '../../hooks/useAuth.ts'
-import { useFilters } from '../../hooks/useFilters.ts'
-import type { AoiFeature } from '../../network/aoi.ts'
-import { useAOI, useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { changesetsPageQueryOptions } from '../../query/options/changesetsPage.ts'
 import { filtersFromSearch, stripFilterSearch, withFilters } from '../../routing/filterSearch.ts'
 import type { OsmchaSearch } from '../../routing/searchSchemas.ts'
@@ -20,37 +17,9 @@ import {
   DropdownSection,
 } from '../ui/dropdown.tsx'
 import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon } from '../ui/icons.ts'
+import { filterName, useSelectedList } from './useSelectedList.ts'
 
 const rootRouteApi = getRouteApi('__root__')
-
-function filterName(aoi: AoiFeature) {
-  return aoi.properties?.name || `Filter ${aoi.id}`
-}
-
-function filterValue(filters: Record<string, unknown>, key: string) {
-  const items = filters[key]
-  if (!Array.isArray(items) || items[0] == null || typeof items[0] !== 'object') return undefined
-  if (!('value' in items[0])) return undefined
-  return items[0].value
-}
-
-function selectedFilterLabel({
-  savedName,
-  isMyChangesets,
-  isMyReviews,
-  isRecent,
-}: {
-  savedName: string | undefined
-  isMyChangesets: boolean
-  isMyReviews: boolean
-  isRecent: boolean
-}) {
-  if (savedName) return savedName
-  if (isMyChangesets) return 'My Changesets'
-  if (isMyReviews) return 'My Reviews'
-  if (isRecent) return 'Recent'
-  return 'Custom filter'
-}
 
 export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   const { token, user } = useAuth()
@@ -62,27 +31,16 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const openChangesetId = useMatch({ from: '/changesets/$id', shouldThrow: false })?.params.id
-  const { filters, aoiId } = useFilters()
-  const { data: aoi } = useAOI(aoiId)
-  const { data } = useAllAOIs()
-  const aois = data ?? []
-  const selected = aois.find((item) => String(item.id) === aoiId)
-  const selectedName = selected
-    ? filterName(selected)
-    : ((aoi?.properties?.name as string | undefined) ?? aoiId)
-
-  const isSaved = Boolean(aoiId)
-  const isMyChangesets =
-    !isSaved && uid != null && String(filterValue(filters, 'uids')) === String(uid)
-  const isMyReviews =
-    !isSaved && Boolean(username) && filterValue(filters, 'checked_by') === username
-  const isRecent = !isSaved && Object.keys(filters).every((key) => key === 'order_by')
-  const triggerLabel = selectedFilterLabel({
-    savedName: isSaved ? (selectedName ?? undefined) : undefined,
+  const {
+    aoiId,
+    aois,
+    selected,
+    selectedName,
     isMyChangesets,
     isMyReviews,
     isRecent,
-  })
+    label: triggerLabel,
+  } = useSelectedList()
 
   const savedAois =
     aoiId && !selected

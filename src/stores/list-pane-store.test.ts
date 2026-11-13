@@ -12,6 +12,16 @@ describe('defaultListPaneOpen', () => {
     expect(defaultListPaneOpen('/changesets/123')).toBe(false)
     expect(defaultListPaneOpen('/changesets/123456')).toBe(false)
   })
+
+  it('collapses on a changeset URL under the GitHub Pages base path', () => {
+    expect(defaultListPaneOpen('/osmcha2/changesets/123', '/osmcha2/')).toBe(false)
+    expect(defaultListPaneOpen('/osmcha2/', '/osmcha2/')).toBe(true)
+    expect(defaultListPaneOpen('/osmcha2', '/osmcha2/')).toBe(true)
+  })
+
+  it('does not treat a lookalike prefix as the base path', () => {
+    expect(defaultListPaneOpen('/osmcha2x/changesets/123', '/osmcha2/')).toBe(true)
+  })
 })
 
 describe('effectiveListPaneOpen', () => {
@@ -23,5 +33,6 @@ describe('effectiveListPaneOpen', () => {
   it('honors the session toggle on a changeset page', () => {
     expect(effectiveListPaneOpen('/changesets/123', false)).toBe(false)
     expect(effectiveListPaneOpen('/changesets/123', true)).toBe(true)
+    expect(effectiveListPaneOpen('/osmcha2/changesets/123', false, '/osmcha2/')).toBe(false)
   })
 })
