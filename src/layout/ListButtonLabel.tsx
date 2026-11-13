@@ -10,10 +10,7 @@ export function ListButtonLabel() {
   return (
     <span className="flex min-w-0 flex-col items-start text-left leading-none">
       <span>List</span>
-      <span
-        title={label}
-        className="mt-0.5 block max-w-16 truncate text-xs/4 font-normal text-zinc-500"
-      >
+      <span title={label} className="block max-w-16 truncate text-xs/3.5 font-normal text-zinc-500">
         {label}
       </span>
     </span>
