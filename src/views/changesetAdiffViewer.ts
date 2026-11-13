@@ -6,6 +6,7 @@ import {
   type AdiffAction,
   type ParsedAdiff,
 } from '../components/changeset/changesetElements.ts'
+import { lowZoomMarkerLayers } from './changesetLowZoomMarkers.ts'
 import {
   annotateNodeClickability,
   applyNodeClickabilityStyle,
@@ -118,8 +119,10 @@ export function useChangesetAdiffViewer(
         viewer.adiff.actions,
       ),
       options: viewer.options,
-      layers: () =>
-        dashUnchangedLayers(applyNodeClickabilityStyle(remapAdiffActionLayers(viewer.layers()))),
+      layers: () => [
+        ...dashUnchangedLayers(applyNodeClickabilityStyle(remapAdiffActionLayers(viewer.layers()))),
+        ...lowZoomMarkerLayers({ source: CHANGESET_SOURCE_ID, showElements, showActions }),
+      ],
     }
   }, [adiff, showElements, showActions])
 }

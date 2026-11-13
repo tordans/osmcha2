@@ -83,6 +83,7 @@ import {
   setSelectedFeatureState,
   syncHighlightedFeatureState,
 } from './changesetFeatureState.ts'
+import { LOW_ZOOM_MARKER_MAX_ZOOM, withLowZoomMarkers } from './changesetLowZoomMarkers.ts'
 import { hitSlopPx, isTouchInput, pickChangesetActionFromClick } from './changesetMapClick.ts'
 import { ChangesetMapUnavailable } from './ChangesetMapUnavailable.tsx'
 import {
@@ -262,6 +263,7 @@ function CMap({
     () => minorMoveObjectKeys(buildElementChanges(viewer?.adiff.actions)),
     [viewer],
   )
+  const sourceData = useMemo(() => (viewer ? withLowZoomMarkers(viewer.geojson) : null), [viewer])
   const seenMap = useMemo(
     () => effectiveSeenMap(storedSeenMap, unseenOverrides, minorMoveKeys),
     [storedSeenMap, unseenOverrides, minorMoveKeys],
@@ -628,6 +630,12 @@ function CMap({
     requestListScroll({ type: nextRef.type, id: nextRef.id })
     selectRef(nextRef)
     setSelectedFeatureState(map, geojson, nextRef.type, nextRef.id)
+    // Zoomed far out the tap hit a marker standing in for the object: go to the object itself.
+    if (map.getZoom() < LOW_ZOOM_MARKER_MAX_ZOOM) {
+      runReviewCamera((bottomInset) => {
+        flyMapToAdiffElement(map, viewer, nextRef.type, nextRef.id, null, { bottomInset })
+      })
+    }
   }
 
   function handleMouseMove(event: MapLayerMouseEvent) {
@@ -683,7 +691,7 @@ function CMap({
             <Source
               id={CHANGESET_SOURCE_ID}
               type="geojson"
-              data={viewer.geojson}
+              data={sourceData ?? viewer.geojson}
               attribution={typeof viewer.adiff.note === 'string' ? viewer.adiff.note : undefined}
             >
               {/* Nested so vis.gl only mounts layers after addSource. Sibling Layers can
