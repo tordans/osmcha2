@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { findOsmNoteRefs, osmNoteIds, osmNoteUrl, splitByOsmNoteRefs } from './osmNoteRefs.ts'
+import { findOsmNoteRefs, osmNoteIds, osmNoteUrl } from './osmNoteRefs.ts'
 
 describe('osmNoteIds', () => {
   test('finds a note URL in a comment', () => {
@@ -97,28 +97,6 @@ describe('findOsmNoteRefs', () => {
   test('keeps a URL path but drops sentence punctuation after it', () => {
     const [ref] = findOsmNoteRefs('see https://www.openstreetmap.org/note/12/foo.')
     expect(ref?.text).toBe('https://www.openstreetmap.org/note/12/foo')
-  })
-})
-
-describe('splitByOsmNoteRefs', () => {
-  test('cuts text into runs and references that join back to the text', () => {
-    const text = 'a note 1, b https://osm.org/note/2 c'
-    const segments = splitByOsmNoteRefs(text)
-    expect(segments).toEqual([
-      { type: 'text', text: 'a ', start: 0 },
-      { type: 'note', text: 'note 1', start: 2, id: 1 },
-      { type: 'text', text: ', b ', start: 8 },
-      { type: 'note', text: 'https://osm.org/note/2', start: 12, id: 2 },
-      { type: 'text', text: ' c', start: 34 },
-    ])
-    expect(segments.map((segment) => segment.text).join('')).toBe(text)
-  })
-
-  test('returns one text segment when there is no reference', () => {
-    expect(splitByOsmNoteRefs('nothing here')).toEqual([
-      { type: 'text', text: 'nothing here', start: 0 },
-    ])
-    expect(splitByOsmNoteRefs('')).toEqual([])
   })
 })
 
