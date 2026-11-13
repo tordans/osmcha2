@@ -14,6 +14,8 @@ import { queryClient } from './query/client.ts'
 import { persistQueryOptions } from './query/persist.ts'
 import { router } from './router.tsx'
 import { waitForAuthHydration } from './stores/auth-store.ts'
+import { initDeviceInput } from './utils/device.ts'
+import { watchHardwareKeys } from './utils/hardwareKeys.ts'
 
 const CHUNK_RELOAD_KEY = 'osmcha-chunk-reload-at'
 const CHUNK_RELOAD_WINDOW_MS = 10_000
@@ -35,6 +37,10 @@ window.addEventListener('vite:preloadError', (event) => {
 
 // iOS Safari applies `:active` (press feedback) only when a touchstart handler exists.
 document.addEventListener('touchstart', () => {}, { passive: true })
+
+// Before the first render: texts and `touch:` styles follow `data-input`, and shortcut hints wait
+// for a hardware keyboard (`data-keys`), which a touch device shows only by its first key.
+watchHardwareKeys(initDeviceInput() === 'keyboard')
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Root element not found')

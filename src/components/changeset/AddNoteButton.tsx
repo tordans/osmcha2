@@ -6,6 +6,7 @@ import {
   REVIEW_MARK_SEEN,
   REVIEW_MARK_UNSEEN,
 } from '../../config/bindings.ts'
+import { useKeyboardKnown, withKeyHint } from '../../utils/hardwareKeys.ts'
 import { TouchTarget } from '../ui/button.tsx'
 import { ChatBubbleLeftIcon, CircleCheckIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -126,10 +127,11 @@ export function MarkSeenButton({
   pressed?: boolean
   onClick: () => void
 }) {
+  const keyboard = useKeyboardKnown()
   return (
     <ReviewIconButton
       label={label}
-      tooltip={`${label} (${seenKey(pressed)})`}
+      tooltip={withKeyHint(label, seenKey(pressed), keyboard)}
       pressed={pressed}
       tone="seen"
       rounded="md"
@@ -155,6 +157,8 @@ export function ObjectReviewActions({
   onNoteClick: () => void
   onSeenClick: () => void
 }) {
+  const keyboard = useKeyboardKnown()
+
   function handleGroupClick(event: MouseEvent<HTMLDivElement>) {
     event.stopPropagation()
   }
@@ -168,7 +172,11 @@ export function ObjectReviewActions({
     >
       <ReviewIconButton
         label={notePressed ? `Close note on ${objectLabel}` : `Add a note on ${objectLabel}`}
-        tooltip={`${notePressed ? 'Close note' : 'Add a note'} (${bindingKey(REVIEW_ADD_NOTE)})`}
+        tooltip={withKeyHint(
+          notePressed ? 'Close note' : 'Add a note',
+          bindingKey(REVIEW_ADD_NOTE),
+          keyboard,
+        )}
         pressed={notePressed}
         tone="note"
         grouped
@@ -183,7 +191,7 @@ export function ObjectReviewActions({
       </ReviewIconButton>
       <ReviewIconButton
         label={seen ? `Mark ${objectLabel} as not seen` : `Mark ${objectLabel} as seen`}
-        tooltip={`${seen ? 'Mark as not seen' : 'Mark as seen'} (${seenKey(seen)})`}
+        tooltip={withKeyHint(seen ? 'Mark as not seen' : 'Mark as seen', seenKey(seen), keyboard)}
         pressed={seen}
         tone="seen"
         grouped

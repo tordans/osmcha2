@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '../components/ui/table.tsx'
 import { Code, Text, TextLink } from '../components/ui/text.tsx'
+import { deviceInput } from '../utils/device.ts'
 
 const ABOUT_MD_URL = 'https://github.com/OSMCha/osmcha-frontend/blob/main/ABOUT.md'
 
@@ -42,12 +43,15 @@ const SHORTCUTS: Array<{ group: string; action: string; keys: string }> = [
 ]
 
 export function About() {
+  const touch = deviceInput() === 'touch'
   return (
     <AccountPage>
       <Heading>Guide</Heading>
       <Text>
-        Keyboard shortcuts help you move through a list of changesets quickly. For the full OSMCha
-        guide, see{' '}
+        {touch
+          ? 'With a keyboard attached, shortcuts help you move through a list of changesets quickly.'
+          : 'Keyboard shortcuts help you move through a list of changesets quickly.'}{' '}
+        For the full OSMCha guide, see{' '}
         <TextLink href={ABOUT_MD_URL} target="_blank" rel="noreferrer">
           ABOUT.md on GitHub
         </TextLink>
@@ -56,10 +60,18 @@ export function About() {
 
       <section className="flex flex-col gap-3">
         <Subheading>Keyboard shortcuts</Subheading>
-        <Text>
-          To review a changeset, press S again and again: each press marks the highlighted element
-          or group as seen and moves on to the next unseen one.
-        </Text>
+        {touch ? (
+          <Text>
+            To review a changeset, tap the check mark on each element or group to mark it as seen.
+            The shortcuts below work once a hardware keyboard is attached: pressing S again and
+            again marks the highlighted element as seen and moves on to the next unseen one.
+          </Text>
+        ) : (
+          <Text>
+            To review a changeset, press S again and again: each press marks the highlighted element
+            or group as seen and moves on to the next unseen one.
+          </Text>
+        )}
         <Table striped>
           <TableHead>
             <TableRow>

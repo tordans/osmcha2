@@ -15,6 +15,15 @@
   }
 }
 
+/* How the person works, on <html> before the first render (src/utils/device.ts): `touch:` and
+   `keyboard:` choose sizes and texts for a finger or a mouse. */
+@custom-variant touch (&:where([data-input='touch'], [data-input='touch'] *));
+@custom-variant keyboard (&:where([data-input='keyboard'], [data-input='keyboard'] *));
+/* A shortcut hint shows once a hardware keyboard is known: at once with a fine pointer, on a phone
+   or an iPad at its first hardware key (`data-keys`, src/utils/hardwareKeys.ts). */
+@custom-variant keys (&:where(html[data-keys], html[data-keys] *));
+@custom-variant nokeys (&:where(html:not([data-keys]), html:not([data-keys]) *));
+
 html {
   -webkit-tap-highlight-color: transparent;
 }

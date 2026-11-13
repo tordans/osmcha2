@@ -7,6 +7,7 @@ import { useChangesetNumberedPins } from '../notes/changesetPins.ts'
 import { useNotesUserKey } from '../notes/useNotesUserKey.ts'
 import type { PinParam } from '../routing/pinParam.ts'
 import { getChangesetNotesActions, usePinPlacement } from '../stores/changeset-notes-store.ts'
+import { deviceInput } from '../utils/device.ts'
 import { isMobile } from '../utils/isMobile.ts'
 import { CHANGESET_MAP_ID } from './changesetAdiffViewer.ts'
 import { suppressNextMapClick } from './suppressMapClick.ts'
@@ -31,7 +32,9 @@ export function PinPlacementOverlay() {
         <p>
           {isMobile()
             ? 'Pan the map, then set the pin at the centre.'
-            : 'Click the map to place this pin.'}
+            : deviceInput() === 'touch'
+              ? 'Tap the map to place this pin.'
+              : 'Click the map to place this pin.'}
         </p>
         {isMobile() ? (
           <Button type="button" color="blue" onClick={setPinHere}>

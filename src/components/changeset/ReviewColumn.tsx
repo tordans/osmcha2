@@ -23,6 +23,7 @@ import {
 } from '../../stores/changeset-hover-store.ts'
 import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
+import { useKeyboardKnown, withKeyHint } from '../../utils/hardwareKeys.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { moveReviewSheet, resetReviewSheet } from '../../views/reviewCamera.ts'
 import { Badge } from '../ui/badge.tsx'
@@ -96,6 +97,7 @@ export function ReviewColumn({
   const queryClient = useQueryClient()
   const { requestFinishFocus } = useReviewFocusActions()
   const desktop = useDesktopLayout()
+  const keyboard = useKeyboardKnown()
   const { requestListScroll } = useChangesetHoverActions()
   // Phone sheet: DetailsHeader portals everything below its menus into the scroller.
   const [headerBodySlot, setHeaderBodySlot] = useState<HTMLDivElement | null>(null)
@@ -223,7 +225,7 @@ export function ReviewColumn({
     <nav aria-label="Review panels" className="-mb-px flex gap-x-4 px-2.5">
       <ReviewTab
         current={changesActive}
-        title={`Changes (${bindingKey(CHANGESET_DETAILS_DETAILS)})`}
+        title={withKeyHint('Changes', bindingKey(CHANGESET_DETAILS_DETAILS), keyboard)}
         onClick={() => selectPanel(CHANGESET_DETAILS_DETAILS.label)}
       >
         Changes{' '}
@@ -233,7 +235,7 @@ export function ReviewColumn({
       </ReviewTab>
       <ReviewTab
         current={discussionActive}
-        title={`Discussion (${bindingKey(CHANGESET_DETAILS_DISCUSSIONS)})`}
+        title={withKeyHint('Discussion', bindingKey(CHANGESET_DETAILS_DISCUSSIONS), keyboard)}
         onClick={() => selectPanel(CHANGESET_DETAILS_DISCUSSIONS.label)}
       >
         Discussion{' '}

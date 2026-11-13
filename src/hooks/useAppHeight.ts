@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { prefersTouchInput } from '../utils/prefersTouchInput.ts'
 
 const TEXT_ENTRY_SELECTOR = 'input, textarea, select, [contenteditable="true"]'
 
@@ -12,9 +13,8 @@ export function keyboardMayBeOpen(activeElement: Element | null, coarsePointer: 
 }
 
 function publishAppHeight() {
-  const coarsePointer = window.matchMedia('(pointer: coarse)').matches
   // The app keeps its height and the keyboard lies over it. The field's blur measures again.
-  if (keyboardMayBeOpen(document.activeElement, coarsePointer)) return
+  if (keyboardMayBeOpen(document.activeElement, prefersTouchInput())) return
   document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`)
   // iOS can leave the page pushed up after the keyboard; a full-bleed app has nothing to scroll to.
   if (document.documentElement.classList.contains('app-full-bleed') && window.scrollY !== 0) {

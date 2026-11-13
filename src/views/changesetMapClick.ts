@@ -1,5 +1,6 @@
 import type { Map, Point } from 'maplibre-gl'
 import { isNoopAction, type AdiffAction } from '../components/changeset/changesetElements.ts'
+import { prefersTouchInput } from '../utils/prefersTouchInput.ts'
 import { isClickableMapFeature } from './spyglassOverlay.ts'
 
 type PickableFeature = {
@@ -20,20 +21,15 @@ type PointerEventLike = { type?: string; pointerType?: string }
 
 /**
  * Whether a map click came from a finger or pen. Touch and pointer events say so directly.
- * A plain mouse-style click carries no hint, so fall back to the primary pointer being coarse.
+ * A plain mouse-style click carries no hint, so fall back to the device's input.
  */
 export function isTouchInput(
   event: PointerEventLike | null | undefined,
-  primaryPointerIsCoarse: boolean = prefersCoarsePointer(),
+  deviceIsTouch: boolean = prefersTouchInput(),
 ): boolean {
   if (event?.pointerType) return event.pointerType !== 'mouse'
   if (event?.type?.startsWith('touch')) return true
-  return primaryPointerIsCoarse
-}
-
-function prefersCoarsePointer(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-  return window.matchMedia('(pointer: coarse)').matches
+  return deviceIsTouch
 }
 
 const GEOMETRY_RANK: Record<string, number> = {
