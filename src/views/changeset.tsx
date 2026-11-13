@@ -19,6 +19,7 @@ import { useFilters } from '../hooks/useFilters.ts'
 import type { NoteTarget } from '../notes/discussionNotes.ts'
 import { useChangesetMap, useChangesetMapFromOverpass } from '../query/hooks/useChangesetMap.ts'
 import { changesetQueryOptions } from '../query/options/changeset.ts'
+import { isHistoryTraversal } from '../routing/historyTraversal.ts'
 import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
 import { useAuthToken } from '../stores/auth-store.ts'
@@ -48,7 +49,13 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   const mapQuery = useChangesetMap(changesetId)
   // Only has data after the user asked for the Overpass fallback in the map pane.
   const overpassMapQuery = useChangesetMapFromOverpass(changesetId)
-  const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(null)
+  // Back/forward to a changeset restores the map view from the URL; the selected object is not a
+  // deep link that should fly the map, switch tabs or flash again.
+  const [inAppDeepLinkKey, setInAppDeepLinkKey] = useState<string | null>(() =>
+    isHistoryTraversal()
+      ? refDeepLinkKey(changesetId, parseRefParam(search.ref ?? ''), search.pin)
+      : null,
+  )
   const [revealNonce, setRevealNonce] = useState(0)
   const [revealTarget, setRevealTarget] = useState<NoteTarget | null>(null)
   const { markRead } = useReadChangesetsActions()

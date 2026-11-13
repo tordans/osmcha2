@@ -1,6 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 import { queryClient } from './query/client.ts'
 import { routeTree } from './routeTree.gen.ts'
+import { trackHistoryTraversal } from './routing/historyTraversal.ts'
 import { routerSearch } from './routing/routerSearch.ts'
 import { NotFound } from './views/not_found.tsx'
 
@@ -21,6 +22,8 @@ export const router = createRouter({
   context: { queryClient },
   scrollRestoration: true,
 })
+
+trackHistoryTraversal(router.history)
 
 declare module '@tanstack/react-router' {
   interface Register {
