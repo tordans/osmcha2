@@ -1,13 +1,16 @@
 import { CHANGESET_SOURCE_ID } from './changesetAdiffViewer.ts'
+import { LOW_ZOOM_MARKER_FILTER, LOW_ZOOM_MARKER_MAX_ZOOM } from './changesetLowZoomMarkers.ts'
 
 export const CHANGESET_EMPHASIS_WAY_LAYER_ID = 'changeset-emphasis-way'
 const CHANGESET_EMPHASIS_RELATION_LAYER_ID = 'changeset-emphasis-relation'
 export const CHANGESET_EMPHASIS_NODE_LAYER_ID = 'changeset-emphasis-node'
+const CHANGESET_EMPHASIS_MARKER_LAYER_ID = 'changeset-emphasis-lowzoom-marker'
 
 export const CHANGESET_EMPHASIS_LAYER_IDS = [
   CHANGESET_EMPHASIS_WAY_LAYER_ID,
   CHANGESET_EMPHASIS_RELATION_LAYER_ID,
   CHANGESET_EMPHASIS_NODE_LAYER_ID,
+  CHANGESET_EMPHASIS_MARKER_LAYER_ID,
 ] as const
 
 const SELECTED: unknown[] = ['boolean', ['feature-state', 'selected'], false]
@@ -33,6 +36,7 @@ type EmphasisLayer = {
   id: string
   type: 'line' | 'circle'
   source: string
+  maxzoom?: number
   filter: unknown[]
   layout?: Record<string, string>
   paint: Record<string, unknown>
@@ -78,6 +82,20 @@ function changesetEmphasisLayers(): EmphasisLayer[] {
       type: 'circle',
       source: CHANGESET_SOURCE_ID,
       filter: ['==', 'type', 'node'],
+      paint: {
+        'circle-color': HALO_COLOR,
+        'circle-radius': NODE_HALO_RADIUS,
+        'circle-opacity': HALO_OPACITY,
+        'circle-blur': 0.2,
+      },
+    },
+    {
+      // The point standing in for a way or relation when zoomed far out.
+      id: CHANGESET_EMPHASIS_MARKER_LAYER_ID,
+      type: 'circle',
+      source: CHANGESET_SOURCE_ID,
+      maxzoom: LOW_ZOOM_MARKER_MAX_ZOOM,
+      filter: LOW_ZOOM_MARKER_FILTER,
       paint: {
         'circle-color': HALO_COLOR,
         'circle-radius': NODE_HALO_RADIUS,

@@ -630,7 +630,7 @@ function CMap({
     requestListScroll({ type: nextRef.type, id: nextRef.id })
     selectRef(nextRef)
     setSelectedFeatureState(map, geojson, nextRef.type, nextRef.id)
-    // Zoomed far out the tap hit a marker standing in for the object: go to the object itself.
+    // Zoomed far out the object is a dot or a stand-in marker: go to the object itself.
     if (map.getZoom() < LOW_ZOOM_MARKER_MAX_ZOOM) {
       runReviewCamera((bottomInset) => {
         flyMapToAdiffElement(map, viewer, nextRef.type, nextRef.id, null, { bottomInset })

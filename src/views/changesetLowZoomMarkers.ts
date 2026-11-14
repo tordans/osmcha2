@@ -6,6 +6,9 @@ import { ACTION } from '../components/changeset/actionColors.ts'
  */
 export const LOW_ZOOM_MARKER_MAX_ZOOM = 13
 
+/** Feature property that tells a marker from the element it stands in for. */
+export const LOW_ZOOM_MARKER_FILTER = ['==', 'lowzoom', true]
+
 const LOW_ZOOM_MARKER_BG_LAYER_ID = 'changeset-lowzoom-marker-bg'
 const LOW_ZOOM_MARKER_LAYER_ID = 'changeset-lowzoom-marker'
 
@@ -122,24 +125,8 @@ const MARKER_COLOR: unknown[] = [
   ACTION.noop.hex,
 ]
 
-/** Dark case at rest; the selection's yellow and the hover's white like the other halos. */
-const CASE_COLOR: unknown[] = [
-  'case',
-  ['boolean', ['feature-state', 'selected'], false],
-  'hsla(45, 93%, 47%, 0.92)',
-  ['boolean', ['feature-state', 'highlighted'], false],
-  'hsla(0, 0%, 100%, 0.7)',
-  'hsla(0, 0%, 15%, 0.5)',
-]
-
-const CASE_RADIUS: unknown[] = [
-  'case',
-  ['boolean', ['feature-state', 'selected'], false],
-  12,
-  ['boolean', ['feature-state', 'highlighted'], false],
-  10,
-  8,
-]
+/** Dark case only. The selection and hover halo lives with the other halos in the emphasis layers. */
+const CASE_COLOR = 'hsla(0, 0%, 15%, 0.5)'
 
 type MarkerLayer = {
   id: string
@@ -163,7 +150,7 @@ export function lowZoomMarkerLayers(options: {
   const elements = options.showElements.filter((type) => type === 'way' || type === 'relation')
   const filter = [
     'all',
-    ['==', 'lowzoom', true],
+    LOW_ZOOM_MARKER_FILTER,
     ['in', 'type', ...elements],
     ['in', 'action', ...options.showActions],
   ]
@@ -177,7 +164,7 @@ export function lowZoomMarkerLayers(options: {
       filter,
       layout: { visibility },
       paint: {
-        'circle-radius': CASE_RADIUS,
+        'circle-radius': 7,
         'circle-color': CASE_COLOR,
       },
     },
@@ -192,7 +179,7 @@ export function lowZoomMarkerLayers(options: {
         'circle-radius': 4,
         'circle-color': MARKER_COLOR,
         'circle-stroke-width': 1.5,
-        // A ring sets the marker apart from a tagged node, which has a white ring too: dark here.
+        // A tagged node has a white ring; a dark one sets the stand-in marker apart.
         'circle-stroke-color': '#18181b',
       },
     },
