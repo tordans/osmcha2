@@ -291,7 +291,7 @@ export function FiltersList({
           handleFocus={() => handleFocus('location')}
           description={
             active === 'location'
-              ? 'Filter for changesets whose bounding box intersects a chosen area. Optionally limit how large those changesets may be.'
+              ? 'Filter for changesets whose bounding box intersects a chosen area. Changesets whose edits all lie elsewhere are flagged once their edits are loaded, so you can skip them.'
               : undefined
           }
         >

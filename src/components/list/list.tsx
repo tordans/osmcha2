@@ -11,6 +11,7 @@ type CurrentPage = {
   features: Array<{
     id: number
     properties: any
+    geometry?: unknown
   }>
   count: number
 }
@@ -69,6 +70,7 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
           active={f.id === activeChangesetId}
           properties={f.properties}
           changesetId={f.id}
+          geometry={f.geometry}
           data={f}
           inputRef={f.id === activeChangesetId ? scrollActiveRowIntoView : undefined}
           key={f.id}

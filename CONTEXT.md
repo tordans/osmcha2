@@ -60,3 +60,7 @@ An object in the changeset payload that was not edited (adiff `noop`). Shown as 
 **Minor move**:
 A node moved 2 m or less with nothing else changed, or a line or area whose shape shifted 2 m or less (Hausdorff distance) with the same nodes and tags. It counts as seen without the reviewer looking, sits in a collapsed "Minor moves" group in the Changes list, and the reviewer can un-see it.
 _Avoid_: small edit, trivial change
+
+**Review area**:
+The place a changeset list is filtered to: the `geometry` (drawn polygon or searched place) or `in_bbox` of the list's filter. OSMCha matches it against the changeset's bounding box only, so a changeset with far-apart edits can match an area it never touched. Once its edits are loaded, such a changeset is flagged "Outside your review area" in the list and in the review, with a skip to the next one.
+_Avoid_: AOI (that is a saved filter), location (the filter field).

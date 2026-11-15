@@ -11,6 +11,7 @@ import {
   REFRESH_CHANGESETS,
 } from '../config/bindings.ts'
 import { useFilters } from '../hooks/useFilters.ts'
+import { useReviewAreaPrefetch } from '../hooks/useReviewArea.ts'
 import { LIST_REFRESH_HINT_MS } from '../query/cachePolicy.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useChangesetsPage } from '../query/hooks/useChangesetsPage.ts'
@@ -44,6 +45,7 @@ function ChangesetsList() {
     aoiId,
   })
   const listIsStale = useStaleAfter(dataUpdatedAt, LIST_REFRESH_HINT_MS)
+  useReviewAreaPrefetch(changesetsPage?.features)
 
   function goUpDownToChangeset(direction: number) {
     if (!changesetsPage?.features) return

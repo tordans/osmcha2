@@ -1,3 +1,4 @@
+import * as Headless from '@headlessui/react'
 import area from '@turf/area'
 import bbox from '@turf/bbox'
 import bboxPolygon from '@turf/bbox-polygon'
@@ -18,6 +19,7 @@ import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { useNominatimSearch } from '../../query/hooks/useNominatimSearch.ts'
 import { Button } from '../ui/button.tsx'
 import { Description, Label } from '../ui/fieldset.tsx'
+import { ChevronDownIcon } from '../ui/icons.ts'
 import { Input } from '../ui/input.tsx'
 import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
@@ -63,8 +65,14 @@ function geometryFromValue(value?: Filter) {
   if (!value || value.length === 0) return null
   const geometry = value[0]?.value
   if (geometry && typeof geometry === 'object') return geometry
-  if (geometry && typeof geometry === 'string') {
-    const bounds = geometry.split(',').map(Number)
+  if (geometry != null && typeof geometry !== 'object') {
+    // `in_bbox` comes back from the URL split at its commas: one item per coordinate.
+    const bounds = value
+      .map((item) => filterOptionLabel(item.value))
+      .join(',')
+      .split(',')
+      .map(Number)
+    if (bounds.length !== 4 || bounds.some((n) => !Number.isFinite(n))) return null
     return bboxPolygon(bounds as [number, number, number, number]).geometry
   }
   return null
@@ -445,30 +453,53 @@ function LocationSelectInner({
         </Text>
       ) : null}
 
-      <div className="space-y-2 border-t border-zinc-950/10 pt-3">
-        <Label className="block">{areaLtDisplay}</Label>
-        <div className="flex max-w-sm items-center gap-2">
-          <Input
-            name="area_lt"
-            inputMode="numeric"
-            type="number"
-            min={1}
-            max={100}
-            value={areaLtInputValue}
-            placeholder={areaLtPlaceholder || areaLtDisplay}
-            onChange={(event) => handleAreaLtChange(event.target.value)}
+      <Headless.Disclosure
+        as="div"
+        defaultOpen={areaLtNumber != null}
+        className="border-t border-zinc-950/10 pt-2"
+      >
+        <Headless.DisclosureButton className="group flex min-h-11 cursor-pointer touch-manipulation items-center gap-1 text-sm font-medium text-zinc-600 select-none hover:text-zinc-950 sm:min-h-8">
+          Advanced: {areaLtDisplay}
+          {areaLtNumber != null ? (
+            <span className="font-normal text-zinc-500">
+              ({filterOptionLabel(areaLt?.[0]?.value)}×)
+            </span>
+          ) : null}
+          <ChevronDownIcon
+            className="size-4 transition-transform group-data-open:rotate-180"
+            aria-hidden="true"
           />
-          <span className="shrink-0 text-sm text-zinc-600">× your location area</span>
-        </div>
-        {!hasLocation ? (
+        </Headless.DisclosureButton>
+        <Headless.DisclosurePanel className="space-y-2 pt-1">
           <Description>
-            Draw or search for a location first. Without a location filter, maximum changeset size
-            has no effect.
+            Usually not needed: leave this empty. Changesets that only reach your area with their
+            bounding box are flagged “Outside your review area” in the list and in the review, so
+            you can skip them.
           </Description>
-        ) : (
-          <Description>{areaLtDescription}</Description>
-        )}
-      </div>
+          <Label className="block">{areaLtDisplay}</Label>
+          <div className="flex max-w-sm items-center gap-2">
+            <Input
+              name="area_lt"
+              inputMode="numeric"
+              type="number"
+              min={1}
+              max={100}
+              value={areaLtInputValue}
+              placeholder={areaLtPlaceholder || areaLtDisplay}
+              onChange={(event) => handleAreaLtChange(event.target.value)}
+            />
+            <span className="shrink-0 text-sm text-zinc-600">× your location area</span>
+          </div>
+          {!hasLocation ? (
+            <Description>
+              Draw or search for a location first. Without a location filter, maximum changeset size
+              has no effect.
+            </Description>
+          ) : (
+            <Description>{areaLtDescription}</Description>
+          )}
+        </Headless.DisclosurePanel>
+      </Headless.Disclosure>
     </div>
   )
 }

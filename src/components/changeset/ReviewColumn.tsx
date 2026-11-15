@@ -9,6 +9,7 @@ import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
+import { useReviewAreaOverlap } from '../../hooks/useReviewArea.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import { useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
@@ -34,6 +35,7 @@ import { DetailsChanges } from './DetailsChanges.tsx'
 import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
 import { ElementCard } from './ElementCard.tsx'
+import { ReviewAreaCallout } from './ReviewAreaCallout.tsx'
 import { ReviewSheet } from './ReviewSheet.tsx'
 import { changeRowDomId, scrollChildIntoScroller, stickyTopOf } from './scrollChildIntoScroller.ts'
 
@@ -52,7 +54,7 @@ const COLUMN_TABS = [
 
 type ReviewColumnProps = {
   changesetId: number
-  currentChangeset: ReviewChangeset & { properties?: Record<string, any> }
+  currentChangeset: ReviewChangeset & { properties?: Record<string, any>; geometry?: unknown }
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
   bindingsState: Record<string, boolean>
@@ -116,6 +118,8 @@ export function ReviewColumn({
   })
   const discussions = discussion?.changeset?.comments || []
   const hasDiscussion = discussions.length > 0
+  const outsideReviewArea =
+    useReviewAreaOverlap(changesetId, currentChangeset.geometry) === 'outside'
 
   /**
    * Scroll the Changes list to a row. Phones keep the sheet where it is: the list is laid
@@ -211,14 +215,17 @@ export function ReviewColumn({
   }
 
   const header = (
-    <DetailsHeader
-      changesetId={changesetId}
-      currentChangeset={currentChangeset}
-      userDetails={userDetails}
-      whosThat={whosThat}
-      layout={desktop ? 'column' : 'sheet'}
-      bodySlot={headerBodySlot}
-    />
+    <>
+      <DetailsHeader
+        changesetId={changesetId}
+        currentChangeset={currentChangeset}
+        userDetails={userDetails}
+        whosThat={whosThat}
+        layout={desktop ? 'column' : 'sheet'}
+        bodySlot={headerBodySlot}
+      />
+      {outsideReviewArea ? <ReviewAreaCallout changesetId={changesetId} /> : null}
+    </>
   )
 
   const tabs = (
@@ -323,7 +330,11 @@ export function ReviewColumn({
   if (!desktop) {
     return (
       <ReviewSheet
-        summary={sheetSummary(changesetCount, discussions.length)}
+        summary={
+          outsideReviewArea
+            ? `Outside your review area · ${sheetSummary(changesetCount, discussions.length)}`
+            : sheetSummary(changesetCount, discussions.length)
+        }
         header={header}
         card={
           selected ? (
