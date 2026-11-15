@@ -9,7 +9,7 @@ import {
   CHANGESET_DETAILS_DETAILS,
   CHANGESET_DETAILS_DISCUSSIONS,
 } from '../../config/bindings.ts'
-import { useReviewAreaOverlap } from '../../hooks/useReviewArea.ts'
+import { useReviewAreaLookahead, useReviewAreaOverlap } from '../../hooks/useReviewArea.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import { useDesktopLayout } from '../../layout/useDesktopLayout.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
@@ -118,6 +118,7 @@ export function ReviewColumn({
   })
   const discussions = discussion?.changeset?.comments || []
   const hasDiscussion = discussions.length > 0
+  useReviewAreaLookahead(changesetId)
   const outsideReviewArea =
     useReviewAreaOverlap(changesetId, currentChangeset.geometry) === 'outside'
 

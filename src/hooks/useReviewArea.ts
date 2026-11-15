@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 import {
   adiffOverlap,
@@ -7,7 +7,6 @@ import {
   type ReviewArea,
   type ReviewAreaOverlap,
 } from '../components/changeset/reviewArea.ts'
-import { fetchAndParseAugmentedDiff } from '../network/changeset.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import {
   changesetMapFromOverpassQueryOptions,
@@ -114,8 +113,9 @@ export function useNextChangesetInReviewArea(changesetId: number): number | null
 }
 
 /** Bigger changesets are checked when opened: their diff is large and they rarely mislead. */
-const REVIEW_AREA_PREFETCH_MAX_CHANGES = 1000
-const REVIEW_AREA_PREFETCH_CONCURRENCY = 2
+const LOOKAHEAD_MAX_CHANGES = 1000
+/** Diffs loaded ahead per opened changeset, at most. */
+const LOOKAHEAD_MAX_LOADS = 3
 
 type ListedChangeset = {
   id: number
@@ -123,53 +123,76 @@ type ListedChangeset = {
   properties?: { create?: number | null; modify?: number | null; delete?: number | null } | null
 }
 
+function changeCount(feature: ListedChangeset) {
+  const { create, modify, delete: deleted } = feature.properties ?? {}
+  return (create ?? 0) + (modify ?? 0) + (deleted ?? 0)
+}
+
 /**
- * Checks the listed changesets that the bbox alone cannot place, so the list can flag the ones
- * outside the review area before anyone opens them. Loads their diffs a few at a time and keeps
- * only the result; huge changesets wait until they are opened.
+ * While a changeset is open, checks what "next" would land on, so a skip is ready before it is
+ * needed. Walks down the list: a changeset known to lie outside the area is passed over (the
+ * reviewer will skip it too), a known inside one ends the walk, an unclear one (bbox not wholly
+ * inside) gets its diff loaded into the Query cache, so it also opens at once. Stops after a few
+ * loads; very large changesets end the walk unloaded.
  */
-export function useReviewAreaPrefetch(features: readonly ListedChangeset[] | undefined) {
+export function useReviewAreaLookahead(changesetId: number) {
+  const queryClient = useQueryClient()
+  const { filters, aoiId, page } = useFilters()
   const area = useReviewArea()
-  const ids = (features ?? [])
-    .filter((feature) => {
-      if (!area) return false
-      const { create, modify, delete: deleted } = feature.properties ?? {}
-      const changes = (create ?? 0) + (modify ?? 0) + (deleted ?? 0)
-      if (changes > REVIEW_AREA_PREFETCH_MAX_CHANGES) return false
-      return changesetBboxOverlap(feature.geometry, area) == null
-    })
-    .map((feature) => feature.id)
-  // The list page is a new array on every render; restart only when the ids change.
-  const idsKey = ids.join(',')
+  const token = useAuthToken()
+  const { data: listPage } = useQuery({
+    ...changesetsPageQueryOptions({ pageIndex: page - 1, filters, aoiId }),
+    enabled: Boolean(area && token),
+  })
+  const features = listPage?.features
+  const index = features?.findIndex((feature) => feature.id === changesetId) ?? -1
+  // The ids after this one; the page object can be new on every render.
+  const followingKey =
+    index < 0
+      ? ''
+      : (features ?? [])
+          .slice(index + 1)
+          .map((feature) => feature.id)
+          .join(',')
 
   useEffect(
-    function checkListedChangesets() {
-      if (!area || idsKey === '') return
+    function lookAhead() {
+      if (!area || followingKey === '') return
+      const byId = new Map((features ?? []).map((feature) => [feature.id, feature]))
+      const following = followingKey.split(',').map(Number)
       let cancelled = false
-      const queue = idsKey
-        .split(',')
-        .map(Number)
-        .filter((id) => getStoredReviewAreaOverlap(area.key, id) == null)
-      async function work() {
-        while (!cancelled) {
-          const id = queue.shift()
-          if (id == null) return
-          if (getStoredReviewAreaOverlap(area!.key, id) != null) continue
-          try {
-            const adiff = await fetchAndParseAugmentedDiff(id)
-            if (cancelled) return
-            const overlap = adiffOverlap(adiff.actions, area!)
-            if (overlap) getReviewAreaOverlapActions().setOverlap(area!.key, id, overlap)
-          } catch {
-            // No diff yet, or offline: the changeset is checked when it is opened.
+      async function walk() {
+        let loads = 0
+        for (const id of following) {
+          if (cancelled) return
+          const feature = byId.get(id)
+          let overlap =
+            getStoredReviewAreaOverlap(area!.key, id) ??
+            (feature ? changesetBboxOverlap(feature.geometry, area!) : null)
+          if (overlap == null) {
+            if (loads >= LOOKAHEAD_MAX_LOADS) return
+            if (feature && changeCount(feature) > LOOKAHEAD_MAX_CHANGES) return
+            loads += 1
+            try {
+              const { adiff } = await queryClient.fetchQuery(changesetMapQueryOptions(id))
+              if (cancelled) return
+              overlap = adiffOverlap(adiff.actions, area!)
+              if (overlap) getReviewAreaOverlapActions().setOverlap(area!.key, id, overlap)
+            } catch {
+              // No diff yet, or offline: the changeset is checked when it is opened.
+              return
+            }
           }
+          if (overlap !== 'outside') return
         }
       }
-      for (let i = 0; i < REVIEW_AREA_PREFETCH_CONCURRENCY; i++) void work()
+      void walk()
       return function cancel() {
         cancelled = true
       }
     },
-    [area, idsKey],
+    // `features` is read for the same ids `followingKey` names.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    [area, followingKey, queryClient],
   )
 }
