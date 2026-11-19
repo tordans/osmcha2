@@ -43,7 +43,12 @@ import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts
 import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
-import { ChevronRightIcon, ExclamationTriangleIcon, MapPinIcon } from '../ui/icons.ts'
+import {
+  ArrowTopRightOnSquareIcon,
+  ChevronRightIcon,
+  ExclamationTriangleIcon,
+  MapPinIcon,
+} from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { typeScale } from '../ui/typography.ts'
 import { ACTION, ACTION_UI_COLOR } from './actionColors.ts'
@@ -61,6 +66,7 @@ import {
   type NodeStats,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
+import { elementOsmUrl } from './elementOpenIn.ts'
 import { locationOf, presetContextOf } from './elementPresets.ts'
 import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
 import { formatMoveMeters, MINOR_MOVES_EXPLANATION } from './minorMoves.ts'
@@ -869,6 +875,7 @@ function TagMutationGroup({
               zoomToAndSelect={zoomToAndSelect}
               showTags={false}
               showPreset={sharedPresetLine == null}
+              grouped
               groupNotesInPanel
               objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
             />
@@ -994,6 +1001,7 @@ function MinorMovesGroup({
                       selectRef={selectRef}
                       zoomToAndSelect={zoomToAndSelect}
                       showPreset={false}
+                      grouped
                       objectNotes={notesByObject.get(objectRefKey(change.type, change.id))}
                     />
                   ))}
@@ -1019,6 +1027,7 @@ const ElementChangeRow = memo(function ElementChangeRow({
   showTags = true,
   showPreset = true,
   groupNotesInPanel = false,
+  grouped = false,
   objectNotes,
 }: {
   change: ElementChange
@@ -1034,6 +1043,11 @@ const ElementChangeRow = memo(function ElementChangeRow({
   showPreset?: boolean
   /** In a group's panel: the notes about the whole group show there, not in this row. */
   groupNotesInPanel?: boolean
+  /**
+   * A member of a group of alike changes: its id stays a plain label that selects the row,
+   * and a small icon beside it opens osm.org.
+   */
+  grouped?: boolean
   objectNotes?: ObjectNotes
 }) {
   const objectKey = objectRefKey(change.type, change.id)
@@ -1155,7 +1169,6 @@ const ElementChangeRow = memo(function ElementChangeRow({
     isCompactReviewRow(collapsed, editingNote != null, hasNotes) && !(currentSelect && pickedOnMap)
 
   const presetLine = usePresetLine(change, showPreset && !compact)
-  const elementName = `${change.type}/${change.id}`
 
   const objectNoteOpen = editingNote != null && editingNote.ref?.key == null
 
@@ -1179,8 +1192,15 @@ const ElementChangeRow = memo(function ElementChangeRow({
       >
         <ActionTypeLabel actionType={actionLabelKey(change)} muted />
         <span className={clsx(typeScale.small, 'truncate text-zinc-600')}>
-          {change.type}/{change.id}
+          {grouped ? (
+            <>
+              {change.type}/{change.id}
+            </>
+          ) : (
+            <OsmElementLink type={change.type} id={change.id} />
+          )}
         </span>
+        {grouped ? <OsmElementLink type={change.type} id={change.id} iconOnly /> : null}
         {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
         <div className="ml-auto">
           <ObjectReviewActions
@@ -1224,8 +1244,16 @@ const ElementChangeRow = memo(function ElementChangeRow({
         <h3 className={clsx(typeScale.body, 'flex min-w-0 items-center gap-1 font-normal')}>
           <ActionTypeLabel actionType={actionLabelKey(change)} />
           <span className="truncate" title={presetLine}>
-            {presetLine ?? elementName}
+            {presetLine ??
+              (grouped ? (
+                `${change.type}/${change.id}`
+              ) : (
+                <OsmElementLink type={change.type} id={change.id} />
+              ))}
           </span>
+          {grouped && !presetLine ? (
+            <OsmElementLink type={change.type} id={change.id} iconOnly />
+          ) : null}
         </h3>
         <div
           className="flex shrink-0 items-center justify-end gap-1"
@@ -1322,7 +1350,14 @@ const ElementChangeRow = memo(function ElementChangeRow({
       {presetLine ? (
         // Under the name: past the 14px action icon and its 4px gap, close to the title it belongs to.
         <p className={clsx(typeScale.small, '-mt-1 mb-1 w-full truncate pl-4.5 text-zinc-500')}>
-          {elementName}
+          {grouped ? (
+            <>
+              {change.type}/{change.id}
+              <OsmElementLink type={change.type} id={change.id} iconOnly />
+            </>
+          ) : (
+            <OsmElementLink type={change.type} id={change.id} />
+          )}
         </p>
       ) : null}
       {/* Own line: next to the id it squeezed the id out on narrow rows. */}
@@ -1453,5 +1488,45 @@ function NodeStatsTooltip({ stats }: { stats: NodeStats }) {
         {stats.deleted} nodes deleted
       </p>
     </div>
+  )
+}
+
+/** "way/123" as a link to the object on osm.org, for inspecting it there. */
+function OsmElementLink({
+  type,
+  id,
+  iconOnly,
+}: {
+  type: string
+  id: number | string
+  /** Collapsed rows: the id stays plain text, a small icon next to it carries the link. */
+  iconOnly?: boolean
+}) {
+  if (iconOnly) {
+    return (
+      <a
+        href={elementOsmUrl(type, id)}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Open ${type}/${id} on openstreetmap.org`}
+        aria-label={`Open ${type}/${id} on openstreetmap.org`}
+        className="ml-1 inline-flex shrink-0 rounded align-middle text-zinc-500 hover:text-zinc-950 focus-visible:text-zinc-950"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <ArrowTopRightOnSquareIcon className="size-3.5" />
+      </a>
+    )
+  }
+  return (
+    <a
+      href={elementOsmUrl(type, id)}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`Open ${type}/${id} on openstreetmap.org`}
+      className="hover:underline focus-visible:underline"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {type}/{id}
+    </a>
   )
 }
