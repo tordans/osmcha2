@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import { useTrafficSigns } from '../../query/hooks/useTrafficSigns.ts'
+import { Tooltip } from '../ui/tooltip.tsx'
 import type { ResolvedSign } from './resolveTrafficSigns.ts'
 
 function SignChip({ sign, muted }: { sign: ResolvedSign; muted: boolean }) {
@@ -8,33 +9,36 @@ function SignChip({ sign, muted }: { sign: ResolvedSign; muted: boolean }) {
     .join(' · ')
 
   return (
-    <li
-      title={title}
-      className={clsx(
-        'inline-flex max-w-full min-w-0 items-center gap-1 rounded-md px-1 py-0.5 font-sans',
-        sign.recognized
-          ? 'bg-white ring-1 ring-zinc-950/10'
-          : 'bg-zinc-100 ring-1 ring-zinc-950/5 ring-inset',
-        muted && 'opacity-60',
-      )}
-    >
-      {sign.svgUrl ? (
-        <img
-          src={sign.svgUrl}
-          alt=""
-          loading="lazy"
-          className="h-6 w-auto max-w-12 flex-none object-contain"
-        />
-      ) : null}
-      {sign.recognized ? (
-        <span className="min-w-0 text-[11px] leading-tight text-zinc-800">
-          {sign.name} <span className="font-mono text-zinc-400">{sign.id}</span>
-        </span>
-      ) : (
-        <span className="min-w-0 font-mono text-[11px] leading-tight break-all text-zinc-500">
-          {sign.id}
-        </span>
-      )}
+    <li className="inline-flex max-w-full min-w-0">
+      <Tooltip
+        as="span"
+        content={title}
+        className={clsx(
+          'max-w-full min-w-0 gap-1 rounded-md px-1 py-0.5 font-sans',
+          sign.recognized
+            ? 'bg-white ring-1 ring-zinc-950/10'
+            : 'bg-zinc-100 ring-1 ring-zinc-950/5 ring-inset',
+          muted && 'opacity-60',
+        )}
+      >
+        {sign.svgUrl ? (
+          <img
+            src={sign.svgUrl}
+            alt=""
+            loading="lazy"
+            className="h-6 w-auto max-w-12 flex-none object-contain"
+          />
+        ) : null}
+        {sign.recognized ? (
+          <span className="min-w-0 text-[11px] leading-tight text-zinc-800">
+            {sign.name} <span className="font-mono text-zinc-400">{sign.id}</span>
+          </span>
+        ) : (
+          <span className="min-w-0 font-mono text-[11px] leading-tight break-all text-zinc-500">
+            {sign.id}
+          </span>
+        )}
+      </Tooltip>
     </li>
   )
 }

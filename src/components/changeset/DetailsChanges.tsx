@@ -1260,12 +1260,14 @@ const ElementChangeRow = memo(function ElementChangeRow({
           onClick={(event) => event.stopPropagation()}
         >
           {change.version != null ? (
-            <span
+            <Tooltip
+              as="span"
+              placement="bottom-end"
+              content={`Version ${change.version} of this object`}
               className={clsx(typeScale.small, 'text-zinc-500')}
-              title={`Version ${change.version} of this object`}
             >
               v{change.version}
-            </span>
+            </Tooltip>
           ) : null}
           {change.flagged ? (
             <Tooltip

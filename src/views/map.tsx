@@ -249,7 +249,7 @@ function CMap({
   const [cursor, setCursor] = useState('default')
   const [styleEpoch, setStyleEpoch] = useState(0)
   const [inspectHover, setInspectHover] = useState<InspectHover | null>(null)
-  const [inspectPoint, setInspectPoint] = useState<{ x: number; y: number } | null>(null)
+  const [inspectPoint, setInspectPoint] = useState<InspectPoint | null>(null)
   const pinPlacement = usePinPlacement()
   const streetImageryLayerOn = useStreetImageryLayerOn()
   const streetImageryViewerOpen = useStreetImageryViewerOpen()
@@ -614,7 +614,14 @@ function CMap({
       // A changeset feature wins over a photo; context lines below a photo do not.
       if (openStreetImageryPhotoFromClick(event)) return
       // Spyglass / surroundings / noop are inspect-only. Do not treat them as an empty-map deselect.
-      if (inspectHoverFromFeatures(hoverFeatures)) return
+      // A mouse shows their flyout on hover; a touch screen has no hover, so a tap shows it.
+      const inspectHover = inspectHoverFromFeatures(hoverFeatures)
+      if (inspectHover) {
+        setInspectHover(inspectHover)
+        setInspectPoint(inspectPointOf(event))
+        return
+      }
+      clearInspect()
       lastClickFeatureIdRef.current = null
       selectRef(null)
       clearSelectedFeatureState(map, geojson)
@@ -622,6 +629,7 @@ function CMap({
     }
 
     lastClickFeatureIdRef.current = nextFeatureId
+    clearInspect()
     if (!action) return
 
     const element = action.new ?? action.old
@@ -653,14 +661,18 @@ function CMap({
     }
     const inspectHover = inspectHoverFromFeatures(hoverFeatures)
     setInspectHover(inspectHover)
-    setInspectPoint(inspectHover ? { x: event.point.x, y: event.point.y } : null)
+    setInspectPoint(inspectHover ? inspectPointOf(event) : null)
     setHover(changesetHoverFromFeatures(hoverFeatures))
+  }
+
+  function clearInspect() {
+    setInspectHover(null)
+    setInspectPoint(null)
   }
 
   function handleMouseLeave() {
     setCursor('default')
-    setInspectHover(null)
-    setInspectPoint(null)
+    clearInspect()
     setHover(null)
   }
 
@@ -684,6 +696,8 @@ function CMap({
             style={{ width: '100%', height: '100%' }}
             onLoad={handleLoad}
             onMoveEnd={handleMoveEnd}
+            // The inspect flyout sits at a screen point; once the map moves it points at nothing.
+            onMoveStart={clearInspect}
             onClick={handleClick}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -780,17 +794,23 @@ function CMap({
   )
 }
 
-function SpyglassInspectFlyout({
-  hover,
-  point,
-}: {
-  hover: InspectHover
-  point: { x: number; y: number }
-}) {
+type InspectPoint = { x: number; y: number; width: number; openLeft: boolean }
+
+/** In the right half of the map the flyout opens to the left, so a tap near the edge stays readable. */
+function inspectPointOf(event: MapLayerMouseEvent): InspectPoint {
+  const width = event.target.getContainer().clientWidth
+  return { x: event.point.x, y: event.point.y, width, openLeft: event.point.x > width / 2 }
+}
+
+function SpyglassInspectFlyout({ hover, point }: { hover: InspectHover; point: InspectPoint }) {
   return (
     <div
       className={`pointer-events-none absolute z-20 max-w-xs rounded-lg px-2 py-1.5 ${flyoutSurfaceClassName}`}
-      style={{ left: point.x + 12, top: point.y + 12 }}
+      style={
+        point.openLeft
+          ? { right: point.width - point.x + 12, top: point.y + 12 }
+          : { left: point.x + 12, top: point.y + 12 }
+      }
     >
       {hover.items.map((item, index) => (
         <SpyglassInspectFlyoutItem

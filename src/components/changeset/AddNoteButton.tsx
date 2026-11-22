@@ -57,7 +57,13 @@ export function ReviewIconButton({
   }
 
   return (
-    <Tooltip as="span" placement="bottom-end" content={tooltip} className="inline-flex">
+    // Compact sits at the start of a tag row: grown leftwards it would cover the map.
+    <Tooltip
+      as="span"
+      placement={compact ? 'bottom' : 'bottom-end'}
+      content={tooltip}
+      className="inline-flex"
+    >
       <button
         type="button"
         aria-label={label}
