@@ -1,5 +1,6 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
+import { AreaLimitHint } from '../components/list/AreaLimitHint.tsx'
 import { Footer } from '../components/list/footer.tsx'
 import { Header } from '../components/list/header.tsx'
 import { List } from '../components/list/list.tsx'
@@ -124,6 +125,7 @@ function ChangesetsList() {
         isRefreshing={isFetching && !isLoading}
         reloadChangesetsPageData={reloadChangesetsPageData}
       />
+      <AreaLimitHint />
       <List
         activeChangesetId={activeChangesetId}
         loading={isLoading}
