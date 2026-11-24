@@ -16,6 +16,7 @@ import {
   type MapLayers,
   type ReviewFilter,
 } from '../../routing/layersParam.ts'
+import { useBasemapFallback, type BasemapFallback } from '../../stores/basemap-fallback-store.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useMapStyle, useMapStyleActions } from '../../stores/map-style-store.ts'
 import {
@@ -35,6 +36,7 @@ import { flyoutSurfaceClassName } from '../ui/flyout.ts'
 import {
   CameraIcon,
   CircleCheckIcon,
+  ExclamationTriangleIcon,
   FunnelIcon,
   GlobeAltIcon,
   StarIcon,
@@ -350,7 +352,43 @@ function UsedInChangesetNote({ children }: { children: React.ReactNode }) {
   )
 }
 
+function CouldNotLoadNote() {
+  return (
+    <span className="mt-0.5 flex items-start gap-1 text-sm/5 font-normal text-amber-700">
+      <ExclamationTriangleIcon
+        className="mt-0.5 size-3.5 shrink-0 text-amber-600"
+        aria-hidden="true"
+      />
+      <span>Could not be loaded here</span>
+    </span>
+  )
+}
+
+function basemapLabel(styleId: string) {
+  return BUILTIN_BASEMAP_OPTIONS.find((option) => option.id === styleId)?.label ?? null
+}
+
+/** Says why the map does not show the imagery the changeset used. */
+function BasemapFallbackNote({ fallback, style }: { fallback: BasemapFallback; style: string }) {
+  const shown = basemapLabel(style)
+  return (
+    <div className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-2.5 text-sm/5 text-amber-950 ring-1 ring-amber-300/70">
+      <ExclamationTriangleIcon
+        className="mt-0.5 size-4 shrink-0 text-amber-600"
+        aria-hidden="true"
+      />
+      <p className="min-w-0 break-words">
+        This changeset used <strong className="font-semibold">{fallback.label}</strong>, but that
+        imagery could not be loaded here. The map shows{' '}
+        {shown ? <strong className="font-semibold">{shown}</strong> : 'the default background'}{' '}
+        instead.
+      </p>
+    </div>
+  )
+}
+
 function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
+  const { id: changesetIdParam } = changesetRouteApi.useParams()
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()
   const map = mapLoaded ? (mainMap?.getMap() ?? null) : null
@@ -360,18 +398,35 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
   const resolution = resolveImageryUsed(imageryUsed, eli?.getLayers() ?? [])
   const appliedMatch = resolution.matches[0] ?? null
   const isAppliedFromChangeset = appliedMatch !== null && style === appliedMatch.styleId
+  const failed = useBasemapFallback()
+  // Only for this changeset, and gone once the reader picks that imagery anyway.
+  const fallback =
+    failed && failed.changesetId === changesetIdParam && style !== failed.styleId ? failed : null
   const appliedTooltip = appliedMatch
     ? `Applied background layer ${appliedMatch.label} that was used in this changeset.`
     : null
+  const fallbackTooltip = fallback
+    ? `${fallback.label} was used in this changeset but could not be loaded. Showing the default background.`
+    : null
+  const buttonTooltip = (isAppliedFromChangeset ? appliedTooltip : null) ?? fallbackTooltip
 
   const imageryButton = (
     <Headless.PopoverButton
-      aria-label={appliedTooltip ?? 'Background imagery'}
-      className={mapControlButtonClassName}
+      aria-label={buttonTooltip ?? 'Background imagery'}
+      className={clsx(mapControlButtonClassName, 'relative')}
     >
       <GlobeAltIcon
         className={clsx('size-5', isAppliedFromChangeset ? 'text-emerald-600' : 'text-zinc-700')}
       />
+      {fallback ? (
+        <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-amber-400 ring-2 ring-white">
+          <ExclamationTriangleIcon
+            variant="fill"
+            className="size-3 text-amber-950"
+            aria-hidden="true"
+          />
+        </span>
+      ) : null}
     </Headless.PopoverButton>
   )
 
@@ -379,10 +434,10 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
     <Headless.Popover>
       {({ open }: { open: boolean }) => (
         <>
-          {isAppliedFromChangeset && appliedTooltip ? (
+          {buttonTooltip ? (
             <Tooltip
               as="span"
-              content={appliedTooltip}
+              content={buttonTooltip}
               placement="bottom-right"
               className="inline-flex"
             >
@@ -393,6 +448,7 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
           )}
           <Headless.PopoverPanel anchor="top end" className={imageryPanelClassName}>
             <h2 className="mb-2 text-base font-semibold text-zinc-950">Background imagery</h2>
+            {fallback ? <BasemapFallbackNote fallback={fallback} style={style} /> : null}
             <ChangesetImageryNote resolution={resolution} />
 
             <section className="space-y-1">
@@ -409,6 +465,7 @@ function MapImageryOptions({ imageryUsed }: MapImageryOptionsProps) {
                     {row.used ? (
                       <UsedInChangesetNote>Used in this changeset</UsedInChangesetNote>
                     ) : null}
+                    {fallback?.styleId === row.styleId ? <CouldNotLoadNote /> : null}
                   </span>
                 </button>
               ))}

@@ -20,7 +20,7 @@ import { resolveBasemapStyle } from '../components/changeset/basemapStyles.ts'
 import { buildElementChanges } from '../components/changeset/changesetElements.ts'
 import { loadEli } from '../components/changeset/eliModule.ts'
 import { InspectKindSwatch } from '../components/changeset/InspectKindSwatch.tsx'
-import { matchImageryUsedStyleId } from '../components/changeset/matchImageryUsed.ts'
+import { matchImageryUsedSelection } from '../components/changeset/matchImageryUsed.ts'
 import { minorMoveObjectKeys } from '../components/changeset/minorMoves.ts'
 import {
   actionMatchingRef,
@@ -34,6 +34,7 @@ import { Loading } from '../components/loading.tsx'
 import { SignIn } from '../components/sign_in.tsx'
 import { flyoutSurfaceClassName } from '../components/ui/flyout.ts'
 import { useAuth } from '../hooks/useAuth.ts'
+import { probeBasemap } from '../map/probeBasemap.ts'
 import { AdiffNotFoundError } from '../network/changeset.ts'
 import { effectiveSeenMap } from '../notes/reviewSeen.ts'
 import { useNotesUserKey } from '../notes/useNotesUserKey.ts'
@@ -42,6 +43,7 @@ import { parseLayersParam } from '../routing/layersParam.ts'
 import { parseMapParam, serializeMapParam } from '../routing/mapParam.ts'
 import { parsePinParam } from '../routing/pinParam.ts'
 import { parseRefParam, type RefParam } from '../routing/refParam.ts'
+import { getBasemapFallbackActions } from '../stores/basemap-fallback-store.ts'
 import { useChangesetHover, useChangesetHoverActions } from '../stores/changeset-hover-store.ts'
 import {
   getChangesetNotesActions,
@@ -91,6 +93,7 @@ import {
   changesetFeaturePassesReviewFilter,
   syncSeenFeatureState,
 } from './changesetSeenStyle.ts'
+import type { LngLatBoundsTuple } from './changesetViewBounds.ts'
 import type { WorkArea } from './changesetWorkAreas.ts'
 import {
   clearMainMapDebugExposure,
@@ -242,6 +245,8 @@ function CMap({
   const lastClickFeatureIdRef = useRef<string | number | null>(null)
   // `<changeset>:<imagery_used>` last applied: the same text on the next changeset applies again.
   const matchedImageryUsedRef = useRef<string | undefined>(undefined)
+  // The changeset's imagery the map switched to, and the background it showed before.
+  const autoAppliedImageryRef = useRef<{ styleId: string; previous: string } | null>(null)
   // The map stays mounted across changesets; warn once per changeset, not once per session.
   const emptyAdiffWarnedForRef = useRef<number | null>(null)
   const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
@@ -325,36 +330,78 @@ function CMap({
   }, [])
 
   useEffect(
-    function resolveChangesetBasemap() {
+    function resolveBasemap() {
       let cancelled = false
 
       async function loadBasemap() {
         await waitForMapStyleHydration()
         if (cancelled) return
-
-        const imageryKey = `${changesetId}:${imageryUsed ?? ''}`
-        if (matchedImageryUsedRef.current !== imageryKey) {
-          matchedImageryUsedRef.current = imageryKey
-          // Without the index the changeset's imagery is unknown; the map still gets its style.
-          const eli = imageryUsed ? await loadEli().catch(() => null) : null
-          const matchedStyleId = eli ? matchImageryUsedStyleId(imageryUsed, eli.getLayers()) : null
-          if (cancelled) return
-          if (matchedStyleId && matchedStyleId !== getMapStyle()) {
-            getMapStyleActions().setStyle(matchedStyleId)
-            return
-          }
-        }
-
         const spec = await resolveBasemapStyle(getMapStyle())
         if (!cancelled) setMapStyle(spec)
       }
 
       void loadBasemap()
-      return function cancelResolveChangesetBasemap() {
+      return function cancelResolveBasemap() {
         cancelled = true
       }
     },
-    [styleId, imageryUsed, changesetId],
+    [styleId],
+  )
+
+  useEffect(
+    function switchToChangesetImageryOnceItLoads() {
+      if (changesetId === null || !viewBounds) return
+      const imageryKey = `${changesetId}:${imageryUsed ?? ''}`
+      if (matchedImageryUsedRef.current === imageryKey) return
+      matchedImageryUsedRef.current = imageryKey
+      const controller = new AbortController()
+      let done = false
+      const { setFallback } = getBasemapFallbackActions()
+      setFallback(null)
+
+      async function applyChangesetImagery(id: number, bounds: LngLatBoundsTuple) {
+        await waitForMapStyleHydration()
+        if (controller.signal.aborted) return
+        // One changeset's imagery rarely covers the next: start again from the background before it.
+        const autoApplied = autoAppliedImageryRef.current
+        autoAppliedImageryRef.current = null
+        if (autoApplied && getMapStyle() === autoApplied.styleId) {
+          getMapStyleActions().setStyle(autoApplied.previous)
+        }
+        if (!imageryUsed) return
+
+        // Without the index the changeset's imagery is unknown; the map keeps its background.
+        const eli = await loadEli().catch(() => null)
+        const match = eli ? matchImageryUsedSelection(imageryUsed, eli.getLayers()) : null
+        const startStyle = getMapStyle()
+        if (controller.signal.aborted || !match || match.styleId === startStyle) return
+
+        // The map shows the current background meanwhile; it switches only to imagery that loads.
+        const spec = await resolveBasemapStyle(match.styleId)
+        const loads = await probeBasemap(spec, bounds, controller.signal)
+        if (controller.signal.aborted) return
+        if (!loads) {
+          setFallback({ changesetId: id, styleId: match.styleId, label: match.label })
+          return
+        }
+        // The reader picked a background while the check ran.
+        if (getMapStyle() !== startStyle) return
+        autoAppliedImageryRef.current = { styleId: match.styleId, previous: startStyle }
+        getMapStyleActions().setStyle(match.styleId)
+      }
+
+      void applyChangesetImagery(changesetId, viewBounds).finally(() => {
+        done = true
+      })
+      return function abortChangesetImageryCheck() {
+        controller.abort()
+        // Interrupted before it decided: the next run checks the same imagery again.
+        if (!done && matchedImageryUsedRef.current === imageryKey) {
+          matchedImageryUsedRef.current = undefined
+        }
+      }
+    },
+    [changesetId, imageryUsed, viewBounds],
   )
 
   useEffect(
