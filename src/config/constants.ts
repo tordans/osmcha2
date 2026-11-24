@@ -29,6 +29,8 @@ export const whosThat = 'https://whosthat.osmz.ru/whosthat.php?action=names&id='
 export const nominatimUrl = 'https://nominatim.openstreetmap.org/search.php'
 /** Nominatim usage policy: at most one request per second. Place search waits for this gap. */
 export const NOMINATIM_SEARCH_MIN_INTERVAL_MS = 1000
+/** Place search also starts when typing pauses this long, so a single word like "Bamberg" finds results. */
+export const PLACE_SEARCH_PAUSE_MS = 900
 
 /** Default list start: this many days before today. */
 export const DEFAULT_FROM_DATE = 2

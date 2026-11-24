@@ -5,6 +5,8 @@ import { handleResponse } from './request.ts'
 const nominatimPlaceSchema = z.object({
   display_name: z.string(),
   geojson: z.unknown().optional(),
+  /** `[south, north, west, east]`, as strings. */
+  boundingbox: z.array(z.union([z.string(), z.number()])).optional(),
 })
 
 const nominatimSearchResultSchema = z.array(nominatimPlaceSchema)

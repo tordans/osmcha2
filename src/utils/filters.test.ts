@@ -1,12 +1,15 @@
 import MockDate from 'mockdate'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, test } from 'vitest'
+import { DEFAULT_FROM_DATE } from '../config/constants.ts'
 import {
   appendDefaultDate,
   applyFilterChange,
   deserializeFiltersFromObject,
   lastDaysFilter,
+  savedFiltersForForm,
   serializeFiltersToObject,
   serializeFiltersToQuery,
+  withSavedFilterDate,
 } from './filters.ts'
 
 afterEach(() => {
@@ -145,5 +148,25 @@ describe('applyFilterChange date exclusivity', () => {
     ).toEqual({
       last_days: lastDaysFilter(0),
     })
+  })
+})
+
+describe('saved filter dates', () => {
+  test('saving an untouched date stores the default window as last days', () => {
+    const saved = withSavedFilterDate({ comment: [{ label: 'x', value: 'x' }] })
+    expect(saved.last_days?.[0]?.value).toBe(String(DEFAULT_FROM_DATE))
+  })
+
+  test('saving keeps a chosen date or an emptied From date', () => {
+    const range = { date__gte: [{ label: '2026-01-01', value: '2026-01-01' }] }
+    expect(withSavedFilterDate(range)).toBe(range)
+    const allTime = { date__gte: [{ label: '', value: '' }] }
+    expect(withSavedFilterDate(allTime)).toBe(allTime)
+  })
+
+  test('a saved filter without a date shows an empty From date', () => {
+    expect(savedFiltersForForm({}).date__gte).toEqual([{ label: '', value: '' }])
+    const lastDays = { last_days: [{ label: 'Last 7 days', value: '7' }] }
+    expect(savedFiltersForForm(lastDays)).toBe(lastDays)
   })
 })

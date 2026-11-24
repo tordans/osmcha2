@@ -16,6 +16,8 @@ import {
   TerraDrawRenderMode,
 } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
+import { PLACE_SEARCH_PAUSE_MS } from '../../config/constants.ts'
+import type { NominatimPlace } from '../../network/nominatim.ts'
 import { useNominatimSearch } from '../../query/hooks/useNominatimSearch.ts'
 import { Button } from '../ui/button.tsx'
 import { Description, Label } from '../ui/fieldset.tsx'
@@ -25,6 +27,7 @@ import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
 import { areaLtBoundPolygon, parseAreaLt } from './areaLtBound.ts'
 import { filterOptionLabel, type Filter } from './filterTypes.ts'
+import { placeGeometry } from './placeGeometry.ts'
 import {
   isSearchablePlaceQuery,
   millisecondsUntilPlaceSearchAllowed,
@@ -108,6 +111,10 @@ function LocationSelectInner({
   const lastSentPlaceAtRef = useRef<number | null>(null)
   const pendingPlaceQueryRef = useRef<string | null>(null)
   const pendingPlaceTimerRef = useRef<number | null>(null)
+  const pausePlaceTimerRef = useRef<number | null>(null)
+  const [selectedPlace, setSelectedPlace] = useState<SearchOption | null>(null)
+  // What is in the place input right now. Results show only while it matches the search they answer.
+  const [placeInput, setPlaceInput] = useState('')
   const [activeMode, setActiveMode] = useState('render')
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -129,13 +136,27 @@ function LocationSelectInner({
   const selectedQueryType =
     queryTypeOptions.find((option) => option.value === queryType) ?? queryTypeOptions[0]
   const canSearchPlaces = isSearchablePlaceQuery(searchedPlaceQuery)
+  // Results for an older text stay hidden: Enter would otherwise pick a stale result
+  // instead of searching for what was typed.
+  const resultsMatchInput = placeInput.trim() === searchedPlaceQuery
   const nominatimQuery = useNominatimSearch(searchedPlaceQuery, queryType, canSearchPlaces)
-  const placeOptions: SearchOption[] = canSearchPlaces
-    ? (nominatimQuery.data ?? []).map((place) => ({
-        label: place.display_name,
-        value: place.geojson,
-      }))
-    : []
+  const placeOptions: SearchOption[] =
+    canSearchPlaces && resultsMatchInput
+      ? (nominatimQuery.data ?? []).map((place) => ({
+          label: place.display_name,
+          value: place,
+        }))
+      : []
+  const placeSearchStatus =
+    !canSearchPlaces || !resultsMatchInput
+      ? null
+      : nominatimQuery.isFetching
+        ? 'Searching…'
+        : nominatimQuery.isError
+          ? 'Place search failed. Press Enter to try again.'
+          : placeOptions.length === 0
+            ? `No places found for “${searchedPlaceQuery}”.`
+            : null
 
   const onDrawFinished = useEffectEvent((id: string | number) => {
     const draw = drawRef.current
@@ -164,6 +185,9 @@ function LocationSelectInner({
     return function clearPendingPlaceSearchTimer() {
       if (pendingPlaceTimerRef.current !== null) {
         window.clearTimeout(pendingPlaceTimerRef.current)
+      }
+      if (pausePlaceTimerRef.current !== null) {
+        window.clearTimeout(pausePlaceTimerRef.current)
       }
     }
   }, [])
@@ -252,7 +276,13 @@ function LocationSelectInner({
     pendingPlaceTimerRef.current = window.setTimeout(flushPendingPlaceSearch, delay)
   }
 
+  function cancelPausePlaceSearch() {
+    if (pausePlaceTimerRef.current !== null) window.clearTimeout(pausePlaceTimerRef.current)
+    pausePlaceTimerRef.current = null
+  }
+
   function resetPlaceSearch() {
+    cancelPausePlaceSearch()
     if (pendingPlaceTimerRef.current !== null) window.clearTimeout(pendingPlaceTimerRef.current)
     pendingPlaceTimerRef.current = null
     pendingPlaceQueryRef.current = null
@@ -261,15 +291,32 @@ function LocationSelectInner({
   }
 
   function handlePlaceQueryChange(input: string) {
+    setPlaceInput(input)
+    // Typing a new place drops the label of the picked one; the drawn area stays until a new pick.
+    if (selectedPlace && input !== selectedPlace.label) setSelectedPlace(null)
     // Clearing the input drops the results, so retyping the same place searches again.
     if (!input.trim()) {
       resetPlaceSearch()
       return
     }
-    if (shouldSearchPlaceOnInput(input, lastSentPlaceQueryRef.current)) requestPlaceSearch(input)
+    cancelPausePlaceSearch()
+    if (shouldSearchPlaceOnInput(input, lastSentPlaceQueryRef.current)) {
+      requestPlaceSearch(input)
+      return
+    }
+    // A word without a trailing space ("Bamberg") searches once typing pauses.
+    pausePlaceTimerRef.current = window.setTimeout(() => {
+      pausePlaceTimerRef.current = null
+      if (shouldSearchPlaceOnEnter(input, lastSentPlaceQueryRef.current)) requestPlaceSearch(input)
+    }, PLACE_SEARCH_PAUSE_MS)
   }
 
   function handlePlaceEnter(input: string) {
+    cancelPausePlaceSearch()
+    if (nominatimQuery.isError && input.trim() === lastSentPlaceQueryRef.current) {
+      void nominatimQuery.refetch()
+      return
+    }
     if (shouldSearchPlaceOnEnter(input, lastSentPlaceQueryRef.current)) requestPlaceSearch(input)
   }
 
@@ -277,7 +324,9 @@ function LocationSelectInner({
     const draw = drawRef.current
     draw?.clear()
 
-    const geometry = option.value as Parameters<typeof area>[0]
+    const geometry = placeGeometry(option.value as NominatimPlace)
+    if (!geometry) return
+    setSelectedPlace(option)
     const tolerance = area(geometry) / 10 ** 6 < 1000 ? 0.01 : 0.1
     const simplified = simplify(geometry, {
       tolerance,
@@ -291,6 +340,7 @@ function LocationSelectInner({
   const handleModeChange = (mode: string) => {
     const draw = drawRef.current
     if (!draw) return
+    setSelectedPlace(null)
     draw.clear()
     draw.setMode(mode as 'rectangle' | 'polygon' | 'render')
     setActiveMode(mode)
@@ -301,6 +351,7 @@ function LocationSelectInner({
     draw?.clear()
     draw?.setMode('render')
     setActiveMode('render')
+    setSelectedPlace(null)
     onChange('geometry', null)
     onChange('in_bbox', null)
   }
@@ -343,6 +394,7 @@ function LocationSelectInner({
           <SearchCombobox
             name={name}
             options={placeOptions}
+            selected={hasLocation ? selectedPlace : null}
             placeholder={placeholder}
             clientFilter={false}
             onQueryChange={handlePlaceQueryChange}
@@ -351,7 +403,9 @@ function LocationSelectInner({
           />
         </div>
       </div>
-      <Description>Search starts after each word, or press Enter.</Description>
+      <Description aria-live="polite">
+        {placeSearchStatus ?? 'Search starts when you pause typing, or press Enter.'}
+      </Description>
 
       <div className="flex flex-wrap gap-2">
         <Button
@@ -390,7 +444,7 @@ function LocationSelectInner({
         <div id="geometry-map" className="h-[300px] w-full touch-manipulation">
           <Map
             id={LOCATION_MAP_ID}
-            mapStyle="/positron.json"
+            mapStyle={`${import.meta.env.BASE_URL}positron.json`}
             maxPitch={0}
             dragRotate={false}
             pitchWithRotate={false}

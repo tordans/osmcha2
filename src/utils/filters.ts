@@ -76,6 +76,32 @@ export function appendDefaultDate(filters: any) {
 
 const EMPTY_DATE_GTE = [{ label: '', value: '' }]
 
+function hasDateFilter(filters: any) {
+  const set = (key: string) =>
+    Array.isArray(filters?.[key]) && filters[key].some((item: any) => item?.value !== '')
+  return set('date__gte') || set('date__lte') || lastDaysHasValue(filters)
+}
+
+/**
+ * A saved filter's changeset list (`/aoi/:id/changesets/`) uses only the stored filters;
+ * nothing adds the default date there. So a filter saved with the date left untouched
+ * stores the default window as "last N days" — what the form showed — instead of
+ * silently listing all time. An explicitly emptied From date stays empty (= all time).
+ */
+export function withSavedFilterDate(filters: any) {
+  if (hasDateFilter(filters) || filters?.date__gte) return filters
+  return { ...filters, last_days: lastDaysFilter(DEFAULT_FROM_DATE) }
+}
+
+/**
+ * A saved filter without a date lists all time. Show that as an empty From date,
+ * not as the default date the form shows for new filters.
+ */
+export function savedFiltersForForm(filters: any) {
+  if (hasDateFilter(filters)) return filters
+  return { ...filters, date__gte: EMPTY_DATE_GTE }
+}
+
 /** Apply one filter-field edit. `last_days` and `date__gte` are mutually exclusive. */
 export function applyFilterChange(filters: any, name: string, values?: any) {
   const next = { ...filters }

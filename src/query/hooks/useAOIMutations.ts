@@ -14,7 +14,7 @@ export function useCreateAOI() {
     mutationFn: ({ name, filters }: { name: string; filters: any }) => createAOI(name, filters),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ['aois'] })
-      toast.success('AOI created')
+      toast.success('Filter saved')
       void navigate({
         to: '/',
         search: (prev) => ({
@@ -41,7 +41,9 @@ export function useUpdateAOI() {
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['aoi', variables.aoiId] })
       void queryClient.invalidateQueries({ queryKey: ['aois'] })
-      toast.success('AOI updated')
+      // The list of a saved filter is keyed by its id, not its filters: refetch it.
+      void queryClient.invalidateQueries({ queryKey: ['changesets', 'page'] })
+      toast.success('Filter saved')
     },
     onError: (error: Error) => {
       console.error('Failed to update AOI:', error)

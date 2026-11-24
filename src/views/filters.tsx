@@ -8,7 +8,12 @@ import { useFilters } from '../hooks/useFilters.ts'
 import { useAOI } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
 import { serializeFiltersToSearch, withFilters } from '../routing/filterSearch.ts'
-import { applyFilterChange, deserializeFiltersFromObject } from '../utils/filters.ts'
+import {
+  applyFilterChange,
+  deserializeFiltersFromObject,
+  savedFiltersForForm,
+  withSavedFilterDate,
+} from '../utils/filters.ts'
 
 function filtersKey(filters: Filters) {
   return JSON.stringify(serializeFiltersToSearch(filters))
@@ -44,7 +49,7 @@ export function Filters() {
     setAppliedAoiId(undefined)
   } else if (!hasUrlFilters && aoi?.properties?.filters && aoi.id !== appliedAoiId) {
     setAppliedAoiId(aoi.id)
-    setLocalFilters(deserializeFiltersFromObject(aoi.properties.filters))
+    setLocalFilters(savedFiltersForForm(deserializeFiltersFromObject(aoi.properties.filters)))
   }
 
   const handleFocus = (name: string) => {
@@ -120,14 +125,14 @@ export function Filters() {
   }
 
   const createAOI = (name: string) => {
-    createAOIMutation.mutate({ name, filters: localFilters })
+    createAOIMutation.mutate({ name, filters: withSavedFilterDate(localFilters) })
   }
 
   const updateAOI = (aoiIdToUpdate: string, name: string) => {
     updateAOIMutation.mutate({
       aoiId: aoiIdToUpdate,
       name,
-      filters: localFilters,
+      filters: withSavedFilterDate(localFilters),
     })
   }
 
