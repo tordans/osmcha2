@@ -1,7 +1,7 @@
 import { useHotkeys } from '@tanstack/react-hotkeys'
 import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import {
@@ -123,26 +123,29 @@ const userOpenMenuClassName = clsx(
 )
 
 function useReviewHeaderMenuWidth() {
-  const pairRef = useRef<HTMLDivElement>(null)
+  // A state ref, not useRef: on phones the pair is portaled into the sheet after the first render,
+  // so the element only exists later and the observer has to attach then.
+  const [pair, pairRef] = useState<HTMLDivElement | null>(null)
   const [width, setWidth] = useState(0)
 
-  useLayoutEffect(function observeReviewHeaderPairWidth() {
-    const pair = pairRef.current
-    if (!pair) return
+  useLayoutEffect(
+    function observeReviewHeaderPairWidth() {
+      if (!pair) return
+      const el = pair
 
-    function measurePairWidth() {
-      const el = pairRef.current
-      if (!el) return
-      setWidth(el.getBoundingClientRect().width)
-    }
+      function measurePairWidth() {
+        setWidth(el.getBoundingClientRect().width)
+      }
 
-    measurePairWidth()
-    const observer = new ResizeObserver(measurePairWidth)
-    observer.observe(pair)
-    return function disconnectPairWidthObserver() {
-      observer.disconnect()
-    }
-  }, [])
+      measurePairWidth()
+      const observer = new ResizeObserver(measurePairWidth)
+      observer.observe(el)
+      return function disconnectPairWidthObserver() {
+        observer.disconnect()
+      }
+    },
+    [pair],
+  )
 
   return { pairRef, menuStyle: width > 0 ? { width } : undefined }
 }
