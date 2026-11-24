@@ -11,8 +11,8 @@ import { aoiQueryOptions } from '../query/options/aoi.ts'
 import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
 import {
   filtersFromSearch,
+  filtersIdentityKey,
   migrateLegacyFilterSearch,
-  serializeFiltersToSearch,
 } from '../routing/filterSearch.ts'
 import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
@@ -28,7 +28,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     aoi: search.aoi,
     page: search.page,
   }),
-  beforeLoad: ({ location, search }) => {
+  beforeLoad: ({ location, search, preload }) => {
     const { pathname, searchStr, hash } = location
     if (pathname.length > 1 && pathname.endsWith('/')) {
       const stripped = pathname.replace(/\/+$/, '') || '/'
@@ -63,10 +63,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
     const migrated = migrateLegacyFilterSearch(pathname, search)
     if (migrated) {
-      if (migrated.copyOfAoi) {
+      // A hover preload of such a link is not a visit.
+      if (migrated.copyOfAoi && !preload) {
         getFilterCopyActions().set(
           migrated.copyOfAoi,
-          JSON.stringify(serializeFiltersToSearch(filtersFromSearch(migrated.search))),
+          filtersIdentityKey(filtersFromSearch(migrated.search)),
         )
       }
       const qs = routerSearch.stringify(migrated.search)

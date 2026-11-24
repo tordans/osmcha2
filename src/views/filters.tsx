@@ -10,6 +10,7 @@ import { useFilters } from '../hooks/useFilters.ts'
 import { useAllAOIs, useAOI } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
 import {
+  filtersIdentityKey,
   serializeFiltersToSearch,
   stripFilterSearch,
   withFilters,
@@ -58,7 +59,9 @@ export function Filters() {
   const copySourceStoredName = useFilterCopySourceName()
   // Only the list the copy was made as: another URL list is not that copy.
   const copySourceId =
-    copyStoredId && !aoiId && copyFiltersKey === filtersKey(filtersFromUrl) ? copyStoredId : null
+    copyStoredId && !aoiId && copyFiltersKey === filtersIdentityKey(filtersFromUrl)
+      ? copyStoredId
+      : null
   const copySourceName = copySourceId
     ? copySourceStoredName ||
       (aoisQuery.data ?? []).find((item) => String(item.id) === copySourceId)?.properties?.name ||
@@ -66,7 +69,7 @@ export function Filters() {
     : null
 
   // What the form starts from, and what "unsaved changes" compares against.
-  const savedName = aoi?.properties?.name ?? ''
+  const savedName = (aoi?.properties?.name ?? '').trim()
   const sourceFilters: Filters = isSaved
     ? aoi?.properties?.filters
       ? savedFiltersForForm(deserializeFiltersFromObject(aoi.properties.filters))
@@ -79,13 +82,25 @@ export function Filters() {
   const [localFilters, setLocalFilters] = useState<Filters>(sourceFilters)
   const [name, setName] = useState(savedName)
   const [prevSourceKey, setPrevSourceKey] = useState(sourceKey)
+  const [prevSourceFilters, setPrevSourceFilters] = useState(sourceFilters)
+  const [prevSavedName, setPrevSavedName] = useState(savedName)
   const [active, setActive] = useState('')
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (sourceKey !== prevSourceKey) {
     setPrevSourceKey(sourceKey)
-    setLocalFilters(sourceFilters)
-    setName(savedName)
+    // A refetch of the same saved filter (changed in another tab) keeps edits in progress;
+    // "Unsaved changes" then compares against the new version.
+    const sameSavedFilter =
+      isSaved && prevSourceKey.startsWith(`aoi:${aoiId}:`) && !prevSourceKey.endsWith(':loading')
+    const hasEdits =
+      filtersKey(localFilters) !== filtersKey(prevSourceFilters) || name.trim() !== prevSavedName
+    if (!(sameSavedFilter && hasEdits)) {
+      setLocalFilters(sourceFilters)
+      setName(savedName)
+    }
+    setPrevSourceFilters(sourceFilters)
+    setPrevSavedName(savedName)
   }
 
   const loading = (isSaved && aoiLoading) || createAOIMutation.isPending
@@ -99,12 +114,15 @@ export function Filters() {
   // Leaving after Apply, Save, Duplicate or Delete is intended: let that one navigation through.
   const leavingOnPurposeRef = useRef(false)
   const blocker = useBlocker({
-    shouldBlockFn: () => {
+    shouldBlockFn: ({ next }) => {
+      let block = dirty
       if (leavingOnPurposeRef.current) {
         leavingOnPurposeRef.current = false
-        return false
+        block = false
       }
-      return dirty
+      // "Copy of …" belongs to this visit of the form; Duplicate stays on it and keeps it.
+      if (!block && next.fullPath !== '/filters') getFilterCopyActions().clear()
+      return block
     },
     enableBeforeUnload: () => dirty,
     withResolver: true,
@@ -173,7 +191,11 @@ export function Filters() {
 
   const handleDuplicate = () => {
     if (!aoiId) return
-    getFilterCopyActions().set(aoiId, filtersKey(localFilters), name.trim() || savedName || null)
+    getFilterCopyActions().set(
+      aoiId,
+      filtersIdentityKey(localFilters),
+      name.trim() || savedName || null,
+    )
     leaveOnPurpose()
     void navigate({
       to: '/filters',
@@ -274,7 +296,14 @@ export function Filters() {
           <Button plain onClick={() => blocker.reset?.()}>
             Keep editing
           </Button>
-          <Button onClick={() => blocker.proceed?.()}>Discard changes</Button>
+          <Button
+            onClick={() => {
+              if (blocker.next?.fullPath !== '/filters') getFilterCopyActions().clear()
+              blocker.proceed?.()
+            }}
+          >
+            Discard changes
+          </Button>
         </AlertActions>
       </Alert>
 

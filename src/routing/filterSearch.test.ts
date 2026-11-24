@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   filtersFromSearch,
   listSearchFromFilters,
+  filtersIdentityKey,
   migrateLegacyFilterSearch,
   serializeFiltersToSearch,
   stripFilterSearch,
@@ -292,5 +293,21 @@ describe('mixed saved filter and URL filter links', () => {
 
   it('a saved filter link alone stays as it is', () => {
     expect(migrateLegacyFilterSearch('/', { aoi: 'abc', page: 1, order: 'date,desc' })).toBeNull()
+  })
+})
+
+describe('filtersIdentityKey', () => {
+  it('ignores key order and the sort order', () => {
+    const geometry = { type: 'Polygon', coordinates: [] }
+    const a = filtersIdentityKey({
+      geometry: [{ label: geometry, value: geometry }],
+      comment: [{ label: 'x', value: 'x' }],
+    })
+    const b = filtersIdentityKey({
+      comment: [{ label: 'x', value: 'x' }],
+      order_by: [{ label: '-date', value: '-date' }],
+      geometry: [{ label: geometry, value: geometry }],
+    })
+    expect(a).toBe(b)
   })
 })

@@ -70,6 +70,15 @@ export function serializeFiltersToSearch(filters: Filters): Record<string, unkno
   return result
 }
 
+/**
+ * Which list a set of filters describes, independent of key order and sort order.
+ * Used to recognise the copy a saved filter was duplicated as.
+ */
+export function filtersIdentityKey(filters: Filters) {
+  const { order: _order, ...rest } = serializeFiltersToSearch(filters)
+  return JSON.stringify(Object.entries(rest).sort(([a], [b]) => a.localeCompare(b)))
+}
+
 export function filtersFromSearch(search: OsmchaSearch): Filters {
   const strings: Record<string, string> = {}
   const objects: Filters = {}

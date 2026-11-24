@@ -60,7 +60,12 @@ export function useFilters() {
       updateSearch((prev) => ({
         ...withFilters(prev, hasFilters ? (newFilters as Filters) : undefined),
         page: 1,
-        aoi: hasFilters ? prev.aoi : undefined,
+        // Only a sort change keeps a saved filter; other filters make a URL list
+        // (a list never has both).
+        aoi:
+          hasFilters && Object.keys(newFilters).every((key) => key === 'order_by')
+            ? prev.aoi
+            : undefined,
       }))
     } catch (error) {
       console.error('Failed to set filters:', error)
