@@ -1,17 +1,30 @@
-import { getRouteApi } from '@tanstack/react-router'
-import { useState } from 'react'
-import { FiltersHeader } from '../components/filters/filters_header.tsx'
+import { getRouteApi, useBlocker } from '@tanstack/react-router'
+import { useRef, useState } from 'react'
+import { FiltersHeader, FiltersPrimaryActions } from '../components/filters/filters_header.tsx'
 import { FiltersList } from '../components/filters/filters_list.tsx'
 import type { Filter, Filters } from '../components/filters/filterTypes.ts'
+import { Alert, AlertActions, AlertDescription, AlertTitle } from '../components/ui/alert.tsx'
+import { Button } from '../components/ui/button.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useFilters } from '../hooks/useFilters.ts'
-import { useAOI } from '../query/hooks/useAOI.ts'
+import { useAllAOIs, useAOI } from '../query/hooks/useAOI.ts'
 import { useCreateAOI, useDeleteAOI, useUpdateAOI } from '../query/hooks/useAOIMutations.ts'
-import { serializeFiltersToSearch, withFilters } from '../routing/filterSearch.ts'
+import {
+  serializeFiltersToSearch,
+  stripFilterSearch,
+  withFilters,
+} from '../routing/filterSearch.ts'
+import {
+  getFilterCopyActions,
+  useFilterCopyFiltersKey,
+  useFilterCopySourceId,
+  useFilterCopySourceName,
+} from '../stores/filter-copy-store.ts'
 import {
   applyFilterChange,
   deserializeFiltersFromObject,
   savedFiltersForForm,
+  suggestFilterName,
   withSavedFilterDate,
 } from '../utils/filters.ts'
 
@@ -19,149 +32,266 @@ function filtersKey(filters: Filters) {
   return JSON.stringify(serializeFiltersToSearch(filters))
 }
 
-const NEW_AOI = 'unnamed *'
-
 const rootRouteApi = getRouteApi('__root__')
 
+/**
+ * The filter form edits one of two things, never both:
+ * - URL filters (no `aoi`): Apply writes them to the list URL; Save as… turns them into a saved filter.
+ * - A saved filter (`aoi` only): Save overwrites that same filter and shows its list;
+ *   Duplicate opens a copy as URL filters.
+ */
 export function Filters() {
   const { token } = useAuth()
   const navigate = rootRouteApi.useNavigate()
-  const { filters: urlFilters, setAoiId, aoiId, clearFilters } = useFilters()
+  const { filters: urlFilters, aoiId } = useFilters()
   const filtersFromUrl = urlFilters as Filters
+  const isSaved = Boolean(aoiId)
 
   const { data: aoi, isLoading: aoiLoading } = useAOI(aoiId)
+  const aoisQuery = useAllAOIs()
   const createAOIMutation = useCreateAOI()
   const updateAOIMutation = useUpdateAOI()
   const deleteAOIMutation = useDeleteAOI()
 
-  const [localFilters, setLocalFilters] = useState<Filters>(filtersFromUrl)
-  const [prevUrlFiltersKey, setPrevUrlFiltersKey] = useState(() => filtersKey(filtersFromUrl))
-  const [appliedAoiId, setAppliedAoiId] = useState<string | number | undefined>(undefined)
+  const copyStoredId = useFilterCopySourceId()
+  const copyFiltersKey = useFilterCopyFiltersKey()
+  const copySourceStoredName = useFilterCopySourceName()
+  // Only the list the copy was made as: another URL list is not that copy.
+  const copySourceId =
+    copyStoredId && !aoiId && copyFiltersKey === filtersKey(filtersFromUrl) ? copyStoredId : null
+  const copySourceName = copySourceId
+    ? copySourceStoredName ||
+      (aoisQuery.data ?? []).find((item) => String(item.id) === copySourceId)?.properties?.name ||
+      'a saved filter'
+    : null
+
+  // What the form starts from, and what "unsaved changes" compares against.
+  const savedName = aoi?.properties?.name ?? ''
+  const sourceFilters: Filters = isSaved
+    ? aoi?.properties?.filters
+      ? savedFiltersForForm(deserializeFiltersFromObject(aoi.properties.filters))
+      : {}
+    : filtersFromUrl
+  const sourceKey = isSaved
+    ? `aoi:${aoiId}:${aoi ? JSON.stringify(aoi.properties ?? {}) : 'loading'}`
+    : `url:${filtersKey(filtersFromUrl)}`
+
+  const [localFilters, setLocalFilters] = useState<Filters>(sourceFilters)
+  const [name, setName] = useState(savedName)
+  const [prevSourceKey, setPrevSourceKey] = useState(sourceKey)
   const [active, setActive] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
-  const loading = aoiLoading || createAOIMutation.isPending || updateAOIMutation.isPending
-  const hasUrlFilters = Boolean(filtersFromUrl && Object.keys(filtersFromUrl).length > 0)
-  const urlFiltersKey = filtersKey(filtersFromUrl)
-
-  if (urlFiltersKey !== prevUrlFiltersKey) {
-    setPrevUrlFiltersKey(urlFiltersKey)
-    setLocalFilters(filtersFromUrl)
-    setAppliedAoiId(undefined)
-  } else if (!hasUrlFilters && aoi?.properties?.filters && aoi.id !== appliedAoiId) {
-    setAppliedAoiId(aoi.id)
-    setLocalFilters(savedFiltersForForm(deserializeFiltersFromObject(aoi.properties.filters)))
+  if (sourceKey !== prevSourceKey) {
+    setPrevSourceKey(sourceKey)
+    setLocalFilters(sourceFilters)
+    setName(savedName)
   }
 
-  const handleFocus = (name: string) => {
-    setActive(name)
+  const loading = (isSaved && aoiLoading) || createAOIMutation.isPending
+  const saving =
+    createAOIMutation.isPending || updateAOIMutation.isPending || deleteAOIMutation.isPending
+  const dirty =
+    !loading &&
+    (filtersKey(localFilters) !== filtersKey(sourceFilters) ||
+      (isSaved && aoi != null && name.trim() !== savedName))
+
+  // Leaving after Apply, Save, Duplicate or Delete is intended: let that one navigation through.
+  const leavingOnPurposeRef = useRef(false)
+  const blocker = useBlocker({
+    shouldBlockFn: () => {
+      if (leavingOnPurposeRef.current) {
+        leavingOnPurposeRef.current = false
+        return false
+      }
+      return dirty
+    },
+    enableBeforeUnload: () => dirty,
+    withResolver: true,
+  })
+
+  function leaveOnPurpose() {
+    leavingOnPurposeRef.current = true
   }
 
   const handleApply = () => {
-    const hasFilters = localFilters && Object.keys(localFilters).length > 0
+    const hasFilters = Object.keys(localFilters).length > 0
+    leaveOnPurpose()
+    getFilterCopyActions().clear()
     void navigate({
       to: '/',
       search: (prev) =>
         withFilters(
-          { ...prev, aoi: aoiId ?? undefined, page: undefined },
+          { ...prev, aoi: undefined, page: undefined },
           hasFilters ? localFilters : undefined,
         ),
       replace: true,
     })
   }
 
-  const handleChange = (name: string, values?: Filter | null) => {
-    setLocalFilters((prevFilters) => applyFilterChange(prevFilters, name, values))
+  const handleReset = () => {
+    leaveOnPurpose()
+    getFilterCopyActions().clear()
+    void navigate({ to: '/', search: (prev) => ({ ...stripFilterSearch(prev), aoi: undefined }) })
   }
 
-  const handleToggleAll = (name: string, values?: Filter | null) => {
-    setLocalFilters((prevFilters) => {
-      const newFilters = { ...prevFilters }
-      const isAll = name.slice(0, 4) === 'all_'
+  const handleSaveAs = (newName: string) => {
+    // The create hook opens the new saved filter's list itself, before this call's onSuccess.
+    leaveOnPurpose()
+    createAOIMutation.mutate(
+      { name: newName, filters: withSavedFilterDate(localFilters) },
+      {
+        onSuccess: () => getFilterCopyActions().clear(),
+        onError: () => {
+          leavingOnPurposeRef.current = false
+        },
+      },
+    )
+  }
 
-      if (isAll) {
-        delete newFilters[name.slice(4)]
-      } else {
-        delete newFilters[`all_${name}`]
-      }
+  const handleSave = () => {
+    if (!aoiId) return
+    updateAOIMutation.mutate(
+      { aoiId, name: name.trim(), filters: withSavedFilterDate(localFilters) },
+      {
+        onSuccess: () => {
+          leaveOnPurpose()
+          void navigate({
+            to: '/',
+            search: (prev) => ({ ...stripFilterSearch(prev), aoi: aoiId, page: undefined }),
+            replace: true,
+          })
+        },
+      },
+    )
+  }
 
-      if (!values) {
-        delete newFilters[name]
-      } else {
-        newFilters[name] = values
-      }
-      return newFilters
+  const handleDiscard = () => {
+    setLocalFilters(sourceFilters)
+    setName(savedName)
+  }
+
+  const handleDuplicate = () => {
+    if (!aoiId) return
+    getFilterCopyActions().set(aoiId, filtersKey(localFilters), name.trim() || savedName || null)
+    leaveOnPurpose()
+    void navigate({
+      to: '/filters',
+      search: (prev) =>
+        withFilters({ ...stripFilterSearch(prev), aoi: undefined, page: undefined }, localFilters),
     })
   }
 
-  const replaceFiltersState = (next: Filters) => {
-    setLocalFilters(next)
+  const handleDelete = () => {
+    if (!aoiId) return
+    deleteAOIMutation.mutate(aoiId, {
+      onSuccess: () => {
+        setDeleteOpen(false)
+        leaveOnPurpose()
+        void navigate({
+          to: '/',
+          search: (prev) => ({ ...stripFilterSearch(prev), aoi: undefined, page: undefined }),
+          replace: true,
+        })
+      },
+    })
   }
 
-  const handleClear = () => {
-    clearFilters()
-    void navigate({ to: '/' })
+  const handleChange = (filterName: string, values?: Filter | null) => {
+    setLocalFilters((prevFilters) => applyFilterChange(prevFilters, filterName, values))
   }
 
-  const loadAoiId = (nextAoiId: string) => {
-    setAoiId(nextAoiId)
-  }
+  const handleToggleAll = (filterName: string, values?: Filter | null) => {
+    setLocalFilters((prevFilters) => {
+      const newFilters = { ...prevFilters }
+      const isAll = filterName.slice(0, 4) === 'all_'
 
-  const getAOIName = () => {
-    if (loading) return ''
-    return aoi?.properties?.name || NEW_AOI
-  }
+      if (isAll) {
+        delete newFilters[filterName.slice(4)]
+      } else {
+        delete newFilters[`all_${filterName}`]
+      }
 
-  const getAOIId = () => {
-    if (loading) return ''
-    return aoi?.id
-  }
-
-  const removeAOI = (aoiIdToRemove: string) => {
-    const currentAoiId = getAOIId()
-    if (aoiIdToRemove === currentAoiId) {
-      handleClear()
-    }
-    deleteAOIMutation.mutate(aoiIdToRemove)
-  }
-
-  const createAOI = (name: string) => {
-    createAOIMutation.mutate({ name, filters: withSavedFilterDate(localFilters) })
-  }
-
-  const updateAOI = (aoiIdToUpdate: string, name: string) => {
-    updateAOIMutation.mutate({
-      aoiId: aoiIdToUpdate,
-      name,
-      filters: withSavedFilterDate(localFilters),
+      if (!values) {
+        delete newFilters[filterName]
+      } else {
+        newFilters[filterName] = values
+      }
+      return newFilters
     })
   }
 
   return (
     <div className="flex min-h-dvh flex-col bg-white px-[max(1rem,env(safe-area-inset-left))] pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <FiltersHeader
-        createAOI={createAOI}
-        updateAOI={updateAOI}
-        removeAOI={removeAOI}
-        loading={loading}
         token={token}
-        aoiName={getAOIName()}
-        aoiId={getAOIId() ? String(getAOIId()) : undefined}
-        loadAoiId={loadAoiId}
-        handleApply={handleApply}
-        handleClear={handleClear}
+        aoiId={aoiId ?? undefined}
+        name={name}
+        onNameChange={setName}
+        dirty={dirty}
+        copyOfName={isSaved ? null : copySourceName}
+        suggestedName={
+          copySourceName ? `${copySourceName} (copy)` : suggestFilterName(localFilters)
+        }
+        saving={saving}
+        onApply={handleApply}
+        onReset={handleReset}
+        onSaveAs={handleSaveAs}
+        onSave={handleSave}
+        onDiscard={handleDiscard}
+        onDuplicate={handleDuplicate}
+        onDelete={() => setDeleteOpen(true)}
       />
       <FiltersList
         loading={loading}
         filters={localFilters}
         active={active}
-        handleFocus={handleFocus}
+        handleFocus={setActive}
         handleChange={handleChange}
         handleToggleAll={handleToggleAll}
-        replaceFiltersState={replaceFiltersState}
+        replaceFiltersState={setLocalFilters}
         token={token}
-        handleApply={handleApply}
-        handleClear={handleClear}
+        footer={
+          <FiltersPrimaryActions
+            isSaved={isSaved}
+            dirty={dirty}
+            saving={saving}
+            canSave={name.trim() !== ''}
+            onApply={handleApply}
+            onSave={handleSave}
+          />
+        }
       />
+
+      <Alert open={blocker.status === 'blocked'} onClose={() => blocker.reset?.()} size="sm">
+        <AlertTitle>Discard unsaved changes?</AlertTitle>
+        <AlertDescription>
+          {isSaved
+            ? 'Your changes to this saved filter are not saved yet.'
+            : 'Your filter changes are not applied yet.'}
+        </AlertDescription>
+        <AlertActions>
+          <Button plain onClick={() => blocker.reset?.()}>
+            Keep editing
+          </Button>
+          <Button onClick={() => blocker.proceed?.()}>Discard changes</Button>
+        </AlertActions>
+      </Alert>
+
+      <Alert open={deleteOpen} onClose={() => setDeleteOpen(false)} size="sm">
+        <AlertTitle>Delete “{savedName || 'this saved filter'}”?</AlertTitle>
+        <AlertDescription>
+          The saved filter, its link and its RSS feed stop working. This cannot be undone.
+        </AlertDescription>
+        <AlertActions>
+          <Button plain onClick={() => setDeleteOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="red" disabled={deleteAOIMutation.isPending} onClick={handleDelete}>
+            Delete
+          </Button>
+        </AlertActions>
+      </Alert>
     </div>
   )
 }

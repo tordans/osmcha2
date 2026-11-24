@@ -278,3 +278,19 @@ describe('withFilters / stripFilterSearch', () => {
     })
   })
 })
+
+describe('mixed saved filter and URL filter links', () => {
+  it('open as a copy: URL filters win, aoi is dropped and reported', () => {
+    const migrated = migrateLegacyFilterSearch('/', {
+      aoi: 'abc',
+      comment: 'hotosm',
+      page: 1,
+    } as never)
+    expect(migrated?.search).toEqual({ comment: 'hotosm', page: 1 })
+    expect(migrated?.copyOfAoi).toBe('abc')
+  })
+
+  it('a saved filter link alone stays as it is', () => {
+    expect(migrateLegacyFilterSearch('/', { aoi: 'abc', page: 1, order: 'date,desc' })).toBeNull()
+  })
+})

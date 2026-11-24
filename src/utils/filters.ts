@@ -216,3 +216,20 @@ export function serializeFiltersToQuery(filters: any): string {
 
   return query
 }
+
+const NAME_PARTS = ['comment', 'users', 'editor', 'source', 'imagery_used', 'hashtags'] as const
+
+/** A first name for "Save as…", from the filters a person reads best. */
+export function suggestFilterName(filters: any) {
+  const parts: string[] = []
+  for (const key of NAME_PARTS) {
+    const items = filters?.[key]
+    if (!Array.isArray(items)) continue
+    const labels = items
+      .map((item: any) => (typeof item?.label === 'string' ? item.label : getString(item?.value)))
+      .filter((label: string) => label && label.trim() !== '')
+    if (labels.length > 0) parts.push(labels.join(', '))
+    if (parts.length === 2) break
+  }
+  return parts.join(' · ') || 'My filter'
+}

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import filters from '../../config/filters.json'
-import { Button } from '../ui/button.tsx'
 import { Subheading } from '../ui/heading.tsx'
 import { ChangesetDateFilter, DateField, parseStoredDate, UtcDateRangeHint } from './date.tsx'
 import type { Filter, FilterOption, Filters } from './filterTypes.ts'
@@ -42,8 +41,8 @@ type FiltersListProps = {
   handleFocus: (name: string) => void
   replaceFiltersState: (filters: Filters) => void
   handleToggleAll: (name: string, values?: Filter | null) => void
-  handleApply: () => void
-  handleClear: () => void
+  /** The form's closing actions, the same main button as in the header. */
+  footer: React.ReactNode
 }
 
 export function FiltersList({
@@ -55,8 +54,7 @@ export function FiltersList({
   handleFocus,
   replaceFiltersState,
   handleToggleAll,
-  handleApply,
-  handleClear,
+  footer,
 }: FiltersListProps) {
   // The latest day the date fields offer, fixed when the panel opens.
   const [today] = useState(() => new Date())
@@ -336,23 +334,7 @@ export function FiltersList({
         {filtersData.slice(17).map((config, index) => renderFilter(config as FilterConfig, index))}
       </FilterSection>
 
-      <div className="flex flex-wrap gap-2 pb-4">
-        <Button
-          type="button"
-          outline
-          className="min-h-11 cursor-pointer touch-manipulation select-none"
-          onClick={handleClear}
-        >
-          Reset
-        </Button>
-        <Button
-          type="button"
-          className="min-h-11 cursor-pointer touch-manipulation select-none"
-          onClick={handleApply}
-        >
-          Apply
-        </Button>
-      </div>
+      <div className="flex flex-wrap justify-end gap-2 pb-4">{footer}</div>
     </div>
   )
 }

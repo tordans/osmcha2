@@ -119,9 +119,10 @@ export function listSearchFromFilters(filters: Filters): OsmchaSearch {
 export function migrateLegacyFilterSearch(
   pathname: string,
   search: OsmchaSearch,
-): { pathname: string; search: OsmchaSearch } | null {
+): { pathname: string; search: OsmchaSearch; copyOfAoi?: string } | null {
   let next: OsmchaSearch = { ...search }
   let changed = false
+  let copyOfAoi: string | undefined
 
   const withoutOrderBy = migrateOrderBySearch(next)
   if (withoutOrderBy) {
@@ -139,13 +140,24 @@ export function migrateLegacyFilterSearch(
     changed = true
   }
 
+  // A list is either a saved filter (`aoi`) or URL filters, never both. Old links that
+  // carry both (OSMCha's "Apply" on a saved filter wrote them) open as an unsaved copy:
+  // the URL filters win, the saved filter stays as it is.
+  if (next.aoi && hasFilterSearchParams(next)) {
+    const { aoi, ...rest } = next
+    copyOfAoi = aoi
+    next = rest as OsmchaSearch
+    changed = true
+  }
+
   // Keep `/authorized?code=` on that route so the OAuth exchange can run.
   // Treating `code`/`state` as chrome is not enough if real filters are also present.
   if (isAccountPath(pathname) && hasFilterSearchParams(next) && next.code?.trim() == null) {
-    return { pathname: '/', search: next }
+    return copyOfAoi ? { pathname: '/', search: next, copyOfAoi } : { pathname: '/', search: next }
   }
 
-  return changed ? { pathname, search: next } : null
+  if (!changed) return null
+  return copyOfAoi ? { pathname, search: next, copyOfAoi } : { pathname, search: next }
 }
 
 /** `order_by=-date` (Django / old OSMCha) → `order=date,desc`. */

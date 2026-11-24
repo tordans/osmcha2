@@ -9,10 +9,15 @@ import { AppShell } from '../layout/AppShell.tsx'
 import { PanePresence } from '../layout/PanePresence.tsx'
 import { aoiQueryOptions } from '../query/options/aoi.ts'
 import { changesetsPageQueryOptions } from '../query/options/changesetsPage.ts'
-import { filtersFromSearch, migrateLegacyFilterSearch } from '../routing/filterSearch.ts'
+import {
+  filtersFromSearch,
+  migrateLegacyFilterSearch,
+  serializeFiltersToSearch,
+} from '../routing/filterSearch.ts'
 import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
 import { getAuthActions, getAuthToken } from '../stores/auth-store.ts'
+import { getFilterCopyActions } from '../stores/filter-copy-store.ts'
 import { getListPaneOpen } from '../stores/list-pane-store.ts'
 import { parseTokenPaste } from '../utils/auth.ts'
 
@@ -58,6 +63,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
     const migrated = migrateLegacyFilterSearch(pathname, search)
     if (migrated) {
+      if (migrated.copyOfAoi) {
+        getFilterCopyActions().set(
+          migrated.copyOfAoi,
+          JSON.stringify(serializeFiltersToSearch(filtersFromSearch(migrated.search))),
+        )
+      }
       const qs = routerSearch.stringify(migrated.search)
       const nextSearch = qs === '' || qs.startsWith('?') ? qs : `?${qs}`
       throw redirect({
