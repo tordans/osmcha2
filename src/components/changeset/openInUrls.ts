@@ -1,4 +1,5 @@
 import type { MapParam } from '../../routing/mapParam.ts'
+import type { RefParam } from '../../routing/refParam.ts'
 
 /** iD / Rapid use Leaflet (raster) zoom, one level above MapLibre. */
 export function editorMapHash(map?: MapParam | null): string {
@@ -8,16 +9,26 @@ export function editorMapHash(map?: MapParam | null): string {
   return `#map=${editorZoom}/${lat}/${lng}`
 }
 
-export function openInUrls(changesetId: number | string, map?: MapParam | null) {
+/**
+ * `map` is where the user looks; `ref` the selected object. iD and Rapid select that object.
+ * JOSM and Level0 load the whole changeset, which has no way to select one object.
+ */
+export function openInUrls(
+  changesetId: number | string,
+  map?: MapParam | null,
+  ref?: RefParam | null,
+) {
   const hash = editorMapHash(map)
+  const idObject = ref ? `&${ref.type}=${ref.id}` : ''
+  const rapidHash = ref ? `#id=${ref.type[0]}${ref.id}${hash.replace('#', '&')}` : hash
   return {
     osm: `https://www.openstreetmap.org/changeset/${changesetId}`,
     achavi: `https://overpass-api.de/achavi/?changeset=${changesetId}&relations=true`,
-    id: `https://www.openstreetmap.org/edit?editor=id${hash}`,
+    id: `https://www.openstreetmap.org/edit?editor=id${idObject}${hash}`,
     josm: `http://127.0.0.1:8111/import?url=https://www.openstreetmap.org/api/0.6/changeset/${changesetId}/download`,
     level0: `http://level0.osmz.ru/?url=changeset/${changesetId}`,
     osmRevert: `https://revert.monicz.dev/?changesets=${changesetId}`,
-    rapid: `https://rapideditor.org/edit${hash}`,
+    rapid: `https://rapideditor.org/edit${rapidHash}`,
     // Spyglass is a MapLibre map, so it takes the viewport zoom as is.
     spyglass: `https://spyglass.jochentopf.com/${map ? `#p=${map.zoom}/${map.lat}/${map.lng}` : ''}`,
     resultMaps: `https://resultmaps.neis-one.org/osm-change-viz?c=${changesetId}`,

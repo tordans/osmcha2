@@ -20,6 +20,15 @@ describe('openInUrls', () => {
     expect(urls.rapid).toBe('https://rapideditor.org/edit#map=15/52.5/13.4')
   })
 
+  test('selects the chosen object in iD and Rapid, at the viewport', () => {
+    const urls = openInUrls(9, { lng: 13.4, lat: 52.5, zoom: 14 }, { type: 'way', id: 42 })
+    expect(urls.id).toBe('https://www.openstreetmap.org/edit?editor=id&way=42#map=15/52.5/13.4')
+    expect(urls.rapid).toBe('https://rapideditor.org/edit#id=w42&map=15/52.5/13.4')
+    expect(openInUrls(9, null, { type: 'node', id: 7 }).rapid).toBe(
+      'https://rapideditor.org/edit#id=n7',
+    )
+  })
+
   test('opens Spyglass at the MapLibre viewport', () => {
     expect(openInUrls(9, { lng: 13.4, lat: 52.5, zoom: 14 }).spyglass).toBe(
       'https://spyglass.jochentopf.com/#p=14/52.5/13.4',

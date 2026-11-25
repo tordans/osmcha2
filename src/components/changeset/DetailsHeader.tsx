@@ -3,6 +3,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { lazy, Suspense, useLayoutEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useMap } from 'react-map-gl/maplibre'
 import { toast } from 'sonner'
 import {
   OPEN_IN_ACHAVI,
@@ -29,8 +30,11 @@ import {
 } from '../../query/hooks/useWatchlistMutations.ts'
 import { listSearchFromFilters } from '../../routing/filterSearch.ts'
 import { parseMapParam } from '../../routing/mapParam.ts'
+import { parseRefParam } from '../../routing/refParam.ts'
+import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
 import { formatCompactCount } from '../../utils/formatCount.ts'
+import { useMapCamera } from '../../views/useMapCamera.ts'
 import { editorCompactName, editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
 import { OsmNoteChips } from '../osm_notes/OsmNoteChips.tsx'
@@ -218,7 +222,11 @@ export function DetailsHeader({
   layout = 'column',
   bodySlot = null,
 }: DetailsHeaderProps) {
-  const { map } = changesetRouteApi.useSearch()
+  const { map, ref } = changesetRouteApi.useSearch()
+  const { mainMap } = useMap()
+  const mapLoaded = useMapLoaded()
+  // `?map=` is missing until the first pan; then the editors open where the map shows.
+  const liveCamera = useMapCamera(mapLoaded ? mainMap?.getMap() : undefined)
   const navigate = rootRouteApi.useNavigate()
   const { token, user } = useAuth()
   const { data: osmMetadata } = useChangesetDiscussion(changesetId)
@@ -241,7 +249,11 @@ export function DetailsHeader({
   const removeFromWatchlistMutation = useRemoveFromWatchlist()
   const addToTrustedlistMutation = useAddToTrustedlist()
   const removeFromTrustedlistMutation = useRemoveFromTrustedlist()
-  const urls = openInUrls(changesetId, parseMapParam(map ?? ''))
+  const urls = openInUrls(
+    changesetId,
+    parseMapParam(map ?? '') ?? liveCamera,
+    parseRefParam(ref ?? ''),
+  )
   const tags = properties.tags ?? []
   const reasons = properties.reasons ?? []
   const checked = Boolean(properties.checked)
