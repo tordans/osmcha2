@@ -2,7 +2,6 @@ import * as Headless from '@headlessui/react'
 import area from '@turf/area'
 import bbox from '@turf/bbox'
 import bboxPolygon from '@turf/bbox-polygon'
-import simplify from '@turf/simplify'
 import clsx from 'clsx'
 import type { MapLibreEvent } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -27,6 +26,7 @@ import { Listbox, ListboxLabel, ListboxOption } from '../ui/listbox.tsx'
 import { Text } from '../ui/text.tsx'
 import { areaLtBoundPolygon, parseAreaLt } from './areaLtBound.ts'
 import { filterOptionLabel, type Filter } from './filterTypes.ts'
+import { fitGeometryToQuery, type GeometryFit } from './fitGeometryToQuery.ts'
 import { placeGeometry } from './placeGeometry.ts'
 import {
   isSearchablePlaceQuery,
@@ -54,7 +54,6 @@ const emptyFeatureCollection: GeoJSON.FeatureCollection = {
 }
 
 type LocationSelectProps = {
-  name: string
   value?: Filter
   placeholder?: string
   areaLt?: Filter
@@ -95,7 +94,6 @@ export function LocationSelect(props: LocationSelectProps) {
 }
 
 function LocationSelectInner({
-  name,
   value,
   placeholder,
   areaLt,
@@ -113,6 +111,8 @@ function LocationSelectInner({
   const pendingPlaceTimerRef = useRef<number | null>(null)
   const pausePlaceTimerRef = useRef<number | null>(null)
   const [selectedPlace, setSelectedPlace] = useState<SearchOption | null>(null)
+  // How the last picked or drawn area had to change to fit OSMCha's request size.
+  const [geometryFit, setGeometryFit] = useState<GeometryFit | null>(null)
   // What is in the place input right now. Results show only while it matches the search they answer.
   const [placeInput, setPlaceInput] = useState('')
   const [activeMode, setActiveMode] = useState('render')
@@ -169,10 +169,13 @@ function LocationSelectInner({
       if (draw.getMode() === 'rectangle') {
         const bounds = bbox(feature)
         const wsen = bounds.map((v) => v.toFixed(4)).join(',')
+        setGeometryFit(null)
         onChange('geometry', null)
         onChange('in_bbox', [{ label: wsen, value: wsen }])
       } else {
-        onChange('geometry', [{ label: feature.geometry, value: feature.geometry }])
+        const fitted = fitGeometryToQuery(feature.geometry)
+        setGeometryFit(fitted.fit)
+        onChange('geometry', [{ label: fitted.geometry, value: fitted.geometry }])
         onChange('in_bbox', null)
       }
     }
@@ -327,13 +330,11 @@ function LocationSelectInner({
     const geometry = placeGeometry(option.value as NominatimPlace)
     if (!geometry) return
     setSelectedPlace(option)
-    const tolerance = area(geometry) / 10 ** 6 < 1000 ? 0.01 : 0.1
-    const simplified = simplify(geometry, {
-      tolerance,
-      highQuality: true,
-    })
+    const startTolerance = area(geometry) / 10 ** 6 < 1000 ? 0.01 : 0.1
+    const fitted = fitGeometryToQuery(geometry, { startTolerance })
+    setGeometryFit(fitted.fit)
 
-    onChange('geometry', [{ label: simplified, value: simplified }])
+    onChange('geometry', [{ label: fitted.geometry, value: fitted.geometry }])
     onChange('in_bbox', null)
   }
 
@@ -341,6 +342,7 @@ function LocationSelectInner({
     const draw = drawRef.current
     if (!draw) return
     setSelectedPlace(null)
+    setGeometryFit(null)
     draw.clear()
     draw.setMode(mode as 'rectangle' | 'polygon' | 'render')
     setActiveMode(mode)
@@ -352,6 +354,7 @@ function LocationSelectInner({
     draw?.setMode('render')
     setActiveMode('render')
     setSelectedPlace(null)
+    setGeometryFit(null)
     onChange('geometry', null)
     onChange('in_bbox', null)
   }
@@ -392,7 +395,8 @@ function LocationSelectInner({
         </div>
         <div className="sm:col-span-8">
           <SearchCombobox
-            name={name}
+            // No `name`: with one, Headless UI writes a hidden input for every coordinate of the
+            // selected place, which freezes the page for a detailed country.
             options={placeOptions}
             selected={hasLocation ? selectedPlace : null}
             placeholder={placeholder}
@@ -499,6 +503,18 @@ function LocationSelectInner({
           </div>
         ) : null}
       </div>
+
+      {hasLocation && geometryFit === 'simplified' ? (
+        <Text>
+          Simplified so OSMCha can filter by it: fewer points, small islands left out. The map shows
+          the area that is used.
+        </Text>
+      ) : null}
+      {hasLocation && geometryFit === 'bbox' ? (
+        <Text>
+          Too detailed for OSMCha to filter by, so its bounding box is used. The map shows it.
+        </Text>
+      ) : null}
 
       {activeMode === 'rectangle' ? <Text>Click two corners to draw a bounding box.</Text> : null}
       {activeMode === 'polygon' ? (

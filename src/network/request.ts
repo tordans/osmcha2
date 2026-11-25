@@ -16,6 +16,46 @@ export function makeApiRequest(endpoint: string, options: RequestInit = {}): Req
   })
 }
 
+/**
+ * Longest path plus query string OSMCha's server takes. Its limit is 4096 bytes for the whole
+ * request line (`GET <target> HTTP/1.1`); this leaves some room (OSMCha/osmcha-frontend#933).
+ */
+export const MAX_REQUEST_TARGET_LENGTH = 4000
+
+/** A request OSMCha would refuse for its length, so it is not sent. */
+export class RequestTooLargeError extends Error {
+  constructor(readonly length: number) {
+    super(
+      `The request is too long for OSMCha (${length} of ${MAX_REQUEST_TARGET_LENGTH} characters).`,
+    )
+    this.name = 'RequestTooLargeError'
+  }
+}
+
+/** The server answered with an error status. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+/** Retry network errors and server errors. A refused request (4xx) fails the same way again. */
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof RequestTooLargeError) return false
+  if (error instanceof ApiError) return error.status >= 500 || error.status === 408
+  return true
+}
+
+/** At most `maxRetries` retries, and only for errors that may pass on a second try. */
+export function retryUnlessRefused(maxRetries: number) {
+  return (failureCount: number, error: unknown) =>
+    failureCount < maxRetries && isRetryableError(error)
+}
+
 const apiErrorBodySchema = z.object({
   detail: z.string().optional(),
   message: z.string().optional(),
@@ -49,7 +89,7 @@ export async function handleResponse(response: Response): Promise<unknown> {
       // If JSON parsing fails, use statusText
     }
 
-    throw new Error(errorMessage || 'Request failed')
+    throw new ApiError(response.status, errorMessage || 'Request failed')
   }
 
   // Handle 204 No Content
@@ -64,6 +104,9 @@ export async function handleResponse(response: Response): Promise<unknown> {
 // Convenience wrapper for common case
 export async function apiFetch(endpoint: string, options?: RequestInit): Promise<unknown> {
   const req = makeApiRequest(endpoint, options)
+  const url = new URL(req.url)
+  const targetLength = url.pathname.length + url.search.length
+  if (targetLength > MAX_REQUEST_TARGET_LENGTH) throw new RequestTooLargeError(targetLength)
   const res = await fetch(req)
   return handleResponse(res)
 }

@@ -294,7 +294,6 @@ export function FiltersList({
           }
         >
           <LocationSelect
-            name="location"
             value={currentFilters.geometry || currentFilters.in_bbox}
             placeholder="Type a place name"
             areaLt={currentFilters.area_lt}

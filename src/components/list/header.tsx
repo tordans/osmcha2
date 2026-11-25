@@ -76,7 +76,8 @@ export function Header({
   // The sort order has its own menu; any other filter can be edited in the filter form.
   const hasListFilters = Object.keys(filters ?? {}).some((key) => key !== 'order_by')
 
-  const changesetCount = numberWithCommas(currentPage?.count ?? 0)
+  // A failed list has no count; "0" would read as "nothing matches".
+  const changesetCount = currentPage?.count != null ? numberWithCommas(currentPage.count) : '–'
 
   return (
     <div>
@@ -105,7 +106,13 @@ export function Header({
       <header className="flex h-11 items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-100 px-1">
         <span
           aria-busy={pending}
-          aria-label={pending ? 'Loading changesets' : `${changesetCount} changesets`}
+          aria-label={
+            pending
+              ? 'Loading changesets'
+              : currentPage?.count != null
+                ? `${changesetCount} changesets`
+                : 'Changesets not loaded'
+          }
           className="@container flex min-w-0 flex-1 items-center gap-1.5 truncate px-2 text-sm font-semibold text-zinc-600"
         >
           {pending ? (

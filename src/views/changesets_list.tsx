@@ -37,6 +37,7 @@ function ChangesetsList() {
     data: changesetsPage,
     isLoading,
     isFetching,
+    error,
     dataUpdatedAt,
     refetch,
   } = useChangesetsPage({
@@ -129,6 +130,8 @@ function ChangesetsList() {
       <List
         activeChangesetId={activeChangesetId}
         loading={isLoading}
+        error={error}
+        onRetry={reloadChangesetsPageData}
         currentPage={changesetsPage}
         pageIndex={pageIndex}
         location={filtersRouteMatch ? '/filters' : '/'}

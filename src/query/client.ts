@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
+import { retryUnlessRefused } from '../network/request.ts'
 import { PERSIST_MAX_AGE_MS, cacheFiveMinutes } from './cachePolicy.ts'
 
 // Note: In React 18 development mode, you may see duplicate requests in DevTools.
@@ -10,7 +11,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: cacheFiveMinutes.staleTime,
       gcTime: PERSIST_MAX_AGE_MS,
-      retry: 3,
+      retry: retryUnlessRefused(3),
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: false,
     },

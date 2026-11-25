@@ -1,10 +1,12 @@
 import { useAuth } from '../../hooks/useAuth.ts'
 import { BrandMark } from '../../layout/Logo.tsx'
+import { ApiError, RequestTooLargeError } from '../../network/request.ts'
 import { isOsmOAuthHost } from '../../utils/auth.ts'
 import { elementInViewport } from '../../utils/element_in_view.ts'
 import { SignInButton } from '../changeset/sign_in_button.tsx'
 import { Loading } from '../loading.tsx'
 import { TokenImport } from '../token_import.tsx'
+import { Button } from '../ui/button.tsx'
 import { Row } from './row.tsx'
 
 type CurrentPage = {
@@ -22,9 +24,60 @@ type Props = {
   pageIndex: number
   loading?: boolean
   location?: string
+  error?: unknown
+  onRetry?: () => void
 }
 
-function List({ currentPage, activeChangesetId, loading, location }: Props) {
+/** What went wrong, in words for the reviewer. Too large a filter is not "no matches". */
+function listErrorText(error: unknown): { title: string; detail: string; canRetry: boolean } {
+  if (error instanceof RequestTooLargeError) {
+    return {
+      title: 'These filters are too large for OSMCha.',
+      detail:
+        'Usually the location has too many points. Use Edit, then pick the place again or draw a simpler area.',
+      canRetry: false,
+    }
+  }
+  if (error instanceof ApiError && error.status === 429) {
+    return {
+      title: 'OSMCha is getting too many requests.',
+      detail: 'Wait a minute, then try again.',
+      canRetry: true,
+    }
+  }
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return {
+      title: 'OSMCha could not run these filters.',
+      detail: `${error.message} (${error.status}). A very detailed location is a common cause: use Edit and pick it again.`,
+      canRetry: false,
+    }
+  }
+  return {
+    title: 'Changesets could not be loaded.',
+    detail: error instanceof Error ? error.message : 'Unknown error.',
+    canRetry: true,
+  }
+}
+
+function ListError({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const { title, detail, canRetry } = listErrorText(error)
+  return (
+    <div
+      role="alert"
+      className="flex flex-1 flex-col items-center gap-2 bg-white px-4 py-9 text-center"
+    >
+      <p className="font-medium text-zinc-900">{title}</p>
+      <p className="text-sm text-zinc-600">{detail}</p>
+      {canRetry && onRetry ? (
+        <Button type="button" outline className="mt-2" onClick={onRetry}>
+          Try again
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
+function List({ currentPage, activeChangesetId, loading, location, error, onRetry }: Props) {
   const { token } = useAuth()
   const localOAuth = isOsmOAuthHost()
   function scrollActiveRowIntoView(r: HTMLElement | null) {
@@ -47,6 +100,10 @@ function List({ currentPage, activeChangesetId, loading, location }: Props) {
         </div>
       </div>
     )
+  }
+
+  if (error != null && !currentPage) {
+    return <ListError error={error} onRetry={onRetry} />
   }
 
   const features = currentPage?.features
