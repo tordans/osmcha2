@@ -138,3 +138,66 @@ export function detectWaySplits(actions: AdiffAction[] = []): WaySplits {
 
   return { parentByChild, childrenByParent }
 }
+
+export type WayMerges = {
+  /** `way/<id>` of a deleted way -> id of the modified way it was merged into. */
+  survivorByPart: Map<string, number>
+  /** Id of a modified way -> ids of the deleted ways merged into it, in action order. */
+  partsBySurvivor: Map<number, number[]>
+}
+
+/**
+ * Finds ways that were merged in this changeset, the reverse of a split: a deleted way D whose old
+ * nodes all reappear, as one contiguous run, in the new nodes of a modified way W, where W gained
+ * nodes it did not have before. iD's "Combine" keeps the oldest way and deletes the others.
+ *
+ * Limits: lines only, as for splits. All of D's nodes must be in W, so a deleted way that merely
+ * touched W is no merge.
+ */
+export function detectWayMerges(actions: AdiffAction[] = []): WayMerges {
+  const survivorByPart = new Map<string, number>()
+  const partsBySurvivor = new Map<number, number[]>()
+
+  type Survivor = { id: number; oldRefs: Set<number>; newRefs: number[] }
+  const survivors: Survivor[] = []
+  const survivorsByNode = new Map<number, Survivor[]>()
+  for (const action of actions) {
+    if (action.type !== 'modify') continue
+    const { old: before, new: after } = action
+    if (before?.type !== 'way' || after?.type !== 'way' || before.id == null) continue
+    const oldRefs = refList(before)
+    const newRefs = refList(after)
+    if (newRefs.length <= oldRefs.length || isClosedRing(oldRefs) || isClosedRing(newRefs)) continue
+    const survivor: Survivor = { id: before.id, oldRefs: new Set(oldRefs), newRefs }
+    survivors.push(survivor)
+    for (const ref of new Set(newRefs)) {
+      const list = survivorsByNode.get(ref)
+      if (list) list.push(survivor)
+      else survivorsByNode.set(ref, [survivor])
+    }
+  }
+  if (survivors.length === 0) return { survivorByPart, partsBySurvivor }
+
+  for (const action of actions) {
+    if (action.type !== 'delete' || action.old?.type !== 'way' || action.old.id == null) continue
+    const partId = action.old.id
+    const partRefs = refList(action.old)
+    const firstRef = partRefs[0]
+    if (firstRef === undefined || partRefs.length < 2 || isClosedRing(partRefs)) continue
+
+    let match: Survivor | undefined
+    for (const survivor of survivorsByNode.get(firstRef) ?? []) {
+      const whole = longestSharedRun(partRefs, survivor.newRefs).length === partRefs.length
+      const gained = partRefs.some((ref) => !survivor.oldRefs.has(ref))
+      if (whole && gained && survivor.id < (match?.id ?? Infinity)) match = survivor
+    }
+    if (!match) continue
+
+    survivorByPart.set(wayKey(partId), match.id)
+    const parts = partsBySurvivor.get(match.id)
+    if (parts) parts.push(partId)
+    else partsBySurvivor.set(match.id, [partId])
+  }
+
+  return { survivorByPart, partsBySurvivor }
+}

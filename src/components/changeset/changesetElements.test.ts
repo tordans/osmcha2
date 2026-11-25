@@ -15,6 +15,7 @@ import {
   tagRowKeys,
   tagRows,
 } from './changesetElements.ts'
+import { changeListItems } from './tagGroups.ts'
 
 /** Test-only accessor: fails the test with a clear message when the item is missing. */
 function at<T>(items: T[], index: number): T {
@@ -759,5 +760,33 @@ describe('split ways', () => {
     expect(
       groupChangesByTagMutation(changes.filter((change) => change.actionType === 'create')),
     ).toHaveLength(2)
+  })
+})
+
+describe('buildElementChanges for merged ways', () => {
+  const tags = { highway: 'path', surface: 'paving_stones' }
+  const mergeActions: AdiffAction[] = [
+    { type: 'delete', old: { type: 'way', id: 31, version: 2, nodes: [1, 2], tags } },
+    { type: 'delete', old: { type: 'way', id: 40, version: 1, nodes: [8, 9], tags } },
+    {
+      type: 'modify',
+      old: { type: 'way', id: 10, version: 8, nodes: [2, 3], tags },
+      new: { type: 'way', id: 10, version: 9, nodes: [1, 2, 3], tags: { ...tags, width: '2' } },
+    },
+  ]
+
+  test('links the deleted part and the way it became part of, and lists the part after it', () => {
+    const changes = buildElementChanges(mergeActions)
+    const part = changes.find((change) => change.id === 31)
+    expect(part?.mergedInto).toBe(10)
+    expect(part?.actionType).toBe('delete')
+    // Diffed against the merged way's new tags, not shown as all removed.
+    expect(part?.tags).toContainEqual({ kind: 'added', key: 'width', value: '2' })
+    expect(part?.tags.filter((row) => row.kind === 'removed')).toEqual([])
+    expect(changes.find((change) => change.id === 10)?.mergedFrom).toEqual([31])
+    expect(changes.find((change) => change.id === 40)?.mergedInto).toBeUndefined()
+
+    const order = changeListItems(changes).items.map((item) => item.map((change) => change.id))
+    expect(order).toEqual([[10], [31], [40]])
   })
 })

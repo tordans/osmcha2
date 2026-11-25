@@ -36,14 +36,18 @@ export function ElementCard({
     ? 'noop'
     : change?.splitFrom != null
       ? 'split'
-      : action.type === 'create' || action.type === 'delete'
-        ? action.type
-        : 'modify'
+      : change?.mergedInto != null
+        ? 'merge'
+        : action.type === 'create' || action.type === 'delete'
+          ? action.type
+          : 'modify'
   const tags = change?.tags ?? tagRows(action)
   const mutation = primaryTagMutation(tags)
   const splitFrom = change?.splitFrom
-  const sameTagsAsParent =
-    splitFrom != null && tags.length > 0 && tagMutationRows(tags).length === 0
+  // A split part is compared with the way it came from, a merged part with the way it became part of.
+  const relatedWay = splitFrom ?? change?.mergedInto
+  const sameTagsAsRelated =
+    relatedWay != null && tags.length > 0 && tagMutationRows(tags).length === 0
   const label = `${element?.type ?? 'element'}/${element?.id ?? ''}`
 
   return (
@@ -59,12 +63,18 @@ export function ElementCard({
           <span className="truncate">{label}</span>
         </span>
         {mutation ? <TagMutationLine mutation={mutation} /> : null}
-        {sameTagsAsParent ? <NoteLine>Same tags as way/{splitFrom}</NoteLine> : null}
+        {change?.mergedInto != null ? (
+          <NoteLine>Merged into way/{change.mergedInto}</NoteLine>
+        ) : null}
+        {sameTagsAsRelated ? <NoteLine>Same tags as way/{relatedWay}</NoteLine> : null}
         {change?.minorMove ? (
           <NoteLine>Minor move · {formatMoveMeters(change.minorMove.meters)}</NoteLine>
         ) : null}
         {change?.splitInto && !mutation ? (
           <NoteLine>Split into {change.splitInto.map((id) => `way/${id}`).join(', ')}</NoteLine>
+        ) : null}
+        {change?.mergedFrom && !mutation ? (
+          <NoteLine>Merged with {change.mergedFrom.map((id) => `way/${id}`).join(', ')}</NoteLine>
         ) : null}
       </button>
       <button

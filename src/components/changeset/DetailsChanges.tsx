@@ -1169,6 +1169,8 @@ const ElementChangeRow = memo(function ElementChangeRow({
     isCompactReviewRow(collapsed, editingNote != null, hasNotes) && !(currentSelect && pickedOnMap)
 
   const presetLine = usePresetLine(change, showPreset && !compact)
+  // A split part is compared with the way it came from, a merged part with the way it became part of.
+  const relatedWay = change.splitFrom ?? change.mergedInto
 
   const objectNoteOpen = editingNote != null && editingNote.ref?.key == null
 
@@ -1232,7 +1234,11 @@ const ElementChangeRow = memo(function ElementChangeRow({
         estimatedChangeRowPx({
           compact: false,
           tagRows: showTags ? change.tags.length : 0,
-          extraLines: (change.splitFrom != null ? 1 : 0) + (change.splitInto ? 1 : 0),
+          extraLines:
+            (change.splitFrom != null ? 1 : 0) +
+            (change.splitInto ? 1 : 0) +
+            (change.mergedInto != null ? 1 : 0) +
+            (change.mergedFrom ? 1 : 0),
           presetLine: presetLine != null,
         }),
       )}
@@ -1306,11 +1312,15 @@ const ElementChangeRow = memo(function ElementChangeRow({
               content={
                 change.splitInto
                   ? `This way was split. It keeps its id and history; the cut-off part is now ${change.splitInto.map((id) => `way/${id}`).join(', ')}.`
-                  : 'This way’s nodes changed (added, removed, or reordered), so its shape changed.'
+                  : change.mergedFrom
+                    ? `Other ways were merged into this one. It keeps its id and history; ${change.mergedFrom.map((id) => `way/${id}`).join(', ')} are now part of it and were deleted.`
+                    : 'This way’s nodes changed (added, removed, or reordered), so its shape changed.'
               }
               className="inline-flex"
             >
-              <Badge color="yellow">{change.splitInto ? 'Shortened' : 'Reshaped'}</Badge>
+              <Badge color="yellow">
+                {change.splitInto ? 'Shortened' : change.mergedFrom ? 'Extended' : 'Reshaped'}
+              </Badge>
             </Tooltip>
           ) : null}
           {change.nodeStats ? (
@@ -1373,13 +1383,23 @@ const ElementChangeRow = memo(function ElementChangeRow({
           Split into <WayLinks ids={change.splitInto} onSelect={selectWay} />
         </p>
       ) : null}
+      {change.mergedInto != null ? (
+        <p className={clsx(typeScale.small, ACTION.merge.tagText)}>
+          Merged into <WayLinks ids={[change.mergedInto]} onSelect={selectWay} />
+        </p>
+      ) : null}
+      {change.mergedFrom ? (
+        <p className={clsx(typeScale.small, ACTION.merge.tagText)}>
+          Merged with <WayLinks ids={change.mergedFrom} onSelect={selectWay} />
+        </p>
+      ) : null}
       {showTags ? (
         <div className="w-full border-t font-mono">
-          {change.splitFrom != null &&
+          {relatedWay != null &&
           change.tags.length > 0 &&
           tagMutationRows(change.tags).length === 0 ? (
             <p className={clsx('px-1 py-1 text-zinc-500', typeScale.small)}>
-              Same tags as <WayLinks ids={[change.splitFrom]} onSelect={selectWay} />
+              Same tags as <WayLinks ids={[relatedWay]} onSelect={selectWay} />
             </p>
           ) : null}
           <TagRows
@@ -1427,9 +1447,11 @@ function MinorMoveBadge({ meters }: { meters: number }) {
   )
 }
 
-/** A created way split off another way shows as "Split" instead of "Created". */
+/** A way split off another shows as "Split" instead of "Created"; one merged into another as "Merged", not "Deleted". */
 function actionLabelKey(change: ElementChange) {
-  return change.splitFrom != null ? 'split' : change.actionType
+  if (change.splitFrom != null) return 'split'
+  if (change.mergedInto != null) return 'merge'
+  return change.actionType
 }
 
 /** `way/<id>` links that select that way, like clicking its row. */

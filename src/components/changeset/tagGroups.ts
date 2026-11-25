@@ -54,15 +54,34 @@ export function areaLetter(areaId: number): string {
 
 /**
  * The rows of one section, in list order: changes by action (create, modify, delete), each action
- * split into same-tag-change groups. Minor moves are not rows; they sit in their own group.
+ * split into same-tag-change groups. A way merged into another follows the way it became part of,
+ * not the other deletions. Minor moves are not rows; they sit in their own group.
  */
 export function changeListItems(changes: ElementChange[]) {
   const listed = changes.filter((change) => change.minorMove == null)
   const minorMoves = changes.filter((change) => change.minorMove != null)
-  const items = groupElementChanges(listed).flatMap(([, actionChanges]) =>
-    groupChangesByTagMutation(actionChanges),
+  const survivorIds = new Set(listed.flatMap((change) => (change.mergedFrom ? [change.id] : [])))
+  const isMergedPart = (change: ElementChange) =>
+    change.mergedInto != null && survivorIds.has(change.mergedInto)
+  const partsBySurvivor = new Map<number, ElementChange[]>()
+  for (const change of listed) {
+    if (!isMergedPart(change) || change.mergedInto == null) continue
+    const parts = partsBySurvivor.get(change.mergedInto)
+    if (parts) parts.push(change)
+    else partsBySurvivor.set(change.mergedInto, [change])
+  }
+  const items = groupElementChanges(listed.filter((change) => !isMergedPart(change))).flatMap(
+    ([, actionChanges]) => groupChangesByTagMutation(actionChanges),
   )
-  return { items, minorMoves }
+  const withParts = items.flatMap((item): ChangeListItem[] => [
+    item,
+    ...item.flatMap((change) =>
+      change.type === 'way'
+        ? (partsBySurvivor.get(change.id) ?? []).map((part): ChangeListItem => [part])
+        : [],
+    ),
+  ])
+  return { items: withParts, minorMoves }
 }
 
 /**

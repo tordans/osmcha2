@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { AdiffAction } from './changesetElements.ts'
-import { detectWaySplits } from './waySplits.ts'
+import { detectWayMerges, detectWaySplits } from './waySplits.ts'
 
 function modifyWay(id: number, oldNodes: number[], newNodes: number[]): AdiffAction {
   return {
@@ -133,5 +133,54 @@ describe('detectWaySplits', () => {
       ]).parentByChild.size,
     ).toBe(0)
     expect(detectWaySplits().parentByChild.size).toBe(0)
+  })
+})
+
+function deleteWay(id: number, nodes: number[]): AdiffAction {
+  return {
+    type: 'delete',
+    old: { type: 'way', id, version: 2, nodes: nodes.map((ref) => ({ ref })) },
+  }
+}
+
+describe('detectWayMerges', () => {
+  // Changeset 192453379: way 1131268876 absorbed two short ways in front of it.
+  test('finds deleted ways that became part of a longer way', () => {
+    const { survivorByPart, partsBySurvivor } = detectWayMerges([
+      deleteWay(31, [1, 2]),
+      deleteWay(32, [2, 3, 4]),
+      modifyWay(10, [4, 5, 6], [1, 2, 3, 4, 5, 6]),
+    ])
+    expect(survivorByPart).toEqual(
+      new Map([
+        ['way/31', 10],
+        ['way/32', 10],
+      ]),
+    )
+    expect(partsBySurvivor).toEqual(new Map([[10, [31, 32]]]))
+  })
+
+  test('finds a part drawn the other way round', () => {
+    const { survivorByPart } = detectWayMerges([
+      deleteWay(31, [3, 2, 1]),
+      modifyWay(10, [3, 4], [1, 2, 3, 4]),
+    ])
+    expect(survivorByPart.get('way/31')).toBe(10)
+  })
+
+  test('ignores a deleted way that only touches the modified way', () => {
+    const { survivorByPart } = detectWayMerges([
+      deleteWay(31, [9, 1]),
+      modifyWay(10, [3, 4], [1, 2, 3, 4]),
+    ])
+    expect(survivorByPart.size).toBe(0)
+  })
+
+  test('ignores a way that did not grow', () => {
+    const { survivorByPart } = detectWayMerges([
+      deleteWay(31, [1, 2]),
+      modifyWay(10, [1, 2, 3], [1, 2, 3]),
+    ])
+    expect(survivorByPart.size).toBe(0)
   })
 })

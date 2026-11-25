@@ -1,7 +1,7 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
 import { clusterChangesBySpace } from './changeGroupClusters.ts'
 import { minorMoveOf } from './minorMoves.ts'
-import { detectWaySplits, wayKey } from './waySplits.ts'
+import { detectWayMerges, detectWaySplits, wayKey } from './waySplits.ts'
 
 export type OsmElementType = 'node' | 'way' | 'relation'
 
@@ -92,6 +92,10 @@ export type ElementChange = {
   splitFrom?: number
   /** Modified way: ids of the created ways split off it. */
   splitInto?: number[]
+  /** Deleted way: id of the modified way it was merged into. `tags` are then diffed against that way's new tags. */
+  mergedInto?: number
+  /** Modified way: ids of the deleted ways merged into it. */
+  mergedFrom?: number[]
 }
 
 export const ACTION_ORDER = ['create', 'modify', 'delete'] as const
@@ -192,6 +196,11 @@ export function tagRows(action: AdiffAction): TagRow[] {
 /** Tags of a way split off `parent`, compared with the parent's tags before the split. */
 export function splitTagRows(parent: AdiffAction, child: AdiffAction): TagRow[] {
   return diffTags(tagsOf(parent.old), tagsOf(child.new))
+}
+
+/** A way merged into another: its old tags against the merged way's new tags. */
+export function mergedTagRows(part: AdiffAction, survivor: AdiffAction): TagRow[] {
+  return diffTags(tagsOf(part.old), tagsOf(survivor.new))
 }
 
 function diffTags(oldRecord: Record<string, string>, newRecord: Record<string, string>): TagRow[] {
@@ -545,11 +554,14 @@ function computeElementChanges(
   const wayMemberNodes = wayMemberNodeIds(actions)
   const statsByNode = nodeActionStats(actions)
   const { parentByChild, childrenByParent } = detectWaySplits(actions)
+  const { survivorByPart, partsBySurvivor } = detectWayMerges(actions)
   const parentActions = new Map<number, AdiffAction>()
+  const survivorActions = new Map<number, AdiffAction>()
   for (const action of actions) {
-    const parentId =
-      action.type === 'modify' && action.old?.type === 'way' ? action.old.id : undefined
-    if (parentId != null && childrenByParent.has(parentId)) parentActions.set(parentId, action)
+    const wayId = action.type === 'modify' && action.old?.type === 'way' ? action.old.id : undefined
+    if (wayId == null) continue
+    if (childrenByParent.has(wayId)) parentActions.set(wayId, action)
+    if (partsBySurvivor.has(wayId)) survivorActions.set(wayId, action)
   }
   const changes: ElementChange[] = []
 
@@ -566,7 +578,19 @@ function computeElementChanges(
     const splitInto =
       type === 'way' && action.type === 'modify' ? childrenByParent.get(element.id) : undefined
 
-    const tags = splitParent ? splitTagRows(splitParent, action) : tagRows(action)
+    const mergedInto =
+      type === 'way' && action.type === 'delete'
+        ? survivorByPart.get(wayKey(element.id))
+        : undefined
+    const survivor = mergedInto != null ? survivorActions.get(mergedInto) : undefined
+    const mergedFrom =
+      type === 'way' && action.type === 'modify' ? partsBySurvivor.get(element.id) : undefined
+
+    const tags = splitParent
+      ? splitTagRows(splitParent, action)
+      : survivor
+        ? mergedTagRows(action, survivor)
+        : tagRows(action)
     const geometry = geometryChip(action)
 
     changes.push({
@@ -591,6 +615,8 @@ function computeElementChanges(
       wayShape: type === 'way' ? wayShape(element) : undefined,
       splitFrom: splitParent ? splitFrom : undefined,
       splitInto,
+      mergedInto: survivor ? mergedInto : undefined,
+      mergedFrom,
     })
   }
 
@@ -648,7 +674,7 @@ export function groupChangesByTagMutation(
     const key =
       tagMutationRows(change.tags).length === 0
         ? `__ungrouped:${ungrouped++}`
-        : `${change.splitFrom != null ? 'split:' : ''}${tagMutationKey(change.tags)}`
+        : `${change.splitFrom != null ? 'split:' : change.mergedInto != null ? 'merge:' : ''}${tagMutationKey(change.tags)}`
     const indices = indicesByKey.get(key)
     if (indices) indices.push(index)
     else indicesByKey.set(key, [index])

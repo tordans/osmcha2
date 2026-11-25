@@ -1,6 +1,12 @@
-import { ArrowsSplitIcon, PencilIcon, PlusCircleIcon, TrashIcon } from '../ui/icons.ts'
+import {
+  ArrowsMergeIcon,
+  ArrowsSplitIcon,
+  PencilIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from '../ui/icons.ts'
 
-export type ElementActionKey = 'create' | 'modify' | 'delete' | 'split'
+export type ElementActionKey = 'create' | 'modify' | 'delete' | 'split' | 'merge'
 
 /**
  * Single source for create/modify/delete/noop: Catalyst badge token, map paint hex
@@ -42,6 +48,13 @@ export const ACTION = {
     token: 'sky',
     icon: ArrowsSplitIcon,
     label: 'Split',
+    tagText: 'text-sky-700',
+  },
+  /** List label for a deleted way merged into a modified way. The map still paints it as deleted. */
+  merge: {
+    token: 'sky',
+    icon: ArrowsMergeIcon,
+    label: 'Merged',
     tagText: 'text-sky-700',
   },
   noop: {
