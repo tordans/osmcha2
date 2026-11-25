@@ -63,6 +63,8 @@ API hosts, page size, and date defaults live in [`src/config/constants.ts`](./sr
 
 How routes and APIs are cached: [`docs/caching.md`](./docs/caching.md).
 
+How saving filters works, before and after the rework: [`docs/filter-saving-states.md`](./docs/filter-saving-states.md).
+
 ## GitHub Pages
 
 Static hosting at [tordans.github.io/osmcha2](https://tordans.github.io/osmcha2/).
