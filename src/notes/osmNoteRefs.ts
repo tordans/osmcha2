@@ -59,21 +59,3 @@ export function osmNoteIds(text: string | null | undefined) {
 export function osmNoteUrl(id: number) {
   return `https://www.openstreetmap.org/note/${id}`
 }
-
-type TextSegment =
-  | { type: 'text'; text: string; start: number }
-  | { type: 'note'; text: string; start: number; id: number }
-
-/** Cut `text` into plain runs and note references. Joined, the segments equal `text`. */
-export function splitByOsmNoteRefs(text: string) {
-  const segments: TextSegment[] = []
-  let cursor = 0
-  for (const ref of findOsmNoteRefs(text)) {
-    if (ref.start > cursor)
-      segments.push({ type: 'text', text: text.slice(cursor, ref.start), start: cursor })
-    segments.push({ type: 'note', text: ref.text, start: ref.start, id: ref.id })
-    cursor = ref.end
-  }
-  if (cursor < text.length) segments.push({ type: 'text', text: text.slice(cursor), start: cursor })
-  return segments
-}
