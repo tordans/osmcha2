@@ -1,6 +1,9 @@
 import type { MapParam } from '../../routing/mapParam.ts'
 import type { RefParam } from '../../routing/refParam.ts'
 
+/** MAID's overview page; each editor there opens the place it is given. Reads iD's hash form. */
+export const MAID_URL = 'https://osm-editor-kit.github.io/maid/'
+
 /** iD / Rapid use Leaflet (raster) zoom, one level above MapLibre. */
 export function editorMapHash(map?: MapParam | null): string {
   if (!map) return ''
@@ -10,7 +13,7 @@ export function editorMapHash(map?: MapParam | null): string {
 }
 
 /**
- * `map` is where the user looks; `ref` the selected object. iD and Rapid select that object.
+ * `map` is where the user looks; `ref` the selected object. iD, Rapid and MAID select that object.
  * JOSM and Level0 load the whole changeset, which has no way to select one object.
  */
 export function openInUrls(
@@ -29,6 +32,7 @@ export function openInUrls(
     level0: `http://level0.osmz.ru/?url=changeset/${changesetId}`,
     osmRevert: `https://revert.monicz.dev/?changesets=${changesetId}`,
     rapid: `https://rapideditor.org/edit${rapidHash}`,
+    maid: `${MAID_URL}${rapidHash}`,
     // Spyglass is a MapLibre map, so it takes the viewport zoom as is.
     spyglass: `https://spyglass.jochentopf.com/${map ? `#p=${map.zoom}/${map.lat}/${map.lng}` : ''}`,
     resultMaps: `https://resultmaps.neis-one.org/osm-change-viz?c=${changesetId}`,

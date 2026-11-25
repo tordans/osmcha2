@@ -100,6 +100,9 @@ export function DropdownOpenElement({ changesetId, type, id, lat, lon }: Dropdow
           <DropdownItem href={urls.level0} target="_blank" rel="noopener noreferrer">
             Level0
           </DropdownItem>
+          <DropdownItem href={urls.maid} target="_blank" rel="noopener noreferrer">
+            MAID
+          </DropdownItem>
           <DropdownItem href={urls.rapid} target="_blank" rel="noopener noreferrer">
             Rapid
           </DropdownItem>

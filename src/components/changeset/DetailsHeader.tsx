@@ -547,6 +547,14 @@ export function DetailsHeader({
                 Rapid
               </DropdownItem>
               <DropdownItem
+                href={urls.maid}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={headerOpenItemClassName}
+              >
+                MAID
+              </DropdownItem>
+              <DropdownItem
                 href={urls.spyglass}
                 target="_blank"
                 rel="noopener noreferrer"

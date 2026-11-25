@@ -1,3 +1,5 @@
+import { MAID_URL } from './openInUrls.ts'
+
 /** Open-in URLs for a single OSM element. */
 
 export function elementPath(type: string, id: number | string): string {
@@ -20,6 +22,7 @@ export function elementOpenInUrls(id: string, lat?: number, lng?: number) {
     josm: string
     level0: string
     rapid: string
+    maid: string
     history: string
     deepHistory: string
     pewu: string
@@ -30,6 +33,7 @@ export function elementOpenInUrls(id: string, lat?: number, lng?: number) {
     josm: `http://127.0.0.1:8111/load_object?new_layer=true&objects=${idToMinimalForm(id)}`,
     level0: `http://level0.osmz.ru/?url=${id}`,
     rapid: `https://rapideditor.org/edit#id=${idToMinimalForm(id)}`,
+    maid: `${MAID_URL}#id=${idToMinimalForm(id)}`,
     // Same object page as /${id}, with the history tab open
     history: `https://www.openstreetmap.org/${id}/history`,
     deepHistory: `https://osmlab.github.io/osm-deep-history/#/${id}`,
@@ -39,6 +43,8 @@ export function elementOpenInUrls(id: string, lat?: number, lng?: number) {
   if (lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
     urls.mapillary = `https://www.mapillary.com/app/?lat=${lat}&lng=${lng}&z=16`
     urls.panoramax = `https://api.panoramax.xyz/?focus=map&map=16/${lat}/${lng}`
+    // The overview page needs a place for its editor buttons; the editors then zoom to the object.
+    urls.maid += `&map=18/${lat}/${lng}`
   }
 
   return urls

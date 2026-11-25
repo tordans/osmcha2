@@ -9,6 +9,7 @@ describe('elementOpenInUrls', () => {
     expect(urls.josm).toBe('http://127.0.0.1:8111/load_object?new_layer=true&objects=w42')
     expect(urls.level0).toBe('http://level0.osmz.ru/?url=way/42')
     expect(urls.rapid).toBe('https://rapideditor.org/edit#id=w42')
+    expect(urls.maid).toBe('https://osm-editor-kit.github.io/maid/#id=w42')
     expect(urls.mapillary).toBeUndefined()
   })
 
@@ -16,6 +17,7 @@ describe('elementOpenInUrls', () => {
     const urls = elementOpenInUrls('node/9', 52.5, 13.4)
     expect(urls.mapillary).toBe('https://www.mapillary.com/app/?lat=52.5&lng=13.4&z=16')
     expect(urls.panoramax).toBe('https://api.panoramax.xyz/?focus=map&map=16/52.5/13.4')
+    expect(urls.maid).toBe('https://osm-editor-kit.github.io/maid/#id=n9&map=18/52.5/13.4')
   })
 
   test('shortens slashed ids for JOSM and RapiD', () => {

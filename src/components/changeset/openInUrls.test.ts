@@ -24,6 +24,7 @@ describe('openInUrls', () => {
     const urls = openInUrls(9, { lng: 13.4, lat: 52.5, zoom: 14 }, { type: 'way', id: 42 })
     expect(urls.id).toBe('https://www.openstreetmap.org/edit?editor=id&way=42#map=15/52.5/13.4')
     expect(urls.rapid).toBe('https://rapideditor.org/edit#id=w42&map=15/52.5/13.4')
+    expect(urls.maid).toBe('https://osm-editor-kit.github.io/maid/#id=w42&map=15/52.5/13.4')
     expect(openInUrls(9, null, { type: 'node', id: 7 }).rapid).toBe(
       'https://rapideditor.org/edit#id=n7',
     )
