@@ -7,8 +7,8 @@ export const MINOR_NODE_MOVE_METERS = 2
 /** A line or area whose shape changed this far or less (and nothing else changed) needs no review. */
 export const MINOR_WAY_MOVE_METERS = 2
 
-/** Shown under the "Minor moves" heading. Both limits are 2 m today. */
-export const MINOR_MOVES_EXPLANATION = `Moved or reshaped by less than ${MINOR_NODE_MOVE_METERS} m; marked as seen automatically.`
+/** Shown under the "Minor changes" heading. Both limits are 2 m today. */
+export const MINOR_MOVES_EXPLANATION = `Moved or reshaped by less than ${MINOR_NODE_MOVE_METERS} m, or relation roles swapped because a way was reversed; marked as seen automatically.`
 
 type Point = { x: number; y: number }
 
@@ -149,4 +149,10 @@ export function minorMoveObjectKeys(changes: ElementChange[]): string[] {
 
 export function formatMoveMeters(meters: number): string {
   return `${meters.toFixed(1)} m`
+}
+
+/** `1.2 m` for a minor move, `3 roles swapped` for roles that followed a reversed way. */
+export function minorMoveLabel(minorMove: NonNullable<ElementChange['minorMove']>): string {
+  if (minorMove.meters != null) return formatMoveMeters(minorMove.meters)
+  return `${minorMove.roleFlips} ${minorMove.roleFlips === 1 ? 'role' : 'roles'} swapped`
 }

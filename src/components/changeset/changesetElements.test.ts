@@ -14,6 +14,7 @@ import {
   tagMutationRows,
   tagRowKeys,
   tagRows,
+  wayReversal,
 } from './changesetElements.ts'
 import { changeListItems } from './tagGroups.ts'
 
@@ -788,5 +789,86 @@ describe('buildElementChanges for merged ways', () => {
 
     const order = changeListItems(changes).items.map((item) => item.map((change) => change.id))
     expect(order).toEqual([[10], [31], [40]])
+  })
+})
+
+describe('wayReversal', () => {
+  const modifyWay = (oldNodes: number[], newNodes: number[]): AdiffAction => ({
+    type: 'modify',
+    old: { type: 'way', id: 1, nodes: oldNodes, tags: {} },
+    new: { type: 'way', id: 1, nodes: newNodes, tags: {} },
+  })
+
+  test('same nodes in the opposite order: reversed only', () => {
+    expect(wayReversal(modifyWay([1, 2, 3, 4], [4, 3, 2, 1]))).toEqual({ reshaped: false })
+  })
+
+  test('reversed and reshaped', () => {
+    expect(wayReversal(modifyWay([1, 2, 3, 4], [4, 9, 3, 1]))).toEqual({ reshaped: true })
+  })
+
+  test('a closed way that now runs the other way round, from another start node', () => {
+    expect(wayReversal(modifyWay([1, 2, 3, 4, 1], [3, 2, 1, 4, 3]))).toEqual({ reshaped: false })
+  })
+
+  test('same direction, or too few kept nodes: not reversed', () => {
+    expect(wayReversal(modifyWay([1, 2, 3, 4], [1, 2, 9, 3, 4]))).toBeNull()
+    expect(wayReversal(modifyWay([1, 2, 3, 4, 1], [2, 3, 4, 1, 2]))).toBeNull()
+    expect(wayReversal(modifyWay([1, 2], [2, 3]))).toBeNull()
+    expect(wayReversal(modifyWay([1, 2, 3, 4], [1, 3, 2, 4]))).toBeNull()
+  })
+
+  test('buildElementChanges marks the reversed way', () => {
+    const [change] = buildElementChanges([modifyWay([1, 2, 3], [3, 2, 1])])
+    expect(change?.geometry).toBe('rewritten')
+    expect(change?.reversed).toEqual({ reshaped: false })
+  })
+})
+
+describe('relation member changes', () => {
+  const way = (id: number, nodes: number[]) => ({ type: 'way', id, nodes, tags: {} })
+  const route = (roles: string[], version = 1) => ({
+    type: 'relation',
+    id: 5,
+    version,
+    tags: { type: 'route', route: 'bicycle' },
+    members: roles.map((role, index) => ({ type: 'way', ref: String(index + 1), role })),
+  })
+  const relationAction = (oldRoles: string[], newRoles: string[]): AdiffAction => ({
+    type: 'modify',
+    old: route(oldRoles),
+    new: route(newRoles, 2),
+  })
+
+  test('roles swapped on a way reversed in the same changeset: a minor change', () => {
+    const changes = buildElementChanges([
+      { type: 'modify', old: way(1, [1, 2, 3]), new: way(1, [3, 2, 1]) },
+      relationAction(['forward', ''], ['backward', '']),
+    ])
+    const relation = changes.find((change) => change.type === 'relation')
+    expect(relation?.memberChanges).toEqual({
+      roles: [{ type: 'way', ref: 1, from: 'forward', to: 'backward' }],
+      added: 0,
+      removed: 0,
+      reordered: false,
+    })
+    expect(relation?.minorMove).toEqual({ roleFlips: 1 })
+  })
+
+  test('roles swapped on a way that kept its direction still need a look', () => {
+    const [relation] = buildElementChanges([relationAction(['forward'], ['backward'])])
+    expect(relation?.memberChanges?.roles).toHaveLength(1)
+    expect(relation?.minorMove).toBeUndefined()
+  })
+
+  test('added, removed and reordered members', () => {
+    const [relation] = buildElementChanges([
+      {
+        type: 'modify',
+        old: { ...route([]), members: [1, 2, 3].map((ref) => ({ type: 'way', ref, role: '' })) },
+        new: { ...route([], 2), members: [3, 1, 4].map((ref) => ({ type: 'way', ref, role: '' })) },
+      },
+    ])
+    expect(relation?.memberChanges).toEqual({ roles: [], added: 1, removed: 1, reordered: true })
   })
 })

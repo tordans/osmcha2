@@ -73,6 +73,16 @@ export type WayShape = {
   bounds?: { minLon: number; minLat: number; maxLon: number; maxLat: number }
 }
 
+export type MemberRoleChange = { type: string; ref: number; from: string; to: string }
+
+export type MemberChanges = {
+  roles: MemberRoleChange[]
+  added: number
+  removed: number
+  /** The members both versions have now come in another order. */
+  reordered: boolean
+}
+
 export type ElementChange = {
   actionType: 'create' | 'modify' | 'delete'
   type: OsmElementType
@@ -81,8 +91,16 @@ export type ElementChange = {
   tags: TagRow[]
   nodeStats?: NodeStats
   geometry?: 'moved' | 'rewritten' | null
-  /** Only moved a tiny bit (see `minorMoveOf`): counts as seen unless the reviewer un-sees it. */
-  minorMove?: { meters: number }
+  /** Modified way whose direction flipped. `reshaped`: it also gained, lost or reordered nodes. */
+  reversed?: { reshaped: boolean }
+  /**
+   * Needs no review, so it counts as seen unless the reviewer un-sees it: moved a tiny bit (see
+   * `minorMoveOf`), or a relation that only swapped forward/backward roles of ways reversed in the
+   * same changeset (see `followsReversal`).
+   */
+  minorMove?: { meters: number; roleFlips?: never } | { roleFlips: number; meters?: never }
+  /** Relations: what changed in the member list. Absent when the members are the same. */
+  memberChanges?: MemberChanges
   flagged?: ElementFlag
   lat?: number
   lon?: number
@@ -357,6 +375,112 @@ export function wayRewritten(action: AdiffAction): boolean {
   return oldRefs.some((ref, index) => ref !== newRefs[index])
 }
 
+function orderedNodeRefs(element?: AdiffElement): number[] {
+  return (element?.nodes ?? []).flatMap((node) => {
+    const ref = nodeRef(node)
+    return ref == null ? [] : [ref]
+  })
+}
+
+/**
+ * Whether a modified way now runs the other way round: the nodes it kept appear in reverse order
+ * (for a closed way: in reverse order around the ring). `null` when the direction did not flip.
+ */
+export function wayReversal(action: AdiffAction): ElementChange['reversed'] | null {
+  if (action.type !== 'modify' || action.new?.type !== 'way') return null
+  const oldRefs = orderedNodeRefs(action.old)
+  const newRefs = orderedNodeRefs(action.new)
+  const closed =
+    oldRefs.length > 3 && oldRefs[0] === oldRefs.at(-1) && newRefs[0] === newRefs.at(-1)
+  const oldRing = closed ? oldRefs.slice(0, -1) : oldRefs
+  const newRing = closed ? newRefs.slice(0, -1) : newRefs
+  const oldIndex = new Map<number, number>()
+  oldRing.forEach((ref, index) => {
+    if (!oldIndex.has(ref)) oldIndex.set(ref, index)
+  })
+  const kept = [...new Set(newRing.filter((ref) => oldIndex.has(ref)))].flatMap(
+    (ref) => oldIndex.get(ref) ?? [],
+  )
+  if (kept.length < (closed ? 3 : 2)) return null
+  // Open: every kept node comes before the previous one. Closed: the same, except once where
+  // the ring wraps around.
+  const ascents = kept.filter((index, at) => {
+    const next = closed ? kept[(at + 1) % kept.length] : kept[at + 1]
+    return next != null && next > index
+  }).length
+  if (ascents > (closed ? 1 : 0)) return null
+  const sameNodes =
+    oldRefs.length === newRefs.length &&
+    kept.length === oldIndex.size &&
+    newRing.every((ref) => oldIndex.has(ref))
+  return { reshaped: !sameNodes }
+}
+
+type Member = { type: string; ref: number; role: string }
+
+function membersOf(element?: AdiffElement): Member[] {
+  return (element?.members ?? []).flatMap((member) => {
+    const ref = Number(member.ref)
+    return typeof member.type === 'string' && Number.isFinite(ref)
+      ? [{ type: member.type, ref, role: typeof member.role === 'string' ? member.role : '' }]
+      : []
+  })
+}
+
+/**
+ * How a modified relation's members changed: roles that changed on a member it kept, members
+ * added or removed, and whether the kept members came in another order. `undefined` when the
+ * member list is the same. A member listed twice is matched by its position among its repeats.
+ */
+export function relationMemberChanges(action: AdiffAction): MemberChanges | undefined {
+  if (action.type !== 'modify' || action.new?.type !== 'relation') return undefined
+  const keyed = (members: Member[]) => {
+    const seen = new Map<string, number>()
+    return members.map((member) => {
+      const base = `${member.type}/${member.ref}`
+      const repeat = seen.get(base) ?? 0
+      seen.set(base, repeat + 1)
+      return { ...member, key: `${base}#${repeat}` }
+    })
+  }
+  const before = keyed(membersOf(action.old))
+  const after = keyed(membersOf(action.new))
+  const beforeByKey = new Map(before.map((member) => [member.key, member]))
+  const afterKeys = new Set(after.map((member) => member.key))
+  const roles = after.flatMap((member) => {
+    const old = beforeByKey.get(member.key)
+    return old && old.role !== member.role
+      ? [{ type: member.type, ref: member.ref, from: old.role, to: member.role }]
+      : []
+  })
+  const added = after.filter((member) => !beforeByKey.has(member.key)).length
+  const removed = before.filter((member) => !afterKeys.has(member.key)).length
+  const keptBefore = before.filter((member) => afterKeys.has(member.key)).map((m) => m.key)
+  const keptAfter = after.filter((member) => beforeByKey.has(member.key)).map((m) => m.key)
+  const reordered = keptBefore.some((key, index) => key !== keptAfter[index])
+  if (roles.length === 0 && added === 0 && removed === 0 && !reordered) return undefined
+  return { roles, added, removed, reordered }
+}
+
+const FLIPPED_ROLE: Record<string, string> = { forward: 'backward', backward: 'forward' }
+
+/**
+ * Whether the member changes only follow from ways reversed in this changeset: iD swaps a way's
+ * forward/backward role in every route relation when it reverses the way.
+ */
+export function followsReversal(changes: MemberChanges, reversedWayIds: ReadonlySet<number>) {
+  return (
+    changes.added === 0 &&
+    changes.removed === 0 &&
+    !changes.reordered &&
+    changes.roles.length > 0 &&
+    changes.roles.every(
+      (role) =>
+        role.type === 'way' && reversedWayIds.has(role.ref) && FLIPPED_ROLE[role.from] === role.to,
+    )
+  )
+}
+
 export function wayMemberGeometryChanged(action: AdiffAction): boolean {
   if (action.new?.type !== 'way' && action.old?.type !== 'way') return false
   if (wayRewritten(action)) return true
@@ -555,6 +679,13 @@ function computeElementChanges(
   const statsByNode = nodeActionStats(actions)
   const { parentByChild, childrenByParent } = detectWaySplits(actions)
   const { survivorByPart, partsBySurvivor } = detectWayMerges(actions)
+  const reversedWayIds = new Set(
+    actions.flatMap((action) =>
+      action.new?.type === 'way' && action.new.id != null && wayReversal(action)
+        ? [action.new.id]
+        : [],
+    ),
+  )
   const parentActions = new Map<number, AdiffAction>()
   const survivorActions = new Map<number, AdiffAction>()
   for (const action of actions) {
@@ -592,6 +723,8 @@ function computeElementChanges(
         ? mergedTagRows(action, survivor)
         : tagRows(action)
     const geometry = geometryChip(action)
+    const tagsChanged = tagMutationRows(tags).length > 0
+    const memberChanges = type === 'relation' ? relationMemberChanges(action) : undefined
 
     changes.push({
       actionType: action.type,
@@ -601,7 +734,12 @@ function computeElementChanges(
       tags,
       nodeStats,
       geometry,
-      minorMove: minorMoveOf(action, { geometry, tagsChanged: tagMutationRows(tags).length > 0 }),
+      reversed: type === 'way' ? (wayReversal(action) ?? undefined) : undefined,
+      minorMove:
+        memberChanges && !tagsChanged && followsReversal(memberChanges, reversedWayIds)
+          ? { roleFlips: memberChanges.roles.length }
+          : minorMoveOf(action, { geometry, tagsChanged }),
+      memberChanges,
       flagged: flagged
         ? {
             name: flagged.name,

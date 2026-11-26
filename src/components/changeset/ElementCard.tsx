@@ -13,7 +13,7 @@ import {
   type ElementChange,
   type TagMutation,
 } from './changesetElements.ts'
-import { formatMoveMeters } from './minorMoves.ts'
+import { minorMoveLabel } from './minorMoves.ts'
 
 /**
  * Phone map view: the selected element floating above the sheet strip. Tapping it opens
@@ -68,7 +68,10 @@ export function ElementCard({
         ) : null}
         {sameTagsAsRelated ? <NoteLine>Same tags as way/{relatedWay}</NoteLine> : null}
         {change?.minorMove ? (
-          <NoteLine>Minor move · {formatMoveMeters(change.minorMove.meters)}</NoteLine>
+          <NoteLine>
+            {change.minorMove.meters != null ? 'Minor move' : 'Follows reversed ways'} ·{' '}
+            {minorMoveLabel(change.minorMove)}
+          </NoteLine>
         ) : null}
         {change?.splitInto && !mutation ? (
           <NoteLine>Split into {change.splitInto.map((id) => `way/${id}`).join(', ')}</NoteLine>

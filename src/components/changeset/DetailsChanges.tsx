@@ -44,6 +44,7 @@ import { Loading } from '../loading.tsx'
 import { TagRows } from '../tag_rows.tsx'
 import { Badge } from '../ui/badge.tsx'
 import {
+  ArrowsLeftRightIcon,
   ArrowTopRightOnSquareIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
@@ -61,6 +62,8 @@ import {
   tagRowKeys,
   type AdiffAction,
   type ElementChange,
+  type MemberChanges,
+  type MemberRoleChange,
   type FlaggedFeature,
   type NamedReason,
   type NodeStats,
@@ -69,7 +72,7 @@ import { DropdownOpenElement } from './DropdownOpenElement.tsx'
 import { elementOsmUrl } from './elementOpenIn.ts'
 import { locationOf, presetContextOf } from './elementPresets.ts'
 import { FinishReviewCard, UnsentNotesBar } from './FinishReviewCard.tsx'
-import { formatMoveMeters, MINOR_MOVES_EXPLANATION } from './minorMoves.ts'
+import { MINOR_MOVES_EXPLANATION, minorMoveLabel } from './minorMoves.ts'
 import { NoteEditor } from './NoteEditor.tsx'
 import {
   ChangesetNotesSection,
@@ -976,7 +979,7 @@ function MinorMovesGroup({
               >
                 <ChevronRightIcon className="size-4 flex-none" />
               </motion.span>
-              <span>Minor moves</span>
+              <span>Minor changes</span>
               <Badge>{changes.length}</Badge>
             </Headless.DisclosureButton>
             <Headless.DisclosurePanel static>
@@ -1203,7 +1206,7 @@ const ElementChangeRow = memo(function ElementChangeRow({
           )}
         </span>
         {grouped ? <OsmElementLink type={change.type} id={change.id} iconOnly /> : null}
-        {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
+        {change.minorMove ? <MinorMoveBadge minorMove={change.minorMove} /> : null}
         <div className="ml-auto">
           <ObjectReviewActions
             objectLabel={`${change.type}/${change.id}`}
@@ -1238,7 +1241,8 @@ const ElementChangeRow = memo(function ElementChangeRow({
             (change.splitFrom != null ? 1 : 0) +
             (change.splitInto ? 1 : 0) +
             (change.mergedInto != null ? 1 : 0) +
-            (change.mergedFrom ? 1 : 0),
+            (change.mergedFrom ? 1 : 0) +
+            memberChangeLineCount(change.memberChanges),
           presetLine: presetLine != null,
         }),
       )}
@@ -1303,26 +1307,8 @@ const ElementChangeRow = memo(function ElementChangeRow({
               <Badge color="yellow">Moved</Badge>
             </Tooltip>
           ) : null}
-          {change.minorMove ? <MinorMoveBadge meters={change.minorMove.meters} /> : null}
-          {change.geometry === 'rewritten' ? (
-            // A split keeps the original id on one part, which therefore lost nodes.
-            <Tooltip
-              as="span"
-              placement="bottom-end"
-              content={
-                change.splitInto
-                  ? `This way was split. It keeps its id and history; the cut-off part is now ${change.splitInto.map((id) => `way/${id}`).join(', ')}.`
-                  : change.mergedFrom
-                    ? `Other ways were merged into this one. It keeps its id and history; ${change.mergedFrom.map((id) => `way/${id}`).join(', ')} are now part of it and were deleted.`
-                    : 'This way’s nodes changed (added, removed, or reordered), so its shape changed.'
-              }
-              className="inline-flex"
-            >
-              <Badge color="yellow">
-                {change.splitInto ? 'Shortened' : change.mergedFrom ? 'Extended' : 'Reshaped'}
-              </Badge>
-            </Tooltip>
-          ) : null}
+          {change.minorMove ? <MinorMoveBadge minorMove={change.minorMove} /> : null}
+          {change.geometry === 'rewritten' ? <GeometryRewrittenBadge change={change} /> : null}
           {change.nodeStats ? (
             <Tooltip
               as="span"
@@ -1393,6 +1379,9 @@ const ElementChangeRow = memo(function ElementChangeRow({
           Merged with <WayLinks ids={change.mergedFrom} onSelect={selectWay} />
         </p>
       ) : null}
+      {change.memberChanges ? (
+        <MemberChangeLines changes={change.memberChanges} onSelectWay={selectWay} />
+      ) : null}
       {showTags ? (
         <div className="w-full border-t font-mono">
           {relatedWay != null &&
@@ -1434,15 +1423,19 @@ const ElementChangeRow = memo(function ElementChangeRow({
   )
 })
 
-function MinorMoveBadge({ meters }: { meters: number }) {
+function MinorMoveBadge({ minorMove }: { minorMove: NonNullable<ElementChange['minorMove']> }) {
   return (
     <Tooltip
       as="span"
       placement="bottom-end"
-      content="A minor move: counts as seen automatically."
+      content={
+        minorMove.meters != null
+          ? 'A minor move: counts as seen automatically.'
+          : 'Only forward/backward roles of ways reversed in this changeset swapped, as editors do when reversing a way: counts as seen automatically.'
+      }
       className="inline-flex"
     >
-      <Badge>{formatMoveMeters(meters)}</Badge>
+      <Badge>{minorMoveLabel(minorMove)}</Badge>
     </Tooltip>
   )
 }
@@ -1552,5 +1545,113 @@ function OsmElementLink({
     >
       {type}/{id}
     </a>
+  )
+}
+
+const REVERSED_HINT = 'Check direction-dependent tags such as oneway, :forward and :backward.'
+
+/** "Shortened", "Extended", "Reshaped" or "Reversed"; a reversal next to another change adds an icon. */
+function GeometryRewrittenBadge({ change }: { change: ElementChange }) {
+  const { splitInto, mergedFrom, reversed } = change
+  // A split keeps the original id on one part, which therefore lost nodes.
+  const shapeText = splitInto
+    ? `This way was split. It keeps its id and history; the cut-off part is now ${splitInto.map((id) => `way/${id}`).join(', ')}.`
+    : mergedFrom
+      ? `Other ways were merged into this one. It keeps its id and history; ${mergedFrom.map((id) => `way/${id}`).join(', ')} are now part of it and were deleted.`
+      : 'This way’s nodes changed (added, removed, or reordered), so its shape changed.'
+  const onlyReversed = reversed && !reversed.reshaped && !splitInto && !mergedFrom
+  const label = onlyReversed
+    ? 'Reversed'
+    : splitInto
+      ? 'Shortened'
+      : mergedFrom
+        ? 'Extended'
+        : 'Reshaped'
+  const content = onlyReversed
+    ? `This way’s direction was reversed; it has the same nodes in the opposite order. ${REVERSED_HINT}`
+    : reversed
+      ? `${shapeText} Its direction was also reversed. ${REVERSED_HINT}`
+      : shapeText
+  return (
+    <Tooltip as="span" placement="bottom-end" content={content} className="inline-flex">
+      <Badge color="yellow">
+        {reversed ? (
+          <ArrowsLeftRightIcon
+            {...(onlyReversed
+              ? { 'aria-hidden': true }
+              : { role: 'img', 'aria-label': 'Reversed' })}
+            className="size-3.5"
+          />
+        ) : null}
+        {label}
+      </Badge>
+    </Tooltip>
+  )
+}
+
+function roleName(role: string) {
+  return role === '' ? 'no role' : role
+}
+
+/** Role changes grouped by from → to, so "forward → backward" lists its ways once. */
+function roleChangeGroups(roles: MemberRoleChange[]) {
+  const groups = new Map<string, MemberRoleChange[]>()
+  for (const role of roles) {
+    const key = `${role.from}\u0000${role.to}`
+    const group = groups.get(key)
+    if (group) group.push(role)
+    else groups.set(key, [role])
+  }
+  return [...groups.values()]
+}
+
+function memberChangeLineCount(changes: MemberChanges | undefined) {
+  if (!changes) return 0
+  return (
+    roleChangeGroups(changes.roles).length +
+    (changes.added > 0 ? 1 : 0) +
+    (changes.removed > 0 ? 1 : 0) +
+    (changes.reordered ? 1 : 0)
+  )
+}
+
+/** What changed in a relation's member list; the tags alone would not say why it is listed. */
+function MemberChangeLines({
+  changes,
+  onSelectWay,
+}: {
+  changes: MemberChanges
+  onSelectWay: (id: number) => void
+}) {
+  const plural = (count: number) => (count === 1 ? 'member' : 'members')
+  return (
+    <div className={clsx(typeScale.small, ACTION.modify.tagText)}>
+      {roleChangeGroups(changes.roles).map((group) => {
+        const [first] = group
+        if (!first) return null
+        const ways = group.filter((role) => role.type === 'way').map((role) => role.ref)
+        const others = group.filter((role) => role.type !== 'way')
+        return (
+          <p key={`${first.from}>${first.to}`}>
+            Role {roleName(first.from)} → {roleName(first.to)}:{' '}
+            <WayLinks ids={ways} onSelect={onSelectWay} />
+            {others.length > 0
+              ? `${ways.length > 0 ? ', ' : ''}${others.map((role) => `${role.type}/${role.ref}`).join(', ')}`
+              : null}
+          </p>
+        )
+      })}
+      {changes.added > 0 ? (
+        <p>
+          {changes.added} {plural(changes.added)} added
+        </p>
+      ) : null}
+      {changes.removed > 0 ? (
+        <p>
+          {changes.removed} {plural(changes.removed)} removed
+        </p>
+      ) : null}
+      {changes.reordered ? <p>Members reordered</p> : null}
+    </div>
   )
 }

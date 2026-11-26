@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowSquareOut,
+  ArrowsLeftRight,
   ArrowsMerge,
   ArrowsSplit,
   BoundingBox,
@@ -51,6 +52,7 @@ import { appIcon } from './icon.tsx'
 export const ArrowDownWideNarrowIcon = appIcon(SortAscending)
 export const ArrowLeftIcon = appIcon(ArrowLeft)
 export const ArrowRightIcon = appIcon(ArrowRight)
+export const ArrowsLeftRightIcon = appIcon(ArrowsLeftRight)
 export const ArrowsMergeIcon = appIcon(ArrowsMerge)
 export const ArrowsSplitIcon = appIcon(ArrowsSplit)
 export const ArrowPathIcon = appIcon(ArrowClockwise)
