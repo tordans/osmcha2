@@ -37,7 +37,12 @@ import { Discussions } from './discussions.tsx'
 import { ElementCard } from './ElementCard.tsx'
 import { ReviewAreaCallout } from './ReviewAreaCallout.tsx'
 import { ReviewSheet } from './ReviewSheet.tsx'
-import { changeRowDomId, scrollChildIntoScroller, stickyTopOf } from './scrollChildIntoScroller.ts'
+import {
+  changeRowDomId,
+  scrollButtonToAnchor,
+  scrollChildIntoScroller,
+  stickyTopOf,
+} from './scrollChildIntoScroller.ts'
 
 const COLUMN_TABS = [
   {
@@ -74,6 +79,9 @@ type ReviewColumnProps = {
   /** Deselect, also on the map (phone element card ×). */
   clearSelection: () => void
 }
+
+/** How long a list scroll keeps the next seen button under the pointer, while rows fold. */
+const ANCHOR_HOLD_MS = 1000
 
 export function ReviewColumn({
   changesetId,
@@ -134,19 +142,27 @@ export function ReviewColumn({
     const rowId = changeRowDomId(target.type, target.id)
     let frame = 0
     let focusPending = target.focus === true
+    // Under the pointer, the button must stay put until the seen row above has folded (0.65 s).
+    const holdUntil = performance.now() + (target.anchorY == null ? 0 : ANCHOR_HOLD_MS)
 
     function attempt(remaining: number) {
       const scroller = changesScrollerRef.current
       const row = document.getElementById(rowId)
       if (scroller && row instanceof HTMLElement && row.getBoundingClientRect().height > 0) {
-        scrollChildIntoScroller(scroller, row, 8, stickyTopOf(scroller))
+        // Each frame: the row above folds after being seen, which moves this one.
+        const seenButton = target.anchorY == null ? null : row.querySelector('[data-review-seen]')
+        if (seenButton && target.anchorY != null) {
+          scrollButtonToAnchor(scroller, seenButton, target.anchorY)
+        } else {
+          scrollChildIntoScroller(scroller, row, 8, stickyTopOf(scroller))
+        }
         // A row in a group that is only just opening is still inert and takes focus a frame later.
         if (focusPending && !row.closest('[inert]')) {
           row.focus({ preventScroll: true })
           focusPending = document.activeElement !== row
         }
       }
-      if (remaining <= 0) return
+      if (remaining <= 0 && performance.now() > holdUntil) return
       frame = requestAnimationFrame(() => attempt(remaining - 1))
     }
 

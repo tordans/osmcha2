@@ -689,13 +689,13 @@ function TagMutationGroup({
     setClosingAfterSeen(false)
   }
 
-  function toggleAllSeen() {
+  function toggleAllSeen(anchorY: number) {
     const objectKeys = changes.map((change) => objectRefKey(change.type, change.id))
     if (allSeen) {
       markAllUnseen(userKey, changesetId, objectKeys)
     } else {
       markAllSeen(userKey, changesetId, objectKeys)
-      moveOnAfterSeen({ on: 'group', changes })
+      moveOnAfterSeen({ on: 'group', changes }, anchorY)
     }
   }
 
@@ -1158,13 +1158,13 @@ const ElementChangeRow = memo(function ElementChangeRow({
     openOrCreateEditor(userKey, changesetId, nextRef)
   }
 
-  function toggleSeen() {
+  function toggleSeen(anchorY: number) {
     if (collapsed) {
       markUnseen(userKey, changesetId, objectKey)
       return
     }
     markSeen(userKey, changesetId, objectKey)
-    moveOnAfterSeen({ on: 'row', changes: [change] })
+    moveOnAfterSeen({ on: 'row', changes: [change] }, anchorY)
   }
 
   // Picked on the map: show what it is, even when it counts as seen.

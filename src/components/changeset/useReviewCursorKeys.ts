@@ -39,8 +39,13 @@ const INTERACTIVE_SELECTOR = 'a[href], button, summary, [role="button"], [role="
  */
 const LEAVE_EVENT_ALONE = { preventDefault: false, stopPropagation: false }
 
-/** After a seen button: go where S would go from there. Stable, so rows stay memoized. */
-export const MoveOnAfterSeenContext = createContext<(from: ReviewCursor) => void>(() => undefined)
+/**
+ * After a seen button: go where S would go from there, with the next seen button at `anchorY`, so
+ * the next click lands on the same spot. Stable, so rows stay memoized.
+ */
+export const MoveOnAfterSeenContext = createContext<(from: ReviewCursor, anchorY?: number) => void>(
+  () => undefined,
+)
 
 function overlayIsOpen() {
   return document.querySelector('[role="dialog"], [role="menu"], [role="listbox"]') != null
@@ -88,21 +93,21 @@ export function useReviewCursorKeys({
     return changes.map(changeKey)
   }
 
-  function moveCursor(cursor: ReviewCursor) {
+  function moveCursor(cursor: ReviewCursor, anchorY?: number) {
     const [change] = cursor.changes
     if (cursor.on === 'group') {
-      requestListScroll({ ...groupHeaderTarget(change), focus: true })
+      requestListScroll({ ...groupHeaderTarget(change), focus: true, anchorY })
       zoomToGroup(cursor.changes)
       return
     }
-    requestListScroll({ type: change.type, id: change.id, focus: true })
+    requestListScroll({ type: change.type, id: change.id, focus: true, anchorY })
     zoomToAndSelect(change.type, change.id)
   }
 
-  function moveOnFrom(cursor: ReviewCursor | null) {
+  function moveOnFrom(cursor: ReviewCursor | null, anchorY?: number) {
     const next = nextUnseen(tagGroups, cursor, isUnseen)
     if (next) {
-      moveCursor(next)
+      moveCursor(next, anchorY)
       return
     }
     toast('All changes seen', { id: 'all-changes-seen' })
@@ -114,7 +119,9 @@ export function useReviewCursorKeys({
   useEffect(function keepMoveOnCurrent() {
     moveOnFromRef.current = moveOnFrom
   })
-  const [moveOnAfterSeen] = useState(() => (from: ReviewCursor) => moveOnFromRef.current(from))
+  const [moveOnAfterSeen] = useState(
+    () => (from: ReviewCursor, anchorY?: number) => moveOnFromRef.current(from, anchorY),
+  )
 
   function markSeenAndMoveOn() {
     const cursor = currentCursor()

@@ -33,6 +33,20 @@ export function scrollChildIntoScroller(
   if (delta !== 0) scroller.scrollTop += delta
 }
 
+/**
+ * Scroll `scroller` so `button`'s centre sits at viewport Y `anchorY`, where the pointer is: the next
+ * seen button lands under the finger that clicked the last one. Out of the visible part of the
+ * scroller, the button is only revealed. The browser clamps at the ends of the list.
+ */
+export function scrollButtonToAnchor(scroller: HTMLElement, button: Element, anchorY: number) {
+  const parent = scroller.getBoundingClientRect()
+  const rect = button.getBoundingClientRect()
+  const top = parent.top + stickyTopOf(scroller) + rect.height / 2
+  const target = Math.min(Math.max(anchorY, top), parent.bottom - rect.height / 2)
+  const delta = Math.round(rect.top + rect.height / 2 - target)
+  if (delta !== 0) scroller.scrollTop += delta
+}
+
 /** Px of sticky chrome at the top of the Changes scroller (phone sheet tabs); 0 on desktop. */
 export function stickyTopOf(scroller: HTMLElement) {
   return Number.parseFloat(getComputedStyle(scroller).getPropertyValue('--changes-sticky-top')) || 0

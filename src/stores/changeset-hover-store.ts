@@ -2,8 +2,11 @@ import { create } from 'zustand'
 
 export type ChangesetHover = { type: string; id: number }
 
-/** `focus`: also move DOM focus there, for moves of the review cursor. */
-export type ListScrollTarget = ChangesetHover & { focus?: boolean }
+/**
+ * `focus`: also move DOM focus there, for moves of the review cursor. `anchorY`: put the target's
+ * seen button at this viewport Y, under the pointer that clicked the previous one.
+ */
+export type ListScrollTarget = ChangesetHover & { focus?: boolean; anchorY?: number }
 
 interface ChangesetHoverStore {
   hover: ChangesetHover | null

@@ -48,12 +48,14 @@ export function ReviewIconButton({
   grouped?: boolean
   compact?: boolean
   rounded: 'md' | 'left' | 'right'
-  onClick: () => void
+  /** `anchorY`: the button's centre in the viewport, where the next seen button should land. */
+  onClick: (anchorY: number) => void
   children: ReactNode
 }) {
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation()
-    onClick()
+    const rect = event.currentTarget.getBoundingClientRect()
+    onClick(rect.top + rect.height / 2)
   }
 
   return (
@@ -68,6 +70,7 @@ export function ReviewIconButton({
         type="button"
         aria-label={label}
         aria-pressed={pressed}
+        data-review-seen={tone === 'seen' || undefined}
         className={clsx(
           iconButtonClassName,
           compact ? 'size-4 rounded' : 'size-6',
@@ -131,7 +134,7 @@ export function MarkSeenButton({
 }: {
   label: string
   pressed?: boolean
-  onClick: () => void
+  onClick: (anchorY: number) => void
 }) {
   const keyboard = useKeyboardKnown()
   return (
@@ -161,7 +164,7 @@ export function ObjectReviewActions({
   seen: boolean
   compact?: boolean
   onNoteClick: () => void
-  onSeenClick: () => void
+  onSeenClick: (anchorY: number) => void
 }) {
   const keyboard = useKeyboardKnown()
 
