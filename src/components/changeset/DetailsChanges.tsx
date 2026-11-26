@@ -1602,7 +1602,7 @@ function roleChangeGroups(roles: MemberRoleChange[]) {
     if (group) group.push(role)
     else groups.set(key, [role])
   }
-  return [...groups.values()]
+  return [...groups.entries()]
 }
 
 function memberChangeLineCount(changes: MemberChanges | undefined) {
@@ -1626,13 +1626,13 @@ function MemberChangeLines({
   const plural = (count: number) => (count === 1 ? 'member' : 'members')
   return (
     <div className={clsx(typeScale.small, ACTION.modify.tagText)}>
-      {roleChangeGroups(changes.roles).map((group) => {
+      {roleChangeGroups(changes.roles).map(([key, group]) => {
         const [first] = group
         if (!first) return null
         const ways = group.filter((role) => role.type === 'way').map((role) => role.ref)
         const others = group.filter((role) => role.type !== 'way')
         return (
-          <p key={`${first.from}>${first.to}`}>
+          <p key={key}>
             Role {roleName(first.from)} → {roleName(first.to)}:{' '}
             <WayLinks ids={ways} onSelect={onSelectWay} />
             {others.length > 0

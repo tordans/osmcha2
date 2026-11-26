@@ -680,13 +680,13 @@ function computeElementChanges(
   const statsByNode = nodeActionStats(actions)
   const { parentByChild, childrenByParent } = detectWaySplits(actions)
   const { survivorByPart, partsBySurvivor } = detectWayMerges(actions)
-  const reversedWayIds = new Set(
-    actions.flatMap((action) =>
-      action.new?.type === 'way' && action.new.id != null && wayReversal(action)
-        ? [action.new.id]
-        : [],
-    ),
+  const reversalByWay = new Map(
+    actions.flatMap((action) => {
+      const reversal = action.new?.type === 'way' ? wayReversal(action) : null
+      return reversal && action.new?.id != null ? [[action.new.id, reversal] as const] : []
+    }),
   )
+  const reversedWayIds = new Set(reversalByWay.keys())
   const parentActions = new Map<number, AdiffAction>()
   const survivorActions = new Map<number, AdiffAction>()
   for (const action of actions) {
@@ -735,7 +735,7 @@ function computeElementChanges(
       tags,
       nodeStats,
       geometry,
-      reversed: type === 'way' ? (wayReversal(action) ?? undefined) : undefined,
+      reversed: type === 'way' ? reversalByWay.get(element.id) : undefined,
       minorMove:
         memberChanges && !tagsChanged && followsReversal(memberChanges, reversedWayIds)
           ? { roleFlips: memberChanges.roles.length }
@@ -802,7 +802,8 @@ export function tagMutationKey(tags: TagRow[]): string {
 /**
  * Group elements that share the same added/removed/changed tags (unchanged tags ignored) and sit
  * in one place (see `clusterChangesBySpace`). Elements with no tag mutations stay ungrouped. They
- * are not "the same tag changes". Groups follow the order of their first member.
+ * are not "the same tag changes". Groups follow the order of their first member; the ways
+ * inside a group follow the street (see `orderByConnectivity`).
  */
 export function groupChangesByTagMutation(
   changes: ElementChange[],
