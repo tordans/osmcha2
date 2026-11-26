@@ -335,7 +335,7 @@ describe('line clusters', () => {
           [4, 295],
         ]),
       ]),
-    ).toEqual([['way/1', 'way/3', 'way/2']])
+    ).toEqual([['way/1', 'way/2', 'way/3']])
   })
 
   test('a name conflict between the ends of a chain does not cut a compatible middle', () => {

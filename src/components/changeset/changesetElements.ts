@@ -1,6 +1,7 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
 import { clusterChangesBySpace } from './changeGroupClusters.ts'
 import { minorMoveOf } from './minorMoves.ts'
+import { orderByConnectivity } from './wayChains.ts'
 import { detectWayMerges, detectWaySplits, wayKey } from './waySplits.ts'
 
 export type OsmElementType = 'node' | 'way' | 'relation'
@@ -836,5 +837,5 @@ export function groupChangesByTagMutation(
     if (group) group.push(change)
     else groups.set(key, [change])
   })
-  return [...groups.values()]
+  return [...groups.values()].map(orderByConnectivity)
 }
