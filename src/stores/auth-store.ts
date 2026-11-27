@@ -52,6 +52,13 @@ export function getAuthActions() {
 
 syncAcrossTabs(useAuthStore)
 
+/** Calls `listener` whenever the token changes, here or (through `syncAcrossTabs`) in another tab. */
+export function onAuthTokenChange(listener: (token: string | null) => void) {
+  return useAuthStore.subscribe((state, previous) => {
+    if (state.token !== previous.token) listener(state.token)
+  })
+}
+
 export function waitForAuthHydration(): Promise<void> {
   return waitForHydration(useAuthStore)
 }

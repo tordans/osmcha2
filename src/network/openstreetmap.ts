@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { apiOSM } from '../config/constants.ts'
-import { api, handleResponse } from './request.ts'
+import { api, ApiError, handleResponse } from './request.ts'
 
 const osmChangesetCommentSchema = z.object({
   id: z.union([z.string(), z.number()]).optional(),
@@ -64,6 +64,12 @@ export async function getUserDetails(uid: number) {
         img: u.img?.href,
         name: u.display_name,
       }
+    })
+    // A deleted account (410) or an unknown id answers the same every time: keep the stats.
+    .catch((error: unknown) => {
+      if (error instanceof ApiError && (error.status === 404 || error.status === 410))
+        return { uid }
+      throw error
     })
 
   const fromOSMCha = api

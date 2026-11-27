@@ -83,6 +83,8 @@ type ReviewColumnProps = {
 
 /** How long a list scroll keeps the next seen button under the pointer, while rows fold. */
 const ANCHOR_HOLD_MS = 1000
+/** Keys that scroll the list by themselves. */
+const SCROLL_KEYS = new Set(['PageUp', 'PageDown', 'Home', 'End', ' ', 'ArrowUp', 'ArrowDown'])
 
 export function ReviewColumn({
   changesetId,
@@ -173,13 +175,25 @@ export function ReviewColumn({
     function stop() {
       cancelAnimationFrame(frame)
     }
-    const userScroll = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const
+    // A press on a row's button is the next review step, and the hold must keep that button
+    // under the pointer: only a press on the scroller itself (its scrollbar) counts.
+    function stopOnScrollbar(event: PointerEvent) {
+      if (event.target === scroller) stop()
+    }
+    function stopOnScrollKey(event: KeyboardEvent) {
+      if (SCROLL_KEYS.has(event.key)) stop()
+    }
+    const userScroll = ['wheel', 'touchstart'] as const
     for (const type of userScroll) scroller?.addEventListener(type, stop, { passive: true })
+    scroller?.addEventListener('pointerdown', stopOnScrollbar, { passive: true })
+    scroller?.addEventListener('keydown', stopOnScrollKey, { passive: true })
 
     attempt(40)
     return function cancelRevealChangeRow() {
       stop()
       for (const type of userScroll) scroller?.removeEventListener(type, stop)
+      scroller?.removeEventListener('pointerdown', stopOnScrollbar)
+      scroller?.removeEventListener('keydown', stopOnScrollKey)
     }
   })
 
