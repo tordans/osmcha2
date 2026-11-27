@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_BASEMAP_ID, isBuiltinBasemapId } from '../map/basemapIds.ts'
+import { safeJSONStorage, waitForHydration } from './persistStorage.ts'
 
 const persistedMapSchema = z.object({
   style: z.string(),
@@ -27,6 +28,7 @@ const useMapStyleStore = create<MapStyleStore>()(
     }),
     {
       name: 'map-controls',
+      storage: safeJSONStorage(),
       partialize: (state) => ({
         style: isBuiltinBasemapId(state.style) ? state.style : DEFAULT_BASEMAP_ID,
       }),
@@ -53,11 +55,5 @@ export function getMapStyleActions() {
 }
 
 export function waitForMapStyleHydration(): Promise<void> {
-  if (useMapStyleStore.persist.hasHydrated()) return Promise.resolve()
-  return new Promise((resolve) => {
-    const unsub = useMapStyleStore.persist.onFinishHydration(() => {
-      unsub()
-      resolve()
-    })
-  })
+  return waitForHydration(useMapStyleStore)
 }

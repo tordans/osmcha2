@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { create } from 'zustand'
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { objectRefKey } from '../notes/locateNotes.ts'
 import {
@@ -15,6 +15,7 @@ import {
 } from '../notes/reviewSeen.ts'
 import type { PinParam } from '../routing/pinParam.ts'
 import type { RefParam } from '../routing/refParam.ts'
+import { safeJSONStorage, syncAcrossTabs } from './persistStorage.ts'
 
 export const ANONYMOUS_NOTES_USER = 'anonymous'
 
@@ -56,35 +57,34 @@ const userNotesSchema = z.object({
 })
 
 const persistedNotesSchema = z.object({
-  byUser: z.record(z.string(), userNotesSchema),
+  byUser: z.record(z.string(), z.unknown()),
 })
 
-function memoryStorage(): StateStorage {
-  const mem = new Map<string, string>()
-  return {
-    getItem: (name) => mem.get(name) ?? null,
-    setItem: (name, value) => {
-      mem.set(name, value)
-    },
-    removeItem: (name) => {
-      mem.delete(name)
-    },
+/** Keeps what is valid of a record whose values fail one by one. */
+function validEntries<T>(value: unknown, schema: z.ZodType<T>): Record<string, T> {
+  if (typeof value !== 'object' || value === null) return {}
+  const valid: Record<string, T> = {}
+  for (const [key, entry] of Object.entries(value)) {
+    const parsed = schema.safeParse(entry)
+    if (parsed.success) valid[key] = parsed.data
   }
+  return valid
 }
 
-const fallbackStorage = memoryStorage()
-
-function persistStorage(): StateStorage {
-  try {
-    if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
-      localStorage.setItem('osmcha2-changeset-notes-probe', '1')
-      localStorage.removeItem('osmcha2-changeset-notes-probe')
-      return localStorage
-    }
-  } catch {
-    // Vitest / private mode
+/**
+ * One user's stored notes. A value that no longer fits the schema drops only that changeset's
+ * entry, not every draft and seen mark of every user.
+ */
+function parseUserNotes(value: unknown): UserNotesState {
+  const parsed = userNotesSchema.safeParse(value)
+  if (parsed.success) return parsed.data
+  const user = typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
+  return {
+    drafts: validEntries(user.drafts, changesetDraftSchema),
+    seen: validEntries(user.seen, z.record(z.string(), z.string())),
+    unseenOverrides: validEntries(user.unseenOverrides, z.array(z.string())),
+    seenTouchedAt: validEntries(user.seenTouchedAt, z.number()),
   }
-  return fallbackStorage
 }
 
 function userOf(byUser: Record<string, UserNotesState>, userKey: string): UserNotesState {
@@ -623,20 +623,22 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
     }),
     {
       name: 'osmcha2-changeset-notes',
-      storage: createJSONStorage(() => persistStorage()),
+      storage: safeJSONStorage(),
       partialize: (state) => ({ byUser: state.byUser }),
       merge: (persistedState, currentState) => {
-        const parsed = persistedNotesSchema.safeParse(persistedState)
-        if (!parsed.success) return currentState
+        const stored = persistedNotesSchema.safeParse(persistedState)
+        if (!stored.success) return currentState
         const byUser: Record<string, UserNotesState> = {}
-        for (const [userKey, user] of Object.entries(parsed.data.byUser)) {
-          byUser[userKey] = evictUserNotes(user)
+        for (const [userKey, user] of Object.entries(stored.data.byUser)) {
+          byUser[userKey] = evictUserNotes(parseUserNotes(user))
         }
         return { ...currentState, byUser }
       },
     },
   ),
 )
+
+syncAcrossTabs(useChangesetNotesStore)
 
 export const useChangesetNotesActions = () => useChangesetNotesStore((state) => state.actions)
 

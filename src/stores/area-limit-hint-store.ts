@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { safeJSONStorage } from './persistStorage.ts'
 
 const persistedSchema = z.object({ dismissed: z.record(z.string(), z.number()) })
 
@@ -23,6 +24,7 @@ const useAreaLimitHintStore = create<AreaLimitHintStore>()(
     }),
     {
       name: 'osmcha-area-limit-hint',
+      storage: safeJSONStorage(),
       partialize: (state) => ({ dismissed: state.dismissed }),
       merge: (persistedState, currentState) => {
         const parsed = persistedSchema.safeParse(persistedState)

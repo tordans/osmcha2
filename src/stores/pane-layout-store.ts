@@ -10,6 +10,7 @@ import {
   REVIEW_MIN,
   clampPane,
 } from '../layout/paneWidths.ts'
+import { safeJSONStorage } from './persistStorage.ts'
 
 const persistedPaneLayoutSchema = z.object({
   listWidth: z.number(),
@@ -53,6 +54,7 @@ const usePaneLayoutStore = create<PaneLayoutStore>()(
     }),
     {
       name: 'pane-layout',
+      storage: safeJSONStorage(),
       partialize: (state) => ({
         listWidth: state.listWidth,
         reviewWidth: state.reviewWidth,

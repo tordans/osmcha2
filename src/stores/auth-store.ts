@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { safeJSONStorage, syncAcrossTabs, waitForHydration } from './persistStorage.ts'
 
 const persistedAuthSchema = z.object({
   token: z.union([z.string(), z.null()]),
@@ -24,7 +25,9 @@ const useAuthStore = create<AuthStore>()(
       },
     }),
     {
-      name: 'auth',
+      // Was `auth`: too generic on an origin that other GitHub Pages projects share.
+      name: 'osmcha2-auth',
+      storage: safeJSONStorage({ legacyName: 'auth' }),
       partialize: (state) => ({
         token: state.token,
       }),
@@ -49,12 +52,8 @@ export function getAuthActions() {
   return useAuthStore.getState().actions
 }
 
+syncAcrossTabs(useAuthStore)
+
 export function waitForAuthHydration(): Promise<void> {
-  if (useAuthStore.persist.hasHydrated()) return Promise.resolve()
-  return new Promise((resolve) => {
-    const unsub = useAuthStore.persist.onFinishHydration(() => {
-      unsub()
-      resolve()
-    })
-  })
+  return waitForHydration(useAuthStore)
 }

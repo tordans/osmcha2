@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { safeJSONStorage } from './persistStorage.ts'
 
 export type FetchedEntry<Facts> = {
   fetchedAt: number
@@ -103,6 +104,7 @@ export function createFetchedFactsStore<Facts>({
       }),
       {
         name,
+        storage: safeJSONStorage(),
         partialize: ({ entries }) => ({ entries }),
         merge: (persistedState, currentState) => ({
           ...currentState,

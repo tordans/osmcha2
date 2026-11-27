@@ -66,7 +66,7 @@ export async function completeOAuthLogin(code: string) {
 
     const { token } = await postFinalTokensOSMCha(code)
 
-    // Save to Zustand store (persists to localStorage under "auth" key)
+    // Save to Zustand store (persists to localStorage under "osmcha2-auth")
     getAuthActions().setToken(token)
 
     toast.success('Login successful')

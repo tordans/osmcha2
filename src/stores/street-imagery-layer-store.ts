@@ -10,6 +10,7 @@ import {
   type StreetImageryPhotoKind,
 } from '../components/street_imagery/streetImageryLayerSettings.ts'
 import type { StreetImageryProvider } from '../components/street_imagery/streetImageryTags.ts'
+import { safeJSONStorage } from './persistStorage.ts'
 
 const day = z.iso.date()
 
@@ -61,6 +62,7 @@ const useStreetImageryLayerStore = create<StreetImageryLayerStore>()(
     }),
     {
       name: 'street-imagery-layer',
+      storage: safeJSONStorage(),
       partialize: ({ photoKind, date }) => ({ photoKind, date }),
       merge: (persistedState, currentState) => ({
         ...currentState,

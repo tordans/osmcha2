@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { safeJSONStorage, syncAcrossTabs } from './persistStorage.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const READ_CHANGESET_MAX_AGE_MS = 30 * DAY_MS
@@ -42,6 +43,7 @@ const useReadChangesetsStore = create<ReadChangesetsStore>()(
     }),
     {
       name: 'osmcha-read-changesets',
+      storage: safeJSONStorage(),
       partialize: (state) => ({ readAt: state.readAt }),
       merge: (persistedState, currentState) => {
         const parsed = persistedReadChangesetsSchema.safeParse(persistedState)
@@ -51,6 +53,8 @@ const useReadChangesetsStore = create<ReadChangesetsStore>()(
     },
   ),
 )
+
+syncAcrossTabs(useReadChangesetsStore)
 
 export const useIsChangesetRead = (id: number) =>
   useReadChangesetsStore((state) => state.readAt[String(id)] !== undefined)

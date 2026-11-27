@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ReviewAreaOverlap } from '../components/changeset/reviewArea.ts'
+import { safeJSONStorage } from './persistStorage.ts'
 
 /** A changeset's edits never change, so a result holds as long as we keep it. */
 const REVIEW_AREA_OVERLAP_MAX_ENTRIES = 3000
@@ -55,6 +56,7 @@ const useReviewAreaOverlapStore = create<ReviewAreaOverlapStore>()(
     }),
     {
       name: 'osmcha-review-area-overlap',
+      storage: safeJSONStorage(),
       partialize: (state) => ({ entries: state.entries }),
       merge: (persistedState, currentState) => {
         const parsed = persistedSchema.safeParse(persistedState)
