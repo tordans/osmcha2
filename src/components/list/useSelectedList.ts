@@ -2,6 +2,7 @@ import { useAuth } from '../../hooks/useAuth.ts'
 import { useFilters } from '../../hooks/useFilters.ts'
 import type { AoiFeature } from '../../network/aoi.ts'
 import { useAOI, useAllAOIs } from '../../query/hooks/useAOI.ts'
+import type { Filters } from '../filters/filterTypes.ts'
 
 export function filterName(aoi: AoiFeature) {
   return aoi.properties?.name || `Filter ${aoi.id}`
@@ -12,6 +13,19 @@ function filterValue(filters: Record<string, unknown>, key: string) {
   if (!Array.isArray(items) || items[0] == null || typeof items[0] !== 'object') return undefined
   if (!('value' in items[0])) return undefined
   return items[0].value
+}
+
+/** The "My Changesets" list: the user's changesets of any date. */
+export function myChangesetsFilters(uid: number | string): Filters {
+  return {
+    uids: [{ label: String(uid), value: String(uid) }],
+    date__gte: [{ label: '', value: '' }],
+  }
+}
+
+/** No saved filter and no filter but the sort order: the "Recent" list. */
+export function isRecentList(filters: Record<string, unknown>, aoiId: string | null | undefined) {
+  return !aoiId && Object.keys(filters).every((key) => key === 'order_by')
 }
 
 function selectedListLabel({
@@ -51,7 +65,7 @@ export function useSelectedList() {
     !isSaved && uid != null && String(filterValue(filters, 'uids')) === String(uid)
   const isMyReviews =
     !isSaved && Boolean(username) && filterValue(filters, 'checked_by') === username
-  const isRecent = !isSaved && Object.keys(filters).every((key) => key === 'order_by')
+  const isRecent = isRecentList(filters, aoiId)
   const label = selectedListLabel({
     savedName: isSaved ? (selectedName ?? undefined) : undefined,
     isMyChangesets,

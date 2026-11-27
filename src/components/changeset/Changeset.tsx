@@ -44,6 +44,7 @@ import { refDeepLinkKey, refParamFromElement, refsEqual } from './refSelection.t
 import { ReviewColumn } from './ReviewColumn.tsx'
 import { SurroundingsButton } from './SurroundingsButton.tsx'
 import { changeKey } from './tagGroups.ts'
+import { useOwnChangesetList } from './useOwnChangesetList.ts'
 import { WorkAreaBar } from './WorkAreaBar.tsx'
 import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
@@ -96,6 +97,13 @@ function Changeset({
     Boolean(token),
   )
   const ready = Boolean(changesetId && currentChangeset)
+  useOwnChangesetList(
+    changesetId,
+    currentChangeset?.properties && {
+      username: currentChangeset.properties.user,
+      uid: currentChangeset.properties.uid,
+    },
+  )
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null)
   const { mainMap } = useMap()
   const mapLoaded = useMapLoaded()

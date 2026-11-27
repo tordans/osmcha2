@@ -17,7 +17,7 @@ import {
   DropdownSection,
 } from '../ui/dropdown.tsx'
 import { CheckIcon, ChevronDownIcon, LoaderCircleIcon, PlusIcon } from '../ui/icons.ts'
-import { filterName, useSelectedList } from './useSelectedList.ts'
+import { filterName, myChangesetsFilters, useSelectedList } from './useSelectedList.ts'
 
 const rootRouteApi = getRouteApi('__root__')
 
@@ -88,13 +88,7 @@ export function FiltersMenu({ pending = false }: { pending?: boolean }) {
   const goMyChangesets = () => {
     if (uid == null) return
     void switchList(
-      withFilters(
-        { ...search, aoi: undefined, page: undefined },
-        {
-          uids: [{ label: String(uid), value: String(uid) }],
-          date__gte: [{ label: '', value: '' }],
-        },
-      ),
+      withFilters({ ...search, aoi: undefined, page: undefined }, myChangesetsFilters(uid)),
     )
   }
 
