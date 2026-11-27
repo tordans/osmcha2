@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { Filters } from '../components/filters/filterTypes.ts'
 import { serializeFiltersToObject } from '../utils/filters.ts'
 import { api } from './request.ts'
 
@@ -38,7 +39,7 @@ export function aoiListFromQueryData(data: unknown): AoiFeature[] {
   return []
 }
 
-export function createAOI(name: string, filters: any): Promise<AoiFeature> {
+export function createAOI(name: string, filters: Filters): Promise<AoiFeature> {
   return api
     .post('/aoi/', {
       name,
@@ -55,7 +56,7 @@ export function fetchAllAOIs(): Promise<AoiFeature[]> {
   return api.get('/aoi/').then((data) => aoiListResponseSchema.parse(data).results.features)
 }
 
-export function updateAOI(aoiId: string, name: string, filters: any): Promise<AoiFeature> {
+export function updateAOI(aoiId: string, name: string, filters: Filters): Promise<AoiFeature> {
   return api
     .put(`/aoi/${aoiId}/`, {
       name,

@@ -10,6 +10,7 @@ import {
 } from '../../stores/area-limit-hint-store.ts'
 import { deserializeFiltersFromObject } from '../../utils/filters.ts'
 import { parseAreaLt } from '../filters/areaLtBound.ts'
+import type { Filters } from '../filters/filterTypes.ts'
 import { Button } from '../ui/button.tsx'
 import { filterName, useSelectedList } from './useSelectedList.ts'
 
@@ -17,13 +18,17 @@ import { filterName, useSelectedList } from './useSelectedList.ts'
  * Saved-filter values as the filter form holds them, without `area_lt`. Values the server
  * returns as objects (a geometry) are kept as they are.
  */
-export function filtersWithoutAreaLimit(raw: Record<string, unknown>) {
+export function filtersWithoutAreaLimit(raw: Record<string, unknown>): Filters {
   const strings: Record<string, unknown> = {}
-  const objects: Record<string, Array<{ label: unknown; value: unknown }>> = {}
+  const objects: Filters = {}
   for (const [key, value] of Object.entries(raw)) {
     if (key === 'area_lt' || value == null) continue
     if (typeof value === 'string') strings[key] = value
-    else objects[key] = [{ label: value, value }]
+    else if (typeof value === 'object') objects[key] = [{ label: value, value }]
+    else if (typeof value === 'number') objects[key] = [{ label: String(value), value }]
+    // A boolean is kept as the text it is sent as; the saved filter is the same.
+    else if (typeof value === 'boolean')
+      objects[key] = [{ label: String(value), value: String(value) }]
   }
   return { ...deserializeFiltersFromObject(strings), ...objects }
 }

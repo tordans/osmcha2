@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { Filters } from '../components/filters/filterTypes.ts'
 import { PAGE_SIZE } from '../config/constants.ts'
 import { appendDefaultDate, serializeFiltersToQuery } from '../utils/filters.ts'
 import { changesetFeatureSchema } from './changeset.ts'
@@ -16,7 +17,7 @@ export type ChangesetsPage = z.infer<typeof changesetsPageSchema>
 
 export function fetchChangesetsPage(
   pageIndex: number,
-  filters: unknown = {},
+  filters: Filters = {},
   aoiId: string | null,
   nocache?: boolean,
 ): Promise<ChangesetsPage> {

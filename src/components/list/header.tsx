@@ -8,6 +8,7 @@ import { stripFilterSearch } from '../../routing/filterSearch.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import numberWithCommas from '../../utils/number_with_commas.ts'
 import { DebugDataHelperDialog } from '../debug/DebugDataHelperDialog.tsx'
+import type { Filters } from '../filters/filterTypes.ts'
 import { Button } from '../ui/button.tsx'
 import {
   chromeDropdownMenuClassName,
@@ -39,7 +40,7 @@ const rootRouteApi = getRouteApi('__root__')
 type OrderOption = { label: string; value: string }
 
 interface HeaderProps {
-  filters: any
+  filters: Filters
   aoiId: string | null
   aoiOrderBy: string | null
   handleFilterOrderBy: (value: OrderOption[]) => void

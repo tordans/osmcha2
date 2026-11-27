@@ -13,11 +13,13 @@ export function fetchWatchList(): Promise<WatchlistUser[]> {
   return api.get('/blacklisted-users/').then((data) => z.array(watchlistUserSchema).parse(data))
 }
 
-export function deleteFromWatchList(uid: string): Promise<any> {
+export function deleteFromWatchList(uid: string): Promise<unknown> {
   return api.delete(`/blacklisted-users/${uid}/`)
 }
 
-export function postUserToWatchList(data: any): Promise<any> {
+export function postUserToWatchList(data: {
+  watchlist_user: { username: string; uid: string }
+}): Promise<unknown> {
   return api.post('/blacklisted-users/', {
     username: data.watchlist_user.username,
     uid: data.watchlist_user.uid,

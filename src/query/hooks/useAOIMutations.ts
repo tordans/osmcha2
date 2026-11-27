@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import type { Filters } from '../../components/filters/filterTypes.ts'
 import { createAOI, deleteAOI, updateAOI } from '../../network/aoi.ts'
 import { stripFilterSearch } from '../../routing/filterSearch.ts'
 
@@ -11,7 +12,7 @@ export function useCreateAOI() {
   const navigate = rootRouteApi.useNavigate()
 
   return useMutation({
-    mutationFn: ({ name, filters }: { name: string; filters: any }) => createAOI(name, filters),
+    mutationFn: ({ name, filters }: { name: string; filters: Filters }) => createAOI(name, filters),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ['aois'] })
       toast.success('Filter saved')
@@ -36,7 +37,7 @@ export function useUpdateAOI() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ aoiId, name, filters }: { aoiId: string; name: string; filters: any }) =>
+    mutationFn: ({ aoiId, name, filters }: { aoiId: string; name: string; filters: Filters }) =>
       updateAOI(aoiId, name, filters),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['aoi', variables.aoiId] })

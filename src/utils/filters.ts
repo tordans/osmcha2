@@ -1,5 +1,6 @@
 import { sub } from 'date-fns'
 import { z } from 'zod'
+import type { Filter, FilterOption, Filters } from '../components/filters/filterTypes.ts'
 import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from '../config/constants.ts'
 import { formatUtcDate, utcDayEdge } from './datetime.ts'
 
@@ -22,7 +23,11 @@ export function validateFilters(filters: unknown): boolean {
 
 const geometryJsonSchema = z.union([z.array(z.unknown()), z.record(z.string(), z.unknown())])
 
-export function getDefaultFromDate(extraDays = 0): any {
+function isGeometryJson(value: unknown): value is unknown[] | Record<string, unknown> {
+  return geometryJsonSchema.safeParse(value).success
+}
+
+export function getDefaultFromDate(extraDays = 0): { date__gte: Filter } {
   // The start of a UTC day, like the From field writes it.
   const day = formatUtcDate(sub(new Date(), { days: DEFAULT_FROM_DATE + extraDays }))
   const value = utcDayEdge(day, 'start')!.toISOString()
@@ -31,7 +36,7 @@ export function getDefaultFromDate(extraDays = 0): any {
   }
 }
 
-function getDefaultToDate(): any {
+function getDefaultToDate(): { date__lte: Filter } {
   const value = sub(new Date(), { minutes: DEFAULT_TO_DATE }).toISOString()
   return {
     date__lte: [{ label: '', value }],
@@ -45,13 +50,16 @@ export function lastDaysFilter(days: number) {
   return [{ label: n === 0 ? 'Today' : `Last ${n} days`, value }]
 }
 
-function lastDaysHasValue(filters: any): boolean {
+function lastDaysHasValue(filters: Filters): boolean {
   const items = filters?.last_days
   if (!Array.isArray(items)) return false
   return items.some((item) => item != null && item.value !== '' && item.value != null)
 }
 
-export function appendDefaultDate(filters: any) {
+/** `appendDefaultDate` always leaves a `date__lte` with one entry for a filter that has none. */
+type WithDateTo = Filters & { date__lte: [FilterOption, ...FilterOption[]] }
+
+export function appendDefaultDate(filters: Filters): WithDateTo {
   // Set From date to 2 days behind if there isn't a date query.
   // In case of a users or uids query, set the From date to 30 days behind.
   // last_days (including 0 / today) is an explicit window — do not inject date__gte.
@@ -71,14 +79,15 @@ export function appendDefaultDate(filters: any) {
     result = { ...result, ...getDefaultToDate() }
   }
 
-  return result
+  // A `date__lte` the caller passed stays as it is, so the tuple type holds for the usual input only.
+  return result as WithDateTo
 }
 
 const EMPTY_DATE_GTE = [{ label: '', value: '' }]
 
-function hasDateFilter(filters: any) {
+function hasDateFilter(filters: Filters) {
   const set = (key: string) =>
-    Array.isArray(filters?.[key]) && filters[key].some((item: any) => item?.value !== '')
+    Array.isArray(filters?.[key]) && filters[key].some((item) => item?.value !== '')
   return set('date__gte') || set('date__lte') || lastDaysHasValue(filters)
 }
 
@@ -88,7 +97,7 @@ function hasDateFilter(filters: any) {
  * stores the default window as "last N days" — what the form showed — instead of
  * silently listing all time. An explicitly emptied From date stays empty (= all time).
  */
-export function withSavedFilterDate(filters: any) {
+export function withSavedFilterDate(filters: Filters): Filters {
   if (hasDateFilter(filters) || filters?.date__gte) return filters
   return { ...filters, last_days: lastDaysFilter(DEFAULT_FROM_DATE) }
 }
@@ -97,13 +106,13 @@ export function withSavedFilterDate(filters: any) {
  * A saved filter without a date lists all time. Show that as an empty From date,
  * not as the default date the form shows for new filters.
  */
-export function savedFiltersForForm(filters: any) {
+export function savedFiltersForForm(filters: Filters): Filters {
   if (hasDateFilter(filters)) return filters
   return { ...filters, date__gte: EMPTY_DATE_GTE }
 }
 
 /** Apply one filter-field edit. `last_days` and `date__gte` are mutually exclusive. */
-export function applyFilterChange(filters: any, name: string, values?: any) {
+export function applyFilterChange(filters: Filters, name: string, values?: Filter | null): Filters {
   const next = { ...filters }
 
   if (name === 'date__gte' && values == null) {
@@ -117,8 +126,7 @@ export function applyFilterChange(filters: any, name: string, values?: any) {
   }
 
   if (name === 'last_days') {
-    const raw = Array.isArray(values) ? values[0]?.value : values
-    const days = Number(raw)
+    const days = Number(values[0]?.value)
     if (!Number.isFinite(days) || days < 0) {
       delete next.last_days
       return next
@@ -136,15 +144,15 @@ export function applyFilterChange(filters: any, name: string, values?: any) {
   return next
 }
 
-function getString(input: any): string {
+function getString(input: string | number | object | undefined): string {
   if (typeof input === 'object') {
     return JSON.stringify(input)
   }
   return String(input)
 }
 
-export function deserializeFiltersFromObject(apiFilters: Record<string, unknown>): any {
-  const result: any = {}
+export function deserializeFiltersFromObject(apiFilters: Record<string, unknown>): Filters {
+  const result: Filters = {}
 
   for (const k of Object.keys(apiFilters)) {
     const v = apiFilters[k]
@@ -158,14 +166,14 @@ export function deserializeFiltersFromObject(apiFilters: Record<string, unknown>
 
     // If the value is a JSON object/array (e.g. geometry), keep it as-is.
     // Otherwise split comma-separated string values.
-    let parsed: any
+    let parsed: unknown
     try {
       parsed = JSON.parse(v)
     } catch {
       parsed = undefined
     }
 
-    if (parsed !== undefined && geometryJsonSchema.safeParse(parsed).success) {
+    if (parsed !== undefined && isGeometryJson(parsed)) {
       result[k] = [{ label: parsed, value: parsed }]
     } else {
       result[k] = v.split(',').map((val) => ({
@@ -178,7 +186,7 @@ export function deserializeFiltersFromObject(apiFilters: Record<string, unknown>
   return result
 }
 
-export function serializeFiltersToObject(filters: any): Record<string, string> {
+export function serializeFiltersToObject(filters: Filters): Record<string, string> {
   const result: Record<string, string> = {}
 
   for (const k of Object.keys(filters)) {
@@ -198,7 +206,7 @@ export function serializeFiltersToObject(filters: any): Record<string, string> {
   return result
 }
 
-export function serializeFiltersToQuery(filters: any): string {
+export function serializeFiltersToQuery(filters: Filters): string {
   let query = ''
 
   for (const k of Object.keys(filters)) {
@@ -220,13 +228,13 @@ export function serializeFiltersToQuery(filters: any): string {
 const NAME_PARTS = ['comment', 'users', 'editor', 'source', 'imagery_used', 'hashtags'] as const
 
 /** A first name for "Save as…", from the filters a person reads best. */
-export function suggestFilterName(filters: any) {
+export function suggestFilterName(filters: Filters) {
   const parts: string[] = []
   for (const key of NAME_PARTS) {
     const items = filters?.[key]
     if (!Array.isArray(items)) continue
     const labels = items
-      .map((item: any) => (typeof item?.label === 'string' ? item.label : getString(item?.value)))
+      .map((item) => (typeof item?.label === 'string' ? item.label : getString(item?.value)))
       .filter((label: string) => label && label.trim() !== '')
     if (labels.length > 0) parts.push(labels.join(', '))
     if (parts.length === 2) break
