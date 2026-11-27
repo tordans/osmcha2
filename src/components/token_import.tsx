@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { getAuthActions } from '../stores/auth-store.ts'
 import { parseTokenPaste } from '../utils/auth.ts'
 import { appEntryUrl, buildOpenSignedInBookmarklet } from '../utils/bookmarkletAuthHandoff.ts'
 import { bookmarksBarShortcut, inspectorOs } from '../utils/inspectorOs.ts'
+import { signInWithToken } from '../utils/session.ts'
 import { Button } from './ui/button.tsx'
 import { ErrorMessage, Field } from './ui/fieldset.tsx'
 import { Heading } from './ui/heading.tsx'
@@ -47,7 +47,7 @@ function TokenPasteField() {
       return
     }
     setError(null)
-    getAuthActions().setToken(token)
+    signInWithToken(token)
   }
 
   return (

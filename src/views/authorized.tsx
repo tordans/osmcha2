@@ -1,6 +1,8 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { withoutOAuthCallbackSearch } from '../routing/searchSchemas.ts'
+import { getAuthToken } from '../stores/auth-store.ts'
 import { completeOAuthLogin } from '../utils/auth.ts'
 
 const authorizedRouteApi = getRouteApi('/authorized')
@@ -29,6 +31,15 @@ export function Authorized() {
 
       if (oauthCodesStarted.has(authCode)) return
       oauthCodesStarted.add(authCode)
+
+      // A link to this page must not swap the account someone is already signed in with.
+      if (getAuthToken()) {
+        toast.warning('Already signed in', {
+          description: 'Log out first to sign in with another account.',
+        })
+        goHome()
+        return
+      }
 
       completeOAuthLogin(authCode)
         .then(goHome)

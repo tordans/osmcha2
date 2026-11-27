@@ -16,10 +16,11 @@ import {
 } from '../routing/filterSearch.ts'
 import { routerSearch } from '../routing/routerSearch.ts'
 import { EMPTY_FILTERS, osmchaSearchSchema } from '../routing/searchSchemas.ts'
-import { getAuthActions, getAuthToken } from '../stores/auth-store.ts'
+import { getAuthToken } from '../stores/auth-store.ts'
 import { getFilterCopyActions } from '../stores/filter-copy-store.ts'
 import { getListPaneOpen } from '../stores/list-pane-store.ts'
 import { parseTokenPaste } from '../utils/auth.ts'
+import { signInWithToken } from '../utils/session.ts'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   validateSearch: osmchaSearchSchema,
@@ -42,7 +43,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     if (rawToken) {
       const token = parseTokenPaste(rawToken)
       if (token) {
-        getAuthActions().setToken(token)
+        signInWithToken(token, { fromLink: true })
       }
       throw redirect({
         search: (prev) => ({ ...prev, token: undefined }),

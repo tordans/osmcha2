@@ -37,6 +37,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** The address that answered, when known. */
+    readonly url = '',
   ) {
     super(message)
     this.name = 'ApiError'
@@ -71,6 +73,11 @@ function errorMessageFromBody(data: unknown): string | undefined {
   return undefined
 }
 
+/** OSMCha refused the token it was sent: it was revoked or replaced on osmcha.org. */
+export function isRejectedOsmchaToken(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401 && error.url.startsWith(API_URL)
+}
+
 export const MISSING_CREDENTIALS_MESSAGE = 'Authentication credentials were not provided.'
 
 export function isMissingCredentialsError(error: unknown): boolean {
@@ -89,7 +96,7 @@ export async function handleResponse(response: Response): Promise<unknown> {
       // If JSON parsing fails, use statusText
     }
 
-    throw new ApiError(response.status, errorMessage || 'Request failed')
+    throw new ApiError(response.status, errorMessage || 'Request failed', response.url)
   }
 
   // Handle 204 No Content

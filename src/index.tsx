@@ -16,6 +16,7 @@ import { router } from './router.tsx'
 import { waitForAuthHydration } from './stores/auth-store.ts'
 import { initDeviceInput } from './utils/device.ts'
 import { watchHardwareKeys } from './utils/hardwareKeys.ts'
+import { signOutWhenTokenExpires } from './utils/session.ts'
 
 const CHUNK_RELOAD_KEY = 'osmcha-chunk-reload-at'
 const CHUNK_RELOAD_WINDOW_MS = 10_000
@@ -75,4 +76,5 @@ async function bootstrap() {
   )
 }
 
+signOutWhenTokenExpires(queryClient)
 void bootstrap()

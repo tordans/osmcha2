@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
-import { getAuthActions } from '../stores/auth-store.ts'
 import {
   ALLOWED_HANDOFF_ORIGINS,
   authReadyPayload,
   isAllowedHandoffOrigin,
   parseBookmarkletAuthMessage,
 } from '../utils/bookmarkletAuthHandoff.ts'
+import { signInWithToken } from '../utils/session.ts'
 
 /**
  * Accepts osmcha.org bookmarklet postMessage auth, and pings the opener when ready.
@@ -17,7 +17,7 @@ export function useBookmarkletAuthHandoff() {
       if (!isAllowedHandoffOrigin(event.origin)) return
       const token = parseBookmarkletAuthMessage(event.data)
       if (!token) return
-      getAuthActions().setToken(token)
+      signInWithToken(token)
       toast.success('Signed in from osmcha.org')
     }
 

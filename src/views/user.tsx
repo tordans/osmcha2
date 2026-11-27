@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { AccountPage } from '../components/secondary_pages_header.tsx'
@@ -15,7 +14,7 @@ import { CheckIcon, ClipboardIcon } from '../components/ui/icons.ts'
 import { Code } from '../components/ui/text.tsx'
 import { EditUserDetails } from '../components/user/details.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
-import { useAuthActions } from '../stores/auth-store.ts'
+import { signOut } from '../utils/session.ts'
 
 function CopyTokenButton({ token }: { token: string }) {
   const [copied, setCopied] = useState(false)
@@ -54,14 +53,11 @@ function CopyTokenButton({ token }: { token: string }) {
 
 export function User() {
   const { token, user } = useAuth()
-  const { clearAuth } = useAuthActions()
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const initials = user?.username?.slice(0, 2).toUpperCase()
 
   const handleLogout = () => {
-    clearAuth()
-    queryClient.clear()
+    signOut()
     void navigate({ to: '/' })
   }
 

@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useMatch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
@@ -24,9 +23,9 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { getAuthUrl } from '../network/auth.ts'
 import { usePrefetchChangesetsPage } from '../query/hooks/usePrefetchChangesetsPage.ts'
 import { isAccountPath } from '../routing/filterSearch.ts'
-import { useAuthActions } from '../stores/auth-store.ts'
 import { useListPaneActions, useListPaneCanCollapse } from '../stores/list-pane-store.ts'
 import { isOsmOAuthHost } from '../utils/auth.ts'
+import { signOut } from '../utils/session.ts'
 import { ListButtonLabel } from './ListButtonLabel.tsx'
 import { Logo } from './Logo.tsx'
 
@@ -120,8 +119,6 @@ function ExpandListButton() {
 
 function NavigationMenu() {
   const { token, user } = useAuth()
-  const { clearAuth } = useAuthActions()
-  const queryClient = useQueryClient()
   const navigate = rootRouteApi.useNavigate()
   const pathname = useMatch({ strict: false, shouldThrow: false })?.pathname ?? '/'
   const search = rootRouteApi.useSearch()
@@ -137,8 +134,7 @@ function NavigationMenu() {
   }
 
   const handleLogout = () => {
-    clearAuth()
-    queryClient.clear()
+    signOut()
     void navigate({ to: '/' })
   }
 

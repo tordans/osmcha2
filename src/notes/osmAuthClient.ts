@@ -31,6 +31,11 @@ export function osmAuthAuthenticated() {
   return getOsmAuth()?.authenticated() ?? false
 }
 
+/** Forgets the OpenStreetMap token, so the next person on this browser cannot post as this user. */
+export function logoutOsm() {
+  getOsmAuth()?.logout()
+}
+
 function errorFromUnknown(err: unknown) {
   if (err instanceof Error) return err
   if (typeof err === 'string') return new Error(err)

@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { postFinalTokensOSMCha } from '../network/auth.ts'
-import { getAuthActions } from '../stores/auth-store.ts'
+import { signInWithToken } from './session.ts'
 
 /**
  * OSM OAuth only completes when this origin is a registered redirect:
@@ -66,8 +66,7 @@ export async function completeOAuthLogin(code: string) {
 
     const { token } = await postFinalTokensOSMCha(code)
 
-    // Save to Zustand store (persists to localStorage under "osmcha2-auth")
-    getAuthActions().setToken(token)
+    signInWithToken(token)
 
     toast.success('Login successful')
 
