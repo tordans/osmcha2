@@ -211,7 +211,7 @@ export function serializeFiltersToQuery(filters: any): string {
       .join(',')
 
     if (filterJoined === '') continue
-    query += `&${k}=${encodeURIComponent(filterJoined)}`
+    query += `&${encodeURIComponent(k)}=${encodeURIComponent(filterJoined)}`
   }
 
   return query

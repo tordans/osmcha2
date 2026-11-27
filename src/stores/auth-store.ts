@@ -42,8 +42,6 @@ const useAuthStore = create<AuthStore>()(
 
 export const useAuthToken = () => useAuthStore((state) => state.token)
 
-export const useAuthActions = () => useAuthStore((state) => state.actions)
-
 export function getAuthToken() {
   return useAuthStore.getState().token
 }

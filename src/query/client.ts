@@ -17,6 +17,9 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: false,
+      // A verdict made offline fails with the error toast instead of pausing with an optimistic
+      // state that is never sent.
+      networkMode: 'always',
     },
   },
 })

@@ -6,6 +6,9 @@ import { PERSIST_MAX_AGE_MS } from './cachePolicy.ts'
 
 const PERSIST_KEY = 'osmcha-query-cache'
 
+/** Bump when the shape of a persisted response changes. */
+const PERSIST_CACHE_VERSION = '1'
+
 const queryPersister = createAsyncStoragePersister({
   key: PERSIST_KEY,
   storage: {
@@ -41,6 +44,7 @@ function shouldPersistQuery(query: Query) {
 export const persistQueryOptions = {
   persister: queryPersister,
   maxAge: PERSIST_MAX_AGE_MS,
+  buster: PERSIST_CACHE_VERSION,
   dehydrateOptions: {
     shouldDehydrateQuery: shouldPersistQuery,
   },

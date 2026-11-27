@@ -6,7 +6,7 @@ const whitelistUserSchema = z.object({
 })
 
 export function deleteFromTrustedList(username: string): Promise<void> {
-  return api.delete(`/whitelist-user/${username}/`).then((data) => {
+  return api.delete(`/whitelist-user/${encodeURIComponent(username)}/`).then((data) => {
     z.undefined().parse(data)
   })
 }

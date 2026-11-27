@@ -7,6 +7,5 @@ export function useStatus() {
     queryKey: ['status'],
     queryFn: getStatus,
     ...cacheFiveMinutes,
-    retry: 3,
   })
 }

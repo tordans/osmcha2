@@ -1,12 +1,27 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { exclusiveSiblingsOf } from '../../components/changeset/reviewPresentation.ts'
-import { setTag } from '../../network/changeset.ts'
+import { setTag, type ChangesetFeature, type ChangesetProperties } from '../../network/changeset.ts'
+import { ApiError } from '../../network/request.ts'
+import { changesetDetailKey, patchChangesetProperties } from '../changesetCache.ts'
 
 interface SetTagParams {
   changesetId: number
   tag: { value: number; label: string }
   remove: boolean
+}
+
+type Tags = ChangesetProperties['tags']
+
+/** The tags after adding or removing `tag`; adding drops the tags that exclude it. */
+function updatedTags(existingTags: Tags, tag: SetTagParams['tag'], remove: boolean): Tags {
+  if (remove) {
+    return existingTags.filter((t) => t.id !== tag.value)
+  }
+  const siblings = new Set<string | number | undefined>(exclusiveSiblingsOf(tag.value))
+  const withoutSiblings = existingTags.filter((t) => !siblings.has(t.id))
+  if (withoutSiblings.some((t) => t.id === tag.value)) return withoutSiblings
+  return [...withoutSiblings, { id: tag.value, name: tag.label }]
 }
 
 export function useSetTag() {
@@ -19,8 +34,9 @@ export function useSetTag() {
         for (const siblingId of siblings) {
           try {
             await setTag(changesetId, { value: siblingId, label: String(siblingId) }, true)
-          } catch {
-            // Sibling may not be present; ignore.
+          } catch (error) {
+            // The sibling is not on the changeset: nothing to remove.
+            if (!(error instanceof ApiError && error.status === 404)) throw error
           }
         }
       }
@@ -28,55 +44,14 @@ export function useSetTag() {
     },
 
     onMutate: async ({ changesetId, tag, remove }) => {
-      await queryClient.cancelQueries({ queryKey: ['changeset', changesetId] })
-
-      const previous = queryClient.getQueryData(['changeset', changesetId])
-
-      const updateTags = (existingTags: any[]) => {
-        if (remove) {
-          return existingTags.filter((t: any) => t.id !== tag.value)
-        }
-        const siblings = new Set(exclusiveSiblingsOf(tag.value))
-        const withoutSiblings = existingTags.filter((t: any) => !siblings.has(t.id))
-        if (withoutSiblings.some((t: any) => t.id === tag.value)) return withoutSiblings
-        return [...withoutSiblings, { id: tag.value, name: tag.label }]
+      const detail = queryClient.getQueryData<ChangesetFeature>(changesetDetailKey(changesetId))
+      if (detail && !detail.properties.checked) {
+        throw new Error('Only allowed on checked changesets')
       }
 
-      queryClient.setQueryData(['changeset', changesetId], (old: any) => {
-        if (!old) return old
-
-        const checked = old.properties?.checked
-        if (!checked) {
-          throw new Error('Only allowed on checked changesets')
-        }
-
-        return {
-          ...old,
-          properties: {
-            ...old.properties,
-            tags: updateTags(old.properties?.tags || []),
-          },
-        }
-      })
-
-      queryClient.setQueriesData({ queryKey: ['changesets', 'page'] }, (old: any) => {
-        if (!old?.features) return old
-        const features = old.features.map((f: any) => {
-          if (f.id === changesetId) {
-            return {
-              ...f,
-              properties: {
-                ...f.properties,
-                tags: updateTags(f.properties?.tags || []),
-              },
-            }
-          }
-          return f
-        })
-        return { ...old, features }
-      })
-
-      return { previous, changesetId }
+      return patchChangesetProperties(queryClient, changesetId, (properties) => ({
+        tags: updatedTags(properties.tags, tag, remove),
+      }))
     },
 
     onSuccess: (_data, { tag, remove }) => {
@@ -86,9 +61,7 @@ export function useSetTag() {
     },
 
     onError: (error: Error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['changeset', context.changesetId], context.previous)
-      }
+      context?.restore()
       toast.error('Failed to update tags', {
         description: error.message,
       })
@@ -96,7 +69,7 @@ export function useSetTag() {
 
     onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({
-        queryKey: ['changeset', variables.changesetId],
+        queryKey: changesetDetailKey(variables.changesetId),
       })
       void queryClient.invalidateQueries({ queryKey: ['changesets', 'page'] })
     },

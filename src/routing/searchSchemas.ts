@@ -3,7 +3,12 @@ import type { Filters } from '../components/filters/filterTypes.ts'
 
 export const osmchaSearchSchema = z
   .object({
-    aoi: z.string().optional(),
+    /** Saved-filter id (UUID); it goes into API paths, so anything else is dropped. Coerced because the router parses digits to a number. */
+    aoi: z.coerce
+      .string()
+      .regex(/^[\w-]+$/)
+      .optional()
+      .catch(undefined),
     page: z.coerce.number().int().positive().default(1).catch(1),
     token: z.string().optional(),
     map: z.string().optional(),

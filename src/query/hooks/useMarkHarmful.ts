@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { setHarmful } from '../../network/changeset.ts'
+import { changesetDetailKey, patchChangesetProperties } from '../changesetCache.ts'
 
 interface MarkHarmfulParams {
   changesetId: number
@@ -19,57 +20,25 @@ export function useMarkHarmful() {
     mutationFn: ({ changesetId, harmful, tags }: MarkHarmfulParams) =>
       setHarmful(changesetId, harmful, tags),
 
-    onMutate: async ({ changesetId, harmful, username, tags, tagObjects }) => {
-      await queryClient.cancelQueries({ queryKey: ['changeset', changesetId] })
-
-      const previous = queryClient.getQueryData(['changeset', changesetId])
-
-      const nextTags = (existing: Array<{ id?: number; name: string }> = []) => {
-        if (tags === undefined) return existing
-        if (tags.length === 0) return []
-        if (tagObjects) return tagObjects
-        return tags.map((id) => {
-          const known = existing.find((tag) => tag.id === id)
-          return known ?? { id, name: String(id) }
-        })
-      }
-
-      queryClient.setQueryData(['changeset', changesetId], (old: any) => {
-        if (!old) return old
-        return {
-          ...old,
-          properties: {
-            ...old.properties,
-            check_user: harmful === -1 ? null : username,
-            checked: harmful !== -1,
-            harmful: harmful === -1 ? null : harmful,
-            ...(tags !== undefined ? { tags: nextTags(old.properties?.tags) } : {}),
-          },
+    onMutate: ({ changesetId, harmful, username, tags, tagObjects }) =>
+      patchChangesetProperties(queryClient, changesetId, (properties) => {
+        const nextTags = () => {
+          if (tags === undefined) return properties.tags
+          if (tags.length === 0) return []
+          if (tagObjects) return tagObjects
+          return tags.map((id) => {
+            const known = properties.tags.find((tag) => tag.id === id)
+            return known ?? { id, name: String(id) }
+          })
         }
-      })
 
-      queryClient.setQueriesData({ queryKey: ['changesets', 'page'] }, (old: any) => {
-        if (!old?.features) return old
-        const features = old.features.map((f: any) => {
-          if (f.id === changesetId) {
-            return {
-              ...f,
-              properties: {
-                ...f.properties,
-                check_user: harmful === -1 ? null : username,
-                checked: harmful !== -1,
-                harmful: harmful === -1 ? null : harmful,
-                ...(tags !== undefined ? { tags: nextTags(f.properties?.tags) } : {}),
-              },
-            }
-          }
-          return f
-        })
-        return { ...old, features }
-      })
-
-      return { previous, changesetId }
-    },
+        return {
+          check_user: harmful === -1 ? null : username,
+          checked: harmful !== -1,
+          harmful: harmful === -1 ? null : harmful,
+          ...(tags !== undefined ? { tags: nextTags() } : {}),
+        }
+      }),
 
     onSuccess: (_data, { harmful }) => {
       if (harmful === -1) {
@@ -81,10 +50,8 @@ export function useMarkHarmful() {
       }
     },
 
-    onError: (error: Error, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['changeset', context.changesetId], context.previous)
-      }
+    onError: (error: Error, _variables, context) => {
+      context?.restore()
       toast.error('Failed to update changeset', {
         description: error.message,
       })
@@ -92,7 +59,7 @@ export function useMarkHarmful() {
 
     onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({
-        queryKey: ['changeset', variables.changesetId],
+        queryKey: changesetDetailKey(variables.changesetId),
       })
       void queryClient.invalidateQueries({ queryKey: ['changesets', 'page'] })
     },

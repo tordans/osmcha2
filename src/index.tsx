@@ -54,6 +54,7 @@ async function bootstrap() {
       queryClient,
       persister: persistQueryOptions.persister,
       maxAge: persistQueryOptions.maxAge,
+      buster: persistQueryOptions.buster,
     }).catch((error) => {
       console.warn('Could not restore query cache', error)
     }),
@@ -63,6 +64,7 @@ async function bootstrap() {
   persistQueryClientSubscribe({
     queryClient,
     persister: persistQueryOptions.persister,
+    buster: persistQueryOptions.buster,
     dehydrateOptions: persistQueryOptions.dehydrateOptions,
   })
 

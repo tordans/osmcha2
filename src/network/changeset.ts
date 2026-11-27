@@ -43,7 +43,8 @@ export const changesetFeatureSchema = z.object({
   properties: changesetPropertiesSchema,
 })
 
-type ChangesetFeature = z.infer<typeof changesetFeatureSchema>
+export type ChangesetFeature = z.infer<typeof changesetFeatureSchema>
+export type ChangesetProperties = ChangesetFeature['properties']
 
 const drfDetailSchema = z.object({
   detail: z.string(),

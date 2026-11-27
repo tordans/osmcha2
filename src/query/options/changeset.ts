@@ -6,8 +6,16 @@ import {
   fetchAndParseAugmentedDiffFromOverpass,
 } from '../../network/changeset.ts'
 import { fetchChangesetMetadata } from '../../network/openstreetmap.ts'
-import { handleResponse, isMissingCredentialsError, makeApiRequest } from '../../network/request.ts'
-import { cacheChangesetMap, cacheDiscussion, cacheForever } from '../cachePolicy.ts'
+import {
+  ApiError,
+  handleResponse,
+  isMissingCredentialsError,
+  makeApiRequest,
+  retryUnlessRefused,
+} from '../../network/request.ts'
+import { cacheChangesetMap, cacheDiscussion, cacheFiveMinutes } from '../cachePolicy.ts'
+
+const retryThreeTimes = retryUnlessRefused(3)
 
 export function changesetQueryOptions(changesetId: number) {
   return queryOptions({
@@ -16,14 +24,15 @@ export function changesetQueryOptions(changesetId: number) {
       const req = makeApiRequest(`/changesets/${changesetId}/`)
       const res = await fetch(req)
       if (res.status === 404) {
-        throw new Error('Changeset not found')
+        throw new ApiError(404, 'Changeset not found', res.url)
       }
       return changesetFeatureSchema.parse(await handleResponse(res))
     },
-    ...cacheForever,
+    // Another reviewer can set the verdict, so the detail is refetched after five minutes.
+    ...cacheFiveMinutes,
     retry: (failureCount, error) => {
       if (isMissingCredentialsError(error)) return false
-      return failureCount < 3
+      return retryThreeTimes(failureCount, error)
     },
   })
 }
@@ -39,7 +48,7 @@ export function changesetMapQueryOptions(changesetId: number) {
     // A missing adiff will not appear by retrying right away; the user can retry or load from Overpass.
     retry: (failureCount, error) => {
       if (error instanceof AdiffNotFoundError) return false
-      return failureCount < 3
+      return retryThreeTimes(failureCount, error)
     },
   })
 }
@@ -63,6 +72,5 @@ export function changesetDiscussionQueryOptions(changesetId: number) {
     queryKey: ['changesetDiscussion', changesetId],
     queryFn: () => fetchChangesetMetadata(changesetId),
     ...cacheDiscussion,
-    retry: 3,
   })
 }

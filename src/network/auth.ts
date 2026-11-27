@@ -3,7 +3,14 @@ import { osmchaSocialTokenUrl } from '../config/constants.ts'
 import { api, handleResponse } from './request.ts'
 
 const oauthTokenSchema = z.object({ token: z.string().min(1) })
-const authUrlSchema = z.object({ auth_url: z.string().min(1) })
+/**
+ * Where OSMCha sends the browser to sign in. It goes to `window.location.assign`, so only the OSM
+ * login host is accepted. The sandbox is used by the note comments (osmAuthConfig.ts) only, never by OSMCha.
+ */
+const OSM_AUTH_URL_PREFIX = 'https://www.openstreetmap.org/'
+const authUrlSchema = z.object({
+  auth_url: z.string().startsWith(OSM_AUTH_URL_PREFIX),
+})
 
 const userDetailsSchema = z.object({
   username: z.string(),

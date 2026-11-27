@@ -9,7 +9,6 @@ export function userDetailsQueryOptions() {
     queryKey: ['user', 'details'],
     queryFn: fetchUserDetails,
     ...cacheForever,
-    retry: 3,
   })
 }
 
@@ -18,7 +17,6 @@ export function watchlistQueryOptions() {
     queryKey: ['watchlist'],
     queryFn: fetchWatchList,
     ...cacheForever,
-    retry: 3,
   })
 }
 

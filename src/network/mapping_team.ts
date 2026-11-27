@@ -36,12 +36,12 @@ export function deleteMappingTeam(id: number) {
 
 export function fetchUserMappingTeams(owner: string): Promise<MappingTeam[]> {
   return api
-    .get(`/mapping-team/?owner=${owner}`)
+    .get(`/mapping-team/?owner=${encodeURIComponent(owner)}`)
     .then((data) => mappingTeamListSchema.parse(data).results)
 }
 
 export function updateMappingTeam(id: number, name: string, users: object): Promise<MappingTeam> {
   return api
-    .put(`/mapping-team/${id}`, { name, users })
+    .put(`/mapping-team/${id}/`, { name, users })
     .then((data) => mappingTeamSchema.parse(data))
 }

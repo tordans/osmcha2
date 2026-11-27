@@ -10,11 +10,11 @@ export const cacheForever = {
 
 /**
  * Static adiff XML from adiffs.osmcha.org (Cloudflare). The file does not change
- * once generated. Keep for the whole tab session; do not persist (parsed trees are large).
+ * once generated. Kept while in use and for 10 minutes after (parsed trees are large); not persisted.
  */
 export const cacheChangesetMap = {
   staleTime: Infinity,
-  gcTime: Infinity,
+  gcTime: 10 * MINUTE,
 } as const
 
 /** Signs of a `traffic_sign` value: static catalogue data, kept for the tab session, not persisted. */

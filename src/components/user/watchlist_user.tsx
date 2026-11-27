@@ -2,6 +2,7 @@ import { useForm } from '@tanstack/react-form'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { apiOSM } from '../../config/constants.ts'
 import { handleResponse } from '../../network/request.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
@@ -38,14 +39,14 @@ export function WatchListUser({ onSave }: { onSave: (username: string, uid: stri
   const [lookupError, setLookupError] = useState<'username' | 'uid' | null>(null)
 
   const fetchByUid = async (userId: string): Promise<OsmUser> => {
-    const res = await fetch(`https://www.openstreetmap.org/api/0.6/user/${userId}.json`)
+    const res = await fetch(`${apiOSM}/user/${encodeURIComponent(userId)}.json`)
     const data = osmUserByIdSchema.parse(await handleResponse(res))
     return { uid: data.user.id.toString(), username: data.user.display_name }
   }
 
   const fetchByUsername = async (displayName: string): Promise<OsmUser> => {
     const res = await fetch(
-      `https://www.openstreetmap.org/api/0.6/changesets.json?display_name=${displayName}`,
+      `${apiOSM}/changesets.json?display_name=${encodeURIComponent(displayName)}`,
     )
     const data = osmChangesetsByDisplayNameSchema.parse(await handleResponse(res))
     const changeset = data.changesets[0]

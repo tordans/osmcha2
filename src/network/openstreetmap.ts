@@ -46,16 +46,16 @@ export async function fetchChangesetMetadata(id: number): Promise<OsmChangesetPa
   return osmChangesetPayloadSchema.parse(metadata)
 }
 
-export function getUserDetails(uid: number) {
-  const user: { uid: number } = { uid }
-
+/**
+ * The OSM part throws when it fails, so the query errors and is retried instead of caching a
+ * mapper without a name and edit count. The OSMCha stats are optional: without them the OSM part
+ * still shows.
+ */
+export async function getUserDetails(uid: number) {
   const fromOSM = fetch(`${apiOSM}/user/${uid}.json`)
-    .then((r) => r.json())
-    .then((r) => {
-      const parsed = osmUserPayloadSchema.safeParse(r)
-      if (!parsed.success) return user
-
-      const u = parsed.data.user
+    .then(handleResponse)
+    .then((data) => {
+      const u = osmUserPayloadSchema.parse(data).user
       return {
         uid,
         count: u.changesets?.count ?? undefined,
@@ -65,7 +65,6 @@ export function getUserDetails(uid: number) {
         name: u.display_name,
       }
     })
-    .catch(() => user)
 
   const fromOSMCha = api
     .get(`/user-stats/${uid}/`)
@@ -75,8 +74,6 @@ export function getUserDetails(uid: number) {
     })
     .catch(() => ({}))
 
-  return Promise.all([fromOSMCha, fromOSM]).then(([r1, r2]) => ({
-    ...r2,
-    ...r1,
-  }))
+  const [stats, osm] = await Promise.all([fromOSMCha, fromOSM])
+  return { ...osm, ...stats }
 }
