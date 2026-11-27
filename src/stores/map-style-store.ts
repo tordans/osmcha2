@@ -19,8 +19,11 @@ interface MapStyleStore {
     setStyle: (style: string) => void
     /** Shows a changeset's imagery without making it the reader's saved background. */
     applyChangesetStyle: (style: string) => void
-    /** Back to the reader's background, if the map still shows the changeset's imagery. */
-    revertChangesetStyle: () => void
+    /**
+     * Back to the reader's background, if the map still shows the changeset's imagery. `keep`: the
+     * next changeset's imagery; when it is the one shown, the map stays on it.
+     */
+    revertChangesetStyle: (keep?: string) => void
   }
 }
 
@@ -48,9 +51,10 @@ const useMapStyleStore = create<MapStyleStore>()(
           const base = autoApplied?.styleId === previous ? autoApplied.previous : previous
           set({ style, autoApplied: { styleId: style, previous: base } })
         },
-        revertChangesetStyle: () => {
+        revertChangesetStyle: (keep) => {
           const { style, autoApplied } = get()
           if (!autoApplied) return
+          if (keep != null && autoApplied.styleId === keep && style === keep) return
           set({
             style: autoApplied.styleId === style ? autoApplied.previous : style,
             autoApplied: null,

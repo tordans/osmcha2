@@ -45,4 +45,13 @@ describe('map style store', () => {
     getMapStyleActions().revertChangesetStyle()
     expect(getMapStyle()).toBe('eli:Bing')
   })
+
+  it('stays on the imagery when the next changeset used the same', () => {
+    getMapStyleActions().setStyle('esri')
+    getMapStyleActions().applyChangesetStyle('eli:Bing')
+    getMapStyleActions().revertChangesetStyle('eli:Bing')
+    expect(getMapStyle()).toBe('eli:Bing')
+    getMapStyleActions().revertChangesetStyle()
+    expect(getMapStyle()).toBe('esri')
+  })
 })

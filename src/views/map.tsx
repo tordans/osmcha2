@@ -370,13 +370,18 @@ function CMap({
       async function applyChangesetImagery(id: number, bounds: LngLatBoundsTuple) {
         await waitForMapStyleHydration()
         if (controller.signal.aborted) return
-        // One changeset's imagery rarely covers the next: start again from the reader's background.
-        getMapStyleActions().revertChangesetStyle()
-        if (!imageryUsed) return
+        if (!imageryUsed) {
+          getMapStyleActions().revertChangesetStyle()
+          return
+        }
 
         // Without the index the changeset's imagery is unknown; the map keeps its background.
         const eli = await loadEli().catch(() => null)
         const match = eli ? matchImageryUsedSelection(imageryUsed, eli.getLayers()) : null
+        if (controller.signal.aborted) return
+        // One changeset's imagery rarely covers the next: start again from the reader's
+        // background, unless this changeset used the imagery already shown.
+        getMapStyleActions().revertChangesetStyle(match?.styleId)
         const startStyle = getMapStyle()
         if (controller.signal.aborted || !match || match.styleId === startStyle) return
 
