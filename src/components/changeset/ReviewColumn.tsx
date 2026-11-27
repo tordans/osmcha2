@@ -166,9 +166,18 @@ export function ReviewColumn({
       frame = requestAnimationFrame(() => attempt(remaining - 1))
     }
 
+    // The reviewer's own scroll wins: stop correcting as soon as they wheel or touch the list.
+    const scroller = changesScrollerRef.current
+    function stop() {
+      cancelAnimationFrame(frame)
+    }
+    const userScroll = ['wheel', 'touchstart'] as const
+    for (const type of userScroll) scroller?.addEventListener(type, stop, { passive: true })
+
     attempt(40)
     return function cancelRevealChangeRow() {
-      cancelAnimationFrame(frame)
+      stop()
+      for (const type of userScroll) scroller?.removeEventListener(type, stop)
     }
   })
 
