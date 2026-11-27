@@ -6,6 +6,7 @@ import {
   ArrowsLeftRight,
   ArrowsMerge,
   ArrowsSplit,
+  ArrowUUpLeft,
   BoundingBox,
   BugBeetle,
   CalendarBlank,
@@ -53,6 +54,7 @@ export const ArrowDownWideNarrowIcon = appIcon(SortAscending)
 export const ArrowLeftIcon = appIcon(ArrowLeft)
 export const ArrowRightIcon = appIcon(ArrowRight)
 export const ArrowsLeftRightIcon = appIcon(ArrowsLeftRight)
+export const ArrowUturnLeftIcon = appIcon(ArrowUUpLeft)
 export const ArrowsMergeIcon = appIcon(ArrowsMerge)
 export const ArrowsSplitIcon = appIcon(ArrowsSplit)
 export const ArrowPathIcon = appIcon(ArrowClockwise)

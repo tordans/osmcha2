@@ -111,6 +111,12 @@ export const REVIEW_MARK_UNSEEN: HotkeyBinding = {
   hotkeys: ['Shift+S'],
 }
 
+/** Ctrl+Z on every platform, and Cmd+Z on a Mac. */
+export const REVIEW_UNDO: HotkeyBinding = {
+  label: 'REVIEW_UNDO',
+  hotkeys: ['Mod+Z', 'Control+Z'],
+}
+
 export const REVIEW_NEXT_STEP: HotkeyBinding = {
   label: 'REVIEW_NEXT_STEP',
   hotkeys: ['.'],

@@ -173,8 +173,75 @@ function draftNoteIsBlank(note: DraftNote) {
   return !note.body.trim() && !note.pin
 }
 
+/** One object's seen state before an undoable step: its seen time and its un-seen override. */
+type SeenBefore = { objectKey: string; seenAt: string | undefined; override: boolean }
+
+/** A step the reviewer can take back with the Undo button or Cmd/Ctrl+Z. Lives in memory only. */
+export type UndoEntry = { userKey: string; changesetId: number; label: string } & (
+  | { kind: 'seen'; before: SeenBefore[] }
+  | { kind: 'note'; note: DraftNote; index: number }
+)
+
+const UNDO_LIMIT = 50
+
+function seenBefore(user: UserNotesState, changesetId: number, objectKeys: readonly string[]) {
+  const id = changesetIdKey(changesetId)
+  const overrides = user.unseenOverrides[id] ?? []
+  return [...new Set(objectKeys)].map((objectKey): SeenBefore => ({
+    objectKey,
+    seenAt: user.seen[id]?.[objectKey],
+    override: overrides.includes(objectKey),
+  }))
+}
+
+function seenLabel(objectKeys: readonly string[], seen: boolean) {
+  const what = objectKeys.length === 1 ? objectKeys[0] : `${objectKeys.length} objects`
+  return `Mark ${what} as ${seen ? 'seen' : 'not seen'}`
+}
+
+/**
+ * Adds an undo step for a change of seen marks, unless the marks did not change: marking a seen
+ * object seen again is nothing to take back.
+ */
+function pushSeenUndo(
+  undoStack: UndoEntry[],
+  userKey: string,
+  changesetId: number,
+  before: SeenBefore[],
+  after: UserNotesState,
+  seen: boolean,
+): UndoEntry[] {
+  const changed = before.filter((item) => {
+    const [now] = seenBefore(after, changesetId, [item.objectKey])
+    return (now?.seenAt != null) !== (item.seenAt != null) || now?.override !== item.override
+  })
+  if (changed.length === 0) return undoStack
+  const label = seenLabel(
+    changed.map((item) => item.objectKey),
+    seen,
+  )
+  const entry: UndoEntry = { kind: 'seen', userKey, changesetId, label, before: changed }
+  return [...undoStack, entry].slice(-UNDO_LIMIT)
+}
+
+function restoreSeen(user: UserNotesState, changesetId: number, before: SeenBefore[]) {
+  const id = changesetIdKey(changesetId)
+  const seenMap = { ...user.seen[id] }
+  for (const { objectKey, seenAt } of before) {
+    if (seenAt == null) delete seenMap[objectKey]
+    else seenMap[objectKey] = seenAt
+  }
+  const keys = before.map((item) => item.objectKey)
+  const overrides = [
+    ...withoutOverrides(user, changesetId, keys),
+    ...before.filter((item) => item.override).map((item) => item.objectKey),
+  ]
+  return writeSeen(user, changesetId, seenMap, overrides)
+}
+
 interface ChangesetNotesStore {
   byUser: Record<string, UserNotesState>
+  undoStack: UndoEntry[]
   openEditor: OpenEditor | null
   pinPlacement: PinPlacement | null
   actions: {
@@ -204,13 +271,16 @@ interface ChangesetNotesStore {
     setDraftPin: (userKey: string, changesetId: number, noteId: string, pin: PinParam) => void
     clearPin: (userKey: string, changesetId: number, noteId: string) => void
     clearDraft: (userKey: string, changesetId: number) => void
+    /** Takes back the last undoable step on this changeset; returns it, or null when none. */
+    undo: (userKey: string, changesetId: number) => UndoEntry | null
   }
 }
 
 const useChangesetNotesStore = create<ChangesetNotesStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       byUser: {},
+      undoStack: [],
       openEditor: null,
       pinPlacement: null,
       actions: {
@@ -220,16 +290,21 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             const id = changesetIdKey(changesetId)
             const seenMap = { ...user.seen[id] }
             seenMap[objectKey] = new Date().toISOString()
+            const next = writeSeen(
+              user,
+              changesetId,
+              seenMap,
+              withoutOverrides(user, changesetId, [objectKey]),
+            )
             return {
-              byUser: writeUser(
-                state.byUser,
+              byUser: writeUser(state.byUser, userKey, next),
+              undoStack: pushSeenUndo(
+                state.undoStack,
                 userKey,
-                writeSeen(
-                  user,
-                  changesetId,
-                  seenMap,
-                  withoutOverrides(user, changesetId, [objectKey]),
-                ),
+                changesetId,
+                seenBefore(user, changesetId, [objectKey]),
+                next,
+                true,
               ),
             }
           }),
@@ -243,14 +318,19 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             // other object it does nothing.
             if (seenMap[objectKey] == null && overrides.includes(objectKey)) return state
             delete seenMap[objectKey]
+            const next = writeSeen(user, changesetId, seenMap, [
+              ...withoutOverrides(user, changesetId, [objectKey]),
+              objectKey,
+            ])
             return {
-              byUser: writeUser(
-                state.byUser,
+              byUser: writeUser(state.byUser, userKey, next),
+              undoStack: pushSeenUndo(
+                state.undoStack,
                 userKey,
-                writeSeen(user, changesetId, seenMap, [
-                  ...withoutOverrides(user, changesetId, [objectKey]),
-                  objectKey,
-                ]),
+                changesetId,
+                seenBefore(user, changesetId, [objectKey]),
+                next,
+                false,
               ),
             }
           }),
@@ -261,16 +341,21 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             const seenMap = { ...user.seen[id] }
             const seenAt = new Date().toISOString()
             for (const objectKey of objectKeys) seenMap[objectKey] = seenAt
+            const next = writeSeen(
+              user,
+              changesetId,
+              seenMap,
+              withoutOverrides(user, changesetId, objectKeys),
+            )
             return {
-              byUser: writeUser(
-                state.byUser,
+              byUser: writeUser(state.byUser, userKey, next),
+              undoStack: pushSeenUndo(
+                state.undoStack,
                 userKey,
-                writeSeen(
-                  user,
-                  changesetId,
-                  seenMap,
-                  withoutOverrides(user, changesetId, objectKeys),
-                ),
+                changesetId,
+                seenBefore(user, changesetId, objectKeys),
+                next,
+                true,
               ),
             }
           }),
@@ -280,14 +365,19 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             const id = changesetIdKey(changesetId)
             const seenMap = { ...user.seen[id] }
             for (const objectKey of objectKeys) delete seenMap[objectKey]
+            const next = writeSeen(user, changesetId, seenMap, [
+              ...withoutOverrides(user, changesetId, objectKeys),
+              ...objectKeys,
+            ])
             return {
-              byUser: writeUser(
-                state.byUser,
+              byUser: writeUser(state.byUser, userKey, next),
+              undoStack: pushSeenUndo(
+                state.undoStack,
                 userKey,
-                writeSeen(user, changesetId, seenMap, [
-                  ...withoutOverrides(user, changesetId, objectKeys),
-                  ...objectKeys,
-                ]),
+                changesetId,
+                seenBefore(user, changesetId, objectKeys),
+                next,
+                false,
               ),
             }
           }),
@@ -332,7 +422,24 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
           set((state) => {
             const user = userOf(state.byUser, userKey)
             const draft = draftOf(user, changesetId)
+            const index = draft.notes.findIndex((item) => item.id === noteId)
+            const removed = draft.notes[index]
             const notes = draft.notes.filter((item) => item.id !== noteId)
+            // An empty note is nothing to take back.
+            const undoStack =
+              removed && !draftNoteIsBlank(removed)
+                ? [
+                    ...state.undoStack,
+                    {
+                      kind: 'note' as const,
+                      userKey,
+                      changesetId,
+                      label: 'Delete a note',
+                      note: removed,
+                      index,
+                    },
+                  ].slice(-UNDO_LIMIT)
+                : state.undoStack
             const openEditor =
               state.openEditor?.noteId === noteId && state.openEditor.changesetId === changesetId
                 ? null
@@ -345,6 +452,7 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             return {
               openEditor,
               pinPlacement,
+              undoStack,
               byUser: writeUser(
                 state.byUser,
                 userKey,
@@ -476,8 +584,41 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
               openEditor,
               pinPlacement,
               byUser: writeUser(state.byUser, userKey, { ...user, drafts }),
+              // The notes went out (or were thrown away): bringing one back would post it twice.
+              undoStack: state.undoStack.filter(
+                (entry) =>
+                  !(
+                    entry.kind === 'note' &&
+                    entry.userKey === userKey &&
+                    entry.changesetId === changesetId
+                  ),
+              ),
             }
           }),
+        undo: (userKey, changesetId) => {
+          const state = get()
+          const at = state.undoStack.findLastIndex(
+            (entry) => entry.userKey === userKey && entry.changesetId === changesetId,
+          )
+          const entry = state.undoStack[at]
+          if (!entry) return null
+          const user = userOf(state.byUser, userKey)
+          let next: UserNotesState
+          if (entry.kind === 'seen') {
+            next = restoreSeen(user, changesetId, entry.before)
+          } else {
+            const draft = draftOf(user, changesetId)
+            const notes = draft.notes.some((note) => note.id === entry.note.id)
+              ? draft.notes
+              : draft.notes.toSpliced(Math.min(entry.index, draft.notes.length), 0, entry.note)
+            next = writeDraft(user, changesetId, { ...draft, notes })
+          }
+          set({
+            byUser: writeUser(state.byUser, userKey, next),
+            undoStack: state.undoStack.toSpliced(at, 1),
+          })
+          return entry
+        },
       },
     }),
     {
@@ -569,6 +710,15 @@ export function getPinPlacement() {
   return useChangesetNotesStore.getState().pinPlacement
 }
 
+/** The step Undo would take back on this changeset, or null. */
+export const useLastUndo = (userKey: string, changesetId: number) =>
+  useChangesetNotesStore(
+    (state) =>
+      state.undoStack.findLast(
+        (entry) => entry.userKey === userKey && entry.changesetId === changesetId,
+      ) ?? null,
+  )
+
 export function getChangesetNotesActions() {
   return useChangesetNotesStore.getState().actions
 }
@@ -592,6 +742,7 @@ export function getChangesetDraft(userKey: string, changesetId: number) {
 export function resetChangesetNotesStoreForTests() {
   useChangesetNotesStore.setState({
     byUser: {},
+    undoStack: [],
     openEditor: null,
     pinPlacement: null,
   })

@@ -71,6 +71,7 @@ import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { isOwnChangeset, OWN_CHANGESET_REVIEW_MESSAGE } from './ownChangeset.ts'
 import { type NamedTag, REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
+import { ReviewUndoButton } from './ReviewUndoButton.tsx'
 import { Tags } from './tags.tsx'
 import TranslateButton from './translate_button.tsx'
 
@@ -1025,6 +1026,7 @@ export function DetailsHeader({
             </Dropdown>
           </OwnChangesetHint>
         )}
+        <ReviewUndoButton changesetId={changesetId} />
       </div>
 
       <Alert open={leftoverAlertOpen} onClose={() => setLeftoverAlertOpen(false)} size="md">

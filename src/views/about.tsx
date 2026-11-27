@@ -29,6 +29,11 @@ const SHORTCUTS: Array<{ group: string; action: string; keys: string }> = [
   { group: 'Changeset detail', action: 'Filter edits of the current changeset’s user', keys: 'A' },
   { group: 'Review elements', action: 'Mark as seen and go to the next unseen', keys: 'S' },
   { group: 'Review elements', action: 'Mark as not seen', keys: 'Shift+S' },
+  {
+    group: 'Review elements',
+    action: 'Undo the last seen mark or deleted note',
+    keys: 'Cmd+Z / Ctrl+Z',
+  },
   { group: 'Review elements', action: 'Next element or group', keys: '.' },
   { group: 'Review elements', action: 'Previous element or group', keys: ',' },
   { group: 'Review elements', action: 'Step into a group', keys: 'Enter' },

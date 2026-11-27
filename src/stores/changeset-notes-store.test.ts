@@ -148,4 +148,52 @@ describe('changeset notes store', () => {
     })
     expect(getSeenState('alice', 1).unseenOverrides).toEqual([])
   })
+
+  test('undo takes back seen marks, newest first, per changeset', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.markSeen('alice', 1, 'way/1')
+    actions.markAllSeen('alice', 1, ['way/2', 'way/3'])
+    actions.markSeen('alice', 2, 'way/9')
+    expect(actions.undo('alice', 1)?.label).toBe('Mark 2 objects as seen')
+    expect(Object.keys(getSeenState('alice', 1).seenMap ?? {})).toEqual(['way/1'])
+    expect(actions.undo('alice', 1)?.label).toBe('Mark way/1 as seen')
+    expect(getSeenState('alice', 1).seenMap).toEqual({})
+    expect(actions.undo('alice', 1)).toBeNull()
+    expect(getSeenState('alice', 2).seenMap?.['way/9']).toBeDefined()
+  })
+
+  test('undo of an un-seen mark brings back the seen time and drops the override', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.markSeen('alice', 1, 'way/1')
+    const seenAt = getSeenState('alice', 1).seenMap?.['way/1']
+    actions.markUnseen('alice', 1, 'way/1')
+    expect(actions.undo('alice', 1)?.label).toBe('Mark way/1 as not seen')
+    expect(getSeenState('alice', 1)).toEqual({ seenMap: { 'way/1': seenAt }, unseenOverrides: [] })
+  })
+
+  test('marking a seen object seen again leaves nothing to undo', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.markSeen('alice', 1, 'way/1')
+    actions.undo('alice', 1)
+    actions.markSeen('alice', 1, 'way/1')
+    actions.markSeen('alice', 1, 'way/1')
+    expect(actions.undo('alice', 1)).not.toBeNull()
+    expect(actions.undo('alice', 1)).toBeNull()
+  })
+
+  test('undo brings a deleted note back to its place, until the draft is cleared', () => {
+    resetChangesetNotesStoreForTests()
+    const actions = getChangesetNotesActions()
+    actions.upsertDraftNote('alice', 1, { id: 'a', body: 'first', ref: { type: 'way', id: 1 } })
+    actions.upsertDraftNote('alice', 1, { id: 'b', body: 'second', ref: { type: 'way', id: 2 } })
+    actions.removeDraftNote('alice', 1, 'a')
+    expect(actions.undo('alice', 1)?.label).toBe('Delete a note')
+    expect(getChangesetDraft('alice', 1)?.notes.map((note) => note.id)).toEqual(['a', 'b'])
+    actions.removeDraftNote('alice', 1, 'a')
+    actions.clearDraft('alice', 1)
+    expect(actions.undo('alice', 1)).toBeNull()
+  })
 })

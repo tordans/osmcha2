@@ -10,12 +10,18 @@ import {
   REVIEW_PREVIOUS_STEP,
   REVIEW_STEP_INTO,
   REVIEW_STEP_OUT,
+  REVIEW_UNDO,
   type HotkeyBinding,
 } from '../../config/bindings.ts'
 import { objectRefKey } from '../../notes/locateNotes.ts'
 import { parseRefParam } from '../../routing/refParam.ts'
 import { useChangesetHoverActions } from '../../stores/changeset-hover-store.ts'
-import { getOpenEditor, useChangesetNotesActions } from '../../stores/changeset-notes-store.ts'
+import {
+  getChangesetNotesActions,
+  getOpenEditor,
+  useChangesetNotesActions,
+  type UndoEntry,
+} from '../../stores/changeset-notes-store.ts'
 import { getGroupCursorKey } from '../../stores/review-focus-store.ts'
 import type { ElementChange } from './changesetElements.ts'
 import { refParamFromElement } from './refSelection.ts'
@@ -46,6 +52,23 @@ const LEAVE_EVENT_ALONE = { preventDefault: false, stopPropagation: false }
 export const MoveOnAfterSeenContext = createContext<(from: ReviewCursor, anchorY?: number) => void>(
   () => undefined,
 )
+
+/** Set while the Changes list is mounted: moves the review cursor to what an undo restored. */
+let focusUndone: ((entry: UndoEntry) => void) | null = null
+
+/**
+ * Takes back the last seen mark or deleted note on this changeset, for the Undo button and
+ * Cmd/Ctrl+Z. The review cursor goes back to the objects whose marks came back.
+ */
+export function undoReviewStep(userKey: string, changesetId: number) {
+  const entry = getChangesetNotesActions().undo(userKey, changesetId)
+  if (!entry) return
+  focusUndone?.(entry)
+  toast(`Undone: ${entry.label}`, { id: 'review-undo' })
+}
+
+/** Mod+Z and Control+Z are one chord off a Mac: one press must undo once. */
+const undoneEvents = new WeakSet<KeyboardEvent>()
 
 function overlayIsOpen() {
   return document.querySelector('[role="dialog"], [role="menu"], [role="listbox"]') != null
@@ -115,6 +138,35 @@ export function useReviewCursorKeys({
     clearListScrollTarget()
   }
 
+  /** Back to the row, or the whole group when all its members came back. */
+  function focusOnUndone(entry: UndoEntry) {
+    if (entry.kind !== 'seen') return
+    const keys = entry.before.map((item) => item.objectKey)
+    const [first] = keys
+    if (first == null) return
+    const row = reviewCursorOf(tagGroups, null, first)
+    const group = reviewCursorOf(tagGroups, first, null)
+    const wholeGroup =
+      keys.length > 1 &&
+      group != null &&
+      group.changes.length > 1 &&
+      group.changes.every((change) => keys.includes(changeKey(change)))
+    const cursor = wholeGroup ? group : row
+    if (cursor) moveCursor(cursor)
+  }
+
+  const focusOnUndoneRef = useRef(focusOnUndone)
+  useEffect(function registerUndoFocus() {
+    focusOnUndoneRef.current = focusOnUndone
+  })
+  useEffect(function provideUndoFocus() {
+    const focus = (entry: UndoEntry) => focusOnUndoneRef.current(entry)
+    focusUndone = focus
+    return function withdrawUndoFocus() {
+      if (focusUndone === focus) focusUndone = null
+    }
+  }, [])
+
   const moveOnFromRef = useRef(moveOnFrom)
   useEffect(function keepMoveOnCurrent() {
     moveOnFromRef.current = moveOnFrom
@@ -153,6 +205,11 @@ export function useReviewCursorKeys({
     }),
     ...bind(REVIEW_MARK_UNSEEN, (event) => {
       if (!event.repeat && !overlayIsOpen()) markUnseen()
+    }),
+    ...bind(REVIEW_UNDO, (event) => {
+      if (undoneEvents.has(event) || overlayIsOpen()) return
+      undoneEvents.add(event)
+      undoReviewStep(userKey, changesetId)
     }),
     ...bind(REVIEW_NEXT_STEP, () => {
       if (!overlayIsOpen()) moveTo(nextStep(tagGroups, currentCursor()))
