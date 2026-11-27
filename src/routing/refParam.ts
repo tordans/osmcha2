@@ -1,8 +1,8 @@
 import { z } from 'zod'
+import { osmElementTypeSchema, type OsmElementType } from '../utils/osmElement.ts'
 
-export type RefParam = { type: 'node' | 'way' | 'relation'; id: number; key?: string }
+export type RefParam = { type: OsmElementType; id: number; key?: string }
 
-const osmTypeSchema = z.enum(['node', 'way', 'relation'])
 const osmIdSchema = z
   .string()
   .regex(/^\d+$/)
@@ -10,7 +10,7 @@ const osmIdSchema = z
   .pipe(z.number().int().positive())
 
 const RefParamSchema = z.object({
-  type: osmTypeSchema,
+  type: osmElementTypeSchema,
   id: osmIdSchema,
   key: z.string().min(1).optional(),
 })

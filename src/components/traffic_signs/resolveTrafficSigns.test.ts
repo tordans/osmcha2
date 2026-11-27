@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { resolveTrafficSigns } from './resolveTrafficSigns.ts'
 
-describe('resolveTrafficSigns (real converter package)', () => {
+// The first test loads the real converter package, which takes seconds under the parallel
+// pre-push checks.
+describe('resolveTrafficSigns (real converter package)', { timeout: 30_000 }, () => {
   it('maps DE:314,1044-11 to two signs: the parking sign and the unknown 1044-11', async () => {
     const signs = await resolveTrafficSigns('DE:314,1044-11')
     expect(signs).toHaveLength(2)

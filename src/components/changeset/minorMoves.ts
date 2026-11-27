@@ -1,4 +1,4 @@
-import { objectRefKey } from '../../notes/locateNotes.ts'
+import { objectRefKey } from '../../utils/osmElement.ts'
 import { distanceMeters, longitudeScale, METERS_PER_DEGREE } from './changeGroupClusters.ts'
 import type { AdiffAction, ElementChange, LonLat } from './changesetElements.ts'
 

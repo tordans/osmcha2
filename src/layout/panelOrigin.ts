@@ -1,3 +1,5 @@
+import { clamp } from '../utils/clamp.ts'
+
 let lastPointer = { x: 0, y: 0 }
 let tracking = false
 
@@ -14,10 +16,6 @@ function trackPointer() {
 }
 
 trackPointer()
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value))
-}
 
 function visibleTrigger(name: string) {
   const nodes = document.querySelectorAll(`[data-panel-origin="${name}"]`)

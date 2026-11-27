@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { locateNotes, objectRefKey, type LocatedNotes, type PublishedNote } from './locateNotes.ts'
+import { objectRefKey } from '../utils/osmElement.ts'
+import { locateNotes, type LocatedNotes, type PublishedNote } from './locateNotes.ts'
 
 const ORIGIN = 'https://osmcha.org'
 const CHANGESET_ID = 999
@@ -35,13 +36,6 @@ function meta(
 ): Pick<PublishedNote, 'author'> & Partial<Pick<PublishedNote, 'date' | 'postId'>> {
   return { author: 'alice', date: '2026-08-01T12:00:00Z', postId: 1, ...overrides }
 }
-
-describe('objectRefKey', () => {
-  test('joins type and id', () => {
-    expect(objectRefKey('way', 123)).toBe('way/123')
-    expect(objectRefKey('node', 1)).toBe('node/1')
-  })
-})
 
 describe('locateNotes with a group note', () => {
   test('lands under its first member with the group size; a note on the object stays a plain tag note', () => {

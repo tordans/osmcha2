@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
-import { objectRefKey } from '../notes/locateNotes.ts'
 import {
   changesetIdKey,
   draftsForObject,
@@ -15,6 +14,7 @@ import {
 } from '../notes/reviewSeen.ts'
 import type { PinParam } from '../routing/pinParam.ts'
 import type { RefParam } from '../routing/refParam.ts'
+import { objectRefKey, osmElementTypeSchema } from '../utils/osmElement.ts'
 import { safeJSONStorage, syncAcrossTabs } from './persistStorage.ts'
 
 export const ANONYMOUS_NOTES_USER = 'anonymous'
@@ -23,7 +23,7 @@ type OpenEditor = { changesetId: number; noteId: string }
 type PinPlacement = { changesetId: number; noteId: string; userKey: string }
 
 const refSchema = z.object({
-  type: z.enum(['node', 'way', 'relation']),
+  type: osmElementTypeSchema,
   id: z.number(),
   key: z.string().optional(),
 })
@@ -367,7 +367,7 @@ const useChangesetNotesStore = create<ChangesetNotesStore>()(
             for (const objectKey of objectKeys) delete seenMap[objectKey]
             const next = writeSeen(user, changesetId, seenMap, [
               ...withoutOverrides(user, changesetId, objectKeys),
-              ...objectKeys,
+              ...new Set(objectKeys),
             ])
             return {
               byUser: writeUser(state.byUser, userKey, next),

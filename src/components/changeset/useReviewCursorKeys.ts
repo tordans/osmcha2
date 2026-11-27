@@ -13,7 +13,6 @@ import {
   REVIEW_UNDO,
   type HotkeyBinding,
 } from '../../config/bindings.ts'
-import { objectRefKey } from '../../notes/locateNotes.ts'
 import { parseRefParam } from '../../routing/refParam.ts'
 import { useChangesetHoverActions } from '../../stores/changeset-hover-store.ts'
 import {
@@ -23,12 +22,12 @@ import {
   type UndoEntry,
 } from '../../stores/changeset-notes-store.ts'
 import { getGroupCursorKey } from '../../stores/review-focus-store.ts'
+import { objectRefKey } from '../../utils/osmElement.ts'
 import { overlayIsOpen } from '../../utils/overlayIsOpen.ts'
 import type { ElementChange } from './changesetElements.ts'
 import { refParamFromElement } from './refSelection.ts'
 import { groupHeaderTarget } from './scrollChildIntoScroller.ts'
 import {
-  changeKey,
   nextStep,
   nextUnseen,
   previousStep,
@@ -110,7 +109,7 @@ export function useReviewCursorKeys({
   }
 
   function objectKeysOf({ changes }: ReviewCursor) {
-    return changes.map(changeKey)
+    return changes.map((change) => objectRefKey(change.type, change.id))
   }
 
   function moveCursor(cursor: ReviewCursor, anchorY?: number) {
@@ -147,7 +146,7 @@ export function useReviewCursorKeys({
       keys.length > 1 &&
       group != null &&
       group.changes.length > 1 &&
-      group.changes.every((change) => keys.includes(changeKey(change)))
+      group.changes.every((change) => keys.includes(objectRefKey(change.type, change.id)))
     const cursor = wholeGroup ? group : row
     if (cursor) moveCursor(cursor)
   }

@@ -1,4 +1,5 @@
-import { objectRefKey, type ObjectNotes, type PublishedNote } from './locateNotes.ts'
+import { objectRefKey } from '../utils/osmElement.ts'
+import type { ObjectNotes, PublishedNote } from './locateNotes.ts'
 
 /** A note about a whole "Same tag changes" group carries its size; see `NoteTarget.group`. */
 function isGroupNote(note: { group?: number }): boolean {

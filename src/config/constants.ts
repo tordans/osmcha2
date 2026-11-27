@@ -24,7 +24,7 @@ export const osmchaSocialTokenUrl = `${API_URL}/social-auth/`
 export const apiOSM = 'https://api.openstreetmap.org/api/0.6'
 export const adiffServiceUrl = 'https://adiffs.osmcha.org'
 
-export const whosThat = 'https://whosthat.osmz.ru/whosthat.php?action=names&id='
+export const WHOSTHAT_URL = 'https://whosthat.osmz.ru/whosthat.php?action=names&id='
 
 export const nominatimUrl = 'https://nominatim.openstreetmap.org/search.php'
 /** Nominatim usage policy: at most one request per second. Place search waits for this gap. */

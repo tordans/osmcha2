@@ -1,14 +1,11 @@
+import { objectRefKey } from '../../utils/osmElement.ts'
 import { MAID_URL } from './openInUrls.ts'
 
 /** Open-in URLs for a single OSM element. */
 
-export function elementPath(type: string, id: number | string): string {
-  return `${type}/${id}`
-}
-
 /** The object's page on osm.org. */
 export function elementOsmUrl(type: string, id: number | string): string {
-  return `https://www.openstreetmap.org/${elementPath(type, id)}`
+  return `https://www.openstreetmap.org/${objectRefKey(type, id)}`
 }
 
 export function idToMinimalForm(id: string): string {

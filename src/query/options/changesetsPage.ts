@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { fetchChangesetsPage } from '../../network/changesets_page.ts'
 import { retryUnlessRefused } from '../../network/request.ts'
-import { cacheChangesetList } from '../cachePolicy.ts'
+import { cacheForever } from '../cachePolicy.ts'
 
 export interface ChangesetsPageParams {
   pageIndex: number
@@ -13,7 +13,8 @@ export function changesetsPageQueryOptions({ pageIndex, filters, aoiId }: Change
   return queryOptions({
     queryKey: ['changesets', 'page', pageIndex, filters, aoiId],
     queryFn: () => fetchChangesetsPage(pageIndex, filters, aoiId, false),
-    ...cacheChangesetList,
+    // Review queue: never auto-refetch; the list refresh button does it.
+    ...cacheForever,
     retry: retryUnlessRefused(3),
   })
 }

@@ -1,5 +1,5 @@
 import type { Map } from 'maplibre-gl'
-import { objectRefKey } from '../notes/locateNotes.ts'
+import { objectRefKey } from '../utils/osmElement.ts'
 import { CHANGESET_OVERLAY_BG_LAYER_ID, CHANGESET_SOURCE_ID } from './changesetAdiffViewer.ts'
 import type { ChangesetGeoJSON } from './changesetFeatureState.ts'
 

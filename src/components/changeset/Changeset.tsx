@@ -25,6 +25,7 @@ import {
   usePaneLayoutActions,
 } from '../../stores/pane-layout-store.ts'
 import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
+import { objectRefKey } from '../../utils/osmElement.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import { flyMapToAdiffElement, flyMapToAdiffElements } from '../../views/changesetCamera.ts'
 import {
@@ -43,7 +44,6 @@ import { MapOptions } from './map_options.tsx'
 import { refDeepLinkKey, refParamFromElement, refsEqual } from './refSelection.ts'
 import { ReviewColumn } from './ReviewColumn.tsx'
 import { SurroundingsButton } from './SurroundingsButton.tsx'
-import { changeKey } from './tagGroups.ts'
 import { useOwnChangesetList } from './useOwnChangesetList.ts'
 import { WorkAreaBar } from './WorkAreaBar.tsx'
 import { groupChangesByWorkArea } from './workAreaChanges.ts'
@@ -195,14 +195,19 @@ function Changeset({
   function zoomToGroup(members: readonly ElementChange[]) {
     clearSelection()
     const [firstMember] = members
-    if (firstMember) setGroupCursor(changeKey(firstMember))
+    if (firstMember) setGroupCursor(objectRefKey(firstMember.type, firstMember.id))
     if (!mainMap || !mapLoaded || !viewer) return
     const map = mainMap.getMap()
     runReviewCamera((bottomInset) => {
-      flyMapToAdiffElements(map, viewer, new Set(members.map(changeKey)), {
-        staged: true,
-        bottomInset,
-      })
+      flyMapToAdiffElements(
+        map,
+        viewer,
+        new Set(members.map((change) => objectRefKey(change.type, change.id))),
+        {
+          staged: true,
+          bottomInset,
+        },
+      )
     })
   }
 

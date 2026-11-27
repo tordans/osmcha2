@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { whosThat } from '../config/constants.ts'
+import { WHOSTHAT_URL } from '../config/constants.ts'
 import { handleResponse } from './request.ts'
 
 const whosthatUserSchema = z.object({
@@ -9,7 +9,7 @@ const whosthatUserSchema = z.object({
 const whosthatUsersSchema = z.array(whosthatUserSchema)
 
 export async function getUsers(input: string | number) {
-  const res = await fetch(`${whosThat}${input}`, { method: 'GET' })
+  const res = await fetch(`${WHOSTHAT_URL}${input}`, { method: 'GET' })
   const json = await handleResponse(res)
   const parsed = whosthatUsersSchema.safeParse(json)
   return parsed.success ? parsed.data : []

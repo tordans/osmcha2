@@ -1,3 +1,4 @@
+import { objectRefKey } from '../utils/osmElement.ts'
 import { parseDiscussionNotes, type ParsedNote } from './discussionNotes.ts'
 
 export type PublishedNote = ParsedNote & {
@@ -15,10 +16,6 @@ export type LocatedNotes = {
   changesetNotes: PublishedNote[]
   byObject: Map<string, ObjectNotes>
   unmatched: PublishedNote[]
-}
-
-export function objectRefKey(type: string, id: number): string {
-  return `${type}/${id}`
 }
 
 export function flattenObjectNotes(notes?: ObjectNotes): PublishedNote[] {

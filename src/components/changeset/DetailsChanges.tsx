@@ -6,7 +6,6 @@ import { collectGroupThreads, withoutGroupNotes } from '../../notes/groupNotes.t
 import {
   flattenObjectNotes,
   locateNotes,
-  objectRefKey,
   type LocatedNotes,
   type ObjectNotes,
 } from '../../notes/locateNotes.ts'
@@ -38,6 +37,7 @@ import {
 } from '../../stores/changeset-notes-store.ts'
 import { useIsGroupCursor, useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+import { objectRefKey } from '../../utils/osmElement.ts'
 import { prefersTouchInput } from '../../utils/prefersTouchInput.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { Loading } from '../loading.tsx'
@@ -102,7 +102,7 @@ import {
   workAreaSectionDomId,
 } from './scrollChildIntoScroller.ts'
 import { TAG_GROUP_CODE_STYLE, TAG_GROUP_EDGE, TAG_GROUP_FILL } from './tagGroupColor.ts'
-import { changeKey, tagGroupsOf, type ChangeListItem, type TagGroups } from './tagGroups.ts'
+import { tagGroupsOf, type ChangeListItem, type TagGroups } from './tagGroups.ts'
 import { PresetContextValue, usePresetLine, useSharedPresetLine } from './usePresetLine.ts'
 import { MoveOnAfterSeenContext, useReviewCursorKeys } from './useReviewCursorKeys.ts'
 
@@ -489,7 +489,7 @@ function ChangeList({
             <TagMutationGroup
               key={group.map((change) => `${change.type}/${change.id}`).join(',')}
               changes={group}
-              code={tagGroups.groupByMember.get(changeKey(group[0]))?.code}
+              code={tagGroups.groupByMember.get(objectRefKey(group[0].type, group[0].id))?.code}
               changesetId={changesetId}
               userKey={userKey}
               selected={selected}
@@ -595,7 +595,7 @@ function TagMutationGroup({
   const sharedPresetLine = useSharedPresetLine(changes)
   const selectedInGroup = changes.find((change) => isSelected(change, selected))
   const containsSelected = selectedInGroup != null
-  const cursorOnGroup = useIsGroupCursor(changeKey(changes[0]))
+  const cursorOnGroup = useIsGroupCursor(objectRefKey(changes[0].type, changes[0].id))
   const revealInGroup = tagGroupContainsRef(changes, deepLinkReveal)
   const disclosureKey = selectedInGroup ? `${selectedInGroup.type}/${selectedInGroup.id}` : 'none'
   const groupNoteCountByKey = aggregateNoteCountByKey(changes, notesByObject)
@@ -856,7 +856,7 @@ function TagMutationGroup({
               changesetId={changesetId}
               note={groupEditingNote}
               autoFocus={!prefersTouchInput()}
-              groupObjectKeys={changes.map(changeKey)}
+              groupObjectKeys={changes.map((change) => objectRefKey(change.type, change.id))}
             />
           </div>
         ) : null}

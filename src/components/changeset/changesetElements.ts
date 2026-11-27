@@ -1,10 +1,9 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+import { isOsmElementType, type OsmElementType } from '../../utils/osmElement.ts'
 import { clusterChangesBySpace } from './changeGroupClusters.ts'
 import { minorMoveOf } from './minorMoves.ts'
 import { orderByConnectivity } from './wayChains.ts'
 import { detectWayMerges, detectWaySplits, wayKey } from './waySplits.ts'
-
-export type OsmElementType = 'node' | 'way' | 'relation'
 
 export type AdiffElement = {
   type?: string
@@ -118,10 +117,6 @@ export type ElementChange = {
 }
 
 export const ACTION_ORDER = ['create', 'modify', 'delete'] as const
-
-function isOsmElementType(value: string): value is OsmElementType {
-  return value === 'node' || value === 'way' || value === 'relation'
-}
 
 function isElementActionType(value: string | undefined): value is ElementChange['actionType'] {
   return value === 'create' || value === 'modify' || value === 'delete'

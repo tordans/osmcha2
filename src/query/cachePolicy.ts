@@ -34,11 +34,6 @@ export const cacheDiscussion = {
 /** Review queue: never auto-refetch; the list refresh button turns orange after this. */
 export const LIST_REFRESH_HINT_MS = 5 * MINUTE
 
-export const cacheChangesetList = {
-  staleTime: Infinity,
-  gcTime: PERSIST_MAX_AGE_MS,
-} as const
-
 /**
  * Saved filters (AOIs): cheap list/detail GETs. Show persisted data, then refetch
  * on mount and when the window/tab is focused so another tab's edits show up.

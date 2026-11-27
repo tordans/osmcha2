@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { OSM_ELEMENT_TYPES } from '../utils/osmElement.ts'
 
 /** Visible map layers. Omit `layers` when every changeset layer is on and spyglass is on. */
 
@@ -31,13 +32,12 @@ export type MapLayers = {
   showUnseen: boolean
 }
 
-const ELEMENT_TOKENS = ['node', 'way', 'relation'] as const
 const ACTION_TOKENS = ['create', 'modify', 'delete', 'noop'] as const
 
 export type ReviewFilter = 'unseen' | 'seen'
 
 export const DEFAULT_MAP_LAYERS: MapLayers = {
-  showElements: [...ELEMENT_TOKENS],
+  showElements: [...OSM_ELEMENT_TYPES],
   // Unchanged elements are context around the edits; they stay off until asked for.
   showActions: ACTION_TOKENS.filter((token) => token !== 'noop'),
   spyglass: true,
@@ -100,7 +100,7 @@ export function parseLayersParam(value: unknown) {
     return { ...DEFAULT_MAP_LAYERS, showSeen, showUnseen }
   }
   return {
-    showElements: ELEMENT_TOKENS.filter((token) => tokens.has(token)),
+    showElements: OSM_ELEMENT_TYPES.filter((token) => tokens.has(token)),
     showActions: ACTION_TOKENS.filter((token) => tokens.has(token)),
     spyglass: tokens.has('spyglass'),
     showSeen,

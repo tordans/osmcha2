@@ -1,4 +1,5 @@
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
+import { objectRefKey } from '../../utils/osmElement.ts'
 import type { WorkArea } from '../../views/changesetWorkAreas.ts'
 import {
   groupChangesByTagMutation,
@@ -35,10 +36,6 @@ export type TagGroups = {
 
 /** Letter of the section "Other changes". There are at most 8 work areas (A to H), so no clash. */
 export const OTHER_CHANGES_LETTER = 'X'
-
-export function changeKey(change: Pick<ElementChange, 'type' | 'id'>) {
-  return `${change.type}/${change.id}`
-}
 
 /** Area 1 → A, Area 2 → B, … Area 27 → AA. */
 export function areaLetter(areaId: number): string {
@@ -97,7 +94,10 @@ export function assignTagGroupCodes(
     for (const item of items) {
       if (item.length < 2) continue
       index += 1
-      const group: TagGroup = { code: `${letter}${index}`, memberKeys: item.map(changeKey) }
+      const group: TagGroup = {
+        code: `${letter}${index}`,
+        memberKeys: item.map((change) => objectRefKey(change.type, change.id)),
+      }
       for (const key of group.memberKeys) groupByMember.set(key, group)
     }
   }
@@ -154,8 +154,10 @@ function cursorOnStep(step: ChangeListItem): ReviewCursor {
 
 function indexOfItem(items: ChangeListItem[], cursor: ReviewCursor | null) {
   if (!cursor) return -1
-  const key = changeKey(cursor.changes[0])
-  return items.findIndex((item) => item.some((change) => changeKey(change) === key))
+  const key = objectRefKey(cursor.changes[0].type, cursor.changes[0].id)
+  return items.findIndex((item) =>
+    item.some((change) => objectRefKey(change.type, change.id) === key),
+  )
 }
 
 /** What follows `index`, then what precedes it. */
@@ -172,11 +174,11 @@ export function reviewCursorOf(
   const key = groupCursorKey ?? selectedKey
   if (key == null) return null
   const item = listedItems(tagGroups).find((candidate) =>
-    candidate.some((change) => changeKey(change) === key),
+    candidate.some((change) => objectRefKey(change.type, change.id) === key),
   )
   if (!item) return null
   if (groupCursorKey != null) return { on: 'group', changes: item }
-  const change = item.find((candidate) => changeKey(candidate) === key)
+  const change = item.find((candidate) => objectRefKey(candidate.type, candidate.id) === key)
   return change ? { on: 'row', changes: [change] } : null
 }
 
@@ -208,10 +210,10 @@ export function nextUnseen(
   const at = indexOfItem(items, cursor)
   const item = items[at]
   if (cursor?.on === 'row' && item) {
-    const key = changeKey(cursor.changes[0])
+    const key = objectRefKey(cursor.changes[0].type, cursor.changes[0].id)
     const member = wrappedAfter(
       item,
-      item.findIndex((change) => changeKey(change) === key),
+      item.findIndex((change) => objectRefKey(change.type, change.id) === key),
     ).find(unseen)
     if (member) return { on: 'row', changes: [member] }
   }

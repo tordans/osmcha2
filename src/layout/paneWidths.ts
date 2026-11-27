@@ -1,3 +1,5 @@
+import { clamp } from '../utils/clamp.ts'
+
 export const LIST_DEFAULT = 288
 export const LIST_MIN = 240
 export const LIST_MAX = 480
@@ -18,10 +20,6 @@ export type PaneSide = 'list' | 'review'
 export type PreferredPaneWidths = {
   list: number
   review: number
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value))
 }
 
 function finiteOr(value: number, fallback: number) {

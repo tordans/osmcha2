@@ -8,6 +8,7 @@ import {
 } from '../../query/hooks/useSurroundings.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { useGroupCursorKey } from '../../stores/review-focus-store.ts'
+import { objectRefKey } from '../../utils/osmElement.ts'
 import type { ChangesetAdiffViewer } from '../../views/changesetAdiffViewer.ts'
 import type { WorkArea } from '../../views/changesetWorkAreas.ts'
 import {
@@ -22,7 +23,7 @@ import { LoaderCircleIcon, SurroundingsIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { buildElementChanges } from './changesetElements.ts'
 import { mapControlButtonClassName } from './map_options.tsx'
-import { changeKey, tagGroupsOf } from './tagGroups.ts'
+import { tagGroupsOf } from './tagGroups.ts'
 
 const TOOLTIP = {
   ready: `Load the OSM objects around the changes in this view, up to ${MAX_BOXES_PER_CLICK} areas per click. Uses the public Postpass service. The map stays where it is.`,
@@ -55,7 +56,9 @@ export function SurroundingsButton({
     () =>
       pointsByElement(
         changesetFeatureIndex(viewer.geojson),
-        changes.filter((change) => change.minorMove == null).map(changeKey),
+        changes
+          .filter((change) => change.minorMove == null)
+          .map((change) => objectRefKey(change.type, change.id)),
       ),
     [viewer.geojson, changes],
   )

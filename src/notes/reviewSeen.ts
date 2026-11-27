@@ -1,5 +1,5 @@
 import type { RefParam } from '../routing/refParam.ts'
-import { objectRefKey } from './locateNotes.ts'
+import { objectRefKey } from '../utils/osmElement.ts'
 
 export const DRAFT_MAX_AGE_MS = 21 * 24 * 60 * 60 * 1000
 export const SEEN_LRU_CAP = 40
