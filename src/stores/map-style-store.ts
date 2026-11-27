@@ -8,30 +8,60 @@ const persistedMapSchema = z.object({
   style: z.string(),
 })
 
+/** The changeset's imagery the map switched to by itself, and the background the reader had. */
+type AutoApplied = { styleId: string; previous: string }
+
 interface MapStyleStore {
   style: string
+  /** For this tab only: the next changeset starts again from the reader's background. */
+  autoApplied: AutoApplied | null
   actions: {
     setStyle: (style: string) => void
+    /** Shows a changeset's imagery without making it the reader's saved background. */
+    applyChangesetStyle: (style: string) => void
+    /** Back to the reader's background, if the map still shows the changeset's imagery. */
+    revertChangesetStyle: () => void
   }
+}
+
+function persistedStyle(state: Pick<MapStyleStore, 'style' | 'autoApplied'>) {
+  const style =
+    state.autoApplied?.styleId === state.style ? state.autoApplied.previous : state.style
+  return isBuiltinBasemapId(style) ? style : DEFAULT_BASEMAP_ID
 }
 
 const useMapStyleStore = create<MapStyleStore>()(
   persist(
     (set, get) => ({
       style: DEFAULT_BASEMAP_ID,
+      autoApplied: null,
       actions: {
         // persist writes localStorage after every set call, so skip unchanged styles.
+        // A pick of the reader, also of the imagery shown already, is theirs to keep.
         setStyle: (style) => {
-          if (get().style !== style) set({ style })
+          if (get().style !== style || get().autoApplied) set({ style, autoApplied: null })
+        },
+        applyChangesetStyle: (style) => {
+          const { style: previous, autoApplied } = get()
+          if (previous === style) return
+          // Switching from one changeset's imagery to the next keeps the reader's background.
+          const base = autoApplied?.styleId === previous ? autoApplied.previous : previous
+          set({ style, autoApplied: { styleId: style, previous: base } })
+        },
+        revertChangesetStyle: () => {
+          const { style, autoApplied } = get()
+          if (!autoApplied) return
+          set({
+            style: autoApplied.styleId === style ? autoApplied.previous : style,
+            autoApplied: null,
+          })
         },
       },
     }),
     {
       name: 'map-controls',
       storage: safeJSONStorage(),
-      partialize: (state) => ({
-        style: isBuiltinBasemapId(state.style) ? state.style : DEFAULT_BASEMAP_ID,
-      }),
+      partialize: (state) => ({ style: persistedStyle(state) }),
       merge: (persistedState, currentState) => {
         const parsed = persistedMapSchema.safeParse(persistedState)
         if (!parsed.success) return currentState

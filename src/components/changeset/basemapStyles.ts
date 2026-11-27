@@ -131,7 +131,7 @@ export async function resolveBasemapStyle(styleId: string): Promise<maplibre.Sty
   }
 
   const eli = await loadEli().catch(() => null)
-  const layer = await eli?.getLayerHydrated(eliId)
+  const layer = await eli?.getLayerHydrated(eliId).catch(() => undefined)
   if (!eli || !layer) {
     return cloneBasemapStyle(DEFAULT_BASEMAP_STYLE)
   }

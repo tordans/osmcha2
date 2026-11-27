@@ -1,6 +1,11 @@
 import { useThrottledCallback } from '@tanstack/react-pacer'
 import { getRouteApi } from '@tanstack/react-router'
-import type { Map as MaplibreMap, MapLibreEvent, StyleSpecification } from 'maplibre-gl'
+import type {
+  Map as MaplibreMap,
+  MapLibreEvent,
+  MapSourceDataEvent,
+  StyleSpecification,
+} from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import '../utils/maplibreWorker.ts'
 import { lazy, Suspense, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
@@ -242,12 +247,14 @@ function CMap({
   const containerRef = useRef<HTMLDivElement>(null)
   const applyingCameraRef = useRef(false)
   const urlWritesEnabledRef = useRef(false)
+  // The ?map= this map wrote itself: when it lands, the camera has moved on and must not jump back.
+  const lastWrittenMapRef = useRef<string | null>(null)
+  // The changeset source the feature state was set on; a style switch replaces it.
+  const changesetSourceRef = useRef<unknown>(null)
   const lastClickFeatureIdRef = useRef<string | number | null>(null)
   // `<changeset>:<imagery_used>` last applied: the same text on the next changeset applies again.
   const matchedImageryUsedRef = useRef<string | undefined>(undefined)
-  // The changeset's imagery the map switched to, and the background it showed before.
-  const autoAppliedImageryRef = useRef<{ styleId: string; previous: string } | null>(null)
-  // The map stays mounted across changesets; warn once per changeset, not once per session.
+  // Warn once per changeset.
   const emptyAdiffWarnedForRef = useRef<number | null>(null)
   const [mapStyle, setMapStyle] = useState<StyleSpecification | null>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -286,6 +293,7 @@ function CMap({
   const replaceMapSearch = useEffectEvent((next: string) => {
     if (!urlWritesEnabledRef.current) return
     if (next === mapSearch) return
+    lastWrittenMapRef.current = next
     void navigate({
       search: (prev) => ({ ...prev, map: next }),
       replace: true,
@@ -362,12 +370,8 @@ function CMap({
       async function applyChangesetImagery(id: number, bounds: LngLatBoundsTuple) {
         await waitForMapStyleHydration()
         if (controller.signal.aborted) return
-        // One changeset's imagery rarely covers the next: start again from the background before it.
-        const autoApplied = autoAppliedImageryRef.current
-        autoAppliedImageryRef.current = null
-        if (autoApplied && getMapStyle() === autoApplied.styleId) {
-          getMapStyleActions().setStyle(autoApplied.previous)
-        }
+        // One changeset's imagery rarely covers the next: start again from the reader's background.
+        getMapStyleActions().revertChangesetStyle()
         if (!imageryUsed) return
 
         // Without the index the changeset's imagery is unknown; the map keeps its background.
@@ -386,8 +390,7 @@ function CMap({
         }
         // The reader picked a background while the check ran.
         if (getMapStyle() !== startStyle) return
-        autoAppliedImageryRef.current = { styleId: match.styleId, previous: startStyle }
-        getMapStyleActions().setStyle(match.styleId)
+        getMapStyleActions().applyChangesetStyle(match.styleId)
       }
 
       void applyChangesetImagery(changesetId, viewBounds).finally(() => {
@@ -426,6 +429,7 @@ function CMap({
       const intent = changesetCameraIntent(mapSearch)
       if (intent.type !== 'restore') return
       if (serializeMapCamera(map) === mapSearch) return
+      if (mapSearch === lastWrittenMapRef.current) return
 
       runWhileApplyingCamera(applyingCameraRef, () => {
         map.jumpTo({
@@ -625,6 +629,17 @@ function CMap({
     setStyleEpoch((epoch) => epoch + 1)
   }
 
+  // A background switch rebuilds the style and with it the changeset source, which drops its
+  // feature state (seen, selected, hover): set it again on the new source.
+  function handleSourceData(event: MapSourceDataEvent) {
+    if (event.sourceId !== CHANGESET_SOURCE_ID) return
+    const source = event.target.getSource(CHANGESET_SOURCE_ID)
+    if (!source || source === changesetSourceRef.current) return
+    const first = changesetSourceRef.current == null
+    changesetSourceRef.current = source
+    if (!first) setStyleEpoch((epoch) => epoch + 1)
+  }
+
   function handleMoveEnd(event: ViewStateChangeEvent) {
     onViewportEditorLayersMoveEnd()
     onDebugMapInspectorMoveEnd()
@@ -744,6 +759,7 @@ function CMap({
             style={{ width: '100%', height: '100%' }}
             onLoad={handleLoad}
             onMoveEnd={handleMoveEnd}
+            onSourceData={handleSourceData}
             // The inspect flyout sits at a screen point; once the map moves it points at nothing.
             onMoveStart={clearInspect}
             onClick={handleClick}
