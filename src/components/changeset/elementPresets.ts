@@ -2,7 +2,8 @@
 // `buildElementChanges`, so that the list works before the preset data has arrived.
 import type { PresetMatcher } from '../../presets/matcher.ts'
 import type { Geometry, LonLat, Preset, Tags } from '../../presets/types.ts'
-import type { AdiffAction, ElementChange, TagRow } from './changesetElements.ts'
+import type { AdiffAction, ElementChange } from './changesetElements.ts'
+import type { TagRow } from './tagRows.ts'
 
 type Side = 'old' | 'new'
 

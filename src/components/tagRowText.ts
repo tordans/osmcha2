@@ -1,4 +1,4 @@
-import type { TagRow } from './changeset/changesetElements.ts'
+import type { TagRow } from './changeset/tagRows.ts'
 
 /** The fields of a tag row that the sign and photo helpers read; `TagRowsItem` and `TagRow` fit. */
 export type TagRowText = {
