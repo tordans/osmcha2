@@ -48,6 +48,7 @@ import {
   ArrowTopRightOnSquareIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
+  InformationCircleIcon,
   MapPinIcon,
 } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -815,6 +816,15 @@ function TagMutationGroup({
             {changes.length}× {sharedPresetLine ?? 'Same tag changes'}
           </span>
         </button>
+        <Tooltip
+          as="button"
+          aria-label="About this group"
+          content={TAG_GROUP_EXPLANATION}
+          placement="bottom-end"
+          className="inline-flex size-6 flex-none items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
+        >
+          <InformationCircleIcon className="size-4" aria-hidden />
+        </Tooltip>
         <MarkSeenButton
           label={allSeen ? `Mark all ${changes.length} unseen` : `Mark all ${changes.length} seen`}
           pressed={allSeen}
@@ -829,10 +839,7 @@ function TagMutationGroup({
         className="overflow-hidden"
         inert={!open}
       >
-        <p className={clsx(typeScale.small, 'px-1 pt-1 pb-3 pl-7 text-zinc-500')}>
-          {TAG_GROUP_EXPLANATION}
-        </p>
-        <div className="border-t font-mono">
+        <div className="mt-1 border-t font-mono">
           <TagRows
             rows={mutations}
             emptyLabel="No tag changes"
