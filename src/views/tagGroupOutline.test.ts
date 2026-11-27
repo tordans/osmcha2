@@ -133,7 +133,8 @@ describe('computeTagGroupOutline', () => {
       if (building.kind !== 'line') throw new Error('expected a line')
       for (const at of building.points) expect(inside(outline.ring, at)).toBe(true)
     }
-  })
+    // 800 buildings: well under a second alone, past the 5 s default under the parallel checks.
+  }, 30_000)
 })
 
 describe('labelPoint', () => {

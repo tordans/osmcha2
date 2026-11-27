@@ -55,9 +55,10 @@ function renderDialog() {
 }
 
 // The dialog loads its content lazily; the first transform of it can take longer than a lookup waits.
+// Under the parallel pre-push checks that transform alone can pass the 10 s hook default.
 beforeAll(async () => {
   await import('./StreetImageryDialogContent.tsx')
-})
+}, 60_000)
 
 afterEach(() => {
   act(() => getStreetImageryViewerActions().close())
