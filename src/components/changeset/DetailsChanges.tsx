@@ -602,22 +602,21 @@ function TagMutationGroup({
   const highlightTagKey = revealInGroup && deepLinkReveal?.key ? deepLinkReveal.key : undefined
   // The notes about the whole group live in the group panel; the member rows leave them out.
   const groupThreads = collectGroupThreads(changes, notesByObject)
-  const memberStates = changes
-    .map((change) => {
-      const notes = notesByObject.get(objectRefKey(change.type, change.id))
-      return {
+  const memberStates = changes.map((change) => {
+    const notes = notesByObject.get(objectRefKey(change.type, change.id))
+    return {
+      change,
+      ...reviewState(
         change,
-        ...reviewState(
-          change,
-          objectSeenOf({ seenMap, unseenOverrides }, objectRefKey(change.type, change.id)),
-          notes,
-          draftsOn(groupDrafts, change.type, change.id).filter((note) => note.group == null),
-          currentUser,
-          withoutGroupNotes(notes),
-        ),
-      }
-    })
-    .sort((left, right) => Number(right.hasNotes) - Number(left.hasNotes))
+        objectSeenOf({ seenMap, unseenOverrides }, objectRefKey(change.type, change.id)),
+        notes,
+        draftsOn(groupDrafts, change.type, change.id).filter((note) => note.group == null),
+        currentUser,
+        withoutGroupNotes(notes),
+      ),
+    }
+  })
+  // Kept in street order: the keyboard walks the group in that order too.
   const editingNote =
     openEditorNoteId != null ? groupDrafts.find((note) => note.id === openEditorNoteId) : undefined
   const editingInGroup =

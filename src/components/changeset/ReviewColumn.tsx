@@ -25,6 +25,7 @@ import {
 import { useReviewFocusActions } from '../../stores/review-focus-store.ts'
 import { getReviewSheetPosition } from '../../stores/review-sheet-store.ts'
 import { useKeyboardKnown, withKeyHint } from '../../utils/hardwareKeys.ts'
+import { unlessOverlayOpen } from '../../utils/overlayIsOpen.ts'
 import type { ActiveWorkArea, WorkArea } from '../../views/changesetWorkAreas.ts'
 import { moveReviewSheet, resetReviewSheet } from '../../views/reviewCamera.ts'
 import { Badge } from '../ui/badge.tsx'
@@ -166,12 +167,13 @@ export function ReviewColumn({
       frame = requestAnimationFrame(() => attempt(remaining - 1))
     }
 
-    // The reviewer's own scroll wins: stop correcting as soon as they wheel or touch the list.
+    // The reviewer's own scroll wins: stop correcting as soon as they wheel, touch, drag the
+    // scrollbar or page with the keyboard.
     const scroller = changesScrollerRef.current
     function stop() {
       cancelAnimationFrame(frame)
     }
-    const userScroll = ['wheel', 'touchstart'] as const
+    const userScroll = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const
     for (const type of userScroll) scroller?.addEventListener(type, stop, { passive: true })
 
     attempt(40)
@@ -229,7 +231,7 @@ export function ReviewColumn({
     COLUMN_TABS.flatMap((tab) =>
       tab.hotkeys.map((hotkey) => ({
         hotkey,
-        callback: () => selectPanel(tab.key),
+        callback: unlessOverlayOpen(() => selectPanel(tab.key)),
       })),
     ),
   )

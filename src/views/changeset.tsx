@@ -26,6 +26,7 @@ import { useChangesetHoverActions } from '../stores/changeset-hover-store.ts'
 import { useReadChangesetsActions } from '../stores/read-changesets-store.ts'
 import { useReviewFocusActions } from '../stores/review-focus-store.ts'
 import { getStreetImageryViewerActions } from '../stores/street-imagery-viewer-store.ts'
+import { unlessOverlayOpen } from '../utils/overlayIsOpen.ts'
 import { useChangesetAdiffViewer } from './changesetAdiffViewer.ts'
 import { changesetWorkAreas } from './changesetWorkAreas.ts'
 import { CMap } from './map.tsx'
@@ -145,7 +146,7 @@ function ChangesetSession({ changesetId }: { changesetId: number }) {
   useHotkeys(
     FILTER_BY_USER.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: filterChangesetsByUser,
+      callback: unlessOverlayOpen(filterChangesetsByUser),
     })),
   )
 

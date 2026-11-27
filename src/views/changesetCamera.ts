@@ -147,8 +147,31 @@ function animatePanThenZoom(
   const startedAt = performance.now()
   cameraAnimating = true
 
+  // The animation jumps the camera every frame: a drag or wheel would be snapped back, and a
+  // removed map (another changeset opened) must not be driven on, so either ends it.
+  const container = map.getCanvasContainer()
+  const interruptEvents = ['wheel', 'pointerdown', 'touchstart'] as const
+  function interrupt() {
+    if (generation === stagedFlyGeneration) {
+      stagedFlyGeneration++
+      cameraAnimating = false
+    }
+    detach()
+  }
+  function detach() {
+    for (const type of interruptEvents) container.removeEventListener(type, interrupt)
+    map.off('remove', interrupt)
+  }
+  for (const type of interruptEvents) {
+    container.addEventListener(type, interrupt, { passive: true })
+  }
+  map.on('remove', interrupt)
+
   function frame(now: number) {
-    if (generation !== stagedFlyGeneration) return
+    if (generation !== stagedFlyGeneration) {
+      detach()
+      return
+    }
 
     const t = clamp01((now - startedAt) / duration)
     const panT = easeInOutCubic(clamp01(t / PAN_PHASE_END))
@@ -164,6 +187,7 @@ function animatePanThenZoom(
 
     // Clear before the last jumpTo so onMoveEnd can write the final ?map=.
     cameraAnimating = false
+    detach()
     map.jumpTo({ center, zoom, bearing, pitch })
   }
 

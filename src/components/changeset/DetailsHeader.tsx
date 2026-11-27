@@ -34,6 +34,7 @@ import { parseRefParam } from '../../routing/refParam.ts'
 import { useMapLoaded } from '../../stores/map-loaded-store.ts'
 import { formatAccountAge, formatLocalDateTime, parseOsmDate } from '../../utils/datetime.ts'
 import { formatCompactCount } from '../../utils/formatCount.ts'
+import { unlessOverlayOpen } from '../../utils/overlayIsOpen.ts'
 import { useMapCamera } from '../../views/useMapCamera.ts'
 import { editorCompactName, editorShortname } from '../list/editorShortname.ts'
 import { ReviewVerdictIcon } from '../list/ReviewStatusBadge.tsx'
@@ -388,39 +389,39 @@ export function DetailsHeader({
   useHotkeys([
     ...VERIFY_BAD.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => markNeedsALook(),
+      callback: unlessOverlayOpen(() => markNeedsALook()),
     })),
     ...VERIFY_CLEAR.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => handleMarkHarmful(-1),
+      callback: unlessOverlayOpen(() => handleMarkHarmful(-1)),
     })),
     ...VERIFY_GOOD.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => requestLooksOk(),
+      callback: unlessOverlayOpen(() => requestLooksOk()),
     })),
     ...OPEN_IN_JOSM.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => openExternal(urls.josm),
+      callback: unlessOverlayOpen(() => openExternal(urls.josm)),
     })),
     ...OPEN_IN_ID.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => openExternal(urls.id),
+      callback: unlessOverlayOpen(() => openExternal(urls.id)),
     })),
     ...OPEN_IN_OSM.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => openExternal(urls.osm),
+      callback: unlessOverlayOpen(() => openExternal(urls.osm)),
     })),
     ...OPEN_IN_LEVEL0.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => openExternal(urls.level0),
+      callback: unlessOverlayOpen(() => openExternal(urls.level0)),
     })),
     ...OPEN_IN_ACHAVI.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: () => openExternal(urls.achavi),
+      callback: unlessOverlayOpen(() => openExternal(urls.achavi)),
     })),
     ...OPEN_IN_HDYC.hotkeys.map((hotkey) => ({
       hotkey,
-      callback: openHdyc,
+      callback: unlessOverlayOpen(openHdyc),
     })),
   ])
 

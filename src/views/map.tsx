@@ -539,6 +539,8 @@ function CMap({
     [mapLoaded, mainMap, viewer, changesetId, refSearch, pinSearch, inAppDeepLinkKey, styleEpoch],
   )
 
+  const surroundingsVisible = useSurroundingsVisible()
+
   if (!token) {
     return <SignIn />
   }
@@ -559,7 +561,6 @@ function CMap({
   const overlayActive = overlayState === 'active'
   const showActions = viewer?.options.showActions
   const showNoop = Array.isArray(showActions) && showActions.includes('noop')
-  const surroundingsVisible = useSurroundingsVisible()
   // After the map's load: restored cells are there at once, the changeset layers come later.
   const surroundingsShown = surroundingsVisible && mapLoaded && firstFeatureLayerId != null
   const clickableLayerIds = changesetClickableLayerIds(layers)

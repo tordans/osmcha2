@@ -15,13 +15,22 @@ export function orderByConnectivity(
   if (shapes.some((shape) => !shape || shape.refs.length < 2)) return group
 
   const nodeSets = shapes.map((shape) => new Set(shape?.refs))
-  const neighbors = group.map((_, index) =>
-    group.flatMap((__, other) =>
-      other !== index && shapes[index]?.refs.some((ref) => nodeSets[other]?.has(ref))
-        ? [other]
-        : [],
-    ),
-  )
+  // Ways by node, so finding the neighbours stays linear for groups of thousands of ways.
+  const waysByRef = new Map<number, number[]>()
+  shapes.forEach((shape, index) => {
+    for (const ref of new Set(shape?.refs)) {
+      const ways = waysByRef.get(ref)
+      if (ways) ways.push(index)
+      else waysByRef.set(ref, [index])
+    }
+  })
+  const neighbors = shapes.map((shape, index) => {
+    const touching = new Set<number>()
+    for (const ref of shape?.refs ?? []) {
+      for (const other of waysByRef.get(ref) ?? []) if (other !== index) touching.add(other)
+    }
+    return [...touching].sort((a, b) => a - b)
+  })
   const firstRef = (index: number) => shapes[index]?.refs[0]
   const lastRef = (index: number) => shapes[index]?.refs.at(-1)
   // The way starts on a node another way of the group has: it is not where the street begins.

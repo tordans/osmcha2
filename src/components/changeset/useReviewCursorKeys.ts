@@ -23,6 +23,7 @@ import {
   type UndoEntry,
 } from '../../stores/changeset-notes-store.ts'
 import { getGroupCursorKey } from '../../stores/review-focus-store.ts'
+import { overlayIsOpen } from '../../utils/overlayIsOpen.ts'
 import type { ElementChange } from './changesetElements.ts'
 import { refParamFromElement } from './refSelection.ts'
 import { groupHeaderTarget } from './scrollChildIntoScroller.ts'
@@ -69,10 +70,6 @@ export function undoReviewStep(userKey: string, changesetId: number) {
 
 /** Mod+Z and Control+Z are one chord off a Mac: one press must undo once. */
 const undoneEvents = new WeakSet<KeyboardEvent>()
-
-function overlayIsOpen() {
-  return document.querySelector('[role="dialog"], [role="menu"], [role="listbox"]') != null
-}
 
 function bind(
   binding: HotkeyBinding,

@@ -370,8 +370,9 @@ export function nodeMoved(action: AdiffAction): boolean {
 
 export function wayRewritten(action: AdiffAction): boolean {
   if (action.type !== 'modify' || action.new?.type !== 'way') return false
-  const oldRefs = [...wayNodeRefs(action.old)]
-  const newRefs = [...wayNodeRefs(action.new)]
+  // In order and with repeats: closing a line repeats its first node, a Set would hide that.
+  const oldRefs = orderedNodeRefs(action.old)
+  const newRefs = orderedNodeRefs(action.new)
   if (oldRefs.length !== newRefs.length) return true
   return oldRefs.some((ref, index) => ref !== newRefs[index])
 }
@@ -524,7 +525,8 @@ export function matchFlaggedFeature(
     if (feature.url === url || feature.url === `${type}/${id}`) return true
     const osmId = feature.osm_id ?? (feature.type ? feature.id : undefined)
     if (feature.type === type && osmId === id) return true
-    if (!feature.type && feature.osm_id === id) return true
+    // Without type and url, the id is all there is; with a url, the url above decided.
+    if (!feature.type && !feature.url && feature.osm_id === id) return true
     return false
   })
 }

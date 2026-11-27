@@ -15,6 +15,7 @@ import {
   tagRowKeys,
   tagRows,
   wayReversal,
+  wayRewritten,
 } from './changesetElements.ts'
 import { changeListItems } from './tagGroups.ts'
 
@@ -870,5 +871,30 @@ describe('relation member changes', () => {
       },
     ])
     expect(relation?.memberChanges).toEqual({ roles: [], added: 1, removed: 1, reordered: true })
+  })
+})
+
+describe('wayRewritten', () => {
+  const way = (refs: number[]) => ({
+    type: 'way' as const,
+    id: 7,
+    version: 1,
+    nodes: refs.map((ref) => ({ ref })),
+    tags: { highway: 'path' },
+  })
+
+  test('closing a line into a ring is a rewrite, not an unchanged way', () => {
+    expect(wayRewritten({ type: 'modify', old: way([1, 2, 3]), new: way([1, 2, 3, 1]) })).toBe(true)
+  })
+
+  test('the same nodes in the same order are not a rewrite', () => {
+    expect(wayRewritten({ type: 'modify', old: way([1, 2, 1]), new: way([1, 2, 1]) })).toBe(false)
+  })
+})
+
+describe('flagged feature matching across types', () => {
+  test('a way flag with a url does not match a node of the same id', () => {
+    expect(matchFlaggedFeature('node', 123, [{ osm_id: 123, url: 'way-123' }])).toBeUndefined()
+    expect(matchFlaggedFeature('way', 123, [{ osm_id: 123, url: 'way-123' }])).toBeDefined()
   })
 })
