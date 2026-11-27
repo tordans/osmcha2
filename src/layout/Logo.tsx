@@ -1,4 +1,5 @@
 import { getRouteApi } from '@tanstack/react-router'
+import { searchWithoutMap } from '../routing/mapParam.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 
 const rootRouteApi = getRouteApi('__root__')
@@ -17,7 +18,7 @@ export function Logo() {
   return (
     <RouterLink
       to="/"
-      search={search}
+      search={searchWithoutMap(search)}
       className="inline-flex min-h-11 cursor-pointer touch-manipulation items-center px-2 text-base font-semibold text-zinc-600 select-none active:opacity-60 sm:min-h-0"
     >
       <BrandMark />

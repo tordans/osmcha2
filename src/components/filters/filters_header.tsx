@@ -2,6 +2,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useAllAOIs } from '../../query/hooks/useAOI.ts'
 import { stripFilterSearch } from '../../routing/filterSearch.ts'
+import { searchWithoutMap } from '../../routing/mapParam.ts'
 import { RouterLink } from '../../routing/RouterLink.tsx'
 import { aoiFeedUrl } from '../../utils/aoiFeedUrl.ts'
 import { prefersTouchInput } from '../../utils/prefersTouchInput.ts'
@@ -146,7 +147,11 @@ export function FiltersHeader({
             if (!option) return
             void navigate({
               to: '/filters',
-              search: (prev) => ({ ...stripFilterSearch(prev), aoi: option.value }),
+              search: (prev) => ({
+                ...stripFilterSearch(prev),
+                aoi: option.value,
+                page: undefined,
+              }),
               replace: true,
             })
           }}
@@ -177,7 +182,7 @@ export function FiltersHeader({
         </div>
         <RouterLink
           to="/"
-          search={search}
+          search={searchWithoutMap(search)}
           aria-label="Close filters"
           className="inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation items-center justify-center select-none active:opacity-60"
         >

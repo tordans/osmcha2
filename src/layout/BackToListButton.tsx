@@ -2,6 +2,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useSelectedList } from '../components/list/useSelectedList.ts'
 import { ArrowLeftIcon } from '../components/ui/icons.ts'
+import { searchWithoutMap } from '../routing/mapParam.ts'
 import { RouterLink } from '../routing/RouterLink.tsx'
 import { ListButtonLabel } from './ListButtonLabel.tsx'
 
@@ -22,7 +23,7 @@ export function BackToListButton() {
   return (
     <RouterLink
       to="/"
-      search={search}
+      search={searchWithoutMap(search)}
       aria-label={`Back to list: ${label}`}
       className={clsx(
         buttonClasses,

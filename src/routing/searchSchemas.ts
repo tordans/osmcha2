@@ -1,6 +1,16 @@
 import { z } from 'zod'
 import type { Filters } from '../components/filters/filterTypes.ts'
 
+/**
+ * Optional string param. The router parses `?ref=123` to a number, so numbers become strings; null,
+ * booleans and arrays (duplicated keys) are dropped instead of failing validation or turning into
+ * strings like "null" or "a,b".
+ */
+const looseString = z
+  .preprocess((value) => (typeof value === 'number' ? String(value) : value), z.string())
+  .optional()
+  .catch(undefined)
+
 export const osmchaSearchSchema = z
   .object({
     /** Saved-filter id (UUID); it goes into API paths, so anything else is dropped. Coerced because the router parses digits to a number. */
@@ -10,23 +20,23 @@ export const osmchaSearchSchema = z
       .optional()
       .catch(undefined),
     page: z.coerce.number().int().positive().default(1).catch(1),
-    token: z.string().optional(),
-    map: z.string().optional(),
+    token: looseString,
+    map: looseString,
     /** Object/tag address: `way/123` or `way/123/highway`. */
-    ref: z.string().optional(),
+    ref: looseString,
     /**
      * Size of the "Same tag changes" group a note is about; only read from posted links. The router
-     * parses `group=2` as a number, so it is coerced back to a string.
+     * parses `group=2` as a number, so it is turned back into a string.
      */
-    group: z.coerce.string().optional().catch(undefined),
+    group: looseString,
     /** Note pin: `lat,lng` at five decimals. */
-    pin: z.string().optional(),
+    pin: looseString,
     /** Map layers: comma-separated tokens; omit at the default layers (Unchanged off) + spyglass + Unseen review filter. Seen-only adds `no-unseen`. */
-    layers: z.string().optional(),
+    layers: looseString,
     /** List sort: `order=date,desc` (field,direction). */
-    order: z.string().optional(),
-    code: z.string().optional(),
-    state: z.string().optional(),
+    order: looseString,
+    code: looseString,
+    state: looseString,
     /** Legacy blob `?filters={...}`, redirected to top-level filter params. */
     filters: z.unknown().optional(),
   })

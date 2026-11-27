@@ -150,7 +150,10 @@ export function Filters() {
   const handleReset = () => {
     leaveOnPurpose()
     getFilterCopyActions().clear()
-    void navigate({ to: '/', search: (prev) => ({ ...stripFilterSearch(prev), aoi: undefined }) })
+    void navigate({
+      to: '/',
+      search: (prev) => ({ ...stripFilterSearch(prev), aoi: undefined, page: undefined }),
+    })
   }
 
   const handleSaveAs = (newName: string) => {

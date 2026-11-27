@@ -2,6 +2,7 @@ import { sub } from 'date-fns'
 import { z } from 'zod'
 import type { Filter, FilterOption, Filters } from '../components/filters/filterTypes.ts'
 import { DEFAULT_FROM_DATE, DEFAULT_TO_DATE } from '../config/constants.ts'
+import filtersConfig from '../config/filters.json'
 import { formatUtcDate, utcDayEdge } from './datetime.ts'
 
 const filterOptionSchema = z.object({
@@ -67,7 +68,8 @@ export function appendDefaultDate(filters: Filters): WithDateTo {
   const skipFromDefault = lastDaysHasValue(filters)
 
   if (filters && !('date__gte' in filters) && !('date__lte' in filters) && !skipFromDefault) {
-    const filterKeys = Object.keys(filters)
+    // A sort order does not narrow the list, so it does not count.
+    const filterKeys = Object.keys(filters).filter((key) => key !== 'order_by')
     if (filterKeys.length === 1 && (filterKeys.includes('users') || filterKeys.includes('uids'))) {
       result = { ...result, ...getDefaultFromDate(28) }
     } else {
@@ -144,6 +146,11 @@ export function applyFilterChange(filters: Filters, name: string, values?: Filte
   return next
 }
 
+/** Single-text filters (comment, source, editor, …): a comma belongs to the value, it is no separator. */
+const SINGLE_VALUE_KEYS = new Set(
+  filtersConfig.filter((config) => config.type === 'text').map((config) => config.name),
+)
+
 function getString(input: string | number | object | undefined): string {
   if (typeof input === 'object') {
     return JSON.stringify(input)
@@ -161,6 +168,11 @@ export function deserializeFiltersFromObject(apiFilters: Record<string, unknown>
     // Empty string should be converted to empty array with one empty item
     if (v === '') {
       result[k] = [{ label: '', value: '' }]
+      continue
+    }
+
+    if (SINGLE_VALUE_KEYS.has(k)) {
+      result[k] = [{ label: v.trim(), value: v.trim() }]
       continue
     }
 

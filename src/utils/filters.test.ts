@@ -5,6 +5,7 @@ import {
   appendDefaultDate,
   applyFilterChange,
   deserializeFiltersFromObject,
+  getDefaultFromDate,
   lastDaysFilter,
   savedFiltersForForm,
   serializeFiltersToObject,
@@ -31,6 +32,17 @@ describe('appendDefaultDate', () => {
     expect(result.last_days).toEqual(lastDaysFilter(0))
     expect(result.date__gte).toBeUndefined()
     expect(result.date__lte).toBeDefined()
+  })
+
+  it('keeps the 30-day window for a users-only list when a sort order is chosen', () => {
+    MockDate.set('2026-08-19T12:00:00.000Z')
+    const sorted = appendDefaultDate({
+      users: [{ label: 'Ann', value: 'Ann' }],
+      order_by: [{ label: '-date', value: '-date' }],
+    })
+    const plain = appendDefaultDate({ users: [{ label: 'Ann', value: 'Ann' }] })
+    expect(sorted.date__gte).toEqual(plain.date__gte)
+    expect(sorted.date__gte).toEqual(getDefaultFromDate(28).date__gte)
   })
 
   it('still injects date__gte when last_days is absent', () => {
@@ -70,6 +82,19 @@ describe('serialize last_days', () => {
   it('stores last_days on the AOI object without injecting dates', () => {
     expect(serializeFiltersToObject({ last_days: lastDaysFilter(7) })).toEqual({ last_days: '7' })
     expect(serializeFiltersToObject({ last_days: lastDaysFilter(0) })).toEqual({ last_days: '0' })
+  })
+
+  it('keeps commas in single-text filters and splits comma-list filters', () => {
+    expect(deserializeFiltersFromObject({ source: 'survey, Bing', comment: 'fix, typo' })).toEqual({
+      source: [{ label: 'survey, Bing', value: 'survey, Bing' }],
+      comment: [{ label: 'fix, typo', value: 'fix, typo' }],
+    })
+    expect(deserializeFiltersFromObject({ users: 'Ann, Bob' })).toEqual({
+      users: [
+        { label: 'Ann', value: 'Ann' },
+        { label: 'Bob', value: 'Bob' },
+      ],
+    })
   })
 
   it('round-trips an AOI last_days key', () => {
