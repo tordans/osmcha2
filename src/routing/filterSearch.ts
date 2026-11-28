@@ -10,8 +10,11 @@ const chromeKeySet = new Set<string>([
   'order_by',
 ])
 
+/** Campaign and click ids that sites add to shared links; they are not list filters. */
+const TRACKING_KEY = /^(?:utm_|mtm_|pk_)|^(?:fbclid|gclid|msclkid|mc_cid|mc_eid)$/
+
 function isFilterSearchKey(key: string) {
-  return !chromeKeySet.has(key)
+  return !chromeKeySet.has(key) && !TRACKING_KEY.test(key)
 }
 
 function hasFilterSearchParams(search: OsmchaSearch) {

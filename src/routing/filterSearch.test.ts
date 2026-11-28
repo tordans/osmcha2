@@ -57,6 +57,17 @@ describe('serializeFiltersToSearch', () => {
 })
 
 describe('filtersFromSearch', () => {
+  it('campaign parameters of a shared link are not filters', () => {
+    expect(
+      filtersFromSearch({
+        page: 1,
+        users: 'mapper',
+        utm_source: 'mastodon',
+        fbclid: 'x',
+      } as OsmchaSearch),
+    ).toEqual({ users: [{ label: 'mapper', value: 'mapper' }] })
+  })
+
   it('rebuilds {label,value} filters from search params', () => {
     expect(filtersFromSearch({ page: 1, uids: '11881', date__gte: '' } as OsmchaSearch)).toEqual({
       uids: [{ label: '11881', value: '11881' }],
