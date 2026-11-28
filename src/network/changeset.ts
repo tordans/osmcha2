@@ -5,10 +5,54 @@ import { parseOsmDate } from '../utils/datetime.ts'
 import { osmChangesetPayloadSchema } from './openstreetmap.ts'
 import { api } from './request.ts'
 
+/** OSMCha sends numeric ids; a numeric string becomes a number, anything else no id. */
+const numericId = z
+  .union([z.number(), z.string()])
+  .transform((id) => (typeof id === 'string' ? Number(id) || undefined : id))
+  .optional()
+
 const namedTagSchema = z.object({
-  id: z.union([z.string(), z.number()]).optional(),
+  id: numericId,
   name: z.string(),
 })
+
+/** A field of an entry OSMCha fills freely: a wrong type or null becomes undefined. */
+const loose = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined)
+
+/** Not an object: no entry, without rejecting the changeset. */
+function objectsOnly<T extends z.ZodType>(schema: T) {
+  return z.array(z.unknown()).transform((items) =>
+    items.flatMap((item) => {
+      const result = schema.safeParse(item)
+      return result.success ? [result.data as z.infer<T>] : []
+    }),
+  )
+}
+
+const flaggedFeatureSchema = z.object({
+  osm_id: loose(z.number()),
+  name: loose(z.string()),
+  note: loose(z.string()),
+  reasons: loose(
+    z.union([
+      z.array(z.number()),
+      z.array(z.object({ id: numericId.catch(undefined), name: loose(z.string()) })),
+    ]),
+  ),
+  user_flag: loose(z.string()),
+  type: loose(z.string()),
+  id: loose(z.number()),
+  url: loose(z.string()),
+})
+
+/** A feature someone flagged in OSMCha; `id` is `type-id`, e.g. `way-123`. */
+const reviewedFeatureSchema = z.object({
+  id: loose(z.string()),
+  user: loose(z.string()),
+})
+
+export type FlaggedFeature = z.infer<typeof flaggedFeatureSchema>
+export type ReviewedFeature = z.infer<typeof reviewedFeatureSchema>
 
 const changesetPropertiesSchema = z.object({
   user: z.string(),
@@ -21,8 +65,8 @@ const changesetPropertiesSchema = z.object({
   date: z.string().nullable().optional(),
   reasons: z.array(namedTagSchema),
   tags: z.array(namedTagSchema),
-  features: z.array(z.unknown()),
-  reviewed_features: z.array(z.unknown()),
+  features: objectsOnly(flaggedFeatureSchema),
+  reviewed_features: objectsOnly(reviewedFeatureSchema),
   tag_changes: z.record(z.string(), z.unknown()).optional(),
   create: z.number().nullable().optional(),
   modify: z.number().nullable().optional(),
@@ -33,7 +77,17 @@ const changesetPropertiesSchema = z.object({
   checked: z.boolean(),
   check_user: z.string().nullable().optional(),
   check_date: z.string().nullable().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  // Changeset tags: strings in OSM; other values are dropped.
+  metadata: z
+    .record(z.string(), z.unknown())
+    .transform((metadata) =>
+      Object.fromEntries(
+        Object.entries(metadata).flatMap(([key, value]) =>
+          typeof value === 'string' || typeof value === 'number' ? [[key, String(value)]] : [],
+        ),
+      ),
+    )
+    .optional(),
 })
 
 export const changesetFeatureSchema = z.object({

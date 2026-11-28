@@ -2,6 +2,7 @@ import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import { motion } from 'motion/react'
 import { memo, use, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import type { FlaggedFeature, ReviewedFeature } from '../../network/changeset.ts'
 import { collectGroupThreads, withoutGroupNotes } from '../../notes/groupNotes.ts'
 import {
   flattenObjectNotes,
@@ -60,7 +61,6 @@ import {
   tagMutationRows,
   type AdiffAction,
   type ElementChange,
-  type FlaggedFeature,
   type NamedReason,
 } from './changesetElements.ts'
 import { DropdownOpenElement } from './DropdownOpenElement.tsx'
@@ -121,8 +121,6 @@ const TAG_GROUP_EXPLANATION = 'Same tag changes: all of these objects got the sa
 const FIRST_RENDER_LIST_ITEMS = 20
 /** Pause before a fully seen group folds away, so the rows show their new state first. */
 const SEEN_FOLD_DELAY_S = 0.4
-
-type ReviewedFeature = { id?: string; user?: string }
 
 type DetailsChangesProps = {
   changesetId: number

@@ -18,6 +18,7 @@ import {
 } from '../../config/bindings.ts'
 import { useAuth } from '../../hooks/useAuth.ts'
 import { useIsUserListed } from '../../hooks/useIsUserListed.ts'
+import type { ChangesetFeature } from '../../network/changeset.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { useMarkHarmful } from '../../query/hooks/useMarkHarmful.ts'
 import {
@@ -71,7 +72,7 @@ import { changesetTagsForDisplay } from './changesetTags.ts'
 import { isOsmChangesetOpen } from './isOsmChangesetOpen.ts'
 import { hdycUrl, missingMapsUrl, openExternal, openInUrls } from './openInUrls.ts'
 import { isOwnChangeset, OWN_CHANGESET_REVIEW_MESSAGE } from './ownChangeset.ts'
-import { type NamedTag, REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
+import { REVIEW_TAG_META, reviewPresentation } from './reviewPresentation.ts'
 import { ReviewUndoButton } from './ReviewUndoButton.tsx'
 import { Tags } from './tags.tsx'
 import TranslateButton from './translate_button.tsx'
@@ -189,26 +190,9 @@ export type ReviewUserDetails = {
   description?: string
 }
 
-export type ReviewChangeset = {
-  properties?: {
-    user?: string
-    uid?: number | string
-    date?: string
-    editor?: string | null
-    comment?: string | null
-    checked?: boolean
-    check_user?: string | null
-    check_date?: string | null
-    harmful?: boolean | null
-    reasons?: NamedTag[]
-    tags?: NamedTag[]
-    metadata?: Record<string, string | number>
-  }
-}
-
 type DetailsHeaderProps = {
   changesetId: number
-  currentChangeset: ReviewChangeset
+  currentChangeset: ChangesetFeature
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
   /** `sheet`: menus side by side here, the rest portaled into `bodySlot` (phone review sheet). */
@@ -239,7 +223,7 @@ export function DetailsHeader({
   // Read the clock once: account age is in days, and render has to stay pure.
   const [now] = useState(() => new Date())
   const { pairRef, menuStyle } = useReviewHeaderMenuWidth()
-  const properties = currentChangeset.properties ?? {}
+  const properties = currentChangeset.properties
   const osmUser = properties.user ?? userDetails?.name ?? 'OSM User'
   const uid = Number(properties.uid ?? userDetails?.uid) || 0
   const [isInTrustedlist, isInWatchlist] = useIsUserListed(osmUser, uid, token)

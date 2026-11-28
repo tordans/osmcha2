@@ -12,6 +12,7 @@ import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.
 import { PaneResizeHandle } from '../../layout/PaneResizeHandle.tsx'
 import { REVIEW_MAX, REVIEW_MIN, resizeSidePane } from '../../layout/paneWidths.ts'
 import { useDisplayedPaneWidths } from '../../layout/usePaneLayout.ts'
+import type { ChangesetFeature } from '../../network/changeset.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
 import { useChangesetMap, useChangesetMapFromOverpass } from '../../query/hooks/useChangesetMap.ts'
 import { useChangesetMapper } from '../../query/hooks/useChangesetMapper.ts'
@@ -50,7 +51,7 @@ import { groupChangesByWorkArea } from './workAreaChanges.ts'
 
 type ChangesetProps = {
   changesetId: number | null
-  currentChangeset: any
+  currentChangeset: ChangesetFeature
   viewer: ChangesetAdiffViewer | null
   workAreas: WorkArea[]
   selected: AdiffAction | null
@@ -101,7 +102,7 @@ function Changeset({
     changesetId,
     currentChangeset?.properties && {
       username: currentChangeset.properties.user,
-      uid: currentChangeset.properties.uid,
+      uid: currentChangeset.properties.uid ?? undefined,
     },
   )
   const mapOptionsButtonRef = useRef<HTMLButtonElement>(null)

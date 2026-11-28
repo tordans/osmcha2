@@ -1,3 +1,4 @@
+import type { FlaggedFeature, ReviewedFeature } from '../../network/changeset.ts'
 import type { NonEmptyArray } from '../../utils/nonEmptyArray.ts'
 import { isOsmElementType, type OsmElementType } from '../../utils/osmElement.ts'
 import { clusterChangesBySpace } from './changeGroupClusters.ts'
@@ -30,17 +31,6 @@ export type ParsedAdiff = {
 }
 
 export type NamedReason = { id?: number; name?: string }
-
-export type FlaggedFeature = {
-  osm_id?: number
-  name?: string
-  note?: string
-  reasons?: number[] | NamedReason[]
-  user_flag?: string
-  type?: string
-  id?: number
-  url?: string
-}
 
 export type NodeStats = { added: number; modified: number; deleted: number }
 
@@ -399,7 +389,7 @@ function reasonNames(feature: FlaggedFeature, changesetReasons: NamedReason[]): 
 
 export function mergeFlaggedFeatures(
   features: FlaggedFeature[],
-  reviewedFeatures: Array<{ id?: string; user?: string }> = [],
+  reviewedFeatures: ReviewedFeature[] = [],
 ): FlaggedFeature[] {
   const reviewed: FlaggedFeature[] = reviewedFeatures.map((feature) => ({
     url: feature.id,

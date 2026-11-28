@@ -12,6 +12,7 @@ import {
 import { useReviewAreaLookahead, useReviewAreaOverlap } from '../../hooks/useReviewArea.ts'
 import { paneCardClassName, paneCardClipClassName } from '../../layout/paneCard.ts'
 import { useDesktopLayout } from '../../layout/useDesktopLayout.ts'
+import type { ChangesetFeature } from '../../network/changeset.ts'
 import type { NoteTarget } from '../../notes/discussionNotes.ts'
 import { useChangesetDiscussion } from '../../query/hooks/useChangesetDiscussion.ts'
 import { changesetDiscussionQueryOptions } from '../../query/options/changeset.ts'
@@ -33,7 +34,7 @@ import { ChatBubbleLeftIcon } from '../ui/icons.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { buildElementChanges, type AdiffAction, type ElementChange } from './changesetElements.ts'
 import { DetailsChanges } from './DetailsChanges.tsx'
-import { DetailsHeader, type ReviewChangeset, type ReviewUserDetails } from './DetailsHeader.tsx'
+import { DetailsHeader, type ReviewUserDetails } from './DetailsHeader.tsx'
 import { Discussions } from './discussions.tsx'
 import { ElementCard } from './ElementCard.tsx'
 import { ReviewAreaCallout } from './ReviewAreaCallout.tsx'
@@ -60,7 +61,7 @@ const COLUMN_TABS = [
 
 type ReviewColumnProps = {
   changesetId: number
-  currentChangeset: ReviewChangeset & { properties?: Record<string, any>; geometry?: unknown }
+  currentChangeset: ChangesetFeature
   userDetails?: ReviewUserDetails | null
   whosThat?: string[]
   bindingsState: Record<string, boolean>
@@ -119,7 +120,7 @@ export function ReviewColumn({
   const lastScrolledDeepLinkRef = useRef(0)
   const listScrollTarget = useListScrollTarget()
   const listScrollNonce = useListScrollNonce()
-  const properties: Record<string, any> = currentChangeset.properties ?? {}
+  const properties = currentChangeset.properties
   const changesetCount =
     (properties.create ?? 0) + (properties.modify ?? 0) + (properties.delete ?? 0)
   const changesActive = Boolean(bindingsState[CHANGESET_DETAILS_DETAILS.label])
